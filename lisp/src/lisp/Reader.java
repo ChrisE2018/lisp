@@ -1,7 +1,7 @@
 
 package lisp;
 
-import java.io.*;
+import java.io.IOException;
 
 public class Reader
 {
@@ -15,10 +15,10 @@ public class Reader
 
     private final CommentReader commentReader = new CommentReader ();
 
-    public Lisp read (final InputStream in) throws IOException
+    public Lisp read (final LispStream in) throws IOException
     {
 	commentReader.skipBlanks (in);
-	final char chr = peek (in);
+	final char chr = in.peek ();
 	if (chr == OPEN_PAREN || chr == OPEN_BRACE || chr == OPEN_BRACKET)
 	{
 	    return readList (in);
@@ -30,18 +30,16 @@ public class Reader
 	return readAtom (in);
     }
 
-    private Lisp readList (final InputStream in) throws IOException
+    private Lisp readList (final LispStream in) throws IOException
     {
-	final LispList result = getParenList ((char)in.read ());
+	final LispList result = getParenList (in.read ());
 	final ListKind listKind = result.getListKind ();
 	final char close = listKind.getCloseChar ();
-	char chr = peek (in);
-	while (chr != close)
+	while (!in.peek (close))
 	{
 	    final Lisp element = read (in);
 	    result.add (element);
 	    commentReader.skipBlanks (in);
-	    chr = peek (in);
 	}
 	in.read ();
 	return result;
@@ -70,10 +68,10 @@ public class Reader
 	}
     }
 
-    private Lisp readString (final InputStream in) throws IOException
+    private Lisp readString (final LispStream in) throws IOException
     {
+	in.read (DOUBLE_QUOTE); // Discard double quote
 	int input = in.read ();
-	input = in.read (); // Discard double quote
 	final StringBuilder buffer = new StringBuilder ();
 	// Need to handle embedded slashes
 	while ((char)input != DOUBLE_QUOTE)
@@ -84,12 +82,12 @@ public class Reader
 	return new StringAtom (buffer.toString ());
     }
 
-    private Lisp readAtom (final InputStream in) throws IOException
+    private Lisp readAtom (final LispStream in) throws IOException
     {
 	final StringBuilder buffer = new StringBuilder ();
-	while (isAtomChar (peek (in)))
+	while (isAtomChar (in.peek ()))
 	{
-	    buffer.append ((char)in.read ());
+	    buffer.append (in.read ());
 	}
 	final String s = buffer.toString ();
 	// Try parsing an integer
@@ -143,14 +141,6 @@ public class Reader
 	    }
 	}
 	return true;
-    }
-
-    private char peek (final InputStream in) throws IOException
-    {
-	in.mark (1);
-	final int input = in.read ();
-	in.reset ();
-	return (char)input;
     }
 
     @Override

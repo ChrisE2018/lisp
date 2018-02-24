@@ -22,15 +22,23 @@ public class LispStream
 	return result;
     }
 
-    /** Peek at the next two chars without advancing the stream. */
-    public String peek2 () throws IOException
+    /** Peek at the next char without advancing the stream. */
+    public boolean peek (final char expected) throws IOException
+    {
+	stream.mark (1);
+	final char result = (char)stream.read ();
+	stream.reset ();
+	return result == expected;
+    }
+
+    /** Peek at the second char without advancing the stream. */
+    public boolean peek2 (final char expected) throws IOException
     {
 	stream.mark (2);
-	final char data[] =
-	    {(char)stream.read (), (char)stream.read ()};
-	final String result = new String (data);
+	stream.read ();
+	final char result = (char)stream.read ();
 	stream.reset ();
-	return result;
+	return result == expected;
     }
 
     /** Read one character advancing the stream. */
@@ -38,6 +46,16 @@ public class LispStream
     {
 	final char result = (char)stream.read ();
 	return result;
+    }
+
+    /** Read one character advancing the stream. */
+    public void read (final char expected) throws IOException
+    {
+	final char result = (char)stream.read ();
+	if (result != expected)
+	{
+	    throw new IllegalArgumentException ("Expected '" + expected + "'");
+	}
     }
 
     @Override

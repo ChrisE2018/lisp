@@ -15,12 +15,13 @@ public class Rpl
 
     private void rpl ()
     {
+	final LispStream stream = new LispStream (System.in);
 	while (true)
 	{
 	    try
 	    {
 		Thread.sleep (100);
-		rp ();
+		rp (stream);
 	    }
 	    catch (final Throwable e)
 	    {
@@ -29,9 +30,9 @@ public class Rpl
 	}
     }
 
-    private void rp () throws IOException
+    private void rp (final LispStream stream) throws IOException
     {
-	final Lisp form = reader.read (System.in);
+	final Lisp form = reader.read (stream);
 	if (form == null)
 	{
 	    System.out.println ("Exit");

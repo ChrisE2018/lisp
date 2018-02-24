@@ -1,7 +1,7 @@
 
 package lisp;
 
-import java.io.*;
+import java.io.IOException;
 
 public class CommentReader
 {
@@ -18,12 +18,12 @@ public class CommentReader
 	S_STAR
     }
 
-    public void skipBlanks (final InputStream in) throws IOException
+    public void skipBlanks (final LispStream in) throws IOException
     {
 	state = BlankState.S_NORMAL;
 	while (true)
 	{
-	    final char chr = peek (in);
+	    final char chr = in.peek ();
 	    switch (state)
 	    {
 		case S_NORMAL:
@@ -39,16 +39,13 @@ public class CommentReader
 		    }
 		    else if (chr == '/')
 		    {
-			in.mark (2);
-			in.read ();
-			if ((char)in.read () == '*')
+			if (in.peek2 ('*'))
 			{
 			    state = BlankState.S_INC;
 			}
 			else
 			{
 			    // Slash is not a comment. Let someone else handle it.
-			    in.reset ();
 			    return;
 			}
 		    }
@@ -87,14 +84,6 @@ public class CommentReader
 		    break;
 	    }
 	}
-    }
-
-    private char peek (final InputStream in) throws IOException
-    {
-	in.mark (1);
-	final int input = in.read ();
-	in.reset ();
-	return (char)input;
     }
 
     @Override
