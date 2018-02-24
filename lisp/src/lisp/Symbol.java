@@ -79,6 +79,11 @@ public class Symbol implements Lisp
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
+	if (pkg != null)
+	{
+	    buffer.append (pkg.getName ());
+	    buffer.append ('.');
+	}
 	buffer.append (name);
 	buffer.append (">");
 	return buffer.toString ();

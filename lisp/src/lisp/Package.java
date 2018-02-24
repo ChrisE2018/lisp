@@ -5,13 +5,19 @@ import java.util.*;
 
 public class Package implements Lisp
 {
-    private Package parent;
+    private final Package parent;
 
     private final List<Package> children = new ArrayList<Package> ();
 
-    private String packageName;
+    private final String packageName;
 
-    private final List<Symbol> symbols = new ArrayList<Symbol> ();
+    private final Map<String, Symbol> symbols = new HashMap<String, Symbol> ();
+
+    public Package (final Package parent, final String name)
+    {
+	this.parent = parent;
+	packageName = name;
+    }
 
     public Package getParent ()
     {
@@ -30,18 +36,38 @@ public class Package implements Lisp
 
     public Symbol find (final String name)
     {
-	for (final Symbol symbol : symbols)
+	final Symbol result = symbols.get (name);
+	if (result != null)
 	{
-	    if (symbol.getName ().equals (name))
-	    {
-		return symbol;
-	    }
+	    return result;
 	}
 	if (parent != null)
 	{
 	    return parent.find (name);
 	}
 	return null;
+    }
+
+    public Lisp internLocal (final String name)
+    {
+	Symbol result = symbols.get (name);
+	if (result != null)
+	{
+	    return result;
+	}
+	result = new Symbol (this, name);
+	return result;
+    }
+
+    public Lisp intern (final String name)
+    {
+	Symbol result = find (name);
+	if (result != null)
+	{
+	    return result;
+	}
+	result = new Symbol (this, name);
+	return result;
     }
 
     /** Print value to a buffer. */

@@ -13,6 +13,8 @@ public class Reader
     private static final char CLOSE_BRACE = '}';
     private static final char CLOSE_BRACKET = ']';
 
+    private final Package pkg = new Package (null, "default");
+
     private final CommentReader commentReader = new CommentReader ();
 
     public Lisp read (final LispStream in) throws IOException
@@ -111,8 +113,8 @@ public class Reader
 
 	}
 	// Not a number. Return a symbol.
-	// [TODO] Intern in the current package.
-	return new Symbol (s);
+	// [TODO] Implement package prefix
+	return pkg.intern (s);
     }
 
     /**
