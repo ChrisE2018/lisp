@@ -13,7 +13,7 @@ public class Reader
     private static final char CLOSE_BRACE = '}';
     private static final char CLOSE_BRACKET = ']';
 
-    private final Package pkg = new Package (null, "default");
+    private final Package pkg = PackageFactory.getPackage ("default");
 
     private final CommentReader commentReader = new CommentReader ();
 

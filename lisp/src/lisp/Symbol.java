@@ -9,7 +9,7 @@ public class Symbol implements Lisp
 
     private Lisp value;
 
-    private Lisp function;
+    private FunctionCell function;
 
     private Lisp plist;
 
@@ -45,12 +45,12 @@ public class Symbol implements Lisp
 	this.value = value;
     }
 
-    public Lisp getFunction ()
+    public FunctionCell getFunction ()
     {
 	return function;
     }
 
-    public void setFunction (final Lisp function)
+    public void setFunction (final FunctionCell function)
     {
 	this.function = function;
     }

@@ -1,24 +1,13 @@
 
 package lisp;
 
-import java.util.List;
-
-public class LispParenList extends LispList
+public class SpecialFunctionCell extends FunctionCell
 {
-    public LispParenList ()
-    {
-	super ();
-    }
-
-    public LispParenList (final List<Lisp> members)
-    {
-	super (members);
-    }
 
     @Override
-    public ListKind getListKind ()
+    public Lisp eval (final Interpreter interpreter, final LispList form)
     {
-	return ListKind.PAREN;
+	return null;
     }
 
     @Override

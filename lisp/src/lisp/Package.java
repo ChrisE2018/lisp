@@ -48,7 +48,7 @@ public class Package implements Lisp
 	return null;
     }
 
-    public Lisp internLocal (final String name)
+    public Symbol internLocal (final String name)
     {
 	Symbol result = symbols.get (name);
 	if (result != null)
@@ -56,10 +56,11 @@ public class Package implements Lisp
 	    return result;
 	}
 	result = new Symbol (this, name);
+	symbols.put (name, result);
 	return result;
     }
 
-    public Lisp intern (final String name)
+    public Symbol intern (final String name)
     {
 	Symbol result = find (name);
 	if (result != null)
@@ -67,6 +68,7 @@ public class Package implements Lisp
 	    return result;
 	}
 	result = new Symbol (this, name);
+	symbols.put (name, result);
 	return result;
     }
 
