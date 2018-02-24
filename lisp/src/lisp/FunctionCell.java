@@ -1,12 +1,9 @@
 
 package lisp;
 
-public class FunctionCell
+public abstract class FunctionCell
 {
-    public Lisp eval (final Interpreter interpreter, final LispList form) throws Exception
-    {
-	return null;
-    }
+    abstract public Lisp eval (final Interpreter interpreter, final LispList form) throws Exception;
 
     @Override
     public String toString ()

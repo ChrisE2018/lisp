@@ -13,8 +13,10 @@ public class Repl
 	repl.repl ();
     }
 
+    @SuppressWarnings ("unused")
     private Repl () throws NoSuchMethodException, SecurityException
     {
+	new Primitives ();
 	interpreter = new Interpreter ();
     }
 

@@ -28,6 +28,8 @@ public class MacroFunctionCell extends FunctionCell
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
+	buffer.append (" ");
+	buffer.append (method);
 	buffer.append (">");
 	return buffer.toString ();
     }
