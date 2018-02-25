@@ -1,75 +1,138 @@
 
 package lisp;
 
+import java.util.*;
+
 public class Symbol implements Lisp
 {
-    private final Package pkg;
+    private final Package symbolPackage;
 
-    private final String name;
+    private final String symbolName;
 
-    private Lisp value;
+    private Lisp symbolValue;
 
-    private FunctionCell function;
+    private FunctionCell symbolFunction;
 
-    private Lisp plist;
+    /** Symbol properties with lazy initialization. */
+    private Map<Symbol, Lisp> symbolPlist = null;
+
+    /** When true it is illegal to set the value of this symbol. */
+    private boolean constantValue = false;
+
+    /** When true it is illegal to set the function of this symbol. */
+    private boolean constantFunction = false;
 
     public Symbol (final String name)
     {
-	pkg = null;
-	this.name = name;
+	symbolPackage = null;
+	symbolName = name;
     }
 
     public Symbol (final Package pkg, final String name)
     {
-	this.pkg = pkg;
-	this.name = name;
+	symbolPackage = pkg;
+	symbolName = name;
     }
 
     public Package getPackage ()
     {
-	return pkg;
+	return symbolPackage;
     }
 
     public String getName ()
     {
-	return name;
+	return symbolName;
     }
 
     public Lisp getValue ()
     {
-	return value;
+	return symbolValue;
     }
 
     public void setValue (final Lisp value)
     {
-	this.value = value;
+	if (constantValue)
+	{
+	    throw new IllegalStateException ("Symbol value is constant " + symbolName);
+	}
+	symbolValue = value;
+    }
+
+    /** When true it is illegal to set the value of this symbol. */
+    public void setConstantValue (final boolean constantValue)
+    {
+	this.constantValue = constantValue;
     }
 
     public FunctionCell getFunction ()
     {
-	return function;
+	return symbolFunction;
     }
 
     public void setFunction (final FunctionCell function)
     {
-	this.function = function;
+	if (constantFunction)
+	{
+	    throw new IllegalStateException ("Symbol function is constant " + symbolName);
+	}
+	symbolFunction = function;
     }
 
-    public Lisp getPlist ()
+    /** When true it is illegal to set the function of this symbol. */
+    public void setConstantFunction (final boolean constantFunction)
     {
-	return plist;
+	this.constantFunction = constantFunction;
     }
 
-    public void setPlist (final Lisp plist)
+    public Lisp get (final Symbol key)
     {
-	this.plist = plist;
+	Lisp result = null;
+	if (symbolPlist != null)
+	{
+	    result = symbolPlist.get (key);
+	}
+	return result;
+    }
+
+    public void put (final Symbol key, final Lisp val)
+    {
+	if (symbolPlist == null)
+	{
+	    symbolPlist = new HashMap<Symbol, Lisp> ();
+	}
+	symbolPlist.put (key, val);
+    }
+
+    public Lisp remove (final Symbol key)
+    {
+	Lisp result = null;
+	if (symbolPlist != null)
+	{
+	    result = symbolPlist.remove (key);
+	    // Could null plist here if it is empty, but it is likely to get populated again.
+	}
+	return result;
+    }
+
+    /**
+     * Provide a method for iterating through plist entries.
+     *
+     * @return
+     */
+    public Set<Symbol> getKeys ()
+    {
+	return symbolPlist.keySet ();
     }
 
     /** Print value to a buffer. */
     public void print (final StringBuilder buffer)
     {
-	// [TODO] Include package information
-	buffer.append (name);
+	if (symbolPackage != null)
+	{
+	    buffer.append (symbolPackage.getName ());
+	    buffer.append ('.');
+	}
+	buffer.append (symbolName);
     }
 
     @Override
@@ -79,12 +142,12 @@ public class Symbol implements Lisp
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
-	if (pkg != null)
+	if (symbolPackage != null)
 	{
-	    buffer.append (pkg.getName ());
+	    buffer.append (symbolPackage.getName ());
 	    buffer.append ('.');
 	}
-	buffer.append (name);
+	buffer.append (symbolName);
 	buffer.append (">");
 	return buffer.toString ();
     }

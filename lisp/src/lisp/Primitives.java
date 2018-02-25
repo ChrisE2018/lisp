@@ -6,7 +6,7 @@ import java.util.*;
 
 public class Primitives
 {
-    private final Package pkg = PackageFactory.getPackage ("default");
+    private final Package pkg = PackageFactory.getSystemPackage ();
 
     public Primitives () throws NoSuchMethodException, SecurityException
     {
@@ -32,6 +32,7 @@ public class Primitives
 	symbol.setFunction (new SpecialFunctionCell (this, method));
     }
 
+    @SuppressWarnings ("unused")
     private void defmacro (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
     {
 	final Symbol symbol = pkg.intern (symbolName);

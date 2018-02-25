@@ -31,6 +31,10 @@ public class DefFunctionCell extends FunctionCell
 	try
 	{
 	    // Bind arguments to arglist
+	    // [TODO] This is not thread safe because the global symbol value is visible.
+	    // Should use a hashmap type binding environment to keep global symbol value clean.
+	    // That requires changing the interpreter eval function to accept and use a binding
+	    // environment.
 	    for (int i = 0; i < arglist.size (); i++)
 	    {
 		final Symbol arg = arglist.get (i);

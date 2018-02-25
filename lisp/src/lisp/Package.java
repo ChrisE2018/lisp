@@ -3,6 +3,12 @@ package lisp;
 
 import java.util.*;
 
+/**
+ * Packages contain symbols and help the reader function. [TODO] Define usePackage mechanism to
+ * extend parent child hierarchy. [TODO] Consider internal/external symbols.
+ *
+ * @author cre
+ */
 public class Package implements Lisp
 {
     private final Package parent;
