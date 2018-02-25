@@ -41,15 +41,15 @@ public class Primitives
 
     public Lisp defEvaluator (final List<Lisp> arguments)
     {
-	final Symbol name = (Symbol)arguments.get (0);
-	final Lisp arglist = arguments.get (1);
+	final Symbol name = (Symbol)arguments.get (1);
+	final Lisp arglist = arguments.get (2);
 	final List<Symbol> params = new ArrayList<Symbol> ();
 	for (final Lisp a : (LispList)arglist)
 	{
 	    params.add ((Symbol)a);
 	}
 	final List<Lisp> body = new ArrayList<Lisp> ();
-	for (int i = 2; i < arguments.size (); i++)
+	for (int i = 3; i < arguments.size (); i++)
 	{
 	    body.add (arguments.get (i));
 	}
@@ -94,8 +94,8 @@ public class Primitives
 
     public Lisp timesEvaluator (final List<Lisp> arguments)
     {
-	int result = 0;
-	double dresult = 0;
+	int result = 1;
+	double dresult = 1;
 	boolean integer = true;
 	for (final Lisp a : arguments)
 	{
