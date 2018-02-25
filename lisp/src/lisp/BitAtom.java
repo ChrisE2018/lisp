@@ -1,7 +1,7 @@
 
 package lisp;
 
-public class BitAtom implements Lisp
+public class BitAtom extends NumberAtom
 {
     private final int value;
 
@@ -16,21 +16,34 @@ public class BitAtom implements Lisp
 
     public int getValue ()
     {
-	return this.value;
+	return value;
     }
 
     public void print (final StringBuilder buffer)
     {
-	buffer.append (this.value);
+	buffer.append (value);
     }
 
+    @Override
+    public boolean isInteger ()
+    {
+	return true;
+    }
+
+    @Override
+    public int getInteger ()
+    {
+	return value;
+    }
+
+    @Override
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
-	buffer.append (this.value);
+	buffer.append (value);
 	buffer.append (">");
 	return buffer.toString ();
     }

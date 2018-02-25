@@ -1,7 +1,7 @@
 
 package lisp;
 
-public class LongAtom implements Lisp
+public class LongAtom extends NumberAtom
 {
     private final long value;
 
@@ -12,22 +12,35 @@ public class LongAtom implements Lisp
 
     public long getValue ()
     {
-	return this.value;
+	return value;
     }
 
     /** Print value to a buffer. */
     public void print (final StringBuilder buffer)
     {
-	buffer.append (this.value);
+	buffer.append (value);
     }
 
+    @Override
+    public boolean isInteger ()
+    {
+	return true;
+    }
+
+    @Override
+    public int getInteger ()
+    {
+	return (int)value;
+    }
+
+    @Override
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
-	buffer.append (this.value);
+	buffer.append (value);
 	buffer.append (">");
 	return buffer.toString ();
     }
