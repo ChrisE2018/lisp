@@ -1,43 +1,19 @@
 
 package lisp;
 
-import java.lang.reflect.Method;
 import java.util.*;
 
 public class Primitives
 {
-    private final Package pkg = PackageFactory.getSystemPackage ();
-
     public Primitives () throws NoSuchMethodException, SecurityException
     {
-	defspecial ("def", "defEvaluator");
-	define ("list", "listEvaluator");
-	define ("plus", "plusEvaluator");
-	define ("+", "plusEvaluator");
-	define ("times", "timesEvaluator");
-	define ("*", "timesEvaluator");
-    }
-
-    private void define (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
-    {
-	final Symbol symbol = pkg.intern (symbolName);
-	final Method method = getClass ().getMethod (methodName, List.class);
-	symbol.setFunction (new StandardFunctionCell (this, method));
-    }
-
-    private void defspecial (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
-    {
-	final Symbol symbol = pkg.intern (symbolName);
-	final Method method = getClass ().getMethod (methodName, List.class);
-	symbol.setFunction (new SpecialFunctionCell (this, method));
-    }
-
-    @SuppressWarnings ("unused")
-    private void defmacro (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
-    {
-	final Symbol symbol = pkg.intern (symbolName);
-	final Method method = getClass ().getMethod (methodName, List.class);
-	symbol.setFunction (new MacroFunctionCell (this, method));
+	final Definer definer = new Definer (PackageFactory.getSystemPackage (), this);
+	definer.defspecial ("def", "defEvaluator");
+	definer.define ("list", "listEvaluator");
+	definer.define ("plus", "plusEvaluator");
+	definer.define ("+", "plusEvaluator");
+	definer.define ("times", "timesEvaluator");
+	definer.define ("*", "timesEvaluator");
     }
 
     public Lisp defEvaluator (final List<Lisp> arguments)
