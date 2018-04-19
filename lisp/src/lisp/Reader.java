@@ -41,6 +41,7 @@ public class Reader
 	{
 	    final Lisp element = read (in);
 	    result.add (element);
+	    // [TODO] Handle colon and comma as distinct types of separatorGE
 	    commentReader.skipBlanks (in);
 	}
 	in.read ();
