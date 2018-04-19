@@ -3,6 +3,8 @@ package lisp;
 
 public class Repl
 {
+    private final Package pkg = PackageFactory.getSystemPackage ();
+
     private final Reader reader = new Reader ();
 
     private final Interpreter interpreter;
@@ -39,7 +41,7 @@ public class Repl
 
     private void rep (final LispStream stream) throws Exception
     {
-	final Lisp form = reader.read (stream);
+	final Lisp form = reader.read (stream, pkg);
 	if (form == null)
 	{
 	    System.out.println ("Exit");

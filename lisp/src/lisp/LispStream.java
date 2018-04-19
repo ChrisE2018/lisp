@@ -8,27 +8,42 @@ public class LispStream
 {
     private final InputStream stream;
 
+    private boolean eof = false;
+
     public LispStream (final InputStream stream)
     {
 	this.stream = stream;
+    }
+
+    public boolean eof ()
+    {
+	return eof;
     }
 
     /** Peek at the next char without advancing the stream. */
     public char peek () throws IOException
     {
 	stream.mark (1);
-	final char result = (char)stream.read ();
+	final int result = stream.read ();
+	if (result == -1)
+	{
+	    eof = true;
+	}
 	stream.reset ();
-	return result;
+	return (char)result;
     }
 
     /** Peek at the next char without advancing the stream. */
     public boolean peek (final char expected) throws IOException
     {
 	stream.mark (1);
-	final char result = (char)stream.read ();
+	final int result = stream.read ();
+	if (result == -1)
+	{
+	    eof = true;
+	}
 	stream.reset ();
-	return result == expected;
+	return (char)result == expected;
     }
 
     /** Peek at the second char without advancing the stream. */
@@ -36,22 +51,34 @@ public class LispStream
     {
 	stream.mark (2);
 	stream.read ();
-	final char result = (char)stream.read ();
+	final int result = stream.read ();
+	if (result == -1)
+	{
+	    eof = true;
+	}
 	stream.reset ();
-	return result == expected;
+	return (char)result == expected;
     }
 
     /** Read one character advancing the stream. */
     public char read () throws IOException
     {
-	final char result = (char)stream.read ();
-	return result;
+	final int result = stream.read ();
+	if (result == -1)
+	{
+	    eof = true;
+	}
+	return (char)result;
     }
 
     /** Read one character advancing the stream. */
     public void read (final char expected) throws IOException
     {
-	final char result = (char)stream.read ();
+	final int result = stream.read ();
+	if (result == -1)
+	{
+	    eof = true;
+	}
 	if (result != expected)
 	{
 	    throw new IllegalArgumentException ("Expected '" + expected + "'");
@@ -64,6 +91,10 @@ public class LispStream
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
+	if (eof)
+	{
+	    buffer.append (" EOF");
+	}
 	buffer.append (" ");
 	buffer.append (stream);
 	buffer.append (">");

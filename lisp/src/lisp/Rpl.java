@@ -5,6 +5,8 @@ import java.io.IOException;
 
 public class Rpl
 {
+    private final Package pkg = PackageFactory.getSystemPackage ();
+
     private final Reader reader = new Reader ();
 
     public static void main (final String[] args)
@@ -32,7 +34,7 @@ public class Rpl
 
     private void rp (final LispStream stream) throws IOException
     {
-	final Lisp form = reader.read (stream);
+	final Lisp form = reader.read (stream, pkg);
 	if (form == null)
 	{
 	    System.out.println ("Exit");

@@ -13,7 +13,14 @@ public class PackageFactory
 
     private static final Map<String, Package> packages = new HashMap<String, Package> ();
 
+    private static Package defaultPackage = null;
+
     private static boolean initializedp = false;
+
+    static
+    {
+	init ();
+    }
 
     private static void init ()
     {
@@ -35,6 +42,7 @@ public class PackageFactory
 		    packages.put (childName, child);
 		}
 	    }
+	    defaultPackage = getPackage ("user");
 	    final Package global = getPackage ("global");
 	    final Symbol trueSymbol = global.intern ("true");
 	    final Symbol falseSymbol = global.intern ("false");
@@ -49,6 +57,16 @@ public class PackageFactory
     {
 	init ();
 	return getPackage ("system");
+    }
+
+    public static Package getDefaultPackage ()
+    {
+	return defaultPackage;
+    }
+
+    public static void setDefaultPackage (final Package pkg)
+    {
+	defaultPackage = pkg;
     }
 
     public static Package getPackage (final String name)

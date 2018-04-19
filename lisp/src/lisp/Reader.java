@@ -5,6 +5,7 @@ import java.io.IOException;
 
 public class Reader
 {
+    private static final char SINGLE_QUOTE = '\'';
     private static final char DOUBLE_QUOTE = '"';
     private static final char OPEN_PAREN = '(';
     private static final char OPEN_BRACE = '{';
@@ -13,33 +14,47 @@ public class Reader
     private static final char CLOSE_BRACE = '}';
     private static final char CLOSE_BRACKET = ']';
 
-    private final Package pkg = PackageFactory.getSystemPackage ();
+    // private final Package pkg = PackageFactory.getSystemPackage ();
 
     private final CommentReader commentReader = new CommentReader ();
 
-    public Lisp read (final LispStream in) throws IOException
+    public Lisp read (final LispStream in, final Package pkg) throws IOException
     {
 	commentReader.skipBlanks (in);
 	final char chr = in.peek ();
 	if (chr == OPEN_PAREN || chr == OPEN_BRACE || chr == OPEN_BRACKET)
 	{
-	    return readList (in);
+	    return readList (in, pkg);
 	}
 	if (chr == DOUBLE_QUOTE)
 	{
 	    return readString (in);
 	}
-	return readAtom (in);
+	if (chr == SINGLE_QUOTE)
+	{
+	    in.read (SINGLE_QUOTE); // Discard quote
+	    final Lisp quote = pkg.intern ("quote");
+	    final Lisp form = read (in, pkg);
+	    final LispParenList result = new LispParenList ();
+	    result.add (quote);
+	    result.add (form);
+	    return result;
+	}
+	if (in.eof ())
+	{
+	    return null;
+	}
+	return readAtom (in, pkg);
     }
 
-    private Lisp readList (final LispStream in) throws IOException
+    private Lisp readList (final LispStream in, final Package pkg) throws IOException
     {
 	final LispList result = getParenList (in.read ());
 	final ListKind listKind = result.getListKind ();
 	final char close = listKind.getCloseChar ();
 	while (!in.peek (close))
 	{
-	    final Lisp element = read (in);
+	    final Lisp element = read (in, pkg);
 	    result.add (element);
 	    // [TODO] Handle colon and comma as distinct types of separatorGE
 	    commentReader.skipBlanks (in);
@@ -85,7 +100,7 @@ public class Reader
 	return new StringAtom (buffer.toString ());
     }
 
-    private Lisp readAtom (final LispStream in) throws IOException
+    private Lisp readAtom (final LispStream in, final Package pkg) throws IOException
     {
 	final StringBuilder buffer = new StringBuilder ();
 	while (isAtomChar (in.peek ()))

@@ -127,10 +127,10 @@ public class Symbol implements Lisp
     /** Print value to a buffer. */
     public void print (final StringBuilder buffer)
     {
-	if (symbolPackage != null)
+	if (symbolPackage != null && symbolPackage != PackageFactory.getDefaultPackage ())
 	{
 	    buffer.append (symbolPackage.getName ());
-	    buffer.append ('.');
+	    buffer.append (':');
 	}
 	buffer.append (symbolName);
     }
