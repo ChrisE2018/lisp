@@ -14,7 +14,7 @@ public class Reader
     private static final char CLOSE_BRACE = '}';
     private static final char CLOSE_BRACKET = ']';
 
-    // private final Package pkg = PackageFactory.getSystemPackage ();
+    private final Package systemPackage = PackageFactory.getSystemPackage ();
 
     private final CommentReader commentReader = new CommentReader ();
 
@@ -33,7 +33,7 @@ public class Reader
 	if (chr == SINGLE_QUOTE)
 	{
 	    in.read (SINGLE_QUOTE); // Discard quote
-	    final Lisp quote = pkg.intern ("quote");
+	    final Lisp quote = systemPackage.intern ("quote");
 	    final Lisp form = read (in, pkg);
 	    final LispParenList result = new LispParenList ();
 	    result.add (quote);

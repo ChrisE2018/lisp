@@ -8,12 +8,19 @@ public class Primitives
     public Primitives () throws NoSuchMethodException, SecurityException
     {
 	final Definer definer = new Definer (PackageFactory.getSystemPackage (), this);
+	definer.defspecial ("quote", "quoteEvaluator");
 	definer.defspecial ("def", "defEvaluator");
 	definer.define ("list", "listEvaluator");
 	definer.define ("plus", "plusEvaluator");
 	definer.define ("+", "plusEvaluator");
 	definer.define ("times", "timesEvaluator");
 	definer.define ("*", "timesEvaluator");
+    }
+
+    public Lisp quoteEvaluator (final List<Lisp> arguments)
+    {
+	final Lisp result = arguments.get (1);
+	return result;
     }
 
     public Lisp defEvaluator (final List<Lisp> arguments)
