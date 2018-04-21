@@ -28,6 +28,8 @@ public class PlanFunctions extends Definer
 	define ("match", "matchEvaluator");
 	define ("determine-truth1", "determineTruth1Evaluator");
 	define ("determine-truth", "determineTruthEvaluator");
+	define ("node", "createNode");
+	define ("plan", "createPlan");
     }
 
     public Object defstateEvaluator (final List<Object> arguments)
@@ -114,6 +116,27 @@ public class PlanFunctions extends Definer
 	    final Object binds = matcher.bindingsToLisp (bindings);
 	    result.add (binds);
 	}
+    }
+
+    public Object createNode (final List<Object> arguments)
+    {
+	final Symbol name = coerceSymbol (arguments.get (0), true);
+	final Node node = new Node (name);
+	name.setValue (node);
+	return name;
+    }
+
+    public Object createPlan (final List<Object> arguments)
+    {
+	final Symbol name = coerceSymbol (arguments.get (0), true);
+	Plan parent = null;
+	if (arguments.size () > 1)
+	{
+	    parent = (Plan)arguments.get (1);
+	}
+	final Plan plan = new Plan (name, parent);
+	name.setValue (plan);
+	return name;
     }
 
     @Override
