@@ -129,7 +129,15 @@ public class Reader
 
 	}
 	// Not a number. Return a symbol.
-	// [TODO] Implement package prefix
+	final int pos = s.indexOf (Symbol.PACKAGE_SEPARATOR);
+	if (pos >= 0)
+	{
+	    // Implement package prefix
+	    final String packageName = s.substring (0, pos);
+	    final String symbolName = s.substring (pos + 1);
+	    final Package p = PackageFactory.getPackage (packageName);
+	    return p.intern (symbolName);
+	}
 	return pkg.intern (s);
     }
 

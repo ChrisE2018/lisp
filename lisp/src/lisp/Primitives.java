@@ -3,18 +3,30 @@ package lisp;
 
 import java.util.*;
 
-public class Primitives
+public class Primitives extends Definer
 {
-    public Primitives () throws NoSuchMethodException, SecurityException
+    public static void initialize () throws NoSuchMethodException, SecurityException
     {
-	final Definer definer = new Definer (PackageFactory.getSystemPackage (), this);
-	definer.defspecial ("quote", "quoteEvaluator");
-	definer.defspecial ("def", "defEvaluator");
-	definer.define ("list", "listEvaluator");
-	definer.define ("plus", "plusEvaluator");
-	definer.define ("+", "plusEvaluator");
-	definer.define ("times", "timesEvaluator");
-	definer.define ("*", "timesEvaluator");
+	final Primitives primitives = new Primitives ();
+	primitives.definePrimitives ();
+    }
+
+    private Primitives ()
+    {
+	super (PackageFactory.getSystemPackage ());
+    }
+
+    private void definePrimitives () throws NoSuchMethodException, SecurityException
+    {
+	defspecial ("quote", "quoteEvaluator");
+	defspecial ("def", "defEvaluator");
+	define ("list", "listEvaluator");
+	define ("plus", "plusEvaluator");
+	define ("+", "plusEvaluator");
+	define ("times", "timesEvaluator");
+	define ("*", "timesEvaluator");
+	define ("in-package", "inPackageEvaluator");
+	define ("java", "javaEvaluator");
     }
 
     public Lisp quoteEvaluator (final List<Lisp> arguments)
@@ -25,7 +37,7 @@ public class Primitives
 
     public Lisp defEvaluator (final List<Lisp> arguments)
     {
-	final Symbol name = (Symbol)arguments.get (1);
+	final Symbol name = coerceSymbol (arguments.get (1), true);
 	final Lisp arglist = arguments.get (2);
 	final List<Symbol> params = new ArrayList<Symbol> ();
 	for (final Lisp a : (LispList)arglist)
@@ -103,6 +115,24 @@ public class Primitives
 	    return new IntAtom (result);
 	}
 	return new DoubleAtom (result * dresult);
+    }
+
+    public Lisp inPackageEvaluator (final List<Lisp> arguments)
+    {
+	final Package pkg = coercePackage (arguments.get (0), true);
+	PackageFactory.setDefaultPackage (pkg);
+	return pkg;
+    }
+
+    public Lisp javaEvaluator (final List<Object> arguments)
+    {
+	final Object target = getObject (arguments, 0);
+	final String method = coerceString (arguments.get (1), true);
+	// [TODO] Retrieve object methods.
+	// [TODO] Scan arguments and coerse to valid types.
+	// [TODO] Allow non Lisp return value.
+	// [TODO] Define support functions to help get the right type from an argument list.
+	return null;
     }
 
     @Override

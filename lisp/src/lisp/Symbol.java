@@ -5,6 +5,9 @@ import java.util.*;
 
 public class Symbol implements Lisp
 {
+    /** Character to separate a package prefix from a symbol name. */
+    public static final char PACKAGE_SEPARATOR = ':';
+
     private final Package symbolPackage;
 
     private final String symbolName;
@@ -130,7 +133,7 @@ public class Symbol implements Lisp
 	if (symbolPackage != null && symbolPackage != PackageFactory.getDefaultPackage ())
 	{
 	    buffer.append (symbolPackage.getName ());
-	    buffer.append (':');
+	    buffer.append (PACKAGE_SEPARATOR);
 	}
 	buffer.append (symbolName);
     }
@@ -145,7 +148,7 @@ public class Symbol implements Lisp
 	if (symbolPackage != null)
 	{
 	    buffer.append (symbolPackage.getName ());
-	    buffer.append ('.');
+	    buffer.append (PACKAGE_SEPARATOR);
 	}
 	buffer.append (symbolName);
 	buffer.append (">");

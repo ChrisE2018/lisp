@@ -27,9 +27,10 @@ public class Interpreter
 	    final FunctionCell function = f.getFunction ();
 	    if (function == null)
 	    {
+		// [TODO] If function is bound to a java object, try to form a method call
 		throw new IllegalArgumentException ("Undefined function " + f);
 	    }
-	    System.out.printf ("Eval %s%n", form);
+	    // System.out.printf ("Eval %s%n", form);
 	    final Lisp result = function.eval (this, list);
 	    return result;
 	}

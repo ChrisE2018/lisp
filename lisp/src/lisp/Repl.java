@@ -3,7 +3,7 @@ package lisp;
 
 public class Repl
 {
-    private final Package pkg = PackageFactory.getSystemPackage ();
+    // private final Package pkg = PackageFactory.getSystemPackage ();
 
     private final Reader reader = new Reader ();
 
@@ -12,17 +12,23 @@ public class Repl
     public static void main (final String[] args) throws NoSuchMethodException, SecurityException
     {
 	final Repl repl = new Repl ();
-	repl.repl ();
+	repl.toplevel ();
     }
 
-    @SuppressWarnings ("unused")
+    /** Constructor for demo application. */
     private Repl () throws NoSuchMethodException, SecurityException
     {
-	new Primitives ();
+	Primitives.initialize ();
 	interpreter = new Interpreter ();
     }
 
-    private void repl ()
+    /** Constructor to use an interpreter built elsewhere. */
+    public Repl (final Interpreter interpreter)
+    {
+	this.interpreter = interpreter;
+    }
+
+    public void toplevel ()
     {
 	final LispStream stream = new LispStream (System.in);
 	while (true)
@@ -41,6 +47,7 @@ public class Repl
 
     private void rep (final LispStream stream) throws Exception
     {
+	final Package pkg = PackageFactory.getDefaultPackage ();
 	final Lisp form = reader.read (stream, pkg);
 	if (form == null)
 	{
