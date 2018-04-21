@@ -1,6 +1,7 @@
 
 package lisp;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 public class Primitives extends Definer
@@ -125,14 +126,107 @@ public class Primitives extends Definer
     }
 
     public Object javaEvaluator (final List<Object> arguments)
+            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	final Object target = getObject (arguments, 0);
 	final String method = coerceString (arguments.get (1), true);
-	// [TODO] Retrieve object methods.
-	// [TODO] Scan arguments and coerse to valid types.
-	// [TODO] Allow non Lisp return value.
-	// [TODO] Define support functions to help get the right type from an argument list.
-	return null;
+	final Class<?> cls = target.getClass ();
+	return javaMethodCall (target, cls, method, arguments);
+    }
+
+    /** Value to return when a method call fails. */
+    private static final Object NO_RETURN_VALUE = new Integer (0);
+
+    /**
+     * Recursive method to perform a java method call.Actual arguments start at argument 2.
+     *
+     * @throws InvocationTargetException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     */
+    private Object javaMethodCall (final Object target, final Class<?> cls, final String methodName, final List<Object> arguments)
+            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    {
+	// Get local methods. Need to apply recursively to superclass
+	final Method[] methods = cls.getDeclaredMethods ();
+	for (final Method method : methods)
+	{
+	    if (method.getName ().equals (methodName))
+	    {
+		if (method.getParameterCount () == arguments.size () - 2)
+		{
+		    final Object result = invokeMethod (target, method, arguments);
+		    if (result != NO_RETURN_VALUE)
+		    {
+			return result;
+		    }
+		}
+	    }
+	}
+	final Class<?> parentClass = cls.getSuperclass ();
+	if (parentClass == null)
+	{
+	    throw new IllegalArgumentException ("Can't apply method to object");
+	}
+	return javaMethodCall (target, parentClass, methodName, arguments);
+    }
+
+    private Object invokeMethod (final Object target, final Method method, final List<Object> arguments)
+            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    {
+	final Class<?>[] parameters = method.getParameterTypes ();
+	final Object[] actuals = new Object[parameters.length];
+	for (int i = 0; i < parameters.length; i++)
+	{
+	    final Object arg = arguments.get (i + 2);
+	    final Object actual = coerceToParameter (parameters[i], arg);
+	    if (actual == NO_RETURN_VALUE)
+	    {
+		return NO_RETURN_VALUE;
+	    }
+	    actuals[i] = actual;
+	    // Scan arguments and try to coerce to valid types.
+	    // If all args can be coerced, then call the method.
+	}
+	return method.invoke (target, actuals);
+    }
+
+    private Object coerceToParameter (final Class<?> p, final Object arg)
+    {
+	final Class<?> argClass = arg.getClass ();
+	if (p.isAssignableFrom (argClass))
+	{
+	    return arg;
+	}
+	if (p == String.class)
+	{
+	    // Handle String from symbol or Lisp string
+	    if (arg instanceof Symbol)
+	    {
+		return ((Symbol)arg).getName ();
+	    }
+	    if (arg instanceof StringAtom)
+	    {
+		return ((StringAtom)arg).getValue ();
+	    }
+	}
+	if (p == int.class || p == Integer.class)
+	{
+	    // Handle int from Lisp int
+	    if (arg instanceof IntAtom)
+	    {
+		return ((IntAtom)arg).getValue ();
+	    }
+	}
+	if (p == double.class || p == Double.class)
+	{
+	    // Handle int from Lisp Double
+	    if (arg instanceof DoubleAtom)
+	    {
+		return ((DoubleAtom)arg).getValue ();
+	    }
+	}
+	return NO_RETURN_VALUE;
     }
 
     @Override

@@ -17,6 +17,16 @@ public class State
 	return facts;
     }
 
+    public int getFactCount ()
+    {
+	return facts.size ();
+    }
+
+    public Object getFact (final int i)
+    {
+	return facts.get (i);
+    }
+
     public void print (final StringBuilder buffer)
     {
 	buffer.append ("#<");
