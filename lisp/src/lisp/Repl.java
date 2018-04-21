@@ -48,18 +48,18 @@ public class Repl
     private void rep (final LispStream stream) throws Exception
     {
 	final Package pkg = PackageFactory.getDefaultPackage ();
-	final Lisp form = reader.read (stream, pkg);
+	final Object form = reader.read (stream, pkg);
 	if (form == null)
 	{
 	    System.out.println ("Exit");
 	    return;
 	}
 	final StringBuilder buffer = new StringBuilder ();
-	form.print (buffer);
+	buffer.append (form.toString ());
 	System.out.println (buffer);
 	System.out.println (form);
 	System.out.print (" ==> ");
-	final Lisp value = interpreter.eval (form);
+	final Object value = interpreter.eval (form);
 	buffer.setLength (0);
 	if (value == null)
 	{
@@ -67,7 +67,7 @@ public class Repl
 	}
 	else
 	{
-	    value.print (buffer);
+	    buffer.append (value.toString ());
 	}
 	System.out.println (buffer);
 	System.out.println (value);

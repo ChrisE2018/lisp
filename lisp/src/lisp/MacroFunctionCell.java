@@ -2,6 +2,7 @@
 package lisp;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class MacroFunctionCell extends FunctionCell
 {
@@ -15,10 +16,10 @@ public class MacroFunctionCell extends FunctionCell
     }
 
     @Override
-    public Lisp eval (final Interpreter interpreter, final LispList form) throws Exception
+    public Object eval (final Interpreter interpreter, final List<?> form) throws Exception
     {
-	final Lisp expanded = (Lisp)method.invoke (obj, form);
-	final Lisp result = interpreter.eval (expanded);
+	final Object expanded = method.invoke (obj, form);
+	final Object result = interpreter.eval (expanded);
 	return result;
     }
 

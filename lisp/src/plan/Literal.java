@@ -1,9 +1,9 @@
 
 package plan;
 
-import lisp.*;
+import lisp.LispList;
 
-public class Literal implements Lisp
+public class Literal
 {
     private final LispList fact;
 
@@ -12,7 +12,6 @@ public class Literal implements Lisp
 	this.fact = fact;
     }
 
-    @Override
     public void print (final StringBuilder buffer)
     {
 	fact.print (buffer);
@@ -22,9 +21,7 @@ public class Literal implements Lisp
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	fact.print (buffer);
-	buffer.append (">");
+	print (buffer);
 	return buffer.toString ();
     }
 }

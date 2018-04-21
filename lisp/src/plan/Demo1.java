@@ -44,13 +44,13 @@ public class Demo1
 	final Reader reader = new Reader ();
 	for (int i = 0; i < 20 && !stream.eof (); i++)
 	{
-	    final Lisp form = reader.read (stream, pkg);
+	    final Object form = reader.read (stream, pkg);
 	    if (form != null)
 	    {
 		final StringBuilder buffer = new StringBuilder ();
-		form.print (buffer);
+		buffer.append (form);
 		System.out.printf ("%s ", buffer);
-		final Lisp value = interpreter.eval (form);
+		final Object value = interpreter.eval (form);
 		buffer.setLength (0);
 		if (value == null)
 		{
@@ -58,7 +58,7 @@ public class Demo1
 		}
 		else
 		{
-		    value.print (buffer);
+		    buffer.append (value.toString ());
 		}
 		System.out.printf ("=> %s %n%n", buffer);
 	    }

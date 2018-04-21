@@ -29,22 +29,22 @@ public class Primitives extends Definer
 	define ("java", "javaEvaluator");
     }
 
-    public Lisp quoteEvaluator (final List<Lisp> arguments)
+    public Object quoteEvaluator (final List<Object> arguments)
     {
-	final Lisp result = arguments.get (1);
+	final Object result = arguments.get (1);
 	return result;
     }
 
-    public Lisp defEvaluator (final List<Lisp> arguments)
+    public Object defEvaluator (final List<Object> arguments)
     {
 	final Symbol name = coerceSymbol (arguments.get (1), true);
-	final Lisp arglist = arguments.get (2);
+	final LispList arglist = (LispList)arguments.get (2);
 	final List<Symbol> params = new ArrayList<Symbol> ();
-	for (final Lisp a : (LispList)arglist)
+	for (final Object a : arglist)
 	{
 	    params.add ((Symbol)a);
 	}
-	final List<Lisp> body = new ArrayList<Lisp> ();
+	final List<Object> body = new ArrayList<Object> ();
 	for (int i = 3; i < arguments.size (); i++)
 	{
 	    body.add (arguments.get (i));
@@ -54,17 +54,17 @@ public class Primitives extends Definer
 	return name;
     }
 
-    public Lisp listEvaluator (final List<Lisp> arguments)
+    public Object listEvaluator (final List<Object> arguments)
     {
 	return new LispParenList (arguments);
     }
 
-    public Lisp plusEvaluator (final List<Lisp> arguments)
+    public Object plusEvaluator (final List<Object> arguments)
     {
 	int result = 0;
 	double dresult = 0;
 	boolean integer = true;
-	for (final Lisp a : arguments)
+	for (final Object a : arguments)
 	{
 	    if (!(a instanceof NumberAtom))
 	    {
@@ -88,12 +88,12 @@ public class Primitives extends Definer
 	return new DoubleAtom (result + dresult);
     }
 
-    public Lisp timesEvaluator (final List<Lisp> arguments)
+    public Object timesEvaluator (final List<Object> arguments)
     {
 	int result = 1;
 	double dresult = 1;
 	boolean integer = true;
-	for (final Lisp a : arguments)
+	for (final Object a : arguments)
 	{
 	    if (!(a instanceof NumberAtom))
 	    {
@@ -117,14 +117,14 @@ public class Primitives extends Definer
 	return new DoubleAtom (result * dresult);
     }
 
-    public Lisp inPackageEvaluator (final List<Lisp> arguments)
+    public Object inPackageEvaluator (final List<Object> arguments)
     {
 	final Package pkg = coercePackage (arguments.get (0), true);
 	PackageFactory.setDefaultPackage (pkg);
 	return pkg;
     }
 
-    public Lisp javaEvaluator (final List<Object> arguments)
+    public Object javaEvaluator (final List<Object> arguments)
     {
 	final Object target = getObject (arguments, 0);
 	final String method = coerceString (arguments.get (1), true);

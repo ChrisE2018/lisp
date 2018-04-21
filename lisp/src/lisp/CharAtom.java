@@ -1,7 +1,7 @@
 
 package lisp;
 
-public class CharAtom implements Lisp
+public class CharAtom
 {
     private final char value;
 
@@ -12,25 +12,19 @@ public class CharAtom implements Lisp
 
     public char getValue ()
     {
-	return this.value;
+	return value;
     }
 
     /** Print value to a buffer. */
     public void print (final StringBuilder buffer)
     {
-	buffer.append ("#\\");
-	// [TODO] Translate char values to char names
-	buffer.append (this.value);
+	buffer.append (toString ());
     }
 
+    @Override
     public String toString ()
     {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (this.value);
-	buffer.append (">");
-	return buffer.toString ();
+	// [TODO] Translate char values to char names
+	return "#\\" + value;
     }
 }

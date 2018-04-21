@@ -1,24 +1,26 @@
 
 package lisp;
 
+import java.util.List;
+
 public class Interpreter
 {
-    public Lisp eval (final Lisp form) throws Exception
+    public Object eval (final Object form) throws Exception
     {
 	if (form instanceof Symbol)
 	{
 	    final Symbol symbol = (Symbol)form;
-	    final Lisp result = symbol.getValue ();
+	    final Object result = symbol.getValue ();
 	    return result;
 	}
-	if (form instanceof LispList)
+	if (form instanceof List<?>)
 	{
-	    final LispList list = (LispList)form;
+	    final List<?> list = (List<?>)form;
 	    if (list.size () == 0)
 	    {
 		return form;
 	    }
-	    final Lisp fn = list.get (0);
+	    final Object fn = list.get (0);
 	    if (!(fn instanceof Symbol))
 	    {
 		throw new IllegalArgumentException ("Function name required " + fn);
@@ -31,7 +33,7 @@ public class Interpreter
 		throw new IllegalArgumentException ("Undefined function " + f);
 	    }
 	    // System.out.printf ("Eval %s%n", form);
-	    final Lisp result = function.eval (this, list);
+	    final Object result = function.eval (this, list);
 	    return result;
 	}
 	return form;

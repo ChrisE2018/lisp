@@ -1,7 +1,7 @@
 
 package lisp;
 
-public abstract class Atom implements Lisp
+public abstract class Atom
 {
     public boolean isNumber ()
     {

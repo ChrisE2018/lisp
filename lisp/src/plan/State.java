@@ -1,9 +1,9 @@
 
 package plan;
 
-import lisp.*;
+import lisp.LispList;
 
-public class State implements Lisp
+public class State
 {
     private final LispList facts;
 
@@ -12,7 +12,11 @@ public class State implements Lisp
 	this.facts = facts;
     }
 
-    @Override
+    public LispList getFacts ()
+    {
+	return facts;
+    }
+
     public void print (final StringBuilder buffer)
     {
 	buffer.append ("#<");
@@ -22,20 +26,11 @@ public class State implements Lisp
 	buffer.append (">");
     }
 
-    public LispList getFacts ()
-    {
-	return facts;
-    }
-
     @Override
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (facts);
-	buffer.append (">");
+	print (buffer);
 	return buffer.toString ();
     }
 }

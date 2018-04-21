@@ -1,7 +1,7 @@
 
 package lisp;
 
-public class BooleanAtom implements Lisp
+public class BooleanAtom
 {
     private final boolean value;
 
@@ -12,22 +12,17 @@ public class BooleanAtom implements Lisp
 
     public boolean getValue ()
     {
-	return this.value;
+	return value;
     }
 
     public void print (final StringBuilder buffer)
     {
-	buffer.append (this.value);
+	buffer.append (value);
     }
 
+    @Override
     public String toString ()
     {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (this.value);
-	buffer.append (">");
-	return buffer.toString ();
+	return String.valueOf (value);
     }
 }

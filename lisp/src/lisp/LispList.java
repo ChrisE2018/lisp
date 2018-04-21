@@ -3,7 +3,7 @@ package lisp;
 
 import java.util.*;
 
-public abstract class LispList extends ArrayList<Lisp> implements Lisp
+public abstract class LispList extends ArrayList<Object>
 {
     public abstract ListKind getListKind ();
 
@@ -12,7 +12,7 @@ public abstract class LispList extends ArrayList<Lisp> implements Lisp
 	super ();
     }
 
-    public LispList (final List<Lisp> members)
+    public LispList (final List<Object> members)
     {
 	super (members);
     }
@@ -22,14 +22,14 @@ public abstract class LispList extends ArrayList<Lisp> implements Lisp
 	// Special case for quote
 	if (size () == 2)
 	{
-	    final Lisp head = get (0);
+	    final Object head = get (0);
 	    if (head instanceof Symbol)
 	    {
 		final Symbol s = (Symbol)head;
 		if (s.getName ().equals ("quote"))
 		{
 		    buffer.append ("'");
-		    get (1).print (buffer);
+		    buffer.append (get (1).toString ());
 		    return;
 		}
 	    }
@@ -41,7 +41,7 @@ public abstract class LispList extends ArrayList<Lisp> implements Lisp
 	    {
 		buffer.append (' ');
 	    }
-	    get (i).print (buffer);
+	    buffer.append (get (i).toString ());
 	}
 	buffer.append (getListKind ().getCloseChar ());
     }

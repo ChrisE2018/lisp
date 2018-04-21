@@ -3,7 +3,7 @@ package lisp;
 
 import java.util.*;
 
-public class Symbol implements Lisp
+public class Symbol
 {
     /** Character to separate a package prefix from a symbol name. */
     public static final char PACKAGE_SEPARATOR = ':';
@@ -12,12 +12,12 @@ public class Symbol implements Lisp
 
     private final String symbolName;
 
-    private Lisp symbolValue;
+    private Object symbolValue;
 
     private FunctionCell symbolFunction;
 
     /** Symbol properties with lazy initialization. */
-    private Map<Symbol, Lisp> symbolPlist = null;
+    private Map<Symbol, Object> symbolPlist = null;
 
     /** When true it is illegal to set the value of this symbol. */
     private boolean constantValue = false;
@@ -47,12 +47,12 @@ public class Symbol implements Lisp
 	return symbolName;
     }
 
-    public Lisp getValue ()
+    public Object getValue ()
     {
 	return symbolValue;
     }
 
-    public void setValue (final Lisp value)
+    public void setValue (final Object value)
     {
 	if (constantValue)
 	{
@@ -87,9 +87,9 @@ public class Symbol implements Lisp
 	this.constantFunction = constantFunction;
     }
 
-    public Lisp get (final Symbol key)
+    public Object get (final Symbol key)
     {
-	Lisp result = null;
+	Object result = null;
 	if (symbolPlist != null)
 	{
 	    result = symbolPlist.get (key);
@@ -97,18 +97,18 @@ public class Symbol implements Lisp
 	return result;
     }
 
-    public void put (final Symbol key, final Lisp val)
+    public void put (final Symbol key, final Object val)
     {
 	if (symbolPlist == null)
 	{
-	    symbolPlist = new HashMap<Symbol, Lisp> ();
+	    symbolPlist = new HashMap<Symbol, Object> ();
 	}
 	symbolPlist.put (key, val);
     }
 
-    public Lisp remove (final Symbol key)
+    public Object remove (final Symbol key)
     {
-	Lisp result = null;
+	Object result = null;
 	if (symbolPlist != null)
 	{
 	    result = symbolPlist.remove (key);
@@ -142,16 +142,7 @@ public class Symbol implements Lisp
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	if (symbolPackage != null)
-	{
-	    buffer.append (symbolPackage.getName ());
-	    buffer.append (PACKAGE_SEPARATOR);
-	}
-	buffer.append (symbolName);
-	buffer.append (">");
+	print (buffer);
 	return buffer.toString ();
     }
 }

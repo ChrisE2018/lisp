@@ -19,12 +19,6 @@ public class OctalBitAtom extends NumberAtom
 	return value;
     }
 
-    /** Print value to a buffer. */
-    public void print (final StringBuilder buffer)
-    {
-	buffer.append (value);
-    }
-
     @Override
     public boolean isInteger ()
     {
@@ -37,15 +31,15 @@ public class OctalBitAtom extends NumberAtom
 	return value;
     }
 
+    /** Print value to a buffer. */
+    public void print (final StringBuilder buffer)
+    {
+	buffer.append (value);
+    }
+
     @Override
     public String toString ()
     {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (value);
-	buffer.append (">");
-	return buffer.toString ();
+	return String.valueOf (value);
     }
 }

@@ -3,7 +3,7 @@ package plan;
 
 import lisp.*;
 
-public class Action implements Lisp
+public class Action
 {
     private final Symbol name;
     private final LispList precondition;
@@ -14,16 +14,6 @@ public class Action implements Lisp
 	this.name = name;
 	this.precondition = precondition;
 	this.postcondition = postcondition;
-    }
-
-    @Override
-    public void print (final StringBuilder buffer)
-    {
-	buffer.append (name.getName ());
-	buffer.append (' ');
-	precondition.print (buffer);
-	buffer.append (' ');
-	postcondition.print (buffer);
     }
 
     public Symbol getName ()
@@ -41,13 +31,20 @@ public class Action implements Lisp
 	return postcondition;
     }
 
+    public void print (final StringBuilder buffer)
+    {
+	buffer.append (name.getName ());
+	buffer.append (' ');
+	precondition.print (buffer);
+	buffer.append (' ');
+	postcondition.print (buffer);
+    }
+
     @Override
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (">");
+	print (buffer);
 	return buffer.toString ();
     }
 }

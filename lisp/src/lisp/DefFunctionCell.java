@@ -8,9 +8,9 @@ public class DefFunctionCell extends FunctionCell
 {
     private final Symbol name;
     private final List<Symbol> arglist;
-    private final List<Lisp> body;
+    private final List<Object> body;
 
-    public DefFunctionCell (final Symbol name, final List<Symbol> arglist, final List<Lisp> body)
+    public DefFunctionCell (final Symbol name, final List<Symbol> arglist, final List<Object> body)
     {
 	this.name = name;
 	this.arglist = arglist;
@@ -18,16 +18,16 @@ public class DefFunctionCell extends FunctionCell
     }
 
     @Override
-    public Lisp eval (final Interpreter interpreter, final LispList form) throws Exception
+    public Object eval (final Interpreter interpreter, final List<?> form) throws Exception
     {
-	final List<Lisp> arguments = new ArrayList<Lisp> ();
+	final List<Object> arguments = new ArrayList<Object> ();
 	for (int i = 1; i < form.size (); i++)
 	{
-	    final Lisp f = form.get (i);
+	    final Object f = form.get (i);
 	    arguments.add (interpreter.eval (f));
 	}
-	Lisp result = null;
-	final Map<Symbol, Lisp> savedValues = new HashMap<Symbol, Lisp> ();
+	Object result = null;
+	final Map<Symbol, Object> savedValues = new HashMap<Symbol, Object> ();
 	try
 	{
 	    // Bind arguments to arglist
@@ -42,14 +42,14 @@ public class DefFunctionCell extends FunctionCell
 		arg.setValue (arguments.get (i));
 	    }
 	    // Evaluate the method body
-	    for (final Lisp f : body)
+	    for (final Object f : body)
 	    {
 		result = interpreter.eval (f);
 	    }
 	}
 	finally
 	{
-	    for (final Entry<Symbol, Lisp> entry : savedValues.entrySet ())
+	    for (final Entry<Symbol, Object> entry : savedValues.entrySet ())
 	    {
 		entry.getKey ().setValue (entry.getValue ());
 	    }

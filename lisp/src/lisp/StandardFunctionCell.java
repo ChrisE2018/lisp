@@ -16,15 +16,15 @@ public class StandardFunctionCell extends FunctionCell
     }
 
     @Override
-    public Lisp eval (final Interpreter interpreter, final LispList form) throws Exception
+    public Object eval (final Interpreter interpreter, final List<?> form) throws Exception
     {
-	final List<Lisp> arguments = new ArrayList<Lisp> ();
+	final List<Object> arguments = new ArrayList<Object> ();
 	for (int i = 1; i < form.size (); i++)
 	{
-	    final Lisp f = form.get (i);
+	    final Object f = form.get (i);
 	    arguments.add (interpreter.eval (f));
 	}
-	return (Lisp)method.invoke (obj, arguments);
+	return method.invoke (obj, arguments);
     }
 
     @Override

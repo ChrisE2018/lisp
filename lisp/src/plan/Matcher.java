@@ -77,16 +77,16 @@ public class Matcher
 	return result;
     }
 
-    public LispParenList mapToLisp (final Map<Lisp, Lisp> bindings)
+    public LispParenList mapToLisp (final Map<Object, Object> bindings)
     {
 	LispParenList result = null;
 	if (bindings != null)
 	{
 	    result = new LispParenList ();
-	    for (final Entry<Lisp, Lisp> entry : bindings.entrySet ())
+	    for (final Entry<Object, Object> entry : bindings.entrySet ())
 	    {
-		final Lisp key = entry.getKey ();
-		final Lisp value = entry.getValue ();
+		final Object key = entry.getKey ();
+		final Object value = entry.getValue ();
 		final LispParenList slot = new LispParenList ();
 		slot.add (key);
 		slot.add (value);

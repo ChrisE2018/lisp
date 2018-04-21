@@ -1,7 +1,7 @@
 
 package lisp;
 
-public class StringAtom implements Lisp
+public class StringAtom
 {
     private final String value;
 
@@ -12,7 +12,7 @@ public class StringAtom implements Lisp
 
     public String getValue ()
     {
-	return this.value;
+	return value;
     }
 
     /** Print value to a buffer. */
@@ -20,18 +20,15 @@ public class StringAtom implements Lisp
     {
 	buffer.append ('"');
 	// [TODO] Slashify characters as required
-	buffer.append (this.value);
+	buffer.append (value);
 	buffer.append ('"');
     }
 
+    @Override
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (this.value);
-	buffer.append (">");
+	print (buffer);
 	return buffer.toString ();
     }
 }

@@ -2,6 +2,7 @@
 package lisp;
 
 import java.lang.reflect.*;
+import java.util.List;
 
 public class SpecialFunctionCell extends FunctionCell
 {
@@ -15,10 +16,10 @@ public class SpecialFunctionCell extends FunctionCell
     }
 
     @Override
-    public Lisp eval (final Interpreter interpreter, final LispList form)
+    public Object eval (final Interpreter interpreter, final List<?> form)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-	final Lisp result = (Lisp)method.invoke (obj, form);
+	final Object result = method.invoke (obj, form);
 	return result;
     }
 

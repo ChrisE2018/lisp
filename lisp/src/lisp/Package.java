@@ -9,7 +9,7 @@ import java.util.*;
  *
  * @author cre
  */
-public class Package implements Lisp
+public class Package
 {
     private final Package parent;
 
@@ -81,9 +81,7 @@ public class Package implements Lisp
     /** Print value to a buffer. */
     public void print (final StringBuilder buffer)
     {
-	buffer.append ("#<package ");
-	buffer.append (packageName);
-	buffer.append (">");
+	buffer.append (toString ());
     }
 
     @Override

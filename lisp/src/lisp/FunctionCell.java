@@ -1,9 +1,11 @@
 
 package lisp;
 
+import java.util.List;
+
 public abstract class FunctionCell
 {
-    abstract public Lisp eval (final Interpreter interpreter, final LispList form) throws Exception;
+    abstract public Object eval (final Interpreter interpreter, final List<?> form) throws Exception;
 
     @Override
     public String toString ()

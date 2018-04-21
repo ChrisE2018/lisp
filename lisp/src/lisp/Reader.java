@@ -18,7 +18,7 @@ public class Reader
 
     private final CommentReader commentReader = new CommentReader ();
 
-    public Lisp read (final LispStream in, final Package pkg) throws IOException
+    public Object read (final LispStream in, final Package pkg) throws IOException
     {
 	commentReader.skipBlanks (in);
 	final char chr = in.peek ();
@@ -33,8 +33,8 @@ public class Reader
 	if (chr == SINGLE_QUOTE)
 	{
 	    in.read (SINGLE_QUOTE); // Discard quote
-	    final Lisp quote = systemPackage.intern ("quote");
-	    final Lisp form = read (in, pkg);
+	    final Object quote = systemPackage.intern ("quote");
+	    final Object form = read (in, pkg);
 	    final LispParenList result = new LispParenList ();
 	    result.add (quote);
 	    result.add (form);
@@ -47,14 +47,14 @@ public class Reader
 	return readAtom (in, pkg);
     }
 
-    private Lisp readList (final LispStream in, final Package pkg) throws IOException
+    private Object readList (final LispStream in, final Package pkg) throws IOException
     {
 	final LispList result = getParenList (in.read ());
 	final ListKind listKind = result.getListKind ();
 	final char close = listKind.getCloseChar ();
 	while (!in.peek (close))
 	{
-	    final Lisp element = read (in, pkg);
+	    final Object element = read (in, pkg);
 	    result.add (element);
 	    // [TODO] Handle colon and comma as distinct types of separatorGE
 	    commentReader.skipBlanks (in);
@@ -86,7 +86,7 @@ public class Reader
 	}
     }
 
-    private Lisp readString (final LispStream in) throws IOException
+    private Object readString (final LispStream in) throws IOException
     {
 	in.read (DOUBLE_QUOTE); // Discard double quote
 	int input = in.read ();
@@ -100,7 +100,7 @@ public class Reader
 	return new StringAtom (buffer.toString ());
     }
 
-    private Lisp readAtom (final LispStream in, final Package pkg) throws IOException
+    private Object readAtom (final LispStream in, final Package pkg) throws IOException
     {
 	final StringBuilder buffer = new StringBuilder ();
 	while (isAtomChar (in.peek ()))

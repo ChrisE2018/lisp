@@ -10,7 +10,7 @@ public class LispParenList extends LispList
 	super ();
     }
 
-    public LispParenList (final List<Lisp> members)
+    public LispParenList (final List<Object> members)
     {
 	super (members);
     }
@@ -20,14 +20,4 @@ public class LispParenList extends LispList
     {
 	return ListKind.PAREN;
     }
-
-    // @Override
-    // public String toString ()
-    // {
-    // final StringBuilder buffer = new StringBuilder ();
-    // buffer.append ("#<");
-    // buffer.append (getClass ().getSimpleName ());
-    // buffer.append (">");
-    // return buffer.toString ();
-    // }
 }

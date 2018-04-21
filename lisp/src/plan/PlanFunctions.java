@@ -30,7 +30,7 @@ public class PlanFunctions extends Definer
 	define ("determine-truth", "determineTruthEvaluator");
     }
 
-    public Lisp defstateEvaluator (final List<Lisp> arguments)
+    public Object defstateEvaluator (final List<Object> arguments)
     {
 	final Symbol name = (Symbol)arguments.get (1);
 	final LispList facts = new LispParenList ();
@@ -43,7 +43,7 @@ public class PlanFunctions extends Definer
 	return name;
     }
 
-    public Lisp defactionEvaluator (final List<Lisp> arguments)
+    public Object defactionEvaluator (final List<Object> arguments)
     {
 	final Symbol name = (Symbol)arguments.get (1);
 	final LispList precondition = (LispList)arguments.get (2);
@@ -53,7 +53,7 @@ public class PlanFunctions extends Definer
 	return name;
     }
 
-    public Lisp matchEvaluator (final List<Lisp> arguments)
+    public Object matchEvaluator (final List<Object> arguments)
     {
 	final LispList pattern = (LispList)arguments.get (0);
 	final LispList literal = (LispList)arguments.get (1);
@@ -62,18 +62,18 @@ public class PlanFunctions extends Definer
 	return result;
     }
 
-    public Lisp determineTruth1Evaluator (final List<Lisp> arguments)
+    public Object determineTruth1Evaluator (final List<Object> arguments)
     {
 	final State state = (State)arguments.get (0);
 	final LispList pattern = (LispList)arguments.get (1);
 	LispParenList result = null;
-	for (final Lisp fact : state.getFacts ())
+	for (final Object fact : state.getFacts ())
 	{
 	    final Map<Symbol, Symbol> bindings = matcher.match (pattern, (LispList)fact);
 	    if (bindings != null)
 	    {
 		System.out.printf ("Bindings %s %n", bindings);
-		final Lisp binds = matcher.bindingsToLisp (bindings);
+		final Object binds = matcher.bindingsToLisp (bindings);
 		if (result == null)
 		{
 		    result = new LispParenList ();
@@ -85,7 +85,7 @@ public class PlanFunctions extends Definer
 	return result;
     }
 
-    public Lisp determineTruthEvaluator (final List<Lisp> arguments)
+    public Object determineTruthEvaluator (final List<Object> arguments)
     {
 	final LispParenList result = new LispParenList ();
 	final State state = (State)arguments.get (0);
@@ -94,13 +94,13 @@ public class PlanFunctions extends Definer
 	return result;
     }
 
-    private void dte (final LispParenList result, final State state, final List<Lisp> arguments, final int i,
+    private void dte (final LispParenList result, final State state, final List<Object> arguments, final int i,
             final Map<Symbol, Symbol> bindings)
     {
 	if (i < arguments.size ())
 	{
 	    final LispList pattern = (LispList)arguments.get (i);
-	    for (final Lisp fact : state.getFacts ())
+	    for (final Object fact : state.getFacts ())
 	    {
 		final Map<Symbol, Symbol> b = matcher.match (pattern, (LispList)fact, bindings);
 		if (b != null)
@@ -111,7 +111,7 @@ public class PlanFunctions extends Definer
 	}
 	else
 	{
-	    final Lisp binds = matcher.bindingsToLisp (bindings);
+	    final Object binds = matcher.bindingsToLisp (bindings);
 	    result.add (binds);
 	}
     }

@@ -34,14 +34,14 @@ public class Rpl
 
     private void rp (final LispStream stream) throws IOException
     {
-	final Lisp form = reader.read (stream, pkg);
+	final Object form = reader.read (stream, pkg);
 	if (form == null)
 	{
 	    System.out.println ("Exit");
 	    return;
 	}
 	final StringBuilder buffer = new StringBuilder ();
-	form.print (buffer);
+	buffer.append (form);
 	System.out.println (buffer);
 	System.out.println (form);
     }
