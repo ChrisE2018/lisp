@@ -1,0 +1,17 @@
+Objects needed for a planner
+
+Variable
+Constant (domain object)
+Predicate
+Term
+Expression
+State
+Goal
+Effect
+Subgoal
+Action
+Precondition
+Postcondition
+Matcher
+Retriever
+Searcher
