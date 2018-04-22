@@ -86,10 +86,6 @@ public class Definer
     {
 	if (arg != null)
 	{
-	    if (arg instanceof IntAtom)
-	    {
-		return ((IntAtom)arg).getValue ();
-	    }
 	    if (arg instanceof Integer)
 	    {
 		return (Integer)arg;

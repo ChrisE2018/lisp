@@ -111,8 +111,9 @@ public class Reader
 	// Try parsing an integer
 	try
 	{
+	    // [TODO] Create a table for small integers to save memory.
 	    final int value = Integer.parseInt (s);
-	    return new IntAtom (value);
+	    return new Integer (value);
 	}
 	catch (final NumberFormatException e)
 	{
@@ -122,7 +123,7 @@ public class Reader
 	try
 	{
 	    final double value = Double.parseDouble (s);
-	    return new DoubleAtom (value);
+	    return new Double (value);
 	}
 	catch (final NumberFormatException e)
 	{

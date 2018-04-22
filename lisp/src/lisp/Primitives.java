@@ -67,26 +67,25 @@ public class Primitives extends Definer
 	boolean integer = true;
 	for (final Object a : arguments)
 	{
-	    if (!(a instanceof NumberAtom))
+	    if (a instanceof Integer)
 	    {
-		throw new IllegalArgumentException ("Number required " + a);
+		result += (Integer)a;
 	    }
-	    final NumberAtom na = (NumberAtom)a;
-	    if (na.isInteger ())
+	    else if (a instanceof Double)
 	    {
-		result += na.getInteger ();
+		integer = false;
+		dresult += (Double)a;
 	    }
 	    else
 	    {
-		integer = false;
-		dresult += na.getFloat ();
+		throw new IllegalArgumentException ("Number required " + a);
 	    }
 	}
 	if (integer)
 	{
-	    return new IntAtom (result);
+	    return new Integer (result);
 	}
-	return new DoubleAtom (result + dresult);
+	return new Double (result + dresult);
     }
 
     public Object timesEvaluator (final List<Object> arguments)
@@ -96,26 +95,25 @@ public class Primitives extends Definer
 	boolean integer = true;
 	for (final Object a : arguments)
 	{
-	    if (!(a instanceof NumberAtom))
+	    if (a instanceof Integer)
 	    {
-		throw new IllegalArgumentException ("Number required " + a);
+		result *= (Integer)a;
 	    }
-	    final NumberAtom na = (NumberAtom)a;
-	    if (na.isInteger ())
+	    else if (a instanceof Double)
 	    {
-		result *= na.getInteger ();
+		integer = false;
+		dresult *= (Double)a;
 	    }
 	    else
 	    {
-		integer = false;
-		dresult += na.getFloat ();
+		throw new IllegalArgumentException ("Number required " + a);
 	    }
 	}
 	if (integer)
 	{
-	    return new IntAtom (result);
+	    return new Integer (result);
 	}
-	return new DoubleAtom (result * dresult);
+	return new Double (result * dresult);
     }
 
     public Object inPackageEvaluator (final List<Object> arguments)
@@ -213,17 +211,16 @@ public class Primitives extends Definer
 	if (p == int.class || p == Integer.class)
 	{
 	    // Handle int from Lisp int
-	    if (arg instanceof IntAtom)
+	    if (arg instanceof Integer)
 	    {
-		return ((IntAtom)arg).getValue ();
+		return arg;
 	    }
 	}
 	if (p == double.class || p == Double.class)
 	{
-	    // Handle int from Lisp Double
-	    if (arg instanceof DoubleAtom)
+	    if (arg instanceof Double)
 	    {
-		return ((DoubleAtom)arg).getValue ();
+		return arg;
 	    }
 	}
 	return NO_RETURN_VALUE;
