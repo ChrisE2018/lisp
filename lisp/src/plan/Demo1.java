@@ -58,7 +58,7 @@ public class Demo1
 		}
 		else
 		{
-		    buffer.append (value.toString ());
+		    Reader.printElement (buffer, value);
 		}
 		System.out.printf ("=> %s %n%n", buffer);
 	    }

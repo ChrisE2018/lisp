@@ -203,11 +203,12 @@ public class Primitives extends Definer
 	    {
 		return ((Symbol)arg).getName ();
 	    }
-	    if (arg instanceof StringAtom)
+	    if (arg instanceof String)
 	    {
-		return ((StringAtom)arg).getValue ();
+		return arg;
 	    }
 	}
+	// [TODO] Handle char, long, short, boolean etc.
 	if (p == int.class || p == Integer.class)
 	{
 	    // Handle int from Lisp int

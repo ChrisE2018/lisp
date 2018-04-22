@@ -50,10 +50,6 @@ public class Definer
 	    {
 		return (String)arg;
 	    }
-	    if (arg instanceof StringAtom)
-	    {
-		return ((StringAtom)arg).getValue ();
-	    }
 	    if (arg instanceof Symbol)
 	    {
 		return ((Symbol)arg).getName ();

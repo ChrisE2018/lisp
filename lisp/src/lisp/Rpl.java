@@ -41,7 +41,7 @@ public class Rpl
 	    return;
 	}
 	final StringBuilder buffer = new StringBuilder ();
-	buffer.append (form);
+	Reader.printElement (buffer, form);
 	System.out.println (buffer);
 	System.out.println (form);
     }

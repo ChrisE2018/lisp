@@ -97,7 +97,7 @@ public class Reader
 	    buffer.append ((char)input);
 	    input = in.read ();
 	}
-	return new StringAtom (buffer.toString ());
+	return buffer.toString ();
     }
 
     private Object readAtom (final LispStream in, final Package pkg) throws IOException
@@ -178,5 +178,20 @@ public class Reader
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (">");
 	return buffer.toString ();
+    }
+
+    public static void printElement (final StringBuilder buffer, final Object element)
+    {
+	if (element instanceof String)
+	{
+	    buffer.append ('"');
+	    // [TODO] Slashify
+	    buffer.append (element);
+	    buffer.append ('"');
+	}
+	else
+	{
+	    buffer.append (element);
+	}
     }
 }

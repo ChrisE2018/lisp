@@ -55,9 +55,8 @@ public class Repl
 	    return;
 	}
 	final StringBuilder buffer = new StringBuilder ();
-	buffer.append (form.toString ());
-	System.out.println (buffer);
-	System.out.println (form);
+	// buffer.append (form.toString ());
+	// System.out.println (buffer);
 	System.out.print (" ==> ");
 	final Object value = interpreter.eval (form);
 	buffer.setLength (0);
@@ -67,10 +66,9 @@ public class Repl
 	}
 	else
 	{
-	    buffer.append (value.toString ());
+	    Reader.printElement (buffer, value);
 	}
 	System.out.println (buffer);
-	System.out.println (value);
     }
 
     @Override

@@ -41,7 +41,7 @@ public abstract class LispList extends ArrayList<Object>
 	    {
 		buffer.append (' ');
 	    }
-	    buffer.append (get (i).toString ());
+	    Reader.printElement (buffer, get (i));
 	}
 	buffer.append (getListKind ().getCloseChar ());
     }
