@@ -1,12 +1,10 @@
 
 package plan;
 
-import java.util.List;
-
 public class ProtectionInterval
 {
     /** The protected condition. */
-    private final List<?> condition;
+    private final Condition condition;
 
     /** The plan node that achieves this condition. */
     private final Node achiever;
@@ -17,14 +15,14 @@ public class ProtectionInterval
      */
     private final Node protectedNode;
 
-    public ProtectionInterval (final List<?> condition, final Node achiever, final Node protectedNode)
+    public ProtectionInterval (final Condition condition, final Node achiever, final Node protectedNode)
     {
 	this.condition = condition;
 	this.achiever = achiever;
 	this.protectedNode = protectedNode;
     }
 
-    public List<?> getCondition ()
+    public Condition getCondition ()
     {
 	return condition;
     }

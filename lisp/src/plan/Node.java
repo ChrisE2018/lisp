@@ -16,13 +16,13 @@ public class Node
     private final List<Node> next = new ArrayList<Node> ();
 
     /** List of conditions that are made true when this node is executed. */
-    private final List<List<?>> addConditions = new ArrayList<List<?>> ();
+    private final List<Condition> addConditions = new ArrayList<Condition> ();
 
     /** List of conditions that are made false when this node is executed. */
-    private final List<List<?>> deleteConditions = new ArrayList<List<?>> ();
+    private final List<Condition> deleteConditions = new ArrayList<Condition> ();
 
     /** List of conditions that are required when this node is executed. */
-    private final List<List<?>> goalConditions = new ArrayList<List<?>> ();
+    private final List<Condition> goalConditions = new ArrayList<Condition> ();
 
     private final List<ProtectionInterval> causalLinks = new ArrayList<ProtectionInterval> ();
 
@@ -97,19 +97,29 @@ public class Node
 	return name;
     }
 
-    public List<List<?>> getAddConditions ()
+    public List<Condition> getAddConditions ()
     {
 	return addConditions;
     }
 
-    public List<List<?>> getDeleteConditions ()
+    public List<Condition> getDeleteConditions ()
     {
 	return deleteConditions;
+    }
+
+    public List<Condition> getGoalConditions ()
+    {
+	return goalConditions;
     }
 
     public boolean hasOpenSubgoals ()
     {
 	return goalConditions.size () > 0;
+    }
+
+    public List<ProtectionInterval> getCausalLinks ()
+    {
+	return causalLinks;
     }
 
     @Override
@@ -120,17 +130,17 @@ public class Node
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
 	buffer.append (name);
-	for (final List<?> condition : addConditions)
+	for (final Condition condition : addConditions)
 	{
 	    buffer.append (" +");
 	    buffer.append (condition);
 	}
-	for (final List<?> condition : deleteConditions)
+	for (final Condition condition : deleteConditions)
 	{
 	    buffer.append (" -");
 	    buffer.append (condition);
 	}
-	for (final List<?> condition : goalConditions)
+	for (final Condition condition : goalConditions)
 	{
 	    buffer.append (" ?");
 	    buffer.append (condition);

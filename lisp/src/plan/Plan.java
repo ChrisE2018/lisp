@@ -47,6 +47,21 @@ public class Plan
 	return result;
     }
 
+    public List<Plan> expand (final Node node, final Condition condition)
+    {
+	final List<Plan> result = new ArrayList<Plan> ();
+	// [TODO] Implement
+	final List<Action> actions = Action.getActions ();
+	for (final Action action : actions)
+	{
+	    // If the action can achieve the condition, then make an expanded plan by inserting the
+	    // action. Figure out all variable bindings.
+	}
+	// Search for causal links that can make the condition true
+	// Search for actions that can be inserted to make the condition true
+	return result;
+    }
+
     public Symbol getName ()
     {
 	return name;

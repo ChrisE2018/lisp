@@ -152,6 +152,12 @@ public class Definer
 	return coercePackage (arg, true);
     }
 
+    /** Package functions are defined in. */
+    public Package getPackage ()
+    {
+	return pkg;
+    }
+
     @Override
     public String toString ()
     {

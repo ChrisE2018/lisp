@@ -1,19 +1,29 @@
 
 package plan;
 
-import lisp.*;
+import java.util.*;
+
+import lisp.Symbol;
 
 public class Action
 {
-    private final Symbol name;
-    private final LispList precondition;
-    private final LispList postcondition;
+    private static List<Action> actions = new ArrayList<Action> ();
 
-    public Action (final Symbol name, final LispList precondition, final LispList postcondition)
+    private final Symbol name;
+    private final List<Condition> precondition;
+    private final List<Condition> postcondition;
+
+    public static List<Action> getActions ()
+    {
+	return actions;
+    }
+
+    public Action (final Symbol name, final List<Condition> precondition, final List<Condition> postcondition)
     {
 	this.name = name;
 	this.precondition = precondition;
 	this.postcondition = postcondition;
+	actions.add (this);
     }
 
     public Symbol getName ()
@@ -21,12 +31,12 @@ public class Action
 	return name;
     }
 
-    public LispList getPrecondition ()
+    public List<Condition> getPrecondition ()
     {
 	return precondition;
     }
 
-    public LispList getPostcondition ()
+    public List<Condition> getPostcondition ()
     {
 	return postcondition;
     }
@@ -34,10 +44,26 @@ public class Action
     public void print (final StringBuilder buffer)
     {
 	buffer.append (name.getName ());
-	buffer.append (' ');
-	precondition.print (buffer);
-	buffer.append (' ');
-	postcondition.print (buffer);
+	if (precondition.size () > 0)
+	{
+	    buffer.append (" [precondition");
+	    for (final Condition condition : precondition)
+	    {
+		buffer.append (' ');
+		condition.print (buffer);
+	    }
+	    buffer.append (']');
+	}
+	if (postcondition.size () > 0)
+	{
+	    buffer.append (" [postcondition");
+	    for (final Condition condition : postcondition)
+	    {
+		buffer.append (' ');
+		condition.print (buffer);
+	    }
+	    buffer.append (']');
+	}
     }
 
     @Override

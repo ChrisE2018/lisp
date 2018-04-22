@@ -45,14 +45,55 @@ public class PlanFunctions extends Definer
 	return name;
     }
 
+    private final Symbol NOT_SYMBOL = getPackage ().intern ("not");
+    private final Symbol PRECONDITION_SYMBOL = getPackage ().intern ("precondition");
+    private final Symbol POSTCONDITION_SYMBOL = getPackage ().intern ("postcondition");
+
     public Object defactionEvaluator (final List<Object> arguments)
     {
 	final Symbol name = (Symbol)arguments.get (1);
-	final LispList precondition = (LispList)arguments.get (2);
-	final LispList postcondition = (LispList)arguments.get (3);
-	final Action action = new Action (name, precondition, postcondition);
+	final List<Condition> preconditions = new ArrayList<Condition> ();
+	final List<Condition> postconditions = new ArrayList<Condition> ();
+	for (int i = 2; i < arguments.size (); i++)
+	{
+	    final LispList arg = (LispList)arguments.get (i);
+	    final Symbol key = coerceSymbol (arg.get (0), true);
+	    if (key == PRECONDITION_SYMBOL)
+	    {
+		for (final Object c : arg.subList (1, arg.size ()))
+		{
+		    final Condition condition = getCondition (false, (List<?>)c);
+		    preconditions.add (condition);
+		}
+	    }
+	    else if (key == POSTCONDITION_SYMBOL)
+	    {
+		for (final Object c : arg.subList (1, arg.size ()))
+		{
+		    final Condition condition = getCondition (false, (List<?>)c);
+		    postconditions.add (condition);
+		}
+	    }
+	}
+	final Action action = new Action (name, preconditions, postconditions);
 	name.setValue (action);
 	return name;
+    }
+
+    private Condition getCondition (final boolean negated, final List<?> condition)
+    {
+	if (condition.get (0) == NOT_SYMBOL)
+	{
+	    final List<?> subcondition = (List<?>)condition.get (1);
+	    return getCondition (!negated, subcondition);
+	}
+	else
+	{
+	    final Symbol predicate = (Symbol)condition.get (0);
+	    @SuppressWarnings ("unchecked")
+	    final List<Symbol> terms = (List<Symbol>)condition.subList (1, condition.size ());
+	    return new Condition (negated, predicate, terms);
+	}
     }
 
     public Object matchEvaluator (final List<Object> arguments)
