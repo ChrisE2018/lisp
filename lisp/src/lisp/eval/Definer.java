@@ -35,7 +35,7 @@ public class Definer
     public void defspecial (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
     {
 	final Symbol symbol = pkg.intern (symbolName);
-	final Method method = source.getClass ().getMethod (methodName, List.class);
+	final Method method = source.getClass ().getMethod (methodName, Interpreter.class, List.class);
 	symbol.setFunction (new SpecialFunctionCell (source, method));
     }
 

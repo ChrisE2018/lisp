@@ -23,7 +23,7 @@ public class SpecialFunctionCell extends FunctionCell
     public Object eval (final Interpreter interpreter, final List<?> form)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-	final Object result = method.invoke (obj, form);
+	final Object result = method.invoke (obj, interpreter, form);
 	return result;
     }
 

@@ -24,6 +24,7 @@ public class Primitives extends Definer
     {
 	defspecial ("quote", "quoteEvaluator");
 	defspecial ("def", "defEvaluator");
+	defspecial ("setq", "setqEvaluator");
 	define ("list", "listEvaluator");
 	define ("plus", "plusEvaluator");
 	define ("+", "plusEvaluator");
@@ -33,13 +34,23 @@ public class Primitives extends Definer
 	define ("java", "javaEvaluator");
     }
 
-    public Object quoteEvaluator (final List<Object> arguments)
+    /**
+     * Evaluator for quoted forms.
+     *
+     * @param interpreter Not used, but required by calling protocol.
+     */
+    public Object quoteEvaluator (final Interpreter interpreter, final List<Object> arguments)
     {
 	final Object result = arguments.get (1);
 	return result;
     }
 
-    public Object defEvaluator (final List<Object> arguments)
+    /**
+     * Interpreter for function definitions.
+     *
+     * @param interpreter Not used, but required by calling protocol.
+     */
+    public Object defEvaluator (final Interpreter interpreter, final List<Object> arguments)
     {
 	final Symbol name = coerceSymbol (arguments.get (1), true);
 	final LispList arglist = (LispList)arguments.get (2);
@@ -56,6 +67,22 @@ public class Primitives extends Definer
 	final DefFunctionCell function = new DefFunctionCell (name, params, body);
 	name.setFunction (function);
 	return name;
+    }
+
+    /**
+     * Interpreter for setq statements.
+     *
+     * @param interpreter The interpreter used to evaluate forms.
+     * @param arguments The symbol and value form.
+     * @return The new value.
+     */
+    public Object setqEvaluator (final Interpreter interpreter, final List<Object> arguments) throws Exception
+    {
+	final Symbol name = coerceSymbol (arguments.get (1), true);
+	final Object form = arguments.get (2);
+	final Object value = interpreter.eval (form);
+	name.setValue (value);
+	return value;
     }
 
     public Object listEvaluator (final List<Object> arguments)
