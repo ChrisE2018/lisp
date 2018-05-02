@@ -30,6 +30,18 @@ public class Rpl
 	    catch (final Throwable e)
 	    {
 		e.printStackTrace ();
+		try
+		{
+		    // Read to a newline character
+		    while (stream.read () != '\n')
+		    {
+
+		    }
+		}
+		catch (final Throwable ex)
+		{
+		    System.out.printf ("[Error recovering from error: %s]", ex);
+		}
 	    }
 	}
     }

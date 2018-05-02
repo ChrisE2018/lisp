@@ -2,6 +2,7 @@
 package lisp;
 
 import java.io.IOException;
+import java.util.*;
 
 /** Control over parsing syntax is collected into the Parsing object. */
 public class Parsing
@@ -9,6 +10,8 @@ public class Parsing
     private static final char EXCLAMATION = '!';
     private static final char DOUBLE_QUOTE = '"';
     private static final char SINGLE_QUOTE = '\'';
+    private static final char COLON = ':';
+    private static final char COMMA = ',';
     private static final char OPEN_PAREN = '(';
     private static final char OPEN_BRACE = '{';
     private static final char OPEN_BRACKET = '[';
@@ -79,11 +82,37 @@ public class Parsing
 	    case CLOSE_PAREN:
 	    case CLOSE_BRACE:
 	    case CLOSE_BRACKET:
+	    case COLON:
+	    case COMMA:
 	    {
 		return false;
 	    }
 	}
 	return true;
+    }
+
+    public Map<Object, Object> getMapResult (final char open)
+    {
+	if (open == OPEN_BRACE)
+	{
+	    return new LinkedHashMap<Object, Object> ();
+	}
+	return null;
+    }
+
+    public char getMapClose ()
+    {
+	return '}';
+    }
+
+    public char getMapSeparator ()
+    {
+	return COLON;
+    }
+
+    public char getMapCombiner ()
+    {
+	return COMMA;
     }
 
     public LispList getParenList (final char open)

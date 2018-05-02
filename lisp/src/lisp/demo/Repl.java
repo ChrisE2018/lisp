@@ -53,7 +53,27 @@ public class Repl
     private void rep (final LispStream stream) throws Exception
     {
 	final Package pkg = PackageFactory.getDefaultPackage ();
-	final Object form = reader.read (stream, pkg);
+	Object form = null;
+	try
+	{
+	    form = reader.read (stream, pkg);
+	}
+	catch (final Throwable e)
+	{
+	    try
+	    {
+		// Read to a newline character
+		while (stream.read () != '\n')
+		{
+
+		}
+	    }
+	    catch (final Throwable ex)
+	    {
+		System.out.printf ("[Error recovering from error: %s]", ex);
+	    }
+	    return;
+	}
 	if (form == null)
 	{
 	    System.out.println ("Exit");

@@ -9,7 +9,7 @@ import lisp.eval.FunctionCell;
 public class Symbol
 {
     /** Character to separate a package prefix from a symbol name. */
-    public static final char PACKAGE_SEPARATOR = ':';
+    public static final char PACKAGE_SEPARATOR = '.';
 
     private final Package symbolPackage;
 

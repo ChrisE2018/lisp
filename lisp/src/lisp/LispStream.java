@@ -81,7 +81,7 @@ public class LispStream
 	}
 	if (result != expected)
 	{
-	    throw new IllegalArgumentException ("Expected '" + expected + "'");
+	    throw new IllegalArgumentException ("Expected '" + expected + "' but found '" + (char)result + '"');
 	}
     }
 
