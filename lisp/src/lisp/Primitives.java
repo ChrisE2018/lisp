@@ -132,7 +132,10 @@ public class Primitives extends Definer
 	return javaMethodCall (target, cls, method, arguments);
     }
 
-    /** Value to return when a method call fails. */
+    /**
+     * Value to return when a method call fails. <br>
+     * [TODO] Use an Exception instead.
+     */
     private static final Object NO_RETURN_VALUE = new Integer (0);
 
     /**
@@ -198,7 +201,7 @@ public class Primitives extends Definer
 	}
 	if (p == String.class)
 	{
-	    // Handle String from symbol or Lisp string
+	    // Handle String from Symbol or String
 	    if (arg instanceof Symbol)
 	    {
 		return ((Symbol)arg).getName ();

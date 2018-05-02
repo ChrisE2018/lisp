@@ -3,6 +3,12 @@ package lisp;
 
 import java.io.IOException;
 
+/**
+ * Read list structure from source text. <br>
+ * [TODO] Make brace lists read as a map. <br>
+ *
+ * @author cre
+ */
 public class Reader
 {
     private static final char SINGLE_QUOTE = '\'';
@@ -14,11 +20,18 @@ public class Reader
     private static final char CLOSE_BRACE = '}';
     private static final char CLOSE_BRACKET = ']';
 
+    /** Map from list type to concrete class. */
+    private final Object[][] LIST_CLASSES =
+	{
+	 {new Character (OPEN_PAREN), LispParenList.class},
+	 {new Character (OPEN_BRACE), LispBraceList.class},
+	 {new Character (OPEN_BRACKET), LispBracketList.class}};
+
     private final Package systemPackage = PackageFactory.getSystemPackage ();
 
     private final CommentReader commentReader = new CommentReader ();
 
-    public Object read (final LispStream in, final Package pkg) throws IOException
+    public Object read (final LispStream in, final Package pkg) throws Exception
     {
 	commentReader.skipBlanks (in);
 	final char chr = in.peek ();
@@ -47,7 +60,7 @@ public class Reader
 	return readAtom (in, pkg);
     }
 
-    private Object readList (final LispStream in, final Package pkg) throws IOException
+    private Object readList (final LispStream in, final Package pkg) throws Exception
     {
 	final LispList result = getParenList (in.read ());
 	final ListKind listKind = result.getListKind ();
@@ -56,34 +69,27 @@ public class Reader
 	{
 	    final Object element = read (in, pkg);
 	    result.add (element);
-	    // [TODO] Handle colon and comma as distinct types of separatorGE
+	    // [TODO] Handle colon and comma as distinct types of separator
+	    // [TODO] Colon separated elements should be collected as a map.
 	    commentReader.skipBlanks (in);
 	}
 	in.read ();
 	return result;
     }
 
-    private LispList getParenList (final char open)
+    private LispList getParenList (final char open) throws InstantiationException, IllegalAccessException
     {
-	switch (open)
+	for (final Object[] slot : LIST_CLASSES)
 	{
-	    case OPEN_PAREN:
+	    final Character selector = (Character)(slot[0]);
+	    if (selector.charValue () == open)
 	    {
-		return new LispParenList ();
-	    }
-	    case OPEN_BRACE:
-	    {
-		return new LispBraceList ();
-	    }
-	    case OPEN_BRACKET:
-	    {
-		return new LispBracketList ();
-	    }
-	    default:
-	    {
-		throw new IllegalArgumentException ("Open paren required");
+		final Class<?> cls = (Class<?>)slot[1];
+		final Object result = cls.newInstance ();
+		return (LispList)result;
 	    }
 	}
+	throw new IllegalArgumentException ("List required");
     }
 
     private Object readString (final LispStream in) throws IOException

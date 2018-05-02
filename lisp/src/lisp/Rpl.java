@@ -1,8 +1,6 @@
 
 package lisp;
 
-import java.io.IOException;
-
 public class Rpl
 {
     private final Package pkg = PackageFactory.getSystemPackage ();
@@ -32,7 +30,7 @@ public class Rpl
 	}
     }
 
-    private void rp (final LispStream stream) throws IOException
+    private void rp (final LispStream stream) throws Exception
     {
 	final Object form = reader.read (stream, pkg);
 	if (form == null)
