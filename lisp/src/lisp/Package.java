@@ -17,6 +17,10 @@ public class Package
 
     private static final String PARSING_VARIABLE = "*parser*";
 
+    private static int PACKAGE_ID = 0;
+
+    private final int packageId = ++PACKAGE_ID;
+
     /** Parent package to use for looking up symbols not found locally. */
     private final Package parent;
 
@@ -33,6 +37,7 @@ public class Package
     {
 	this.parent = parent;
 	packageName = name;
+	System.out.printf ("Creating Package %s\n", this);
     }
 
     /** Parent package to use for looking up symbols not found locally. */
@@ -97,6 +102,10 @@ public class Package
 	{
 	    return result;
 	}
+	if (name.equals ("quote"))
+	{
+	    System.out.printf ("Quote interned %s\n", this);
+	}
 	result = new Symbol (this, name);
 	symbols.put (name, result);
 	return result;
@@ -131,6 +140,13 @@ public class Package
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
 	buffer.append (packageName);
+	buffer.append (" ");
+	buffer.append (packageId);
+	if (parent != null)
+	{
+	    buffer.append (" parent: ");
+	    buffer.append (parent);
+	}
 	buffer.append (">");
 	return buffer.toString ();
     }

@@ -29,10 +29,12 @@ public class Parsing
 	 {OPEN_BRACE, CLOSE_BRACE},
 	 {OPEN_BRACKET, CLOSE_BRACKET}};
 
+    private static final Package SYSTEM_PACKAGE = PackageFactory.getSystemPackage ();
+
     private static final Object[][] WRAPPER_SYMBOLS =
 	{
-	 {SINGLE_QUOTE, PackageFactory.getSystemPackage ().intern ("quote")},
-	 {EXCLAMATION, PackageFactory.getSystemPackage ().intern ("not")}};
+	 {SINGLE_QUOTE, SYSTEM_PACKAGE.intern ("quote")},
+	 {EXCLAMATION, SYSTEM_PACKAGE.intern ("not")}};
 
     /**
      * Characters that are replaced by a list starting with a specific symbol.

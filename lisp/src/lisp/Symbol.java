@@ -81,6 +81,10 @@ public class Symbol
 	{
 	    throw new IllegalStateException ("Symbol function is constant " + symbolName);
 	}
+	if (symbolFunction != null)
+	{
+	    System.out.printf ("%%Refining %s\n", this);
+	}
 	symbolFunction = function;
     }
 

@@ -26,14 +26,14 @@ public class Interpreter
 	    final Object fn = list.get (0);
 	    if (!(fn instanceof Symbol))
 	    {
-		throw new IllegalArgumentException ("Function name required " + fn);
+		throw new IllegalArgumentException ("Function is not a symbol " + fn);
 	    }
 	    final Symbol f = (Symbol)fn;
 	    final FunctionCell function = f.getFunction ();
 	    if (function == null)
 	    {
 		// [TODO] If function is bound to a java object, try to form a method call
-		throw new IllegalArgumentException ("Undefined function " + f);
+		throw new IllegalArgumentException ("Symbol has no function definition " + f);
 	    }
 	    // System.out.printf ("Eval %s%n", form);
 	    final Object result = function.eval (this, list);
