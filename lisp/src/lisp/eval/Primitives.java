@@ -3,6 +3,7 @@ package lisp.eval;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 import lisp.*;
 import lisp.Package;
@@ -293,15 +294,35 @@ public class Primitives extends Definer
 
     private void describe (final Object arg)
     {
+	final Package pkg = PackageFactory.getDefaultPackage ();
 	System.out.printf ("Describe: %s \n", arg);
 	if (arg == null)
 	{
 
 	}
-	else if (arg instanceof Described)
+	else if (arg instanceof Describer)
 	{
-	    final Described d = (Described)arg;
-	    d.describe ();
+	    final Describer d = (Describer)arg;
+	    int index = 0;
+	    final Map<String, Object> description = d.getDescriberValues (arg);
+	    for (final Entry<String, Object> entry : description.entrySet ())
+	    {
+		// Make a symbol using the index value, i.e., d001
+		++index;
+		final String key = entry.getKey ();
+		final Object value = entry.getValue ();
+		final String doc = d.getDescriberDocumentation (arg, key);
+		final Symbol symbol = pkg.intern (String.format ("d%d", index));
+		symbol.setValue (value);
+		if (doc != null)
+		{
+		    System.out.printf ("[%5s] %s: %s %s\n", symbol, key, value, doc);
+		}
+		else
+		{
+		    System.out.printf ("[%5s] %s: %s\n", symbol, key, value);
+		}
+	    }
 	}
 	else
 	{
@@ -311,7 +332,7 @@ public class Primitives extends Definer
 
     /**
      * Lookup and return the default (user) package.
-     * 
+     *
      * @param arguments
      */
     public Object getDefaultPackageEvaluator (final List<Object> arguments)
@@ -321,7 +342,7 @@ public class Primitives extends Definer
 
     /**
      * Lookup and return the system package.
-     * 
+     *
      * @param arguments
      */
     public Object getSystemPackageEvaluator (final List<Object> arguments)

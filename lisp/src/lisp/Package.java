@@ -11,7 +11,7 @@ import java.util.Map.Entry;
  *
  * @author cre
  */
-public class Package implements Described
+public class Package implements Describer
 {
     /** Control over parsing syntax is collected into the Parsing object. */
     // private static final Parsing DEFAULT_PARSING = new Parsing ();
@@ -159,12 +159,32 @@ public class Package implements Described
     }
 
     @Override
-    public void describe ()
+    public Map<String, Object> getDescriberValues (final Object target)
     {
-	System.out.printf ("Parent: %s \n", parent);
+	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	result.put ("Id", packageId);
+	result.put ("Parent", parent);
+	int childCount = 0;
+	for (final Object child : getChildren ())
+	{
+	    result.put ("Child" + childCount, child);
+	    childCount++;
+	}
+	result.put ("Symbols", symbols.size ());
+	getSymbolDescriptions (result, 5);
+	return result;
+    }
+
+    private void getSymbolDescriptions (final Map<String, Object> result, final int limit)
+    {
+	int count = 0;
 	for (final Entry<String, Symbol> entry : symbols.entrySet ())
 	{
-	    System.out.printf ("   Entry %s: %s \n", entry.getKey (), entry.getValue ());
+	    if (++count > limit)
+	    {
+		return;
+	    }
+	    result.put (entry.getKey (), entry.getValue ());
 	}
     }
 }

@@ -25,6 +25,13 @@ public class Definer
 	source = this;
     }
 
+    /**
+     * Bind a symbol to a java implementation method. <br>
+     * [TODO] Should be able to specify the number and type of the arguments.
+     *
+     * @param symbolName
+     * @param methodName
+     */
     public void define (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
     {
 	final Symbol symbol = pkg.intern (symbolName);
@@ -32,6 +39,13 @@ public class Definer
 	symbol.setFunction (new StandardFunctionCell (source, method));
     }
 
+    /**
+     * Bind a symbol to a java implementation method for a special form. <br>
+     * [TODO] Should be able to specify the number and type of the arguments.
+     *
+     * @param symbolName
+     * @param methodName
+     */
     public void defspecial (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
     {
 	final Symbol symbol = pkg.intern (symbolName);
@@ -39,6 +53,13 @@ public class Definer
 	symbol.setFunction (new SpecialFunctionCell (source, method));
     }
 
+    /**
+     * Bind a symbol to a java implementation method for a macro. <br>
+     * [TODO] Should be able to specify the number and type of the arguments.
+     *
+     * @param symbolName
+     * @param methodName
+     */
     public void defmacro (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
     {
 	final Symbol symbol = pkg.intern (symbolName);

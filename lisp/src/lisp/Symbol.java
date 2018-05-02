@@ -6,7 +6,7 @@ import java.util.*;
 import lisp.eval.FunctionCell;
 
 /** Unique named structure associated with a package. */
-public class Symbol implements Described
+public class Symbol implements Describer
 {
     /** Character to separate a package prefix from a symbol name. */
     public static final char PACKAGE_SEPARATOR = '.';
@@ -154,12 +154,13 @@ public class Symbol implements Described
     }
 
     @Override
-    public void describe ()
+    public Map<String, Object> getDescriberValues (final Object target)
     {
-	System.out.printf ("Package: %s \n", symbolPackage);
-	System.out.printf ("Value: %s \n", symbolValue);
-	System.out.printf ("Function: %s \n", symbolFunction);
-	System.out.printf ("Plist: %s \n", symbolPlist);
-
+	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	result.put ("Package", symbolPackage);
+	result.put ("Value", symbolValue);
+	result.put ("Function", symbolFunction);
+	result.put ("Plist", symbolPlist);
+	return result;
     }
 }

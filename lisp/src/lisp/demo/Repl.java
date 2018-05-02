@@ -36,12 +36,13 @@ public class Repl
     public void toplevel ()
     {
 	final LispStream stream = new LispStream (System.in);
+	int index = 0;
 	while (true)
 	{
 	    try
 	    {
 		Thread.sleep (100);
-		rep (stream);
+		rep (stream, ++index);
 	    }
 	    catch (final Throwable e)
 	    {
@@ -50,15 +51,17 @@ public class Repl
 	}
     }
 
-    private void rep (final LispStream stream) throws Exception
+    private void rep (final LispStream stream, final int index) throws Exception
     {
 	final Package pkg = PackageFactory.getDefaultPackage ();
+	final Symbol e = pkg.intern ("e" + index);
+	System.out.printf ("[%s] ", e);
 	Object form = null;
 	try
 	{
 	    form = reader.read (stream, pkg);
 	}
-	catch (final Throwable e)
+	catch (final Throwable ex)
 	{
 	    try
 	    {
@@ -68,9 +71,9 @@ public class Repl
 
 		}
 	    }
-	    catch (final Throwable ex)
+	    catch (final Throwable exx)
 	    {
-		System.out.printf ("[Error recovering from error: %s]", ex);
+		System.out.printf ("[Error recovering from error: %s]", exx);
 	    }
 	    return;
 	}
@@ -79,11 +82,14 @@ public class Repl
 	    System.out.println ("Exit");
 	    return;
 	}
+	e.setValue (form);
 	final StringBuilder buffer = new StringBuilder ();
 	// buffer.append (form.toString ());
 	// System.out.println (buffer);
-	System.out.print (" ==> ");
+	final Symbol v = pkg.intern ("v" + index);
+	System.out.printf ("[%s] ==> ", v);
 	final Object value = interpreter.eval (form);
+	v.setValue (value);
 	buffer.setLength (0);
 	if (value == null)
 	{
