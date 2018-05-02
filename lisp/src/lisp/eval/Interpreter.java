@@ -5,6 +5,7 @@ import java.util.List;
 
 import lisp.Symbol;
 
+/** Simple interpreter that using reflection to evaluate forms like Lisp functions. */
 public class Interpreter
 {
     public Object eval (final Object form) throws Exception

@@ -13,10 +13,18 @@ public class LispReader
 {
     private static final char DOUBLE_QUOTE = '"';
 
-    private final Parsing parsing = new Parsing ();
-
-    public Object read (final LispStream in, final Package pkg) throws Exception
+    /**
+     * Read a single form from the input stream.
+     *
+     * @param in The input stream.
+     * @param pkg The default package for symbols.
+     * @return The form read.
+     * @throws IOException
+     * @throws Exception
+     */
+    public Object read (final LispStream in, final Package pkg) throws IOException
     {
+	final Parsing parsing = pkg.getParsing ();
 	parsing.skipBlanks (in);
 	final char chr = in.peek ();
 	if (chr == DOUBLE_QUOTE)
@@ -46,8 +54,9 @@ public class LispReader
 	return readAtom (in, pkg);
     }
 
-    private Object readList (final LispStream in, final Package pkg, final LispList result) throws IOException, Exception
+    private Object readList (final LispStream in, final Package pkg, final LispList result) throws IOException
     {
+	final Parsing parsing = pkg.getParsing ();
 	final char close = result.getCloseChar ();
 	while (!in.peek (close))
 	{
@@ -61,6 +70,7 @@ public class LispReader
 	return result;
     }
 
+    /** Read a double quoted string as a java String. */
     private Object readString (final LispStream in) throws IOException
     {
 	in.read (DOUBLE_QUOTE); // Discard double quote
@@ -75,9 +85,11 @@ public class LispReader
 	return buffer.toString ();
     }
 
+    /** Read a number or symbol. */
     private Object readAtom (final LispStream in, final Package pkg) throws IOException
     {
 	final StringBuilder buffer = new StringBuilder ();
+	final Parsing parsing = pkg.getParsing ();
 	while (parsing.isAtomChar (in.peek ()))
 	{
 	    buffer.append (in.read ());

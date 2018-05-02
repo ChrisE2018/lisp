@@ -4,6 +4,10 @@ package lisp.eval;
 import java.lang.reflect.Method;
 import java.util.List;
 
+/**
+ * Function cell that processes the original form and returns an expanded form for further
+ * evaluation.
+ */
 public class MacroFunctionCell extends FunctionCell
 {
     private final Object obj;

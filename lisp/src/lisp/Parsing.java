@@ -3,6 +3,7 @@ package lisp;
 
 import java.io.IOException;
 
+/** Control over parsing syntax is collected into the Parsing object. */
 public class Parsing
 {
     private static final char EXCLAMATION = '!';

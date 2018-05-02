@@ -3,6 +3,7 @@ package lisp;
 
 import java.util.*;
 
+/** Extended List with nice external representation. */
 public class LispList extends ArrayList<Object>
 {
     /**
@@ -52,6 +53,7 @@ public class LispList extends ArrayList<Object>
 	return closeChar;
     }
 
+    /** Print in the same format as the reader. */
     public void print (final StringBuilder buffer)
     {
 	// Special case for quoted wrapper forms

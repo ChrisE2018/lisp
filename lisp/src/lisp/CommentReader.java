@@ -19,7 +19,10 @@ public class CommentReader
 	S_STAR
     }
 
-    /** Skip blanks and comments from an input stream. */
+    /**
+     * Skip blanks and comments from an input stream. Implemented using a fast, simple finite state
+     * parser.
+     */
     public void skipBlanks (final LispStream in) throws IOException
     {
 	state = BlankState.S_NORMAL;

@@ -5,6 +5,7 @@ import java.util.*;
 
 import lisp.eval.FunctionCell;
 
+/** Unique named structure associated with a package. */
 public class Symbol
 {
     /** Character to separate a package prefix from a symbol name. */

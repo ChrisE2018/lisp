@@ -5,11 +5,10 @@ import lisp.*;
 import lisp.Package;
 import lisp.eval.*;
 
+/** Simple toplevel loop that reads a lisp form, evaluates it and prints the result. */
 public class Repl
 {
-    // private final Package pkg = PackageFactory.getSystemPackage ();
-
-    private final LispReader reader = new LispReader ();
+    private final LispReader reader;
 
     private final Interpreter interpreter;
 
@@ -24,12 +23,14 @@ public class Repl
     {
 	Primitives.initialize ();
 	interpreter = new Interpreter ();
+	reader = new LispReader ();
     }
 
     /** Constructor to use an interpreter built elsewhere. */
     public Repl (final Interpreter interpreter)
     {
 	this.interpreter = interpreter;
+	reader = new LispReader ();
     }
 
     public void toplevel ()

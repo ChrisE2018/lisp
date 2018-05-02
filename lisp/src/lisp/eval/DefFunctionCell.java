@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import lisp.Symbol;
 
+/** Function cell for a function definition of a named function that binds arguments to values. */
 public class DefFunctionCell extends FunctionCell
 {
     private final Symbol name;

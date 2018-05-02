@@ -4,6 +4,10 @@ package lisp.eval;
 import java.lang.reflect.*;
 import java.util.List;
 
+/**
+ * Function cell that processes the original form without evaluating arguments. Needed for control
+ * constructs like if, and, or.
+ */
 public class SpecialFunctionCell extends FunctionCell
 {
     private final Object obj;

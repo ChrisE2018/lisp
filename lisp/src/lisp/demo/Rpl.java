@@ -4,6 +4,7 @@ package lisp.demo;
 import lisp.*;
 import lisp.Package;
 
+/** Simple toplevel loop that reads a lisp form and prints it back. */
 public class Rpl
 {
     private final Package pkg = PackageFactory.getSystemPackage ();

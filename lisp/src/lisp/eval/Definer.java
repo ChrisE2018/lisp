@@ -2,11 +2,12 @@
 package lisp.eval;
 
 import java.lang.reflect.Method;
-import lisp.Package;
 import java.util.List;
 
 import lisp.*;
+import lisp.Package;
 
+/** Helper class (used as a base class) for defining functions. */
 public class Definer
 {
     private final Package pkg;
