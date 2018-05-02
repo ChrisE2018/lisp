@@ -11,6 +11,7 @@ import java.io.IOException;
  */
 public class Reader
 {
+    private static final char EXCLAMATION = '!';
     private static final char SINGLE_QUOTE = '\'';
     private static final char DOUBLE_QUOTE = '"';
     private static final char OPEN_PAREN = '(';
@@ -20,14 +21,23 @@ public class Reader
     private static final char CLOSE_BRACE = '}';
     private static final char CLOSE_BRACKET = ']';
 
-    /** Map from list type to concrete class. */
-    private final Object[][] LIST_CLASSES =
-	{
-	 {new Character (OPEN_PAREN), LispParenList.class},
-	 {new Character (OPEN_BRACE), LispBraceList.class},
-	 {new Character (OPEN_BRACKET), LispBracketList.class}};
-
     private final Package systemPackage = PackageFactory.getSystemPackage ();
+
+    /**
+     * Map from list type to concrete class. Don't use angle brackets so they are available for
+     * comparison operators.
+     */
+    private final Character[][] LIST_CLASSES =
+	{
+	 {OPEN_PAREN, CLOSE_PAREN},
+	 {OPEN_BRACE, CLOSE_BRACE},
+	 {OPEN_BRACKET, CLOSE_BRACKET}};
+
+    /** Characters that are replaced by a list starting with a specific symbol. */
+    private final Object[][] SINGLE_CHAR_FORMS =
+	{
+	 {new Character (SINGLE_QUOTE), systemPackage.intern ("quote")},
+	 {new Character (EXCLAMATION), systemPackage.intern ("not")}};
 
     private final CommentReader commentReader = new CommentReader ();
 
@@ -35,23 +45,31 @@ public class Reader
     {
 	commentReader.skipBlanks (in);
 	final char chr = in.peek ();
-	if (chr == OPEN_PAREN || chr == OPEN_BRACE || chr == OPEN_BRACKET)
-	{
-	    return readList (in, pkg);
-	}
 	if (chr == DOUBLE_QUOTE)
 	{
 	    return readString (in);
 	}
-	if (chr == SINGLE_QUOTE)
+	final LispList listResult = getParenList (chr);
+	if (listResult != null)
 	{
-	    in.read (SINGLE_QUOTE); // Discard quote
-	    final Object quote = systemPackage.intern ("quote");
-	    final Object form = read (in, pkg);
-	    final LispParenList result = new LispParenList ();
-	    result.add (quote);
-	    result.add (form);
-	    return result;
+	    in.read ();
+	    return readList (in, pkg, listResult);
+	}
+	// Handle single character form wrappers.
+	// [TODO] These are not reversed properly on printing.
+	for (final Object[] slot : SINGLE_CHAR_FORMS)
+	{
+	    final Character ch = (Character)slot[0];
+	    if (chr == ch)
+	    {
+		in.read (ch); // Discard quote character
+		final Symbol symbol = (Symbol)slot[1];
+		final Object form = read (in, pkg);
+		final LispList result = new LispList ();
+		result.add (symbol);
+		result.add (form);
+		return result;
+	    }
 	}
 	if (in.eof ())
 	{
@@ -60,11 +78,9 @@ public class Reader
 	return readAtom (in, pkg);
     }
 
-    private Object readList (final LispStream in, final Package pkg) throws Exception
+    private Object readList (final LispStream in, final Package pkg, final LispList result) throws IOException, Exception
     {
-	final LispList result = getParenList (in.read ());
-	final ListKind listKind = result.getListKind ();
-	final char close = listKind.getCloseChar ();
+	final char close = result.getCloseChar ();
 	while (!in.peek (close))
 	{
 	    final Object element = read (in, pkg);
@@ -77,19 +93,19 @@ public class Reader
 	return result;
     }
 
-    private LispList getParenList (final char open) throws InstantiationException, IllegalAccessException
+    private LispList getParenList (final char open)
     {
-	for (final Object[] slot : LIST_CLASSES)
+	for (final Character[] slot : LIST_CLASSES)
 	{
-	    final Character selector = (Character)(slot[0]);
-	    if (selector.charValue () == open)
+	    final Character openChar = slot[0];
+	    if (openChar.charValue () == open)
 	    {
-		final Class<?> cls = (Class<?>)slot[1];
-		final Object result = cls.newInstance ();
-		return (LispList)result;
+		final Character closeChar = slot[1];
+		final LispList result = new LispList (openChar, closeChar);
+		return result;
 	    }
 	}
-	throw new IllegalArgumentException ("List required");
+	return null;
     }
 
     private Object readString (final LispStream in) throws IOException
@@ -149,7 +165,7 @@ public class Reader
     }
 
     /**
-     * Test for atom characters. [TODO] Make a table.
+     * Test for atom characters. [TODO] Make a syntax table.
      *
      * @param chr
      * @return

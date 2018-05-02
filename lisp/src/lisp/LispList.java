@@ -3,23 +3,54 @@ package lisp;
 
 import java.util.*;
 
-public abstract class LispList extends ArrayList<Object>
+public class LispList extends ArrayList<Object>
 {
-    public abstract ListKind getListKind ();
+    /** Character that starts the list. */
+    private final char openChar;
+
+    /** Character that finishes the list. */
+    private final char closeChar;
+
+    public LispList (final char openChar, final char closeChar)
+    {
+	super ();
+	this.openChar = openChar;
+	this.closeChar = closeChar;
+    }
+
+    public LispList (final char openChar, final char closeChar, final List<Object> members)
+    {
+	super (members);
+	this.openChar = openChar;
+	this.closeChar = closeChar;
+    }
 
     public LispList ()
     {
-	super ();
+	this ('(', ')');
     }
 
     public LispList (final List<Object> members)
     {
-	super (members);
+	this ('(', ')', members);
+    }
+
+    /** Character that starts the list. */
+    public char getOpenChar ()
+    {
+	return openChar;
+    }
+
+    /** Character that finishes the list. */
+    public char getCloseChar ()
+    {
+	return closeChar;
     }
 
     public void print (final StringBuilder buffer)
     {
 	// Special case for quote
+	// [TODO] Use table of SINGLE_CHAR_FORMS to map quote instead.
 	if (size () == 2)
 	{
 	    final Object head = get (0);
@@ -34,7 +65,7 @@ public abstract class LispList extends ArrayList<Object>
 		}
 	    }
 	}
-	buffer.append (getListKind ().getOpenChar ());
+	buffer.append (getOpenChar ());
 	for (int i = 0; i < size (); i++)
 	{
 	    if (i > 0)
@@ -43,18 +74,19 @@ public abstract class LispList extends ArrayList<Object>
 	    }
 	    Reader.printElement (buffer, get (i));
 	}
-	buffer.append (getListKind ().getCloseChar ());
+	buffer.append (getCloseChar ());
     }
 
     @Override
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
 	print (buffer);
-	buffer.append (">");
+	// buffer.append ("#<");
+	// buffer.append (getClass ().getSimpleName ());
+	// buffer.append (" ");
+	// print (buffer);
+	// buffer.append (">");
 	return buffer.toString ();
     }
 }

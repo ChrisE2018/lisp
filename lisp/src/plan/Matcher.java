@@ -58,17 +58,17 @@ public class Matcher
 	return symbol.getName ().charAt (0) == QUESTION_MARK;
     }
 
-    public LispParenList bindingsToLisp (final Map<Symbol, Symbol> bindings)
+    public LispList bindingsToLisp (final Map<Symbol, Symbol> bindings)
     {
-	LispParenList result = null;
+	LispList result = null;
 	if (bindings != null)
 	{
-	    result = new LispParenList ();
+	    result = new LispList ();
 	    for (final Entry<Symbol, Symbol> entry : bindings.entrySet ())
 	    {
 		final Symbol key = entry.getKey ();
 		final Symbol value = entry.getValue ();
-		final LispParenList slot = new LispParenList ();
+		final LispList slot = new LispList ();
 		slot.add (key);
 		slot.add (value);
 		result.add (slot);
@@ -77,17 +77,17 @@ public class Matcher
 	return result;
     }
 
-    public LispParenList mapToLisp (final Map<Object, Object> bindings)
+    public LispList mapToLisp (final Map<Object, Object> bindings)
     {
-	LispParenList result = null;
+	LispList result = null;
 	if (bindings != null)
 	{
-	    result = new LispParenList ();
+	    result = new LispList ();
 	    for (final Entry<Object, Object> entry : bindings.entrySet ())
 	    {
 		final Object key = entry.getKey ();
 		final Object value = entry.getValue ();
-		final LispParenList slot = new LispParenList ();
+		final LispList slot = new LispList ();
 		slot.add (key);
 		slot.add (value);
 		result.add (slot);

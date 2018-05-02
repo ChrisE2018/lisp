@@ -35,7 +35,7 @@ public class PlanFunctions extends Definer
     public Object defstateEvaluator (final List<Object> arguments)
     {
 	final Symbol name = (Symbol)arguments.get (1);
-	final LispList facts = new LispParenList ();
+	final LispList facts = new LispList ();
 	for (int i = 2; i < arguments.size (); i++)
 	{
 	    facts.add (arguments.get (i));
@@ -101,7 +101,7 @@ public class PlanFunctions extends Definer
 	final LispList pattern = (LispList)arguments.get (0);
 	final LispList literal = (LispList)arguments.get (1);
 	final Map<Symbol, Symbol> bindings = matcher.match (pattern, literal);
-	final LispParenList result = matcher.bindingsToLisp (bindings);
+	final LispList result = matcher.bindingsToLisp (bindings);
 	return result;
     }
 
@@ -109,7 +109,7 @@ public class PlanFunctions extends Definer
     {
 	final State state = (State)arguments.get (0);
 	final LispList pattern = (LispList)arguments.get (1);
-	LispParenList result = null;
+	LispList result = null;
 	for (final Object fact : state.getFacts ())
 	{
 	    final Map<Symbol, Symbol> bindings = matcher.match (pattern, (LispList)fact);
@@ -119,7 +119,7 @@ public class PlanFunctions extends Definer
 		final Object binds = matcher.bindingsToLisp (bindings);
 		if (result == null)
 		{
-		    result = new LispParenList ();
+		    result = new LispList ();
 		}
 		result.add (binds);
 	    }
@@ -130,14 +130,14 @@ public class PlanFunctions extends Definer
 
     public Object determineTruthEvaluator (final List<Object> arguments)
     {
-	final LispParenList result = new LispParenList ();
+	final LispList result = new LispList ();
 	final State state = (State)arguments.get (0);
 	final Map<Symbol, Symbol> bindings = new HashMap<Symbol, Symbol> ();
 	dte (result, state, arguments, 1, bindings);
 	return result;
     }
 
-    private void dte (final LispParenList result, final State state, final List<Object> arguments, final int i,
+    private void dte (final LispList result, final State state, final List<Object> arguments, final int i,
             final Map<Symbol, Symbol> bindings)
     {
 	if (i < arguments.size ())

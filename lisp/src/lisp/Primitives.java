@@ -57,7 +57,7 @@ public class Primitives extends Definer
 
     public Object listEvaluator (final List<Object> arguments)
     {
-	return new LispParenList (arguments);
+	return new LispList (arguments);
     }
 
     public Object plusEvaluator (final List<Object> arguments)
