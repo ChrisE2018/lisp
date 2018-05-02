@@ -30,8 +30,15 @@ public class Primitives extends Definer
 	define ("+", "plusEvaluator");
 	define ("times", "timesEvaluator");
 	define ("*", "timesEvaluator");
+	define ("not", "notEvaluator");
 	define ("in-package", "inPackageEvaluator");
 	define ("java", "javaEvaluator");
+	// [TODO] Need javaStatic, javaNew
+	define ("describe", "describeEvaluator");
+	define ("getDefaultPackage", "getDefaultPackageEvaluator");
+	define ("getSystemPackage", "getSystemPackageEvaluator");
+	define ("getParentPackage", "getParentPackageEvaluator");
+	define ("getChildPackages", "getChildPackagesEvaluator");
     }
 
     /**
@@ -146,6 +153,21 @@ public class Primitives extends Definer
 	return new Double (result * dresult);
     }
 
+    public Object notEvaluator (final List<Object> arguments)
+    {
+	if (arguments.size () != 1)
+	{
+	    throw new IllegalArgumentException ("Exactly one argument required");
+	}
+	final Object arg = arguments.get (0);
+	if (arg instanceof Boolean)
+	{
+	    final Boolean b = (Boolean)arg;
+	    return !b;
+	}
+	return Boolean.FALSE;
+    }
+
     public Object inPackageEvaluator (final List<Object> arguments)
     {
 	final Package pkg = coercePackage (arguments.get (0), true);
@@ -258,6 +280,55 @@ public class Primitives extends Definer
 	    }
 	}
 	return NO_RETURN_VALUE;
+    }
+
+    public Object describeEvaluator (final List<Object> arguments)
+    {
+	for (final Object arg : arguments)
+	{
+	    describe (arg);
+	}
+	return Boolean.FALSE;
+    }
+
+    private void describe (final Object arg)
+    {
+	System.out.printf ("Describe: %s \n", arg);
+	if (arg == null)
+	{
+
+	}
+	else if (arg instanceof Described)
+	{
+	    final Described d = (Described)arg;
+	    d.describe ();
+	}
+	else
+	{
+	    System.out.printf ("Class: %s \n", arg.getClass ().getCanonicalName ());
+	}
+    }
+
+    public Object getDefaultPackageEvaluator (final List<Object> arguments)
+    {
+	return PackageFactory.getDefaultPackage ();
+    }
+
+    public Object getSystemPackageEvaluator (final List<Object> arguments)
+    {
+	return PackageFactory.getSystemPackage ();
+    }
+
+    public Object getParentPackageEvaluator (final List<Object> arguments)
+    {
+	final Package p = getPackage (arguments, 0);
+	return p.getParent ();
+    }
+
+    public Object getChildPackagesEvaluator (final List<Object> arguments)
+    {
+	final Package p = getPackage (arguments, 0);
+	return p.getChildren ();
     }
 
     @Override

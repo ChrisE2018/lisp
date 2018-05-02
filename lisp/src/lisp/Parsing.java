@@ -36,6 +36,8 @@ public class Parsing
 	 {SINGLE_QUOTE, SYSTEM_PACKAGE.intern ("quote")},
 	 {EXCLAMATION, SYSTEM_PACKAGE.intern ("not")}};
 
+    private static Parsing DEFAULT_PARSING = null;
+
     /**
      * Characters that are replaced by a list starting with a specific symbol.
      *
@@ -44,6 +46,15 @@ public class Parsing
     private final SimpleBiMap<Character, Symbol> wrapperSymbols = new SimpleBiMap<Character, Symbol> (WRAPPER_SYMBOLS);
 
     private final CommentReader commentReader = new CommentReader ();
+
+    public static Parsing getDefaultParsing ()
+    {
+	if (DEFAULT_PARSING == null)
+	{
+	    DEFAULT_PARSING = new Parsing ();
+	}
+	return DEFAULT_PARSING;
+    }
 
     /** Lists start with the default open char unless explicitly created otherwise. */
     public char getDefaultOpenChar ()

@@ -17,23 +17,29 @@ public class PackageFactory
 	 {GLOBAL_PACKAGE_NAME, SYSTEM_PACKAGE_NAME},
 	 {SYSTEM_PACKAGE_NAME, DEFAULT_PACKAGE_NAME}};
 
-    private static final String[][] CONSTANT_SYMBOLS =
+    private static final Object[][] CONSTANT_SYMBOLS =
 	{
-	 {GLOBAL_PACKAGE_NAME, "true", "false"}};
+	 {GLOBAL_PACKAGE_NAME, "true", Boolean.TRUE, "false", Boolean.FALSE}};
 
     private static final Map<String, Package> packages = new HashMap<String, Package> ();
 
     private static Package defaultPackage = null;
+
+    private PackageFactory ()
+    {
+	// no instances
+    }
 
     static
     {
 	init ();
     }
 
-    private static void init ()
+    private synchronized static void init ()
     {
 	if (!initializedp)
 	{
+	    // [TODO] Use a logger
 	    System.out.printf ("Initializing PackageFactory\n");
 	    initializedp = true;
 	    for (final String[] p : PACKAGE_TREE)
@@ -51,13 +57,16 @@ public class PackageFactory
 		}
 	    }
 	    defaultPackage = getPackage (GLOBAL_PACKAGE_NAME, DEFAULT_PACKAGE_NAME);
-	    for (final String[] constantDefinition : CONSTANT_SYMBOLS)
+	    for (final Object[] constantDefinition : CONSTANT_SYMBOLS)
 	    {
-		final Package global = getPackage (GLOBAL_PACKAGE_NAME, constantDefinition[0]);
-		for (int i = 1; i < constantDefinition.length; i++)
+		final String packageName = (String)constantDefinition[0];
+		final Package pkg = getPackage (GLOBAL_PACKAGE_NAME, packageName);
+		for (int i = 1; i < constantDefinition.length; i += 2)
 		{
-		    final Symbol symbol = global.intern (constantDefinition[i]);
-		    symbol.setValue (symbol);
+		    final String symbolName = (String)constantDefinition[i];
+		    final Object value = constantDefinition[i + 1];
+		    final Symbol symbol = pkg.intern (symbolName);
+		    symbol.setValue (value);
 		    symbol.setConstantValue (true);
 		}
 	    }
@@ -100,6 +109,11 @@ public class PackageFactory
 	    throw new IllegalArgumentException ("There is no package named " + packageName);
 	}
 	return result;
+    }
+
+    public static Map<String, Package> getPackageMap ()
+    {
+	return packages;
     }
 
     @Override

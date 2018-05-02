@@ -2,6 +2,7 @@
 package lisp;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Packages contain symbols and help the reader function. <br>
@@ -10,10 +11,10 @@ import java.util.*;
  *
  * @author cre
  */
-public class Package
+public class Package implements Described
 {
     /** Control over parsing syntax is collected into the Parsing object. */
-    private static final Parsing DEFAULT_PARSING = new Parsing ();
+    // private static final Parsing DEFAULT_PARSING = new Parsing ();
 
     private static final String PARSING_VARIABLE = "*parser*";
 
@@ -23,9 +24,6 @@ public class Package
 
     /** Parent package to use for looking up symbols not found locally. */
     private final Package parent;
-
-    /** Child packages that inherit symbols from this package. */
-    private final List<Package> children = new ArrayList<Package> ();
 
     /** Name of this package. */
     private final String packageName;
@@ -37,6 +35,7 @@ public class Package
     {
 	this.parent = parent;
 	packageName = name;
+	// [TODO] Use a logger
 	System.out.printf ("Creating Package %s\n", this);
     }
 
@@ -47,8 +46,16 @@ public class Package
     }
 
     /** Child packages that inherit symbols from this package. */
-    public List<Package> getChildren ()
+    public LispList getChildren ()
     {
+	final LispList children = new LispList ();
+	for (final Package pkg : PackageFactory.getPackageMap ().values ())
+	{
+	    if (pkg.getParent () == this)
+	    {
+		children.add (pkg);
+	    }
+	}
 	return children;
     }
 
@@ -123,7 +130,7 @@ public class Package
 		return (Parsing)value;
 	    }
 	}
-	return DEFAULT_PARSING;
+	return Parsing.getDefaultParsing ();
     }
 
     /** Print value to a buffer. */
@@ -149,5 +156,15 @@ public class Package
 	}
 	buffer.append (">");
 	return buffer.toString ();
+    }
+
+    @Override
+    public void describe ()
+    {
+	System.out.printf ("Parent: %s \n", parent);
+	for (final Entry<String, Symbol> entry : symbols.entrySet ())
+	{
+	    System.out.printf ("   Entry %s: %s \n", entry.getKey (), entry.getValue ());
+	}
     }
 }
