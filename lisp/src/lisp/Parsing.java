@@ -25,14 +25,17 @@ public class Parsing
 	 {OPEN_BRACE, CLOSE_BRACE},
 	 {OPEN_BRACKET, CLOSE_BRACKET}};
 
-    /**
-     * Characters that are replaced by a list starting with a specific symbol. <br>
-     * [TODO] This should be a map
-     */
-    private final Object[][] SINGLE_CHAR_FORMS =
+    private static final Object[][] WRAPPER_SYMBOLS =
 	{
-	 {new Character (SINGLE_QUOTE), PackageFactory.getSystemPackage ().intern ("quote")},
-	 {new Character (EXCLAMATION), PackageFactory.getSystemPackage ().intern ("not")}};
+	 {SINGLE_QUOTE, PackageFactory.getSystemPackage ().intern ("quote")},
+	 {EXCLAMATION, PackageFactory.getSystemPackage ().intern ("not")}};
+
+    /**
+     * Characters that are replaced by a list starting with a specific symbol.
+     *
+     * @see https://stackoverflow.com/questions/1670038/does-java-have-a-hashmap-with-reverse-lookup
+     */
+    private final SimpleBiMap<Character, Symbol> wrapperSymbols = new SimpleBiMap<Character, Symbol> (WRAPPER_SYMBOLS);
 
     private final CommentReader commentReader = new CommentReader ();
 
@@ -99,32 +102,19 @@ public class Parsing
 
     public LispList getWrapperList (final char chr)
     {
-	for (final Object[] slot : SINGLE_CHAR_FORMS)
+	final Symbol wrapperSymbol = wrapperSymbols.get (chr);
+	if (wrapperSymbol != null)
 	{
-	    final Character ch = (Character)slot[0];
-	    if (chr == ch)
-	    {
-		final Symbol wrapperSymbol = (Symbol)slot[1];
-		final LispList result = new LispList ();
-		result.add (wrapperSymbol);
-		return result;
-	    }
+	    final LispList result = new LispList ();
+	    result.add (wrapperSymbol);
+	    return result;
 	}
 	return null;
     }
 
     public Character getWrapperQuote (final Symbol symbol)
     {
-	for (final Object[] slot : SINGLE_CHAR_FORMS)
-	{
-	    final Symbol wrapperSymbol = (Symbol)slot[1];
-	    if (wrapperSymbol == symbol)
-	    {
-		final Character ch = (Character)slot[0];
-		return ch;
-	    }
-	}
-	return null;
+	return wrapperSymbols.getKey (symbol);
     }
 
     @Override
