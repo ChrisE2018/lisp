@@ -1,7 +1,9 @@
 
-package lisp;
+package lisp.eval;
 
 import java.util.List;
+
+import lisp.Symbol;
 
 public class Interpreter
 {

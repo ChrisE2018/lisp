@@ -1,8 +1,11 @@
 
-package lisp;
+package lisp.eval;
 
 import java.lang.reflect.Method;
+import lisp.Package;
 import java.util.List;
+
+import lisp.*;
 
 public class Definer
 {

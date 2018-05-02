@@ -3,6 +3,8 @@ package lisp;
 
 import java.util.*;
 
+import lisp.eval.FunctionCell;
+
 public class Symbol
 {
     /** Character to separate a package prefix from a symbol name. */

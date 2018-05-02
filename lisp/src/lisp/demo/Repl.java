@@ -1,11 +1,15 @@
 
-package lisp;
+package lisp.demo;
+
+import lisp.*;
+import lisp.Package;
+import lisp.eval.*;
 
 public class Repl
 {
     // private final Package pkg = PackageFactory.getSystemPackage ();
 
-    private final Reader reader = new Reader ();
+    private final LispReader reader = new LispReader ();
 
     private final Interpreter interpreter;
 
@@ -66,7 +70,7 @@ public class Repl
 	}
 	else
 	{
-	    Reader.printElement (buffer, value);
+	    LispReader.printElement (buffer, value);
 	}
 	System.out.println (buffer);
     }

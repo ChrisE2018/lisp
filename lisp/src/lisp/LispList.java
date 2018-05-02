@@ -5,6 +5,11 @@ import java.util.*;
 
 public class LispList extends ArrayList<Object>
 {
+    /**
+     * The parsing control should be obtained from the current package. Currently it is a constant.
+     */
+    private static Parsing parsing = new Parsing ();
+
     /** Character that starts the list. */
     private final char openChar;
 
@@ -27,12 +32,12 @@ public class LispList extends ArrayList<Object>
 
     public LispList ()
     {
-	this ('(', ')');
+	this (parsing.getDefaultOpenChar (), parsing.getDefaultCloseChar ());
     }
 
     public LispList (final List<Object> members)
     {
-	this ('(', ')', members);
+	this (parsing.getDefaultOpenChar (), parsing.getDefaultCloseChar (), members);
     }
 
     /** Character that starts the list. */
@@ -49,17 +54,17 @@ public class LispList extends ArrayList<Object>
 
     public void print (final StringBuilder buffer)
     {
-	// Special case for quote
-	// [TODO] Use table of SINGLE_CHAR_FORMS to map quote instead.
+	// Special case for quoted wrapper forms
 	if (size () == 2)
 	{
 	    final Object head = get (0);
 	    if (head instanceof Symbol)
 	    {
 		final Symbol s = (Symbol)head;
-		if (s.getName ().equals ("quote"))
+		final Character chr = parsing.getWrapperQuote (s);
+		if (chr != null)
 		{
-		    buffer.append ("'");
+		    buffer.append (chr);
 		    buffer.append (get (1).toString ());
 		    return;
 		}
@@ -72,7 +77,7 @@ public class LispList extends ArrayList<Object>
 	    {
 		buffer.append (' ');
 	    }
-	    Reader.printElement (buffer, get (i));
+	    LispReader.printElement (buffer, get (i));
 	}
 	buffer.append (getCloseChar ());
     }

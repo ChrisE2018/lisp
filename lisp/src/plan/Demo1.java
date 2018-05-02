@@ -5,7 +5,9 @@ import java.io.*;
 
 import lisp.*;
 import lisp.Package;
-import lisp.Reader;
+import lisp.LispReader;
+import lisp.demo.Repl;
+import lisp.eval.Interpreter;
 
 public class Demo1
 {
@@ -41,7 +43,7 @@ public class Demo1
 	final FileInputStream in = new FileInputStream (file);
 	final BufferedInputStream b = new BufferedInputStream (in);
 	final LispStream stream = new LispStream (b);
-	final Reader reader = new Reader ();
+	final LispReader reader = new LispReader ();
 	for (int i = 0; i < 20 && !stream.eof (); i++)
 	{
 	    final Object form = reader.read (stream, pkg);
@@ -58,7 +60,7 @@ public class Demo1
 		}
 		else
 		{
-		    Reader.printElement (buffer, value);
+		    LispReader.printElement (buffer, value);
 		}
 		System.out.printf ("=> %s %n%n", buffer);
 	    }

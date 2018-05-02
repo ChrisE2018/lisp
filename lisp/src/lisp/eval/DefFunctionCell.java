@@ -1,8 +1,10 @@
 
-package lisp;
+package lisp.eval;
 
 import java.util.*;
 import java.util.Map.Entry;
+
+import lisp.Symbol;
 
 public class DefFunctionCell extends FunctionCell
 {

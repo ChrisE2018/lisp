@@ -9,47 +9,21 @@ import java.io.IOException;
  *
  * @author cre
  */
-public class Reader
+public class LispReader
 {
-    private static final char EXCLAMATION = '!';
-    private static final char SINGLE_QUOTE = '\'';
     private static final char DOUBLE_QUOTE = '"';
-    private static final char OPEN_PAREN = '(';
-    private static final char OPEN_BRACE = '{';
-    private static final char OPEN_BRACKET = '[';
-    private static final char CLOSE_PAREN = ')';
-    private static final char CLOSE_BRACE = '}';
-    private static final char CLOSE_BRACKET = ']';
 
-    private final Package systemPackage = PackageFactory.getSystemPackage ();
-
-    /**
-     * Map from list type to concrete class. Don't use angle brackets so they are available for
-     * comparison operators.
-     */
-    private final Character[][] LIST_CLASSES =
-	{
-	 {OPEN_PAREN, CLOSE_PAREN},
-	 {OPEN_BRACE, CLOSE_BRACE},
-	 {OPEN_BRACKET, CLOSE_BRACKET}};
-
-    /** Characters that are replaced by a list starting with a specific symbol. */
-    private final Object[][] SINGLE_CHAR_FORMS =
-	{
-	 {new Character (SINGLE_QUOTE), systemPackage.intern ("quote")},
-	 {new Character (EXCLAMATION), systemPackage.intern ("not")}};
-
-    private final CommentReader commentReader = new CommentReader ();
+    private final Parsing parsing = new Parsing ();
 
     public Object read (final LispStream in, final Package pkg) throws Exception
     {
-	commentReader.skipBlanks (in);
+	parsing.skipBlanks (in);
 	final char chr = in.peek ();
 	if (chr == DOUBLE_QUOTE)
 	{
 	    return readString (in);
 	}
-	final LispList listResult = getParenList (chr);
+	final LispList listResult = parsing.getParenList (chr);
 	if (listResult != null)
 	{
 	    in.read ();
@@ -57,19 +31,13 @@ public class Reader
 	}
 	// Handle single character form wrappers.
 	// [TODO] These are not reversed properly on printing.
-	for (final Object[] slot : SINGLE_CHAR_FORMS)
+	final LispList wrapper = parsing.getWrapperList (chr);
+	if (wrapper != null)
 	{
-	    final Character ch = (Character)slot[0];
-	    if (chr == ch)
-	    {
-		in.read (ch); // Discard quote character
-		final Symbol symbol = (Symbol)slot[1];
-		final Object form = read (in, pkg);
-		final LispList result = new LispList ();
-		result.add (symbol);
-		result.add (form);
-		return result;
-	    }
+	    in.read (chr); // Discard quote character
+	    final Object form = read (in, pkg);
+	    wrapper.add (form);
+	    return wrapper;
 	}
 	if (in.eof ())
 	{
@@ -87,25 +55,10 @@ public class Reader
 	    result.add (element);
 	    // [TODO] Handle colon and comma as distinct types of separator
 	    // [TODO] Colon separated elements should be collected as a map.
-	    commentReader.skipBlanks (in);
+	    parsing.skipBlanks (in);
 	}
 	in.read ();
 	return result;
-    }
-
-    private LispList getParenList (final char open)
-    {
-	for (final Character[] slot : LIST_CLASSES)
-	{
-	    final Character openChar = slot[0];
-	    if (openChar.charValue () == open)
-	    {
-		final Character closeChar = slot[1];
-		final LispList result = new LispList (openChar, closeChar);
-		return result;
-	    }
-	}
-	return null;
     }
 
     private Object readString (final LispStream in) throws IOException
@@ -125,7 +78,7 @@ public class Reader
     private Object readAtom (final LispStream in, final Package pkg) throws IOException
     {
 	final StringBuilder buffer = new StringBuilder ();
-	while (isAtomChar (in.peek ()))
+	while (parsing.isAtomChar (in.peek ()))
 	{
 	    buffer.append (in.read ());
 	}
@@ -162,34 +115,6 @@ public class Reader
 	    return p.intern (symbolName);
 	}
 	return pkg.intern (s);
-    }
-
-    /**
-     * Test for atom characters. [TODO] Make a syntax table.
-     *
-     * @param chr
-     * @return
-     */
-    private boolean isAtomChar (final char chr)
-    {
-	if (Character.isWhitespace (chr))
-	{
-	    return false;
-	}
-	switch (chr)
-	{
-	    case DOUBLE_QUOTE:
-	    case OPEN_PAREN:
-	    case OPEN_BRACE:
-	    case OPEN_BRACKET:
-	    case CLOSE_PAREN:
-	    case CLOSE_BRACE:
-	    case CLOSE_BRACKET:
-	    {
-		return false;
-	    }
-	}
-	return true;
     }
 
     @Override

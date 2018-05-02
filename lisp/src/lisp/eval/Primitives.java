@@ -1,8 +1,11 @@
 
-package lisp;
+package lisp.eval;
 
 import java.lang.reflect.*;
 import java.util.*;
+
+import lisp.*;
+import lisp.Package;
 
 public class Primitives extends Definer
 {

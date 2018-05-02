@@ -4,6 +4,7 @@ package plan;
 import java.util.*;
 
 import lisp.*;
+import lisp.eval.*;
 
 public class PlanFunctions extends Definer
 {

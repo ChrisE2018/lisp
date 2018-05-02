@@ -3,6 +3,7 @@ package lisp;
 
 import java.io.IOException;
 
+/** Skip blanks and comments from an input stream. */
 public class CommentReader
 {
     private BlankState state = BlankState.S_NORMAL;
@@ -18,6 +19,7 @@ public class CommentReader
 	S_STAR
     }
 
+    /** Skip blanks and comments from an input stream. */
     public void skipBlanks (final LispStream in) throws IOException
     {
 	state = BlankState.S_NORMAL;

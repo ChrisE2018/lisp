@@ -1,11 +1,14 @@
 
-package lisp;
+package lisp.demo;
+
+import lisp.*;
+import lisp.Package;
 
 public class Rpl
 {
     private final Package pkg = PackageFactory.getSystemPackage ();
 
-    private final Reader reader = new Reader ();
+    private final LispReader reader = new LispReader ();
 
     public static void main (final String[] args)
     {
@@ -39,7 +42,7 @@ public class Rpl
 	    return;
 	}
 	final StringBuilder buffer = new StringBuilder ();
-	Reader.printElement (buffer, form);
+	LispReader.printElement (buffer, form);
 	System.out.println (buffer);
 	System.out.println (form);
     }
