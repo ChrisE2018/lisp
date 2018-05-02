@@ -309,11 +309,21 @@ public class Primitives extends Definer
 	}
     }
 
+    /**
+     * Lookup and return the default (user) package.
+     * 
+     * @param arguments
+     */
     public Object getDefaultPackageEvaluator (final List<Object> arguments)
     {
 	return PackageFactory.getDefaultPackage ();
     }
 
+    /**
+     * Lookup and return the system package.
+     * 
+     * @param arguments
+     */
     public Object getSystemPackageEvaluator (final List<Object> arguments)
     {
 	return PackageFactory.getSystemPackage ();
