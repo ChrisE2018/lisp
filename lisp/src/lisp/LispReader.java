@@ -11,8 +11,6 @@ import java.util.Map;
  */
 public class LispReader
 {
-    private static final char DOUBLE_QUOTE = '"';
-
     /**
      * Read a single form from the input stream.
      *
@@ -27,9 +25,9 @@ public class LispReader
 	final Parsing parsing = pkg.getParsing ();
 	parsing.skipBlanks (in);
 	final char chr = in.peek ();
-	if (chr == DOUBLE_QUOTE)
+	if (chr == parsing.getStringDelimiter ())
 	{
-	    return readString (in);
+	    return readString (parsing.getStringDelimiter (), in);
 	}
 	final Map<Object, Object> mapResult = parsing.getMapResult (chr);
 	if (mapResult != null)
@@ -102,14 +100,18 @@ public class LispReader
 	return mapResult;
     }
 
-    /** Read a double quoted string as a java String. */
-    private Object readString (final LispStream in) throws IOException
+    /**
+     * Read a double quoted string as a java String.
+     *
+     * @param stringDelimiter
+     */
+    private Object readString (final char stringDelimiter, final LispStream in) throws IOException
     {
-	in.read (DOUBLE_QUOTE); // Discard double quote
+	in.read (stringDelimiter); // Discard double quote
 	int input = in.read ();
 	final StringBuilder buffer = new StringBuilder ();
 	// Need to handle embedded slashes
-	while ((char)input != DOUBLE_QUOTE)
+	while ((char)input != stringDelimiter)
 	{
 	    buffer.append ((char)input);
 	    input = in.read ();
