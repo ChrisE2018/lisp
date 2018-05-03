@@ -15,7 +15,8 @@ public class Repl
     public static void main (final String[] args) throws NoSuchMethodException, SecurityException
     {
 	final Repl repl = new Repl ();
-	repl.toplevel ();
+	final LispStream stream = new LispStream (System.in);
+	repl.toplevel (stream);
     }
 
     /** Constructor for demo application. */
@@ -33,9 +34,8 @@ public class Repl
 	reader = new LispReader ();
     }
 
-    public void toplevel ()
+    public void toplevel (final LispStream stream)
     {
-	final LispStream stream = new LispStream (System.in);
 	int index = 0;
 	while (true)
 	{
