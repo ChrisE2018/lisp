@@ -34,7 +34,7 @@ public class Definer
      */
     public void define (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
     {
-	final Symbol symbol = pkg.intern (symbolName);
+	final Symbol symbol = pkg.internPublic (symbolName);
 	final Method method = source.getClass ().getMethod (methodName, List.class);
 	symbol.setFunction (new StandardFunctionCell (source, method));
     }
@@ -48,7 +48,7 @@ public class Definer
      */
     public void defspecial (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
     {
-	final Symbol symbol = pkg.intern (symbolName);
+	final Symbol symbol = pkg.internPublic (symbolName);
 	final Method method = source.getClass ().getMethod (methodName, Interpreter.class, List.class);
 	symbol.setFunction (new SpecialFunctionCell (source, method));
     }
@@ -62,7 +62,7 @@ public class Definer
      */
     public void defmacro (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
     {
-	final Symbol symbol = pkg.intern (symbolName);
+	final Symbol symbol = pkg.internPublic (symbolName);
 	final Method method = source.getClass ().getMethod (methodName, List.class);
 	symbol.setFunction (new MacroFunctionCell (source, method));
     }

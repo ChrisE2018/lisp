@@ -13,9 +13,6 @@ import java.util.Map.Entry;
  */
 public class Package implements Describer
 {
-    /** Control over parsing syntax is collected into the Parsing object. */
-    // private static final Parsing DEFAULT_PARSING = new Parsing ();
-
     private static final String PARSING_VARIABLE = "*parser*";
 
     private static int PACKAGE_ID = 0;
@@ -28,8 +25,11 @@ public class Package implements Describer
     /** Name of this package. */
     private final String packageName;
 
-    /** Symbols interned into this package locally. */
-    private final Map<String, Symbol> symbols = new HashMap<String, Symbol> ();
+    /** Private symbols interned into this package locally. */
+    private final Map<String, Symbol> privateSymbols = new HashMap<String, Symbol> ();
+
+    /** Public symbols interned into this package locally. */
+    private final Map<String, Symbol> publicSymbols = new HashMap<String, Symbol> ();
 
     public Package (final Package parent, final String name)
     {
@@ -66,35 +66,40 @@ public class Package implements Describer
     }
 
     /**
-     * Lookup a symbol locally or by inheritance but do not create the symbol if it is not already
-     * present.
+     * Lookup a public symbol locally or by inheritance but do not create the symbol if it is not
+     * already present.
      */
-    public Symbol find (final String name)
+    public Symbol findPublic (final String name)
     {
-	final Symbol result = symbols.get (name);
-	if (result != null)
+	Symbol result = publicSymbols.get (name);
+	if (result == null)
 	{
-	    return result;
+	    if (parent != null)
+	    {
+		result = parent.findPublic (name);
+	    }
 	}
-	if (parent != null)
-	{
-	    return parent.find (name);
-	}
-	return null;
+	return result;
     }
 
     /**
-     * Lookup a symbol locally and create it if not present. Does not inherit from parent packages.
+     * Lookup a public or private symbol locally or by inheritance but do not create the symbol if
+     * it is not already present.
      */
-    public Symbol internLocal (final String name)
+    public Symbol findPrivate (final String name)
     {
-	Symbol result = symbols.get (name);
-	if (result != null)
+	Symbol result = publicSymbols.get (name);
+	if (result == null)
 	{
-	    return result;
+	    result = privateSymbols.get (name);
+	    if (result == null)
+	    {
+		if (parent != null)
+		{
+		    result = parent.findPrivate (name);
+		}
+	    }
 	}
-	result = new Symbol (this, name);
-	symbols.put (name, result);
 	return result;
     }
 
@@ -102,26 +107,49 @@ public class Package implements Describer
      * Lookup a symbol from this package or parent packages (by inheritance). If not found, create
      * it locally.
      */
-    public Symbol intern (final String name)
+    public Symbol internPrivate (final String name)
     {
-	Symbol result = find (name);
-	if (result != null)
+	Symbol result = findPrivate (name);
+	if (result == null)
 	{
-	    return result;
+	    result = new Symbol (this, name);
+	    privateSymbols.put (name, result);
 	}
-	if (name.equals ("quote"))
-	{
-	    System.out.printf ("Quote interned %s\n", this);
-	}
-	result = new Symbol (this, name);
-	symbols.put (name, result);
 	return result;
+    }
+
+    /**
+     * Lookup a public symbol from this package or parent packages (by inheritance). If not found,
+     * create it locally and make it public.
+     */
+    public Symbol internPublic (final String name)
+    {
+	Symbol result = findPublic (name);
+	if (result == null)
+	{
+	    result = privateSymbols.get (name);
+	    if (result != null)
+	    {
+		privateSymbols.remove (name);
+	    }
+	    else
+	    {
+		result = new Symbol (this, name);
+	    }
+	    publicSymbols.put (name, result);
+	}
+	return result;
+    }
+
+    public Object isPublic (final Symbol symbol)
+    {
+	return publicSymbols.values ().contains (symbol);
     }
 
     /** Control over parsing syntax is collected into a Parsing object. */
     public Parsing getParsing ()
     {
-	final Symbol symbol = find (PARSING_VARIABLE);
+	final Symbol symbol = findPublic (PARSING_VARIABLE);
 	if (symbol != null)
 	{
 	    final Object value = symbol.getValue ();
@@ -170,12 +198,14 @@ public class Package implements Describer
 	    result.put ("Child" + childCount, child);
 	    childCount++;
 	}
-	result.put ("Symbols", symbols.size ());
-	getSymbolDescriptions (result, 5);
+	result.put ("Public", publicSymbols.size ());
+	getSymbolDescriptions (result, publicSymbols, 5);
+	result.put ("Private", privateSymbols.size ());
+	getSymbolDescriptions (result, privateSymbols, 5);
 	return result;
     }
 
-    private void getSymbolDescriptions (final Map<String, Object> result, final int limit)
+    private void getSymbolDescriptions (final Map<String, Object> result, final Map<String, Symbol> symbols, final int limit)
     {
 	int count = 0;
 	for (final Entry<String, Symbol> entry : symbols.entrySet ())

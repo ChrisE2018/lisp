@@ -19,6 +19,8 @@ public class Parsing
     private static final char CLOSE_BRACE = '}';
     private static final char CLOSE_BRACKET = ']';
 
+    private static final boolean MAP_SYNTAX = false;
+
     /**
      * Map from list type to concrete class. Don't use angle brackets so they are available for
      * comparison operators.
@@ -33,8 +35,8 @@ public class Parsing
 
     private static final Object[][] WRAPPER_SYMBOLS =
 	{
-	 {SINGLE_QUOTE, SYSTEM_PACKAGE.intern ("quote")},
-	 {EXCLAMATION, SYSTEM_PACKAGE.intern ("not")}};
+	 {SINGLE_QUOTE, SYSTEM_PACKAGE.internPublic ("quote")},
+	 {EXCLAMATION, SYSTEM_PACKAGE.internPublic ("not")}};
 
     private static Parsing DEFAULT_PARSING = null;
 
@@ -89,16 +91,20 @@ public class Parsing
 	switch (chr)
 	{
 	    case DOUBLE_QUOTE:
+	    case SINGLE_QUOTE:
 	    case OPEN_PAREN:
 	    case OPEN_BRACE:
 	    case OPEN_BRACKET:
 	    case CLOSE_PAREN:
 	    case CLOSE_BRACE:
 	    case CLOSE_BRACKET:
+	    {
+		return false;
+	    }
 	    case COLON:
 	    case COMMA:
 	    {
-		return false;
+		return !MAP_SYNTAX;
 	    }
 	}
 	return true;

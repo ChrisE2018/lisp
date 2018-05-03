@@ -312,7 +312,7 @@ public class Primitives extends Definer
 		final String key = entry.getKey ();
 		final Object value = entry.getValue ();
 		final String doc = d.getDescriberDocumentation (arg, key);
-		final Symbol symbol = pkg.intern (String.format ("d%d", index));
+		final Symbol symbol = pkg.internPrivate (String.format ("d%d", index));
 		symbol.setValue (value);
 		if (doc != null)
 		{

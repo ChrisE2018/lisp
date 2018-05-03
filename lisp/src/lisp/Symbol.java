@@ -9,7 +9,7 @@ import lisp.eval.FunctionCell;
 public class Symbol implements Describer
 {
     /** Character to separate a package prefix from a symbol name. */
-    public static final char PACKAGE_SEPARATOR = '.';
+    public static final char PACKAGE_SEPARATOR = ':';
 
     private final Package symbolPackage;
 
@@ -158,9 +158,19 @@ public class Symbol implements Describer
     {
 	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
 	result.put ("Package", symbolPackage);
-	result.put ("Value", symbolValue);
-	result.put ("Function", symbolFunction);
-	result.put ("Plist", symbolPlist);
+	result.put ("Public", symbolPackage.isPublic (this));
+	if (symbolValue != null)
+	{
+	    result.put ("Value", symbolValue);
+	}
+	if (symbolFunction != null)
+	{
+	    result.put ("Function", symbolFunction);
+	}
+	if (symbolPlist != null)
+	{
+	    result.put ("Plist", symbolPlist);
+	}
 	return result;
     }
 }

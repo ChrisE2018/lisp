@@ -29,12 +29,12 @@ public class LispReader
 	{
 	    return readString (parsing.getStringDelimiter (), in);
 	}
-	final Map<Object, Object> mapResult = parsing.getMapResult (chr);
-	if (mapResult != null)
-	{
-	    in.read ();
-	    return readMap (in, pkg, mapResult);
-	}
+	// final Map<Object, Object> mapResult = parsing.getMapResult (chr);
+	// if (mapResult != null)
+	// {
+	// in.read ();
+	// return readMap (in, pkg, mapResult);
+	// }
 	final LispList listResult = parsing.getParenList (chr);
 	if (listResult != null)
 	{
@@ -129,6 +129,10 @@ public class LispReader
 	    buffer.append (in.read ());
 	}
 	final String s = buffer.toString ();
+	if (s.length () == 0)
+	{
+	    throw new IOException ("Character " + (in.peek ()) + " cannot start an atom");
+	}
 	// Try parsing an integer
 	try
 	{
@@ -154,13 +158,35 @@ public class LispReader
 	final int pos = s.indexOf (Symbol.PACKAGE_SEPARATOR);
 	if (pos >= 0)
 	{
-	    // Implement package prefix
+	    // Process package prefix
 	    final String packageName = s.substring (0, pos);
-	    final String symbolName = s.substring (pos + 1);
 	    final Package p = PackageFactory.getPackage (packageName);
-	    return p.intern (symbolName);
+	    if (s.charAt (pos + 1) == Symbol.PACKAGE_SEPARATOR)
+	    {
+		if (s.charAt (pos + 2) == Symbol.PACKAGE_SEPARATOR)
+		{
+		    // Lookup public external symbol, creating it if needed.
+		    final String symbolName = s.substring (pos + 3);
+		    return p.internPublic (symbolName);
+		}
+		// Lookup private internal symbol, creating it if needed.
+		final String symbolName = s.substring (pos + 2);
+		return p.internPrivate (symbolName);
+	    }
+	    else
+	    {
+		// Lookup public external symbol. Don't create the symbol if it does not already
+		// exist.
+		final String symbolName = s.substring (pos + 1);
+		final Symbol result = p.findPublic (symbolName);
+		if (result == null)
+		{
+		    throw new IOException ("Package " + packageName + " has no public symbol " + symbolName);
+		}
+		return result;
+	    }
 	}
-	return pkg.intern (s);
+	return pkg.internPrivate (s);
     }
 
     @Override

@@ -54,7 +54,7 @@ public class Repl
     private void rep (final LispStream stream, final int index) throws Exception
     {
 	final Package pkg = PackageFactory.getDefaultPackage ();
-	final Symbol e = pkg.intern ("e" + index);
+	final Symbol e = pkg.internPrivate ("e" + index);
 	System.out.printf ("[%s] ", e);
 	Object form = null;
 	try
@@ -65,6 +65,7 @@ public class Repl
 	{
 	    try
 	    {
+		System.out.printf ("Error reading expression: %s\n", ex);
 		// Read to a newline character
 		while (stream.read () != '\n')
 		{
@@ -73,7 +74,7 @@ public class Repl
 	    }
 	    catch (final Throwable exx)
 	    {
-		System.out.printf ("[Error recovering from error: %s]", exx);
+		System.out.printf ("[Error recovering from error: %s]\n", exx);
 	    }
 	    return;
 	}
@@ -86,7 +87,7 @@ public class Repl
 	final StringBuilder buffer = new StringBuilder ();
 	// buffer.append (form.toString ());
 	// System.out.println (buffer);
-	final Symbol v = pkg.intern ("v" + index);
+	final Symbol v = pkg.internPrivate ("v" + index);
 	System.out.printf ("[%s] ==> ", v);
 	final Object value = interpreter.eval (form);
 	v.setValue (value);

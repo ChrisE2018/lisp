@@ -65,7 +65,7 @@ public class PackageFactory
 		{
 		    final String symbolName = (String)constantDefinition[i];
 		    final Object value = constantDefinition[i + 1];
-		    final Symbol symbol = pkg.intern (symbolName);
+		    final Symbol symbol = pkg.internPublic (symbolName);
 		    symbol.setValue (value);
 		    symbol.setConstantValue (true);
 		}
