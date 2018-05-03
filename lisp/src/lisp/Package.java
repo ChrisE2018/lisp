@@ -19,8 +19,11 @@ public class Package implements Describer
 
     private final int packageId = ++PACKAGE_ID;
 
-    /** Parent package to use for looking up symbols not found locally. */
-    private final Package parent;
+    /** External symbols in parent packages are inherited. */
+    private final Set<Package> parentPackages = new LinkedHashSet<Package> ();
+
+    /** External symbols will be inherited by children. */
+    private final Set<Package> childPackages = new LinkedHashSet<Package> ();
 
     /** Name of this package. */
     private final String packageName;
@@ -31,32 +34,27 @@ public class Package implements Describer
     /** Public symbols interned into this package locally. */
     private final Map<String, Symbol> publicSymbols = new HashMap<String, Symbol> ();
 
-    public Package (final Package parent, final String name)
+    public Package (final String name)
     {
-	this.parent = parent;
 	packageName = name;
 	// [TODO] Use a logger
 	System.out.printf ("Creating Package %s\n", this);
     }
 
-    /** Parent package to use for looking up symbols not found locally. */
-    public Package getParent ()
+    public void usePackage (final Package parentPackage)
     {
-	return parent;
+	parentPackages.add (parentPackage);
+	parentPackage.childPackages.add (this);
     }
 
-    /** Child packages that inherit symbols from this package. */
-    public LispList getChildren ()
+    public Set<Package> getParents ()
     {
-	final LispList children = new LispList ();
-	for (final Package pkg : PackageFactory.getPackageMap ().values ())
-	{
-	    if (pkg.getParent () == this)
-	    {
-		children.add (pkg);
-	    }
-	}
-	return children;
+	return parentPackages;
+    }
+
+    public Set<Package> getChildren ()
+    {
+	return childPackages;
     }
 
     /** Name of this package. */
@@ -74,9 +72,13 @@ public class Package implements Describer
 	Symbol result = publicSymbols.get (name);
 	if (result == null)
 	{
-	    if (parent != null)
+	    for (final Package parent : parentPackages)
 	    {
 		result = parent.findPublic (name);
+		if (result != null)
+		{
+		    return result;
+		}
 	    }
 	}
 	return result;
@@ -94,9 +96,13 @@ public class Package implements Describer
 	    result = privateSymbols.get (name);
 	    if (result == null)
 	    {
-		if (parent != null)
+		for (final Package parent : parentPackages)
 		{
 		    result = parent.findPrivate (name);
+		    if (result != null)
+		    {
+			return result;
+		    }
 		}
 	    }
 	}
@@ -177,10 +183,15 @@ public class Package implements Describer
 	buffer.append (packageName);
 	buffer.append (" ");
 	buffer.append (packageId);
-	if (parent != null)
+	for (final Package parent : parentPackages)
 	{
 	    buffer.append (" parent: ");
-	    buffer.append (parent);
+	    buffer.append (parent.packageName);
+	}
+	for (final Package child : childPackages)
+	{
+	    buffer.append (" child: ");
+	    buffer.append (child.packageName);
 	}
 	buffer.append (">");
 	return buffer.toString ();
@@ -191,9 +202,14 @@ public class Package implements Describer
     {
 	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
 	result.put ("Id", packageId);
-	result.put ("Parent", parent);
+	int parentCount = 0;
+	for (final Package parent : parentPackages)
+	{
+	    result.put ("Parent" + parentCount, parent);
+	    parentCount++;
+	}
 	int childCount = 0;
-	for (final Object child : getChildren ())
+	for (final Package child : childPackages)
 	{
 	    result.put ("Child" + childCount, child);
 	    childCount++;

@@ -353,13 +353,17 @@ public class Primitives extends Definer
     public Object getParentPackageEvaluator (final List<Object> arguments)
     {
 	final Package p = getPackage (arguments, 0);
-	return p.getParent ();
+	final LispList result = new LispList ();
+	result.addAll (p.getParents ());
+	return result;
     }
 
     public Object getChildPackagesEvaluator (final List<Object> arguments)
     {
 	final Package p = getPackage (arguments, 0);
-	return p.getChildren ();
+	final LispList result = new LispList ();
+	result.addAll (p.getChildren ());
+	return result;
     }
 
     @Override

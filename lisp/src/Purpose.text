@@ -1,0 +1,32 @@
+Java does not have good support for loading and manipulating configuration data. The properties file format is too limited and XML is too cumbersome. Python has constructs to define lists, tuples, maps and long strings right in the source code, which makes it easy to define flexible software configurations.
+
+What is configuration data? Some examples include mapping cities to time zones, or file extensions to MIME types or keystroke to commands. A simulation might define properties of ships or planes. The amount of configuration data supported is more than you want to hard-code, but may not enough to justify building a heavyweight database. The data should be separate from the code and easily changed, but hidden from end users. It isn't worth putting in a database and should not clutter the GUI, but also should not be buried deep in the code.
+
+Unit tests have a similar problem. You want to define a handful of examples of test data to validate a function. There might be hundreds of units tests, each with special requirements so you want some kind of a system, but don't want to write a big XML parser for each one.
+
+This Lisp implementation was started to test the idea of using Lisp syntax for this purpose. It is meant to be a Java library, not grown into a full Lisp language implementation. (There are many good existing Lisp language implementations out there.)
+
+Lisp syntax works well for this purpose.
+
+For example we might define a ship like this:
+
+(defship "enterprise" (type carrier) (length 1024) (speed 23)
+	(deck 1 (rooms 34))
+	(deck 2 (rooms 46)))
+
+A program can read this as data and easily parse the syntax. If more properties of a deck are required, it is easy to add more elements to the list. Once read in, this might end up as an instance of a Java class where it can be processed further.
+
+Standard Lisp syntax includes numbers, strings, symbols and lists. Traditionally lists are stored as linked lists, which allows for some interesting algorithmic tricks, but Java Lists work too. Java numbers and strings  can be used directly. Symbols are unique objects with some properties that can be manipulated. In Lisp a symbol can have a value or be defined as a function. (Some versions merge values and function definitions, like Python, other versions keep these concepts separate.) When a Lisp expression is read, the symbols are stored in a symbol table so there is only one symbol for each name. That means the value of a symbol can be set in one place and used elsewhere, like a global variable.
+
+Lists are written using parenthesis to mark the start and finish, but alternate syntax is possible. Braces or brackets could be used to enclose a list instead. This might be used for a purpose like annotations.
+
+A simple function definition:
+(def foo (a b) (+ a b))
+
+Annotated to define the type of the value:
+(def foo [integer] (a b) (+ a b))
+
+In addition to lists, a syntax for maps might be useful.
+{a:1, b : 2}
+
+The equals sign (=) should not be used for maps, because that would make it impossible to use for comparisons (=, <=, >= etc.).

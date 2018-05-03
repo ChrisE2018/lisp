@@ -11,18 +11,29 @@ public class PackageFactory
 
     private static boolean initializedp = false;
 
-    private static final String[][] PACKAGE_TREE =
-	{
-	 {null, GLOBAL_PACKAGE_NAME},
-	 {GLOBAL_PACKAGE_NAME, SYSTEM_PACKAGE_NAME},
-	 {SYSTEM_PACKAGE_NAME, DEFAULT_PACKAGE_NAME}};
+    /** Names of packages to create initially. */
+    private static final String[] INITIAL_PACKAGES =
+	{GLOBAL_PACKAGE_NAME, SYSTEM_PACKAGE_NAME, DEFAULT_PACKAGE_NAME};
 
+    /**
+     * Package use linking. Each entry is the packageName followed by the names of packages it uses.
+     */
+    private static final String[][] PACKAGE_USES =
+	{
+	 {SYSTEM_PACKAGE_NAME, GLOBAL_PACKAGE_NAME},
+	 {DEFAULT_PACKAGE_NAME, GLOBAL_PACKAGE_NAME, SYSTEM_PACKAGE_NAME}};
+
+    /**
+     * Predefined constant values. Each entry is packageName, (symbolName, symbolValue)*
+     */
     private static final Object[][] CONSTANT_SYMBOLS =
 	{
 	 {GLOBAL_PACKAGE_NAME, "true", Boolean.TRUE, "false", Boolean.FALSE}};
 
+    /** Map from package name to package object for all packages that exist. */
     private static final Map<String, Package> packages = new HashMap<String, Package> ();
 
+    /** Package we are working in currently. */
     private static Package defaultPackage = null;
 
     private PackageFactory ()
@@ -42,25 +53,27 @@ public class PackageFactory
 	    // [TODO] Use a logger
 	    System.out.printf ("Initializing PackageFactory\n");
 	    initializedp = true;
-	    for (final String[] p : PACKAGE_TREE)
+	    for (final String packageName : INITIAL_PACKAGES)
 	    {
-		final String parentName = p[0];
-		final String childName = p[1];
-		if (parentName == null)
+		final Package pkg = new Package (packageName);
+		packages.put (packageName, pkg);
+	    }
+	    for (final String[] p : PACKAGE_USES)
+	    {
+		final String packageName = p[0];
+		final Package pkg = getPackage (packageName);
+		for (int i = 1; i < p.length; i++)
 		{
-		    getPackage (null, childName);
-		}
-		else
-		{
-		    final Package child = getPackage (parentName, childName);
-		    packages.put (childName, child);
+		    final String usedPackageName = p[i];
+		    final Package usedPackage = getPackage (usedPackageName);
+		    pkg.usePackage (usedPackage);
 		}
 	    }
-	    defaultPackage = getPackage (GLOBAL_PACKAGE_NAME, DEFAULT_PACKAGE_NAME);
+	    defaultPackage = getPackage (DEFAULT_PACKAGE_NAME);
 	    for (final Object[] constantDefinition : CONSTANT_SYMBOLS)
 	    {
 		final String packageName = (String)constantDefinition[0];
-		final Package pkg = getPackage (GLOBAL_PACKAGE_NAME, packageName);
+		final Package pkg = getPackage (packageName);
 		for (int i = 1; i < constantDefinition.length; i += 2)
 		{
 		    final String symbolName = (String)constantDefinition[i];
@@ -75,8 +88,7 @@ public class PackageFactory
 
     public static Package getSystemPackage ()
     {
-	init ();
-	return getPackage (GLOBAL_PACKAGE_NAME, SYSTEM_PACKAGE_NAME);
+	return getPackage (SYSTEM_PACKAGE_NAME);
     }
 
     public static Package getDefaultPackage ()
@@ -87,18 +99,6 @@ public class PackageFactory
     public static void setDefaultPackage (final Package pkg)
     {
 	defaultPackage = pkg;
-    }
-
-    public static Package getPackage (final String parentName, final String packageName)
-    {
-	Package result = packages.get (packageName);
-	if (result == null)
-	{
-	    final Package parent = packages.get (parentName);
-	    result = new Package (parent, packageName);
-	    packages.put (packageName, result);
-	}
-	return result;
     }
 
     public static Package getPackage (final String packageName)
