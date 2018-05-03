@@ -32,6 +32,9 @@ public class Primitives extends Definer
 	define ("times", "timesEvaluator");
 	define ("*", "timesEvaluator");
 	define ("not", "notEvaluator");
+	defspecial ("or", "orEvaluator");
+	defspecial ("and", "andEvaluator");
+	defspecial ("if", "ifEvaluator");
 	define ("in-package", "inPackageEvaluator");
 	define ("java", "javaEvaluator");
 	// [TODO] Need javaStatic, javaNew
@@ -167,6 +170,69 @@ public class Primitives extends Definer
 	    return !b;
 	}
 	return Boolean.FALSE;
+    }
+
+    public Object orEvaluator (final Interpreter interpreter, final List<Object> arguments) throws Exception
+    {
+	for (int i = 1; i < arguments.size (); i++)
+	{
+	    final Object arg = arguments.get (i);
+	    final Object value = interpreter.eval (arg);
+	    if (isTrue (value))
+	    {
+		return value;
+	    }
+	}
+	return false;
+    }
+
+    public Object andEvaluator (final Interpreter interpreter, final List<Object> arguments) throws Exception
+    {
+	Object result = Boolean.TRUE;
+	for (int i = 1; i < arguments.size (); i++)
+	{
+	    final Object arg = arguments.get (i);
+	    final Object value = interpreter.eval (arg);
+	    if (!isTrue (value))
+	    {
+		return false;
+	    }
+	    result = value;
+	}
+	return result;
+    }
+
+    public Object ifEvaluator (final Interpreter interpreter, final List<Object> arguments) throws Exception
+    {
+	final Object test = interpreter.eval (arguments.get (1));
+	if (isTrue (test))
+	{
+	    return interpreter.eval (arguments.get (2));
+	}
+	Object result = Boolean.TRUE;
+	for (int i = 3; i < arguments.size (); i++)
+	{
+	    final Object arg = arguments.get (i);
+	    final Object value = interpreter.eval (arg);
+	    result = value;
+	}
+	return result;
+    }
+
+    private boolean isTrue (final Object value)
+    {
+	if (value != null)
+	{
+	    if (value instanceof Boolean)
+	    {
+		if (false == (Boolean)value)
+		{
+		    return false;
+		}
+	    }
+	    return true;
+	}
+	return false;
     }
 
     public Object inPackageEvaluator (final List<Object> arguments)
