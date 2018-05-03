@@ -183,16 +183,16 @@ public class Package implements Describer
 	buffer.append (packageName);
 	buffer.append (" ");
 	buffer.append (packageId);
-	for (final Package parent : parentPackages)
-	{
-	    buffer.append (" parent: ");
-	    buffer.append (parent.packageName);
-	}
-	for (final Package child : childPackages)
-	{
-	    buffer.append (" child: ");
-	    buffer.append (child.packageName);
-	}
+	// for (final Package parent : parentPackages)
+	// {
+	// buffer.append (" parent: ");
+	// buffer.append (parent.packageName);
+	// }
+	// for (final Package child : childPackages)
+	// {
+	// buffer.append (" child: ");
+	// buffer.append (child.packageName);
+	// }
 	buffer.append (">");
 	return buffer.toString ();
     }

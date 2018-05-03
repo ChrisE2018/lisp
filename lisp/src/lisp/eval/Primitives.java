@@ -21,28 +21,52 @@ public class Primitives extends Definer
 	super (PackageFactory.getSystemPackage ());
     }
 
+    /**
+     * Bind java functions to lisp symbols.
+     * <p>
+     * Note that special forms like quote and setq are passed the interpreter as a first parameter
+     * and the entire expression (including the function name) as the arguments. The real arguments
+     * start at the second position. This is convenient because the interpreter is already
+     * processing the whole expression and would have to allocate a new object to remove the
+     * function from the start of the expression.
+     * </p>
+     * <p>
+     * Normal functions are just passed the evaluated arguments. The real arguments start at the
+     * beginning. This is convenient since the interpreter creates a new list for the arguments
+     * anyhow.
+     * </p>
+     *
+     * @throws NoSuchMethodException
+     * @throws SecurityException
+     */
     private void definePrimitives () throws NoSuchMethodException, SecurityException
     {
 	defspecial ("quote", "quoteEvaluator");
 	defspecial ("def", "defEvaluator");
 	defspecial ("setq", "setqEvaluator");
 	define ("list", "listEvaluator");
+	// [TODO] Create immutable list
 	define ("plus", "plusEvaluator");
 	define ("+", "plusEvaluator");
 	define ("times", "timesEvaluator");
 	define ("*", "timesEvaluator");
+	// [TODO] subtraction, division, comparison, trig, abs
 	define ("not", "notEvaluator");
 	defspecial ("or", "orEvaluator");
 	defspecial ("and", "andEvaluator");
 	defspecial ("if", "ifEvaluator");
+	// [TODO] Property list access
+	// [TODO] Maps, sets, union, intersection, difference
 	define ("in-package", "inPackageEvaluator");
+	// [TODO] Package creation, uses, export, import
 	define ("java", "javaEvaluator");
 	// [TODO] Need javaStatic, javaNew
 	define ("describe", "describeEvaluator");
 	define ("getDefaultPackage", "getDefaultPackageEvaluator");
 	define ("getSystemPackage", "getSystemPackageEvaluator");
-	define ("getParentPackage", "getParentPackageEvaluator");
+	define ("getParentPackages", "getParentPackagesEvaluator");
 	define ("getChildPackages", "getChildPackagesEvaluator");
+	// [TODO] File functions
     }
 
     /**
@@ -416,7 +440,7 @@ public class Primitives extends Definer
 	return PackageFactory.getSystemPackage ();
     }
 
-    public Object getParentPackageEvaluator (final List<Object> arguments)
+    public Object getParentPackagesEvaluator (final List<Object> arguments)
     {
 	final Package p = getPackage (arguments, 0);
 	final LispList result = new LispList ();
