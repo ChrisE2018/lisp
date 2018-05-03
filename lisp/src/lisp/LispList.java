@@ -4,7 +4,7 @@ package lisp;
 import java.util.*;
 
 /** Extended List with nice external representation. */
-public class LispList extends ArrayList<Object>
+public class LispList extends ArrayList<Object> implements Describer
 {
     /**
      * The parsing control should be obtained from the current package. Currently it is a constant.
@@ -95,5 +95,16 @@ public class LispList extends ArrayList<Object>
 	// print (buffer);
 	// buffer.append (">");
 	return buffer.toString ();
+    }
+
+    @Override
+    public Map<String, Object> getDescriberValues (final Object target)
+    {
+	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	for (int i = 0; i < size (); i++)
+	{
+	    result.put ("element" + i, get (i));
+	}
+	return result;
     }
 }
