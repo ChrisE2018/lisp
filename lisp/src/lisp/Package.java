@@ -5,9 +5,9 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- * Packages contain symbols and help the reader function. <br>
- * [TODO] Define usePackage mechanism to extend parent child hierarchy. <br>
- * [TODO] Consider internal/external symbols.
+ * Packages contain symbols and help the reader function. Symbols can be internal (private) or
+ * external (public). A symbol lookup in the current (default) package will create a private symbol.
+ * A normal reference to another package will only see public symbols.
  *
  * @author cre
  */

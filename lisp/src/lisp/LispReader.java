@@ -2,7 +2,6 @@
 package lisp;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Read list structure from source text.
@@ -71,34 +70,35 @@ public class LispReader
 	return result;
     }
 
-    /** Read a map using colon and comma to separate entries. */
-    private Object readMap (final LispStream in, final Package pkg, final Map<Object, Object> mapResult) throws IOException
-    {
-	final Parsing parsing = pkg.getParsing ();
-	final char close = parsing.getMapClose ();
-	final char mapCombiner = parsing.getMapCombiner ();
-	final char mapSeparator = parsing.getMapSeparator ();
-	boolean done = in.peek (close);
-	while (!done)
-	{
-	    final Object key = read (in, pkg);
-	    parsing.skipBlanks (in);
-	    in.read (mapCombiner);
-	    final Object value = read (in, pkg);
-	    mapResult.put (key, value);
-	    parsing.skipBlanks (in);
-	    if (in.peek (close))
-	    {
-		done = true;
-	    }
-	    else
-	    {
-		in.read (mapSeparator);
-	    }
-	}
-	in.read ();
-	return mapResult;
-    }
+    // /** Read a map using colon and comma to separate entries. */
+    // private Object readMap (final LispStream in, final Package pkg, final Map<Object, Object>
+    // mapResult) throws IOException
+    // {
+    // final Parsing parsing = pkg.getParsing ();
+    // final char close = parsing.getMapClose ();
+    // final char mapCombiner = parsing.getMapCombiner ();
+    // final char mapSeparator = parsing.getMapSeparator ();
+    // boolean done = in.peek (close);
+    // while (!done)
+    // {
+    // final Object key = read (in, pkg);
+    // parsing.skipBlanks (in);
+    // in.read (mapCombiner);
+    // final Object value = read (in, pkg);
+    // mapResult.put (key, value);
+    // parsing.skipBlanks (in);
+    // if (in.peek (close))
+    // {
+    // done = true;
+    // }
+    // else
+    // {
+    // in.read (mapSeparator);
+    // }
+    // }
+    // in.read ();
+    // return mapResult;
+    // }
 
     /**
      * Read a double quoted string as a java String.

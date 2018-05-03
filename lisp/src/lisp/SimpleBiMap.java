@@ -3,6 +3,16 @@ package lisp;
 
 import java.util.*;
 
+/**
+ * Bidirectional map implementation. This implementation just maintains separate maps for the
+ * forward and reverse lookup. Only the minimal operations required are implemented. The values must
+ * be supplied in the constructor and are constant.
+ *
+ * @see https://stackoverflow.com/questions/1670038/does-java-have-a-hashmap-with-reverse-lookup
+ * @author cre
+ * @param <A>
+ * @param <B>
+ */
 public class SimpleBiMap<A, B>
 {
     private final Map<A, B> forward = new HashMap<A, B> ();

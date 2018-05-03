@@ -4,7 +4,10 @@ package lisp;
 import java.io.IOException;
 import java.util.*;
 
-/** Control over parsing syntax is collected into the Parsing object. */
+/**
+ * Control over parsing syntax is collected into the Parsing object. Various constants in this class
+ * could be made customizable to modify the parsing behavior. That is a project for another day.
+ */
 public class Parsing
 {
     private static final char EXCLAMATION = '!';
@@ -19,13 +22,17 @@ public class Parsing
     private static final char CLOSE_BRACE = '}';
     private static final char CLOSE_BRACKET = ']';
 
+    /**
+     * As an experiment the syntax {var1:val1, var2:val2} was used to define a map. It didn't work
+     * out. Some remaining parts of that implementation can be controlled by this flag.
+     */
     private static final boolean MAP_SYNTAX = false;
 
     /**
      * Map from list type to concrete class. Don't use angle brackets so they are available for
      * comparison operators.
      */
-    private final Character[][] LIST_CLASSES =
+    private static final Character[][] LIST_DELIMITERS =
 	{
 	 {OPEN_PAREN, CLOSE_PAREN},
 	 {OPEN_BRACE, CLOSE_BRACE},
@@ -136,7 +143,7 @@ public class Parsing
 
     public LispList getParenList (final char open)
     {
-	for (final Character[] slot : LIST_CLASSES)
+	for (final Character[] slot : LIST_DELIMITERS)
 	{
 	    final Character openChar = slot[0];
 	    if (openChar.charValue () == open)

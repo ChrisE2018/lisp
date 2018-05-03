@@ -11,12 +11,16 @@ public class Symbol implements Describer
     /** Character to separate a package prefix from a symbol name. */
     public static final char PACKAGE_SEPARATOR = ':';
 
+    /** The package containing this symbol. It may be public (external) or private (internal). */
     private final Package symbolPackage;
 
+    /** The name of the symbol. */
     private final String symbolName;
 
+    /** The global value of the symbol. */
     private Object symbolValue;
 
+    /** The global function definition for a symbol. */
     private FunctionCell symbolFunction;
 
     /** Symbol properties with lazy initialization. */
@@ -40,21 +44,25 @@ public class Symbol implements Describer
 	symbolName = name;
     }
 
+    /** The package containing this symbol. It may be public (external) or private (internal). */
     public Package getPackage ()
     {
 	return symbolPackage;
     }
 
+    /** The name of the symbol. */
     public String getName ()
     {
 	return symbolName;
     }
 
+    /** The global value of the symbol. */
     public Object getValue ()
     {
 	return symbolValue;
     }
 
+    /** The global value of the symbol. */
     public void setValue (final Object value)
     {
 	if (constantValue)
@@ -70,11 +78,13 @@ public class Symbol implements Describer
 	this.constantValue = constantValue;
     }
 
+    /** The global function definition for a symbol. */
     public FunctionCell getFunction ()
     {
 	return symbolFunction;
     }
 
+    /** The global function definition for a symbol. */
     public void setFunction (final FunctionCell function)
     {
 	if (constantFunction)
@@ -94,6 +104,7 @@ public class Symbol implements Describer
 	this.constantFunction = constantFunction;
     }
 
+    /** Symbol properties with lazy initialization. */
     public Object get (final Symbol key)
     {
 	Object result = null;
@@ -104,6 +115,7 @@ public class Symbol implements Describer
 	return result;
     }
 
+    /** Symbol properties with lazy initialization. */
     public void put (final Symbol key, final Object val)
     {
 	if (symbolPlist == null)
@@ -113,6 +125,7 @@ public class Symbol implements Describer
 	symbolPlist.put (key, val);
     }
 
+    /** Symbol properties with lazy initialization. */
     public Object remove (final Symbol key)
     {
 	Object result = null;
