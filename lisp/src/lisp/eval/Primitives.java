@@ -67,6 +67,7 @@ public class Primitives extends Definer
 	define ("getParentPackages", "getParentPackagesEvaluator");
 	define ("getChildPackages", "getChildPackagesEvaluator");
 	// [TODO] File functions
+	define ("printf", "printfEvaluator");
     }
 
     /**
@@ -454,6 +455,16 @@ public class Primitives extends Definer
 	final LispList result = new LispList ();
 	result.addAll (p.getChildren ());
 	return result;
+    }
+
+    public Object printfEvaluator (final List<Object> arguments)
+    {
+	final String format = getString (arguments, 0);
+	final int size = arguments.size ();
+	final Object[] args = new Object[size - 1];
+	arguments.subList (1, size).toArray (args);
+	System.out.printf (format, args);
+	return null;
     }
 
     @Override
