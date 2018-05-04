@@ -85,6 +85,11 @@ public class LispStream
 	}
     }
 
+    public void close () throws IOException
+    {
+	stream.close ();
+    }
+
     @Override
     public String toString ()
     {
