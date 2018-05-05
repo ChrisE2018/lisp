@@ -8,6 +8,18 @@ import lisp.eval.*;
 /** Class to read a lisp file and evaluate the forms in the file. */
 public class FileReader
 {
+    private boolean trace = false;
+
+    public void setTrace (final boolean trace)
+    {
+	this.trace = trace;
+    }
+
+    public Object read (final Interpreter interpreter, final Package pkg, final String pathname) throws Exception
+    {
+	return read (interpreter, pkg, new File (pathname));
+    }
+
     public Object read (final Interpreter interpreter, final File file) throws Exception
     {
 	return read (interpreter, PackageFactory.getDefaultPackage (), file);
@@ -42,6 +54,10 @@ public class FileReader
 		if (form != null)
 		{
 		    result = interpreter.eval (form);
+		    if (trace)
+		    {
+			System.out.printf ("%s => %s %n", form, result);
+		    }
 		}
 	    }
 	}

@@ -1,7 +1,6 @@
 
 package lisp.eval;
 
-import java.lang.reflect.*;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -59,8 +58,6 @@ public class Primitives extends Definer
 	// [TODO] Maps, sets, union, intersection, difference
 	define ("in-package", "inPackageEvaluator");
 	// [TODO] Package creation, uses, export, import
-	define ("java", "javaEvaluator");
-	// [TODO] Need javaStatic, javaNew
 	define ("describe", "describeEvaluator");
 	define ("getDefaultPackage", "getDefaultPackageEvaluator");
 	define ("getSystemPackage", "getSystemPackageEvaluator");
@@ -267,113 +264,6 @@ public class Primitives extends Definer
 	return pkg;
     }
 
-    public Object javaEvaluator (final List<Object> arguments)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
-    {
-	final Object target = getObject (arguments, 0);
-	final String method = coerceString (arguments.get (1), true);
-	final Class<?> cls = target.getClass ();
-	return javaMethodCall (target, cls, method, arguments);
-    }
-
-    /**
-     * Value to return when a method call fails. <br>
-     * [TODO] Use an Exception instead.
-     */
-    private static final Object NO_RETURN_VALUE = new Integer (0);
-
-    /**
-     * Recursive method to perform a java method call.Actual arguments start at argument 2.
-     *
-     * @throws InvocationTargetException
-     * @throws IllegalArgumentException
-     * @throws IllegalAccessException
-     */
-    private Object javaMethodCall (final Object target, final Class<?> cls, final String methodName, final List<Object> arguments)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
-    {
-	// Get local methods. Need to apply recursively to superclass
-	final Method[] methods = cls.getDeclaredMethods ();
-	for (final Method method : methods)
-	{
-	    if (method.getName ().equals (methodName))
-	    {
-		if (method.getParameterCount () == arguments.size () - 2)
-		{
-		    final Object result = invokeMethod (target, method, arguments);
-		    if (result != NO_RETURN_VALUE)
-		    {
-			return result;
-		    }
-		}
-	    }
-	}
-	final Class<?> parentClass = cls.getSuperclass ();
-	if (parentClass == null)
-	{
-	    throw new IllegalArgumentException ("Can't apply method to object");
-	}
-	return javaMethodCall (target, parentClass, methodName, arguments);
-    }
-
-    private Object invokeMethod (final Object target, final Method method, final List<Object> arguments)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
-    {
-	final Class<?>[] parameters = method.getParameterTypes ();
-	final Object[] actuals = new Object[parameters.length];
-	for (int i = 0; i < parameters.length; i++)
-	{
-	    final Object arg = arguments.get (i + 2);
-	    final Object actual = coerceToParameter (parameters[i], arg);
-	    if (actual == NO_RETURN_VALUE)
-	    {
-		return NO_RETURN_VALUE;
-	    }
-	    actuals[i] = actual;
-	    // Scan arguments and try to coerce to valid types.
-	    // If all args can be coerced, then call the method.
-	}
-	return method.invoke (target, actuals);
-    }
-
-    private Object coerceToParameter (final Class<?> p, final Object arg)
-    {
-	final Class<?> argClass = arg.getClass ();
-	if (p.isAssignableFrom (argClass))
-	{
-	    return arg;
-	}
-	if (p == String.class)
-	{
-	    // Handle String from Symbol or String
-	    if (arg instanceof Symbol)
-	    {
-		return ((Symbol)arg).getName ();
-	    }
-	    if (arg instanceof String)
-	    {
-		return arg;
-	    }
-	}
-	// [TODO] Handle char, long, short, boolean etc.
-	if (p == int.class || p == Integer.class)
-	{
-	    // Handle int from Lisp int
-	    if (arg instanceof Integer)
-	    {
-		return arg;
-	    }
-	}
-	if (p == double.class || p == Double.class)
-	{
-	    if (arg instanceof Double)
-	    {
-		return arg;
-	    }
-	}
-	return NO_RETURN_VALUE;
-    }
-
     public Object describeEvaluator (final List<Object> arguments)
     {
 	for (final Object arg : arguments)
@@ -385,39 +275,57 @@ public class Primitives extends Definer
 
     private void describe (final Object arg)
     {
-	final Package pkg = PackageFactory.getDefaultPackage ();
 	System.out.printf ("Describe: %s \n", arg);
-	if (arg == null)
+	if (arg != null)
 	{
-
-	}
-	else if (arg instanceof Describer)
-	{
-	    final Describer d = (Describer)arg;
-	    int index = 0;
-	    final Map<String, Object> description = d.getDescriberValues (arg);
-	    for (final Entry<String, Object> entry : description.entrySet ())
+	    final Describer d = getDescriber (arg);
+	    if (d != null)
 	    {
-		// Make a symbol using the index value, i.e., d001
-		++index;
-		final String key = entry.getKey ();
-		final Object value = entry.getValue ();
-		final String doc = d.getDescriberDocumentation (arg, key);
-		final Symbol symbol = pkg.internPrivate (String.format ("d%d", index));
-		symbol.setValue (value);
-		if (doc != null)
-		{
-		    System.out.printf ("[%5s] %s: %s %s\n", symbol, key, value, doc);
-		}
-		else
-		{
-		    System.out.printf ("[%5s] %s: %s\n", symbol, key, value);
-		}
+		describe (d, arg);
+	    }
+	    else
+	    {
+		System.out.printf ("Class: %s \n", arg.getClass ().getCanonicalName ());
 	    }
 	}
-	else
+    }
+
+    private Describer getDescriber (final Object arg)
+    {
+	if (arg instanceof Describer)
 	{
-	    System.out.printf ("Class: %s \n", arg.getClass ().getCanonicalName ());
+	    return (Describer)arg;
+	}
+	if (arg instanceof List)
+	{
+	    return new LispList ();
+	}
+	return null;
+    }
+
+    private void describe (final Describer d, final Object arg)
+    {
+	final Package pkg = PackageFactory.getDefaultPackage ();
+	int index = 0;
+	final Map<String, Object> description = d.getDescriberValues (arg);
+	for (final Entry<String, Object> entry : description.entrySet ())
+	{
+	    // Make a symbol using the index value, i.e., d001
+	    ++index;
+	    final String key = entry.getKey ();
+	    final Object value = entry.getValue ();
+	    final String doc = d.getDescriberDocumentation (arg, key);
+	    final Symbol symbol = pkg.internPrivate (String.format ("d%d", index));
+	    symbol.setValue (value);
+	    if (doc != null)
+	    {
+		System.out.printf ("[%5s] %s: %s %s\n", symbol, key, value, doc);
+	    }
+	    else
+	    {
+		final String type = value == null ? "null" : value.getClass ().getSimpleName ();
+		System.out.printf ("[%5s] %s: %s (%s)\n", symbol, key, value, type);
+	    }
 	}
     }
 

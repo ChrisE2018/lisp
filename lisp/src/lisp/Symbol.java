@@ -56,6 +56,12 @@ public class Symbol implements Describer
 	return symbolName;
     }
 
+    /** The name of the symbol. */
+    public boolean is (final String s)
+    {
+	return symbolName.equals (s);
+    }
+
     /** The global value of the symbol. */
     public Object getValue ()
     {

@@ -100,10 +100,12 @@ public class LispList extends ArrayList<Object> implements Describer
     @Override
     public Map<String, Object> getDescriberValues (final Object target)
     {
+	@SuppressWarnings ("unchecked")
+	final List<Object> t = (List<Object>)target;
 	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
-	for (int i = 0; i < size (); i++)
+	for (int i = 0; i < t.size (); i++)
 	{
-	    result.put ("element" + i, get (i));
+	    result.put ("element" + i, t.get (i));
 	}
 	return result;
     }
