@@ -143,6 +143,28 @@ public class Symbol implements Describer
 	return result;
     }
 
+    public Symbol gensym ()
+    {
+	final StringBuilder buffer = new StringBuilder ();
+	buffer.append (symbolName);
+	int length = buffer.length ();
+	while (Character.isDigit (buffer.charAt (length - 1)))
+	{
+	    buffer.setLength (--length);
+	}
+	for (int i = 1; true; i++)
+	{
+	    buffer.append (i);
+	    final String name = buffer.toString ();
+	    final Symbol oldSymbol = symbolPackage.findPrivate (name);
+	    if (oldSymbol == null)
+	    {
+		return symbolPackage.internPrivate (name);
+	    }
+	    buffer.setLength (length);
+	}
+    }
+
     /**
      * Provide a method for iterating through plist entries.
      *

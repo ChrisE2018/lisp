@@ -44,6 +44,10 @@ public class Repl
 		Thread.sleep (100);
 		rep (stream, ++index);
 	    }
+	    catch (final java.lang.reflect.InvocationTargetException e)
+	    {
+		e.getCause ().printStackTrace ();
+	    }
 	    catch (final Throwable e)
 	    {
 		e.printStackTrace ();

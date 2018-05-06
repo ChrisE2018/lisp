@@ -85,8 +85,8 @@ public class Package implements Describer
     }
 
     /**
-     * Lookup a public or private symbol locally or by inheritance but do not create the symbol if
-     * it is not already present.
+     * Lookup a public or private symbol locally. Do not create the symbol if it is not already
+     * present.
      */
     public Symbol findPrivate (final String name)
     {
@@ -98,7 +98,7 @@ public class Package implements Describer
 	    {
 		for (final Package parent : parentPackages)
 		{
-		    result = parent.findPrivate (name);
+		    result = parent.findPublic (name);
 		    if (result != null)
 		    {
 			return result;

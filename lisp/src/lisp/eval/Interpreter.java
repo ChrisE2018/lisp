@@ -91,11 +91,7 @@ public class Interpreter extends BasicDefiner
 		{
 		    try
 		    {
-			final Object result = invokeMethod (target, method, arguments);
-			// if (result != NO_RETURN_VALUE)
-			// {
-			return result;
-			// }
+			return invokeMethod (target, method, arguments);
 		    }
 		    catch (final CoerceError e)
 		    {
@@ -121,10 +117,6 @@ public class Interpreter extends BasicDefiner
 	{
 	    final Object arg = arguments.get (i + 2);
 	    final Object actual = coerceToParameter (parameters[i], arg);
-	    // if (actual == NO_RETURN_VALUE)
-	    // {
-	    // return NO_RETURN_VALUE;
-	    // }
 	    actuals[i] = actual;
 	    // Scan arguments and try to coerce to valid types.
 	    // If all args can be coerced, then call the method.

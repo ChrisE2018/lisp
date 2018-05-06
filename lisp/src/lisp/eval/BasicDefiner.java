@@ -186,7 +186,7 @@ public class BasicDefiner
 		return arg;
 	    }
 	}
-	// [TODO] Handle char, long, short, boolean etc.
+	// [TODO] Handle char, long, short etc.
 	if (p == int.class || p == Integer.class)
 	{
 	    // Handle int from Lisp int
@@ -202,8 +202,14 @@ public class BasicDefiner
 		return arg;
 	    }
 	}
+	if (p == boolean.class || p == Boolean.class)
+	{
+	    if (arg instanceof Boolean)
+	    {
+		return arg;
+	    }
+	}
 	throw new CoerceError ("Can't coerce " + arg + " to " + p);
-	// return NO_RETURN_VALUE;
     }
 
     @Override
