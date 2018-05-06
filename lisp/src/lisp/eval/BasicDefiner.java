@@ -65,6 +65,11 @@ public class BasicDefiner
 	symbol.setFunction (new MacroFunctionCell (source, method));
     }
 
+    public String coerceString (final Object arg)
+    {
+	return coerceString (arg, true);
+    }
+
     public String coerceString (final Object arg, final boolean errorp)
     {
 	if (arg != null)
@@ -83,6 +88,11 @@ public class BasicDefiner
 	    throw new IllegalArgumentException ("Can't coerce object to String: " + arg);
 	}
 	return null;
+    }
+
+    public Symbol coerceSymbol (final Object arg)
+    {
+	return coerceSymbol (arg, true);
     }
 
     public Symbol coerceSymbol (final Object arg, final boolean errorp)
@@ -115,6 +125,11 @@ public class BasicDefiner
 	    throw new IllegalArgumentException ("Can't coerce object to Integer: " + arg);
 	}
 	return null;
+    }
+
+    public Package coercePackage (final Object arg)
+    {
+	return coercePackage (arg, true);
     }
 
     public Package coercePackage (final Object arg, final boolean errorp)

@@ -5,13 +5,18 @@ import java.lang.reflect.*;
 import java.util.List;
 
 import lisp.*;
+import lisp.Package;
 
 /** Simple interpreter that using reflection to evaluate forms like Lisp functions. */
 public class Interpreter extends BasicDefiner
 {
     public Interpreter () throws NoSuchMethodException, SecurityException
     {
+	final Symbol eval = PackageFactory.getSystemPackage ().internPublic ("eval");
+	final Symbol load = PackageFactory.getSystemPackage ().internPublic ("load");
 	final Symbol java = PackageFactory.getSystemPackage ().internPublic ("java");
+	define (eval, "evalEvaluator");
+	define (load, "loadEvaluator");
 	define (java, "javaEvaluator");
 	// [TODO] Need javaStatic, javaNew
     }
@@ -60,6 +65,28 @@ public class Interpreter extends BasicDefiner
 	    return result;
 	}
 	return form;
+    }
+
+    /** Evaluate a lisp expression and return the result. */
+    public Object evalEvaluator (final List<Object> arguments) throws Exception
+    {
+	final Object expression = arguments.get (0);
+	final Object value = eval (expression);
+	return value;
+    }
+
+    /** Load a file. First argument is the pathname. Optional second argument is the package. */
+    public Object loadEvaluator (final List<Object> arguments) throws Exception
+    {
+	final String pathname = coerceString (arguments.get (0));
+	Package pkg = PackageFactory.getDefaultPackage ();
+	if (arguments.size () > 1)
+	{
+	    pkg = coercePackage (arguments.get (1));
+	}
+	final FileReader fileReader = new FileReader ();
+	final Object result = fileReader.read (this, pkg, pathname);
+	return result;
     }
 
     public Object javaEvaluator (final List<Object> arguments)

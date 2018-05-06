@@ -20,6 +20,11 @@ public class FileReader
 	return read (interpreter, pkg, new File (pathname));
     }
 
+    public Object read (final Interpreter interpreter, final String pathname) throws Exception
+    {
+	return read (interpreter, new File (pathname));
+    }
+
     public Object read (final Interpreter interpreter, final File file) throws Exception
     {
 	return read (interpreter, PackageFactory.getDefaultPackage (), file);
