@@ -31,6 +31,7 @@ public class Interpreter extends BasicDefiner
 	}
 	if (form instanceof List<?>)
 	{
+	    @SuppressWarnings ("unchecked")
 	    final List<Object> list = (List<Object>)form;
 	    if (list.size () == 0)
 	    {

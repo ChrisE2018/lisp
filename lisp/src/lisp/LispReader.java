@@ -155,6 +155,11 @@ public class LispReader
 
 	}
 	// Not a number. Return a symbol.
+	return readSymbol (pkg, s);
+    }
+
+    public Symbol readSymbol (final Package pkg, final String s) throws IOException
+    {
 	final int pos = s.indexOf (Symbol.PACKAGE_SEPARATOR);
 	if (pos >= 0)
 	{

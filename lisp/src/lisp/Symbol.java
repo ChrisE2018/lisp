@@ -1,6 +1,7 @@
 
 package lisp;
 
+import java.io.IOException;
 import java.util.*;
 
 import lisp.eval.FunctionCell;
@@ -175,6 +176,22 @@ public class Symbol implements Describer
 	return symbolPlist.keySet ();
     }
 
+    @Override
+    public int hashCode ()
+    {
+	return System.identityHashCode (this);
+    }
+
+    @Override
+    public boolean equals (final Object obj)
+    {
+	if (this == obj)
+	{
+	    return true;
+	}
+	return true;
+    }
+
     /** Print value to a buffer. */
     public void print (final StringBuilder buffer)
     {
@@ -213,5 +230,26 @@ public class Symbol implements Describer
 	    result.put ("Plist", symbolPlist);
 	}
 	return result;
+    }
+
+    /**
+     * Quick way for Java code to get at Lisp symbol values. This uses a LispReader so package
+     * prefix notation can be used.
+     *
+     * @throws IOException
+     */
+    public static Object value (final String name)
+    {
+	try
+	{
+	    final LispReader lispReader = new LispReader ();
+	    final Package p = PackageFactory.getDefaultPackage ();
+	    final Symbol symbol = lispReader.readSymbol (p, name);
+	    return symbol.symbolValue;
+	}
+	catch (final IOException e)
+	{
+	    return null;
+	}
     }
 }
