@@ -96,18 +96,20 @@ public class Node implements Describer
      */
     public boolean before (final Node node)
     {
-	if (next.contains (node))
-	{
-	    return true;
-	}
-	for (final Node n : next)
-	{
-	    if (n.before (node))
-	    {
-		return true;
-	    }
-	}
-	return false;
+	final NodeSearch ns = new NodeSearch ();
+	return ns.before (node);
+	// if (next.contains (node))
+	// {
+	// return true;
+	// }
+	// for (final Node n : next)
+	// {
+	// if (n.before (node))
+	// {
+	// return true;
+	// }
+	// }
+	// return false;
     }
 
     /**
@@ -118,18 +120,87 @@ public class Node implements Describer
      */
     public boolean after (final Node node)
     {
-	if (previous.contains (node))
+	final NodeSearch ns = new NodeSearch ();
+	return ns.after (node);
+	// if (previous.contains (node))
+	// {
+	// return true;
+	// }
+	// for (final Node n : previous)
+	// {
+	// if (n.after (node))
+	// {
+	// return true;
+	// }
+	// }
+	// return false;
+    }
+
+    private class NodeSearch
+    {
+	private final Set<Node> marked = new HashSet<Node> ();
+
+	/**
+	 * Determine if this node is before another node.
+	 *
+	 * @param node The node being checked.
+	 * @return True if the node parameter must be after this node.
+	 */
+	public boolean before (final Node node)
 	{
-	    return true;
-	}
-	for (final Node n : previous)
-	{
-	    if (n.after (node))
+	    if (next.contains (node))
 	    {
 		return true;
 	    }
+	    for (final Node n : node.previous)
+	    {
+		if (!marked.contains (n))
+		{
+		    marked.add (n);
+		    if (before (n))
+		    {
+			return true;
+		    }
+		}
+	    }
+	    return false;
 	}
-	return false;
+
+	/**
+	 * Determine if this node is after another node.
+	 *
+	 * @param node The node being checked.
+	 * @return True if the node parameter must be before this node.
+	 */
+	public boolean after (final Node node)
+	{
+	    if (previous.contains (node))
+	    {
+		return true;
+	    }
+	    for (final Node n : node.next)
+	    {
+		if (!marked.contains (n))
+		{
+		    marked.add (n);
+		    if (after (n))
+		    {
+			return true;
+		    }
+		}
+	    }
+	    return false;
+	}
+
+	@Override
+	public String toString ()
+	{
+	    final StringBuilder buffer = new StringBuilder ();
+	    buffer.append ("#<");
+	    buffer.append (getClass ().getSimpleName ());
+	    buffer.append (">");
+	    return buffer.toString ();
+	}
     }
 
     public Symbol getName ()

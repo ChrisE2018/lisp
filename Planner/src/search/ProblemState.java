@@ -12,5 +12,9 @@ public interface ProblemState
     public Map<ProblemState, Double> expand ();
 
     /** Return an estimate of the cost of reaching a solution state. */
-    public double estimate ();
+    public double estimateRemainingCost ();
+
+    public void setSearchState (final SearchState searchState);
+
+    public SearchState getSearchState ();
 }

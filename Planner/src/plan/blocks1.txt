@@ -36,5 +36,8 @@
 ;(expand p5 false true)
 ;(printf "Expanding p7 %n")
 ;(expand p7 false true)
-(bfs p1)
-(planTree p1)
+(setq s (bfs p1))
+(setSearchLimit s 100)
+(printf "Call (solve s) now %n")
+;(planTree p1)
+'done

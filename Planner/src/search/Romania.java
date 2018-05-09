@@ -66,6 +66,8 @@ public class Romania
 	private final int y;
 	private final Map<City, Double> connections = new HashMap<City, Double> ();
 
+	private SearchState searchState;
+
 	public City (final String name, final int x, final int y)
 	{
 	    this.name = name;
@@ -107,11 +109,25 @@ public class Romania
 	}
 
 	@Override
-	public double estimate ()
+	public double estimateRemainingCost ()
 	{
 	    final int dx = x - destination.x;
 	    final int dy = y - destination.y;
 	    return Math.sqrt (dx * dx + dy * dy);
+	}
+
+	public void setSearchState (final SearchState searchState)
+	{
+	    if (this.searchState != null)
+	    {
+		throw new IllegalStateException ("Double visit");
+	    }
+	    this.searchState = searchState;
+	}
+
+	public SearchState getSearchState ()
+	{
+	    return searchState;
 	}
 
 	@Override

@@ -30,7 +30,8 @@ public class SearchState implements Comparable<SearchState>
 	{
 	    cost = parentState.getCost () + increment;
 	}
-	estimate = cost + problemState.estimate ();
+	estimate = cost + problemState.estimateRemainingCost ();
+	problemState.setSearchState (this);
     }
 
     public ProblemState getProblemState ()

@@ -8,10 +8,10 @@
 				   ])
 	
 
-;(defaction unstack
-;	[precondition (clear ?a) (on ?a ?b)]
-;	[postcondition 
-;	    (not (on ?a ?b)) 
-;	    (clear ?b) 
-;	    (ontable ?a)])
+(defaction unstack
+	[precondition (clear ?a) (on ?a ?b)]
+	[postcondition 
+	    (not (on ?a ?b)) 
+	    (clear ?b) 
+	    (ontable ?a)])
 	    

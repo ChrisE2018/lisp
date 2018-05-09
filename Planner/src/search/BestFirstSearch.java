@@ -13,6 +13,8 @@ public class BestFirstSearch
     private Integer searchLimit = null;
     private int count = 0;
 
+    private boolean stopAtFirstSolution = true;
+
     /**
      * Turn on tracing. [TODO] Use a logger.
      */
@@ -30,7 +32,10 @@ public class BestFirstSearch
 		if (trace)
 		{
 		    System.out.printf ("Solution %s found %n", state);
-		    // return state;
+		}
+		if (stopAtFirstSolution)
+		{
+		    return state;
 		}
 	    }
 	    else
@@ -104,6 +109,11 @@ public class BestFirstSearch
     public void setSearchLimit (final Integer limit)
     {
 	searchLimit = limit;
+    }
+
+    public void setStopAtFirstSolution (final boolean stopAtFirstSolution)
+    {
+	this.stopAtFirstSolution = stopAtFirstSolution;
     }
 
     public void setTrace (final boolean trace)

@@ -5,7 +5,7 @@ import java.util.*;
 
 import lisp.*;
 import plan.gui.PlanView;
-import search.ProblemState;
+import search.*;
 import util.Pair;
 
 // [TODO] Implement ProblemState and use search on this
@@ -25,6 +25,8 @@ public class Plan implements Describer, ProblemState
     private Object revisionSupport = null;
 
     private final List<Node> nodes = new ArrayList<Node> ();
+
+    private SearchState searchState = null;
 
     public Plan (final Symbol parentName, final Symbol name)
     {
@@ -428,14 +430,22 @@ public class Plan implements Describer, ProblemState
 	final List<Plan> childPlans = expandPlan ();
 	for (final Plan plan : childPlans)
 	{
-	    result.put (plan, plan.estimate ());
+	    double cost = 0.1;
+	    if (plan.revisionSupport != null)
+	    {
+		if (plan.revisionSupport instanceof Action)
+		{
+		    cost += 1;
+		}
+	    }
+	    result.put (plan, cost);
 	}
 	return result;
     }
 
     /** Heuristic estimate for best first search algorithm. */
     @Override
-    public double estimate ()
+    public double estimateRemainingCost ()
     {
 	double result = 0;
 	for (final Node node : nodes)
@@ -443,6 +453,20 @@ public class Plan implements Describer, ProblemState
 	    result += node.getGoalConditions ().size ();
 	}
 	return result;
+    }
+
+    public void setSearchState (final SearchState searchState)
+    {
+	if (this.searchState != null)
+	{
+	    throw new IllegalStateException ("Double visit");
+	}
+	this.searchState = searchState;
+    }
+
+    public SearchState getSearchState ()
+    {
+	return searchState;
     }
 
     @Override

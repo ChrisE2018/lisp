@@ -40,6 +40,7 @@ import javax.swing.JComponent;
 import org.abego.treelayout.*;
 
 import plan.Plan;
+import search.SearchState;
 
 /**
  * A JComponent displaying a tree of TextInBoxes, given by a {@link TreeLayout}.
@@ -107,7 +108,9 @@ public class PlanInBoxTreePane extends JComponent implements MouseListener
     private void paintBox (final Graphics g, final Plan plan)
     {
 	// draw the box in the background
-	g.setColor (BOX_COLOR);
+	final Color boxColor = (plan.solved ()) ? Color.green : BOX_COLOR;
+
+	g.setColor (boxColor);
 	final Rectangle2D.Double box = getBoundsOfNode (plan);
 	g.fillRoundRect ((int)box.x, (int)box.y, (int)box.width - 1, (int)box.height - 1, ARC_SIZE, ARC_SIZE);
 	g.setColor (BORDER_COLOR);
@@ -115,6 +118,7 @@ public class PlanInBoxTreePane extends JComponent implements MouseListener
 
 	// draw the text on top of the box (possibly multiple lines)
 	g.setColor (TEXT_COLOR);
+
 	final String[] lines = plan.getName ().getName ().split ("\n");
 	final FontMetrics m = getFontMetrics (getFont ());
 	final int x = (int)box.x + ARC_SIZE / 2;
@@ -122,6 +126,22 @@ public class PlanInBoxTreePane extends JComponent implements MouseListener
 	for (int i = 0; i < lines.length; i++)
 	{
 	    g.drawString (lines[i], x, y);
+	    y += m.getHeight ();
+	}
+	final SearchState searchState = plan.getSearchState ();
+	if (searchState != null)
+	{
+	    final StringBuilder buffer = new StringBuilder ();
+	    final double a = searchState.getCost ();
+	    final double b = plan.estimateRemainingCost ();
+	    final double c = a + b;
+	    final String s = String.format ("%.1f = %.1f + %.1f", c, a, b);
+	    g.drawString (s, x, y);
+	    y += m.getHeight ();
+	}
+	else
+	{
+	    g.drawString ("C = " + plan.estimateRemainingCost (), x, y);
 	    y += m.getHeight ();
 	}
     }

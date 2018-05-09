@@ -113,13 +113,13 @@ public class PlanTreeDemo
 	    @Override
 	    public double getWidth (final Plan treeNode)
 	    {
-		return 100;
+		return 60;
 	    }
 
 	    @Override
 	    public double getHeight (final Plan treeNode)
 	    {
-		return 50;
+		return 40;
 	    }
 	};
 
@@ -128,6 +128,8 @@ public class PlanTreeDemo
 
 	// Create a panel that draws the nodes and edges and show the panel
 	final PlanInBoxTreePane panel = new PlanInBoxTreePane (treeLayout);
-	showInDialog (panel);
+	final JScrollPane scroll =
+	    new JScrollPane (panel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+	showInDialog (scroll);
     }
 }
