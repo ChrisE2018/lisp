@@ -37,11 +37,13 @@ public class Node implements Describer
     public Node (final Symbol name)
     {
 	this.name = name;
+	this.name.setValue (this);
     }
 
     public Node (final Node parent)
     {
 	name = parent.name.gensym ();
+	name.setValue (this);
 	addConditions.addAll (parent.addConditions);
 	deleteConditions.addAll (parent.deleteConditions);
 	goalConditions.addAll (parent.goalConditions);
@@ -202,7 +204,7 @@ public class Node implements Describer
     /**
      * Add an already constructed PI to this node. This constructor is used when making a copy of a
      * plan.
-     * 
+     *
      * @param pi
      */
     public void addPI (final ProtectionInterval pi)
@@ -214,7 +216,7 @@ public class Node implements Describer
     /**
      * Add a PI for a condition to this node. This method is used when creating a protection
      * interval initially.
-     * 
+     *
      * @param condition
      * @param protectedNode
      * @return

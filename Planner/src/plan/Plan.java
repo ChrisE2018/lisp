@@ -16,6 +16,9 @@ public class Plan implements Describer
     /** Name of the parent plan, if any, otherwise null. */
     private final Symbol parentName;
 
+    /** References to children. Note that the name is stored, not the object. */
+    private final List<Symbol> children = new ArrayList<Symbol> ();
+
     /** Revisions made to the parent plan to generate this plan. */
     private Object revisionGoal = null;
     private Object revisionSupport = null;
@@ -27,6 +30,11 @@ public class Plan implements Describer
 	this.parentName = parentName;
 	this.name = name;
 	name.setValue (this);
+	if (parentName != null)
+	{
+	    final Plan parent = (Plan)parentName.getValue ();
+	    parent.children.add (name);
+	}
     }
 
     /** Determine if this plan is a solution. */
@@ -192,7 +200,7 @@ public class Plan implements Describer
 	}
     }
 
-    private List<Node> getPossibleAchievers (final Node node, final Condition condition)
+    public List<Node> getPossibleAchievers (final Node node, final Condition condition)
     {
 	List<Node> result = null;
 	for (final Node n : nodes)
@@ -279,7 +287,8 @@ public class Plan implements Describer
 	    {
 		partialResolutions.add (conflict.getResolutions ());
 	    }
-	    final List<List<Pair<Node, Node>>> fullResolutions = cartsianProduct (partialResolutions);
+	    final List<List<Pair<Node, Node>>> fullResolutions = computeCombinations (partialResolutions);
+	    // cartesianProduct (partialResolutions);
 	    for (final List<Pair<Node, Node>> resolutions : fullResolutions)
 	    {
 		for (final Pair<Node, Node> resolution : resolutions)
@@ -300,29 +309,57 @@ public class Plan implements Describer
 	}
     }
 
-    private List<List<Pair<Node, Node>>> cartsianProduct (final LinkedList<List<Pair<Node, Node>>> partialResolutions)
+    // private List<List<Pair<Node, Node>>> cartesianProduct (final LinkedList<List<Pair<Node,
+    // Node>>> partialResolutions)
+    // {
+    // if (partialResolutions.size () == 0)
+    // {
+    // return new ArrayList<List<Pair<Node, Node>>> ();
+    // }
+    // else
+    // {
+    // final List<List<Pair<Node, Node>>> result = new ArrayList<List<Pair<Node, Node>>> ();
+    // final List<Pair<Node, Node>> r = partialResolutions.pop ();
+    // final List<List<Pair<Node, Node>>> recursiveResult = cartesianProduct (partialResolutions);
+    // for (final Pair<Node, Node> rr : r)
+    // {
+    // for (final List<Pair<Node, Node>> tail : recursiveResult)
+    // {
+    // final List<Pair<Node, Node>> option = new ArrayList<Pair<Node, Node>> ();
+    // option.add (rr);
+    // option.addAll (tail);
+    // result.add (option);
+    // }
+    // }
+    // return result;
+    // }
+    // }
+
+    /**
+     * Cartesian product implement from the WWW.
+     *
+     * @see https://codereview.stackexchange.com/questions/67804/generate-cartesian-product-of-list-in-java
+     * @param lists
+     * @return
+     */
+    public <T> List<List<T>> computeCombinations (final List<List<T>> lists)
     {
-	if (partialResolutions.size () == 0)
+	List<List<T>> result = Arrays.asList (Arrays.asList ());
+	for (final List<T> list : lists)
 	{
-	    return new ArrayList<List<Pair<Node, Node>>> ();
-	}
-	else
-	{
-	    final List<List<Pair<Node, Node>>> result = new ArrayList<List<Pair<Node, Node>>> ();
-	    final List<Pair<Node, Node>> r = partialResolutions.pop ();
-	    final List<List<Pair<Node, Node>>> recursiveResult = cartsianProduct (partialResolutions);
-	    for (final Pair<Node, Node> rr : r)
+	    final List<List<T>> extraColumnCombinations = new ArrayList<> ();
+	    for (final List<T> combination : result)
 	    {
-		for (final List<Pair<Node, Node>> tail : recursiveResult)
+		for (final T element : list)
 		{
-		    final List<Pair<Node, Node>> option = new ArrayList<Pair<Node, Node>> ();
-		    option.add (rr);
-		    option.addAll (tail);
-		    result.add (option);
+		    final List<T> newCombination = new ArrayList<> (combination);
+		    newCombination.add (element);
+		    extraColumnCombinations.add (newCombination);
 		}
 	    }
-	    return result;
+	    result = extraColumnCombinations;
 	}
+	return result;
     }
 
     /** Name of this plan. */
@@ -335,6 +372,11 @@ public class Plan implements Describer
     public Symbol getParentName ()
     {
 	return parentName;
+    }
+
+    public List<Symbol> getChildren ()
+    {
+	return children;
     }
 
     /** Revisions made to the parent plan to generate this plan. */

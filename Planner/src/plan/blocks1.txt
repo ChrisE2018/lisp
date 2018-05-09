@@ -6,7 +6,6 @@
 	(red block001)
 	(blue block002)
 	(red block003))*/
-(setq PlanView true)
 (def d (x)
   (describe x))
 
@@ -29,9 +28,12 @@
 	(before initial goal)
 	)
  
- (expand p1)
- (expand p2)
- (expand p3 false true)
- (expand p4 false true)
- (setq PlanView true)
- (expand p5 false true)
+(setq PlanView false)
+(expand p1)
+(expand p2)
+(expand p3 false true)
+(expand p4 false true)
+(expand p5 false true)
+(printf "Expanding p7 %n")
+(expand p7 false true)
+(planTree p1)

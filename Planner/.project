@@ -4,6 +4,7 @@
 	<comment></comment>
 	<projects>
 		<project>lisp</project>
+		<project>TreeLayout</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

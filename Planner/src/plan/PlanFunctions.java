@@ -35,6 +35,7 @@ public class PlanFunctions extends Definer
 	defspecial ("plan", "createPlan");
 	define ("layout", "createPlanLayoutEvaluator");
 	define ("view", "createPlanViewEvaluator");
+	define ("planTree", "createPlanTreeEvaluator");
     }
 
     /**
@@ -284,6 +285,13 @@ public class PlanFunctions extends Definer
     {
 	final Plan plan = (Plan)arguments.get (0);
 	PlanView.makeView (plan);
+	return plan;
+    }
+
+    public Object createPlanTreeEvaluator (final List<Object> arguments)
+    {
+	final Plan plan = (Plan)arguments.get (0);
+	PlanTreeDemo.displayPlan (plan);
 	return plan;
     }
 
