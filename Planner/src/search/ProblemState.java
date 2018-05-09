@@ -9,7 +9,7 @@ public interface ProblemState
     public boolean solved ();
 
     /** Return a map from child states to the incremental cost of reaching each child. */
-    public Map<ProblemState, Integer> expand ();
+    public Map<ProblemState, Double> expand ();
 
     /** Return an estimate of the cost of reaching a solution state. */
     public double estimate ();

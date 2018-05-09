@@ -48,7 +48,7 @@ public class BreadthFirstSearch
     private boolean filterPreviousState (final SearchState child)
     {
 	final ProblemState p = child.getProblemState ();
-	final int cost = child.getCost ();
+	final double cost = child.getCost ();
 	for (final SearchState s : closed)
 	{
 	    if (p == s.getProblemState ())

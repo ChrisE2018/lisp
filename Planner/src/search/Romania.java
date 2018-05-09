@@ -30,32 +30,32 @@ public class Romania
 
     private static final Object[][] CONNECTIONS =
 	{
-	 {"Oradea", "Zerind", 71},
-	 {"Oradea", "Sibiu", 151},
-	 {"Zerind", "Arad", 75},
-	 {"Arad", "Sibiu", 140},
-	 {"Arad", "Timisoara", 118},
-	 {"Timisoara", "Lugoj", 111},
-	 {"Sibiu", "Fagaras", 99},
-	 {"Sibiu", "Rimnicu Vilcea", 80},
-	 {"Fagaras", "Bucharest", 211},
-	 {"Rimnicu Vilcea", "Pitesti", 97},
-	 {"Rimnicu Vilcea", "Craiova", 146},
-	 {"Lugoj", "Mehadia", 70},
-	 {"Mehadia", "Dobreta", 75},
-	 {"Dobreta", "Craiova", 120},
-	 {"Pitesti", "Craiova", 138},
-	 {"Pitesti", "Bucharest", 101},
+	 {"Oradea", "Zerind", 71.0},
+	 {"Oradea", "Sibiu", 151.0},
+	 {"Zerind", "Arad", 75.0},
+	 {"Arad", "Sibiu", 140.0},
+	 {"Arad", "Timisoara", 118.0},
+	 {"Timisoara", "Lugoj", 111.0},
+	 {"Sibiu", "Fagaras", 99.0},
+	 {"Sibiu", "Rimnicu Vilcea", 80.0},
+	 {"Fagaras", "Bucharest", 211.0},
+	 {"Rimnicu Vilcea", "Pitesti", 97.0},
+	 {"Rimnicu Vilcea", "Craiova", 146.0},
+	 {"Lugoj", "Mehadia", 70.0},
+	 {"Mehadia", "Dobreta", 75.0},
+	 {"Dobreta", "Craiova", 120.0},
+	 {"Pitesti", "Craiova", 138.0},
+	 {"Pitesti", "Bucharest", 101.0},
 	 // {"Craiova"},
-	 {"Bucharest", "Giugiu", 90},
-	 {"Bucharest", "Urziceni", 85},
+	 {"Bucharest", "Giugiu", 90.0},
+	 {"Bucharest", "Urziceni", 85.0},
 	 // {"Giugiu"},
-	 {"Urziceni", "Vaslui", 142},
-	 {"Urziceni", "Hirsova", 98},
-	 {"Neamt", "Iasi", 87},
-	 {"Iasi", "Vaslui", 92},
+	 {"Urziceni", "Vaslui", 142.0},
+	 {"Urziceni", "Hirsova", 98.0},
+	 {"Neamt", "Iasi", 87.0},
+	 {"Iasi", "Vaslui", 92.0},
 	 // {"Vaslui"},
-	 {"Hirsova", "Eforie", 86}
+	 {"Hirsova", "Eforie", 86.0}
 			// {"Eforie"}
 	};
 
@@ -64,7 +64,7 @@ public class Romania
 	private final String name;
 	private final int x;
 	private final int y;
-	private final Map<City, Integer> connections = new HashMap<City, Integer> ();
+	private final Map<City, Double> connections = new HashMap<City, Double> ();
 
 	public City (final String name, final int x, final int y)
 	{
@@ -88,7 +88,7 @@ public class Romania
 	    return y;
 	}
 
-	public Map<City, Integer> getConnections ()
+	public Map<City, Double> getConnections ()
 	{
 	    return connections;
 	}
@@ -100,9 +100,9 @@ public class Romania
 	}
 
 	@Override
-	public Map<ProblemState, Integer> expand ()
+	public Map<ProblemState, Double> expand ()
 	{
-	    final Map<ProblemState, Integer> result = new HashMap<ProblemState, Integer> (connections);
+	    final Map<ProblemState, Double> result = new HashMap<ProblemState, Double> (connections);
 	    return result;
 	}
 
@@ -146,7 +146,7 @@ public class Romania
 	{
 	    final String fromCity = (String)slot[0];
 	    final String toCity = (String)slot[1];
-	    final int distance = (int)slot[2];
+	    final double distance = (double)slot[2];
 	    final City c1 = cities.get (fromCity);
 	    final City c2 = cities.get (toCity);
 	    c1.getConnections ().put (c2, distance);

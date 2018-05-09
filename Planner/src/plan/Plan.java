@@ -5,10 +5,11 @@ import java.util.*;
 
 import lisp.*;
 import plan.gui.PlanView;
+import search.ProblemState;
 import util.Pair;
 
 // [TODO] Implement ProblemState and use search on this
-public class Plan implements Describer
+public class Plan implements Describer, ProblemState
 {
     /** Name of this plan. */
     private final Symbol name;
@@ -68,12 +69,12 @@ public class Plan implements Describer
 	return result;
     }
 
-    public List<Plan> expand ()
+    public List<Plan> expandPlan ()
     {
-	return expand (true, true);
+	return expandPlan (true, true);
     }
 
-    public List<Plan> expand (final boolean useActions, final boolean useLinks)
+    public List<Plan> expandPlan (final boolean useActions, final boolean useLinks)
     {
 	final List<Plan> result = new ArrayList<Plan> ();
 	for (final Node node : nodes)
@@ -417,6 +418,31 @@ public class Plan implements Describer
 	    }
 	}
 	throw new Error ("Plan has no initial state");
+    }
+
+    /** Expand method for best first search algorithm. */
+    @Override
+    public Map<ProblemState, Double> expand ()
+    {
+	final Map<ProblemState, Double> result = new HashMap<ProblemState, Double> ();
+	final List<Plan> childPlans = expandPlan ();
+	for (final Plan plan : childPlans)
+	{
+	    result.put (plan, plan.estimate ());
+	}
+	return result;
+    }
+
+    /** Heuristic estimate for best first search algorithm. */
+    @Override
+    public double estimate ()
+    {
+	double result = 0;
+	for (final Node node : nodes)
+	{
+	    result += node.getGoalConditions ().size ();
+	}
+	return result;
     }
 
     @Override

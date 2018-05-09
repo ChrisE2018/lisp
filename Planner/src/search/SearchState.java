@@ -13,12 +13,12 @@ public class SearchState implements Comparable<SearchState>
     private final ProblemState problemState;
 
     /** Actual cost so far. */
-    private int cost;
+    private double cost;
 
     /** Estimated total cost to reach the goal. */
     private final double estimate;
 
-    public SearchState (final SearchState parentState, final ProblemState problemState, final int increment)
+    public SearchState (final SearchState parentState, final ProblemState problemState, final double increment)
     {
 	this.parentState = parentState;
 	this.problemState = problemState;
@@ -43,7 +43,7 @@ public class SearchState implements Comparable<SearchState>
 	return parentState;
     }
 
-    public int getCost ()
+    public double getCost ()
     {
 	return cost;
     }
@@ -56,11 +56,11 @@ public class SearchState implements Comparable<SearchState>
     public List<SearchState> expand ()
     {
 	final List<SearchState> result = new ArrayList<SearchState> ();
-	final Map<ProblemState, Integer> children = problemState.expand ();
-	for (final Entry<ProblemState, Integer> entry : children.entrySet ())
+	final Map<ProblemState, Double> children = problemState.expand ();
+	for (final Entry<ProblemState, Double> entry : children.entrySet ())
 	{
 	    final ProblemState child = entry.getKey ();
-	    final int increment = entry.getValue ();
+	    final double increment = entry.getValue ();
 	    final SearchState s = new SearchState (this, child, increment);
 	    result.add (s);
 	}

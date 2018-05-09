@@ -7,6 +7,7 @@ import java.util.*;
 import lisp.*;
 import lisp.eval.*;
 import plan.gui.*;
+import search.BestFirstSearch;
 
 public class PlanFunctions extends Definer
 {
@@ -36,6 +37,7 @@ public class PlanFunctions extends Definer
 	define ("layout", "createPlanLayoutEvaluator");
 	define ("view", "createPlanViewEvaluator");
 	define ("planTree", "createPlanTreeEvaluator");
+	define ("bfs", "bfsEvaluator");
     }
 
     /**
@@ -293,6 +295,14 @@ public class PlanFunctions extends Definer
 	final Plan plan = (Plan)arguments.get (0);
 	PlanTreeDemo.displayPlan (plan);
 	return plan;
+    }
+
+    public Object bfsEvaluator (final List<Object> arguments)
+    {
+	final Plan plan = (Plan)arguments.get (0);
+	final BestFirstSearch result = new BestFirstSearch ();
+	result.add (plan);
+	return result;
     }
 
     @Override
