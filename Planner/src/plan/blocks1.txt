@@ -1,0 +1,37 @@
+/*(defstate state1
+	(on block001 block002)
+	(on block002 block003)
+	(ontable block003)
+	(clear block001)
+	(red block001)
+	(blue block002)
+	(red block003))*/
+(setq PlanView true)
+(def d (x)
+  (describe x))
+
+(def op (node)
+	(hasOpenSubgoals node))
+
+(plan p1
+	(node initial
+		(add
+			(ontable block1)
+			(ontable block2)
+			(ontable block3)
+			(clear block1)
+			(clear block2)
+			(clear block3)))
+	(node goal
+		(goal
+			(on block1 block2)
+			(on block2 block3)))
+	(before initial goal)
+	)
+ 
+ (expand p1)
+ (expand p2)
+ (expand p3 false true)
+ (expand p4 false true)
+ (setq PlanView true)
+ (expand p5 false true)

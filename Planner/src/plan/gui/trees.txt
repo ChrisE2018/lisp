@@ -1,0 +1,10 @@
+http://www.cs.unc.edu/techreports/89-034.pdf
+
+https://llimllib.github.io/pymag-trees/
+
+https://cs.brown.edu/~rt/gdhandbook/chapters/trees.pdf
+
+https://rachel53461.wordpress.com/2014/04/20/algorithm-for-drawing-trees/
+
+http://www.it.usyd.edu.au/~shhong/comp5048-lec2.pdf
+
