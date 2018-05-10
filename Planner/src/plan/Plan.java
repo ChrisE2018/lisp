@@ -5,7 +5,7 @@ import java.util.*;
 
 import lisp.*;
 import plan.gui.PlanView;
-import search.*;
+import search.ProblemState;
 import util.Pair;
 
 // [TODO] Implement ProblemState and use search on this
@@ -15,7 +15,7 @@ public class Plan implements Describer, ProblemState
     private final Symbol name;
 
     /** Name of the parent plan, if any, otherwise null. */
-    private final Symbol parentName;
+    private final Plan parent;
 
     /** References to children. Note that the name is stored, not the object. */
     private final List<Symbol> children = new ArrayList<Symbol> ();
@@ -26,16 +26,22 @@ public class Plan implements Describer, ProblemState
 
     private final List<Node> nodes = new ArrayList<Node> ();
 
-    private SearchState searchState = null;
+    // private SearchState searchState = null;
+    private final double incrementCost;
 
-    public Plan (final Symbol parentName, final Symbol name)
+    public Plan (final Symbol name)
     {
-	this.parentName = parentName;
+	this (name, null, 0.0);
+    }
+
+    public Plan (final Symbol name, final Plan parent, final double incrementCost)
+    {
 	this.name = name;
+	this.parent = parent;
+	this.incrementCost = incrementCost;
 	name.setValue (this);
-	if (parentName != null)
+	if (parent != null)
 	{
-	    final Plan parent = (Plan)parentName.getValue ();
 	    parent.children.add (name);
 	}
     }
@@ -146,7 +152,7 @@ public class Plan implements Describer, ProblemState
     private void expand (final List<Plan> result, final Node node, final Condition condition, final Action action,
             final Bindings match)
     {
-	final PlanCopy copy = new PlanCopy (this);
+	final PlanCopy copy = new PlanCopy (this, 2.0);
 	final Plan child = copy.getChild ();
 	final Map<Node, Node> nodeMap = copy.getNodeMap ();
 	// Make a new node for the action
@@ -187,7 +193,7 @@ public class Plan implements Describer, ProblemState
 	    for (final Node n : achievers)
 	    {
 		// Create a child by adding a causal link from n to node
-		final PlanCopy copy = new PlanCopy (this);
+		final PlanCopy copy = new PlanCopy (this, 1.0);
 		final Plan child = copy.getChild ();
 		if (Symbol.value ("user:::PlanView") == Boolean.TRUE)
 		{
@@ -265,49 +271,28 @@ public class Plan implements Describer, ProblemState
 
     private void resolveConflicts (final List<Plan> result, final List<PIConflict> conflicts)
     {
-	if (conflicts.size () == 1 && Math.abs (1) < 0)
+	final LinkedList<List<Pair<Node, Node>>> partialResolutions = new LinkedList<List<Pair<Node, Node>>> ();
+	for (final PIConflict conflict : conflicts)
 	{
-	    final PIConflict conflict = conflicts.get (0);
-	    final List<Pair<Node, Node>> resolutions = conflict.getResolutions ();
+	    partialResolutions.add (conflict.getResolutions ());
+	}
+	final List<List<Pair<Node, Node>>> fullResolutions = computeCombinations (partialResolutions);
+	// cartesianProduct (partialResolutions);
+	for (final List<Pair<Node, Node>> resolutions : fullResolutions)
+	{
 	    for (final Pair<Node, Node> resolution : resolutions)
 	    {
 		final Node before = resolution.getFirst ();
 		final Node after = resolution.getSecond ();
-		final PlanCopy copy = new PlanCopy (this);
+		final PlanCopy copy = new PlanCopy (this, 1.0);
 		final Plan child = copy.getChild ();
+		child.revisionGoal = conflicts;
+		child.revisionSupport = resolution;
 		final Map<Node, Node> nodeMap = copy.getNodeMap ();
 		final Node nodeCopy = nodeMap.get (before);
 		final Node fromCopy = nodeMap.get (after);
 		nodeCopy.addSuccessor (fromCopy);
 		result.add (child);
-	    }
-	    result.remove (this);
-	}
-	else
-	{
-	    final LinkedList<List<Pair<Node, Node>>> partialResolutions = new LinkedList<List<Pair<Node, Node>>> ();
-	    for (final PIConflict conflict : conflicts)
-	    {
-		partialResolutions.add (conflict.getResolutions ());
-	    }
-	    final List<List<Pair<Node, Node>>> fullResolutions = computeCombinations (partialResolutions);
-	    // cartesianProduct (partialResolutions);
-	    for (final List<Pair<Node, Node>> resolutions : fullResolutions)
-	    {
-		for (final Pair<Node, Node> resolution : resolutions)
-		{
-		    final Node before = resolution.getFirst ();
-		    final Node after = resolution.getSecond ();
-		    final PlanCopy copy = new PlanCopy (this);
-		    final Plan child = copy.getChild ();
-		    child.revisionGoal = conflicts;
-		    child.revisionSupport = resolution;
-		    final Map<Node, Node> nodeMap = copy.getNodeMap ();
-		    final Node nodeCopy = nodeMap.get (before);
-		    final Node fromCopy = nodeMap.get (after);
-		    nodeCopy.addSuccessor (fromCopy);
-		    result.add (child);
-		}
 	    }
 	}
     }
@@ -371,11 +356,21 @@ public class Plan implements Describer, ProblemState
 	return name;
     }
 
-    /** Name of the parent plan, if any, otherwise null. */
-    public Symbol getParentName ()
+    /** The parent plan, if any, otherwise null. */
+    public Plan getParent ()
     {
-	return parentName;
+	return parent;
     }
+
+    // /** Name of the parent plan, if any, otherwise null. */
+    // public Symbol getParentName ()
+    // {
+    // if (parent != null)
+    // {
+    // return parent.getName ();
+    // }
+    // return null;
+    // }
 
     public List<Symbol> getChildren ()
     {
@@ -443,6 +438,24 @@ public class Plan implements Describer, ProblemState
 	return result;
     }
 
+    /** Cost of using this plan for search purposes. */
+    public double getCost ()
+    {
+	if (parent == null)
+	{
+	    return incrementCost;
+	}
+	else
+	{
+	    return parent.getCost () + incrementCost;
+	}
+    }
+
+    public double getIncrementCost ()
+    {
+	return incrementCost;
+    }
+
     /** Heuristic estimate for best first search algorithm. */
     @Override
     public double estimateRemainingCost ()
@@ -455,19 +468,19 @@ public class Plan implements Describer, ProblemState
 	return result;
     }
 
-    public void setSearchState (final SearchState searchState)
-    {
-	if (this.searchState != null)
-	{
-	    throw new IllegalStateException ("Double visit");
-	}
-	this.searchState = searchState;
-    }
-
-    public SearchState getSearchState ()
-    {
-	return searchState;
-    }
+    // public void setSearchState (final SearchState searchState)
+    // {
+    // if (this.searchState != null)
+    // {
+    // throw new IllegalStateException ("Double visit");
+    // }
+    // this.searchState = searchState;
+    // }
+    //
+    // public SearchState getSearchState ()
+    // {
+    // return searchState;
+    // }
 
     @Override
     public String toString ()

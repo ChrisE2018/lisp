@@ -189,7 +189,7 @@ public class PlanFunctions extends Definer
     public Object createPlan (final Interpreter interpreter, final List<Object> arguments)
     {
 	final Symbol name = coerceSymbol (arguments.get (1), true);
-	final Plan plan = new Plan (null, name);
+	final Plan plan = new Plan (name);
 	name.setValue (plan);
 	System.out.printf ("Create plan %s %n", name);
 	for (final Object c : arguments.subList (2, arguments.size ()))

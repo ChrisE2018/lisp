@@ -5,9 +5,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import lisp.Symbol;
 import plan.*;
-import search.SearchState;
 
 /** Layout a partially ordered plan geometrically. */
 public class PlanLayout
@@ -54,8 +52,8 @@ public class PlanLayout
 	}
 
 	final Sprite info = new Sprite (plan, "Name: " + plan.getName ());
-	final Symbol parentName = plan.getParentName ();
-	info.addLabel ("Parent: " + (parentName == null ? "None" : parentName));
+	final Plan parent = plan.getParent ();
+	info.addLabel ("Parent: " + (parent == null ? "None" : parent.getName ()));
 	final Object revisionGoal = plan.getRevisionGoal ();
 	if (revisionGoal != null)
 	{
@@ -66,15 +64,25 @@ public class PlanLayout
 	// {
 	// info.addLabel ("Revision Support: " + revisionSupport);
 	// }
-	final SearchState searchState = plan.getSearchState ();
-	if (searchState != null)
+	final double b = plan.getIncrementCost ();
+	final double c = plan.getCost ();
+	if (parent == null)
 	{
-	    info.addLabel ("Search State: " + searchState);
+	    info.addLabel ("Act: %.1f = [root]%.1f + %.1f[incr]", c, 0.0, b);
 	}
+	else
+	{
+	    final double a = parent.getCost ();
+	    info.addLabel ("Act: %.1f = [%s]%.1f + %.1f[incr]", c, parent.getName (), a, b);
+	}
+	final double e = plan.estimateRemainingCost ();
+	final double t = c + e;
+	info.addLabel ("Tot: %.1f = [act]%.1f + %.1f[est]", t, c, e);
+
 	info.x = 0;
 	info.y = 0;
 	info.width = 300;
-	info.height = 75;
+	info.height = 90;
 	result.add (info);
 	return result;
     }

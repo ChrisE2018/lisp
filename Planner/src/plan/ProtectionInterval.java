@@ -42,7 +42,7 @@ public class ProtectionInterval
     {
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
+	buffer.append ("PI");
 	buffer.append (" ");
 	buffer.append (condition);
 	buffer.append (" from: ");

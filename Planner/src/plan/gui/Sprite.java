@@ -102,13 +102,15 @@ public class Sprite extends Rectangle
 	return labels;
     }
 
-    public void addLabel (final String label)
+    public void addLabel (final String fmt, final Object... args)
     {
+	final String label = String.format (fmt, args);
 	labels.add (new Pair<String, Color> (label, null));
     }
 
-    public void addLabel (final Color color, final String label)
+    public void addLabel (final Color color, final String fmt, final Object... args)
     {
+	final String label = String.format (fmt, args);
 	labels.add (new Pair<String, Color> (label, color));
     }
 

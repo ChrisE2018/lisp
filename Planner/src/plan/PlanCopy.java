@@ -13,12 +13,12 @@ public class PlanCopy
     private final Map<Node, Node> nodeMap;
 
     /** Construct a copy of a plan with a map from parent plan nodes to child plan nodes. */
-    public PlanCopy (final Plan plan)
+    public PlanCopy (final Plan plan, final double incrementCost)
     {
 	parent = plan;
 	final Symbol name = plan.getName ();
 	final Symbol childName = name.gensym ();
-	child = new Plan (plan.getName (), childName);
+	child = new Plan (childName, plan, incrementCost);
 	nodeMap = new HashMap<Node, Node> ();
 	final List<Node> nodes = plan.getNodes ();
 	for (final Node n : nodes)

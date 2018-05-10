@@ -40,7 +40,6 @@ import javax.swing.JComponent;
 import org.abego.treelayout.*;
 
 import plan.Plan;
-import search.SearchState;
 
 /**
  * A JComponent displaying a tree of TextInBoxes, given by a {@link TreeLayout}.
@@ -128,21 +127,26 @@ public class PlanInBoxTreePane extends JComponent implements MouseListener
 	    g.drawString (lines[i], x, y);
 	    y += m.getHeight ();
 	}
-	final SearchState searchState = plan.getSearchState ();
-	if (searchState != null)
+
+	final double b = plan.getIncrementCost ();
+	final double c = plan.getCost ();
+	final Plan parent = plan.getParent ();
+	if (parent == null)
 	{
-	    final double a = searchState.getCost ();
-	    final double b = plan.estimateRemainingCost ();
-	    final double c = searchState.getEstimate ();
-	    final String s = String.format ("%.1f = %.1f + %.1f", c, a, b);
-	    g.drawString (s, x, y);
-	    y += m.getHeight ();
+	    g.drawString (String.format ("Act: %.1f = [root]%.1f + %.1f[incr]", c, 0.0, b), x, y);
 	}
 	else
 	{
-	    g.drawString ("C = " + plan.estimateRemainingCost (), x, y);
-	    y += m.getHeight ();
+	    final double a = parent.getCost ();
+	    g.drawString (String.format ("Act: %.1f = [%s]%.1f + %.1f[incr]", c, parent.getName (), a, b), x, y);
 	}
+	y += m.getHeight ();
+
+	final double e = plan.estimateRemainingCost ();
+	final double t = c + e;
+	g.drawString (String.format ("Tot: %.1f = [act]%.1f + %.1f[est]", t, c, e), x, y);
+
+	y += m.getHeight ();
     }
 
     @Override

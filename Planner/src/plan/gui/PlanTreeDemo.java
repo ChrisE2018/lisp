@@ -113,7 +113,7 @@ public class PlanTreeDemo
 	    @Override
 	    public double getWidth (final Plan treeNode)
 	    {
-		return 150;
+		return 200;
 	    }
 
 	    @Override

@@ -14,7 +14,7 @@ public interface ProblemState
     /** Return an estimate of the cost of reaching a solution state. */
     public double estimateRemainingCost ();
 
-    public void setSearchState (final SearchState searchState);
-
-    public SearchState getSearchState ();
+    // public void setSearchState (final SearchState searchState);
+    //
+    // public SearchState getSearchState ();
 }

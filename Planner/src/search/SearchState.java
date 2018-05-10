@@ -16,7 +16,7 @@ public class SearchState implements Comparable<SearchState>
     private final double increment;
 
     /** Actual cost so far. */
-    private double cost;
+    private final double cost;
 
     /** Estimated total cost to reach the goal. */
     private final double estimate;
@@ -25,6 +25,7 @@ public class SearchState implements Comparable<SearchState>
     {
 	this.parentState = parentState;
 	this.problemState = problemState;
+
 	this.increment = increment;
 	if (parentState == null)
 	{
@@ -35,7 +36,6 @@ public class SearchState implements Comparable<SearchState>
 	    cost = parentState.getCost () + increment;
 	}
 	estimate = cost + problemState.estimateRemainingCost ();
-	problemState.setSearchState (this);
     }
 
     public ProblemState getProblemState ()
