@@ -131,10 +131,9 @@ public class PlanInBoxTreePane extends JComponent implements MouseListener
 	final SearchState searchState = plan.getSearchState ();
 	if (searchState != null)
 	{
-	    final StringBuilder buffer = new StringBuilder ();
 	    final double a = searchState.getCost ();
 	    final double b = plan.estimateRemainingCost ();
-	    final double c = a + b;
+	    final double c = searchState.getEstimate ();
 	    final String s = String.format ("%.1f = %.1f + %.1f", c, a, b);
 	    g.drawString (s, x, y);
 	    y += m.getHeight ();

@@ -7,6 +7,7 @@ import java.util.List;
 
 import lisp.Symbol;
 import plan.*;
+import search.SearchState;
 
 /** Layout a partially ordered plan geometrically. */
 public class PlanLayout
@@ -58,12 +59,17 @@ public class PlanLayout
 	final Object revisionGoal = plan.getRevisionGoal ();
 	if (revisionGoal != null)
 	{
-	    info.addLabel ("Revision Goal: " + revisionGoal);
+	    info.addLabel ("Expanded Goal: " + revisionGoal);
 	}
-	final Object revisionSupport = plan.getRevisionSupport ();
-	if (revisionSupport != null)
+	// final Object revisionSupport = plan.getRevisionSupport ();
+	// if (revisionSupport != null)
+	// {
+	// info.addLabel ("Revision Support: " + revisionSupport);
+	// }
+	final SearchState searchState = plan.getSearchState ();
+	if (searchState != null)
 	{
-	    info.addLabel ("Revision Support: " + revisionSupport);
+	    info.addLabel ("Search State: " + searchState);
 	}
 	info.x = 0;
 	info.y = 0;

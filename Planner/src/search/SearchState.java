@@ -12,6 +12,9 @@ public class SearchState implements Comparable<SearchState>
     /** Domain problem state. */
     private final ProblemState problemState;
 
+    /** Incremental cost from parent. */
+    private final double increment;
+
     /** Actual cost so far. */
     private double cost;
 
@@ -22,6 +25,7 @@ public class SearchState implements Comparable<SearchState>
     {
 	this.parentState = parentState;
 	this.problemState = problemState;
+	this.increment = increment;
 	if (parentState == null)
 	{
 	    cost = increment;
@@ -68,6 +72,11 @@ public class SearchState implements Comparable<SearchState>
 	return result;
     }
 
+    public double getEstimate ()
+    {
+	return estimate;
+    }
+
     @Override
     public int compareTo (final SearchState o)
     {
@@ -89,12 +98,24 @@ public class SearchState implements Comparable<SearchState>
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
+	buffer.append (dd (cost));
+	buffer.append ("=");
+	if (parentState != null)
+	{
+	    buffer.append (dd (parentState.getCost ()));
+	    buffer.append ("+");
+	}
+	buffer.append (dd (increment));
+	buffer.append (" ?");
+	buffer.append (dd (estimate));
+	buffer.append (" ");
 	buffer.append (problemState);
-	buffer.append (" ");
-	buffer.append (cost);
-	buffer.append (" ");
-	buffer.append (estimate);
 	buffer.append (">");
 	return buffer.toString ();
+    }
+
+    private String dd (final double d)
+    {
+	return String.format ("%.1f", d);
     }
 }
