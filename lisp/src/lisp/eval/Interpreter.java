@@ -15,7 +15,7 @@ public class Interpreter extends BasicDefiner
 	final Symbol eval = PackageFactory.getSystemPackage ().internPublic ("eval");
 	final Symbol load = PackageFactory.getSystemPackage ().internPublic ("load");
 	final Symbol java = PackageFactory.getSystemPackage ().internPublic ("java");
-	define (eval, "evalEvaluator");
+	defineTyped (eval, "evalEvaluatorT");
 	define (load, "loadEvaluator");
 	define (java, "javaEvaluator");
 	// [TODO] Need javaStatic, javaNew
@@ -46,8 +46,6 @@ public class Interpreter extends BasicDefiner
 	    final FunctionCell function = f.getFunction ();
 	    if (function == null)
 	    {
-		// [TODO] If function is bound to a java object, try to form a method call
-		// throw new IllegalArgumentException ("Symbol has no function definition " + f);
 		final Object target = eval (getObject (list, 1));
 		final String method = coerceString (f, true);
 		final Class<?> cls = target.getClass ();
@@ -69,9 +67,8 @@ public class Interpreter extends BasicDefiner
     }
 
     /** Evaluate a lisp expression and return the result. */
-    public Object evalEvaluator (final List<Object> arguments) throws Exception
+    public Object evalEvaluatorT (final Object expression) throws Exception
     {
-	final Object expression = arguments.get (0);
 	final Object value = eval (expression);
 	return value;
     }

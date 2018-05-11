@@ -123,13 +123,13 @@ public class Symbol implements Describer
     }
 
     /** Symbol properties with lazy initialization. */
-    public void put (final Symbol key, final Object val)
+    public Object put (final Symbol key, final Object val)
     {
 	if (symbolPlist == null)
 	{
 	    symbolPlist = new HashMap<Symbol, Object> ();
 	}
-	symbolPlist.put (key, val);
+	return symbolPlist.put (key, val);
     }
 
     /** Symbol properties with lazy initialization. */
@@ -142,6 +142,11 @@ public class Symbol implements Describer
 	    // Could null plist here if it is empty, but it is likely to get populated again.
 	}
 	return result;
+    }
+
+    public Map<Symbol, Object> getPlist ()
+    {
+	return symbolPlist;
     }
 
     public Symbol gensym ()

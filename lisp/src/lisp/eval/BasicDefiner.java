@@ -40,6 +40,39 @@ public class BasicDefiner
     }
 
     /**
+     * Bind a symbol to a java implementation method. <br>
+     * The method must be a unique local method of the source class and the number and type of
+     * arguments come from it.
+     *
+     * @param symbol
+     * @param methodName
+     */
+    public void defineTyped (final Symbol symbol, final String methodName) throws NoSuchMethodException, SecurityException
+    {
+	final Method method = getNamedMethod (methodName);
+	symbol.setFunction (new TypedFunctionCell (source, method));
+    }
+
+    private Method getNamedMethod (final String methodName) throws NoSuchMethodException
+    {
+	Method result = null;
+	final Method[] methods = source.getClass ().getDeclaredMethods ();
+	for (final Method method : methods)
+	{
+	    if (method.getName ().equals (methodName))
+	    {
+		if (result != null)
+		{
+		    final String cname = source.getClass ().getSimpleName ();
+		    throw new NoSuchMethodException (cname + " has more than one method named " + methodName);
+		}
+		result = method;
+	    }
+	}
+	return result;
+    }
+
+    /**
      * Bind a symbol to a java implementation method for a special form. <br>
      * [TODO] Should be able to specify the number and type of the arguments.
      *

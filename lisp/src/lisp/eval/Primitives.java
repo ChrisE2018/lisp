@@ -50,19 +50,25 @@ public class Primitives extends Definer
 	define ("times", "timesEvaluator");
 	define ("*", "timesEvaluator");
 	// [TODO] subtraction, division, comparison, trig, abs
-	define ("not", "notEvaluator");
+	defineTyped ("not", "notEvaluatorT");
 	defspecial ("or", "orEvaluator");
 	defspecial ("and", "andEvaluator");
 	defspecial ("if", "ifEvaluator");
 	// [TODO] Property list access
 	// [TODO] Maps, sets, union, intersection, difference
-	define ("in-package", "inPackageEvaluator");
+	defineTyped ("in-package", "inPackageEvaluatorT");
 	// [TODO] Package creation, uses, export, import
-	define ("describe", "describeEvaluator");
-	define ("getDefaultPackage", "getDefaultPackageEvaluator");
-	define ("getSystemPackage", "getSystemPackageEvaluator");
-	define ("getParentPackages", "getParentPackagesEvaluator");
-	define ("getChildPackages", "getChildPackagesEvaluator");
+	defineTyped ("symbolValue", "symbolValueEvaluatorT");
+	defineTyped ("symbolFunction", "symbolFunctionEvaluatorT");
+	defineTyped ("symbolPlist", "symbolFunctionEvaluatorT");
+	defineTyped ("get", "symbolGetEvaluatorT");
+	defineTyped ("put", "symbolPutEvaluatorT");
+	defineTyped ("remove", "symbolRemoveEvaluatorT");
+	defineTyped ("describe", "describeEvaluatorT");
+	defineTyped ("getDefaultPackage", "getDefaultPackageEvaluatorT");
+	defineTyped ("getSystemPackage", "getSystemPackageEvaluatorT");
+	defineTyped ("getParentPackages", "getParentPackagesEvaluatorT");
+	defineTyped ("getChildPackages", "getChildPackagesEvaluatorT");
 	// [TODO] File functions
 	define ("printf", "printfEvaluator");
     }
@@ -179,13 +185,23 @@ public class Primitives extends Definer
 	return new Double (result * dresult);
     }
 
-    public Object notEvaluator (final List<Object> arguments)
+    // public Object notEvaluator (final List<Object> arguments)
+    // {
+    // if (arguments.size () != 1)
+    // {
+    // throw new IllegalArgumentException ("Exactly one argument required");
+    // }
+    // final Object arg = arguments.get (0);
+    // if (arg instanceof Boolean)
+    // {
+    // final Boolean b = (Boolean)arg;
+    // return !b;
+    // }
+    // return Boolean.FALSE;
+    // }
+
+    public Object notEvaluatorT (final Object arg)
     {
-	if (arguments.size () != 1)
-	{
-	    throw new IllegalArgumentException ("Exactly one argument required");
-	}
-	final Object arg = arguments.get (0);
 	if (arg instanceof Boolean)
 	{
 	    final Boolean b = (Boolean)arg;
@@ -257,19 +273,46 @@ public class Primitives extends Definer
 	return false;
     }
 
-    public Object inPackageEvaluator (final List<Object> arguments)
+    public Object inPackageEvaluatorT (final Object pkg)
     {
-	final Package pkg = coercePackage (arguments.get (0), true);
-	PackageFactory.setDefaultPackage (pkg);
+	final Package p = coercePackage (pkg, true);
+	PackageFactory.setDefaultPackage (p);
 	return pkg;
     }
 
-    public Object describeEvaluator (final List<Object> arguments)
+    public Object symbolValueEvaluatorT (final Symbol arg)
     {
-	for (final Object arg : arguments)
-	{
-	    describe (arg);
-	}
+	return arg.getValue ();
+    }
+
+    public Object symbolFunctionEvaluatorT (final Symbol arg)
+    {
+	return arg.getFunction ();
+    }
+
+    public Object symbolPlistEvaluatorT (final Symbol arg)
+    {
+	return arg.getPlist ();
+    }
+
+    public Object symbolGetEvaluatorT (final Symbol arg, final Symbol key)
+    {
+	return arg.get (key);
+    }
+
+    public Object symbolPutEvaluatorT (final Symbol arg, final Symbol key, final Object value)
+    {
+	return arg.put (key, value);
+    }
+
+    public Object symbolRemoveEvaluatorT (final Symbol arg, final Symbol key)
+    {
+	return arg.remove (key);
+    }
+
+    public Object describeEvaluatorT (final Object arg)
+    {
+	describe (arg);
 	return Boolean.FALSE;
     }
 
@@ -335,7 +378,7 @@ public class Primitives extends Definer
      *
      * @param arguments
      */
-    public Object getDefaultPackageEvaluator (final List<Object> arguments)
+    public Object getDefaultPackageEvaluatorT ()
     {
 	return PackageFactory.getDefaultPackage ();
     }
@@ -345,22 +388,22 @@ public class Primitives extends Definer
      *
      * @param arguments
      */
-    public Object getSystemPackageEvaluator (final List<Object> arguments)
+    public Object getSystemPackageEvaluatorT ()
     {
 	return PackageFactory.getSystemPackage ();
     }
 
-    public Object getParentPackagesEvaluator (final List<Object> arguments)
+    public Object getParentPackagesEvaluatorT (final Object pkg)
     {
-	final Package p = getPackage (arguments, 0);
+	final Package p = coercePackage (pkg, true);
 	final LispList result = new LispList ();
 	result.addAll (p.getParents ());
 	return result;
     }
 
-    public Object getChildPackagesEvaluator (final List<Object> arguments)
+    public Object getChildPackagesEvaluatorT (final Object pkg)
     {
-	final Package p = getPackage (arguments, 0);
+	final Package p = coercePackage (pkg, true);
 	final LispList result = new LispList ();
 	result.addAll (p.getChildren ());
 	return result;
