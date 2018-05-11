@@ -69,6 +69,12 @@ public class BasicDefiner
 		result = method;
 	    }
 	}
+	if (result == null)
+	{
+	    final String cname = source.getClass ().getSimpleName ();
+	    throw new NoSuchMethodException (cname + " has more no method named " + methodName);
+
+	}
 	return result;
     }
 

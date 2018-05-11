@@ -36,9 +36,9 @@ public class LispList extends ArrayList<Object> implements Describer
 	this (parsing.getDefaultOpenChar (), parsing.getDefaultCloseChar ());
     }
 
-    public LispList (final List<Object> members)
+    public LispList (final List<Object> p)
     {
-	this (parsing.getDefaultOpenChar (), parsing.getDefaultCloseChar (), members);
+	this (parsing.getDefaultOpenChar (), parsing.getDefaultCloseChar (), p);
     }
 
     /** Character that starts the list. */
