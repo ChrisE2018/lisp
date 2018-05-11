@@ -16,23 +16,25 @@ public class Sprite extends Rectangle
     private final Color backColor = Color.white;
     private final Color labelColor = Color.black;
     private Object target = null;
+    public Rectangle destination = new Rectangle (0, 0, 0, 0);
 
     public Sprite (final Object target, final int x, final int y, final int width, final int height, final String... lines)
     {
-	this (lines);
-	this.target = target;
+	this (target, lines);
 	this.x = x;
 	this.y = y;
 	this.width = width;
 	this.height = height;
+	destination.setBounds (this);
     }
 
     public Sprite (final Object target, final int width, final int height, final String... lines)
     {
-	this (lines);
+	this (target, lines);
 	this.target = target;
 	this.width = width;
 	this.height = height;
+	destination.setBounds (this);
     }
 
     public Sprite (final Object target, final String... lines)
@@ -153,6 +155,8 @@ public class Sprite extends Rectangle
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
+	buffer.append (" ");
+	buffer.append (target);
 	buffer.append (">");
 	return buffer.toString ();
     }

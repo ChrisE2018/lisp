@@ -38,6 +38,7 @@ public class PlanFunctions extends Definer
 	define ("view", "createPlanViewEvaluator");
 	define ("planTree", "createPlanTreeEvaluator");
 	define ("bfs", "bfsEvaluator");
+	define ("execute", "executeEvaluator");
     }
 
     /**
@@ -303,6 +304,13 @@ public class PlanFunctions extends Definer
 	final BestFirstSearch result = new BestFirstSearch ();
 	result.add (plan);
 	return result;
+    }
+
+    public Object executeEvaluator (final List<Object> arguments)
+    {
+	final Plan plan = (Plan)arguments.get (0);
+	BlockworldSimulator.makeView (plan);
+	return plan;
     }
 
     @Override
