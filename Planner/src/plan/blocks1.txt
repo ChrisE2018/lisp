@@ -6,6 +6,7 @@
 	(red block001)
 	(blue block002)
 	(red block003))*/
+
 (def d (x)
   (describe x))
 

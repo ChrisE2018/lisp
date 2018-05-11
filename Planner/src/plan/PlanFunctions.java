@@ -29,16 +29,14 @@ public class PlanFunctions extends Definer
     {
 	defspecial ("defstate", "defstateEvaluator");
 	defspecial ("defaction", "defactionEvaluator");
-	define ("match", "matchEvaluator");
-	define ("determine-truth1", "determineTruth1Evaluator");
-	define ("determine-truth", "determineTruthEvaluator");
-	define ("node", "createNode");
+	defineTyped ("match", "matchEvaluatorT");
+	defineTyped ("node", "createNodeT");
 	defspecial ("plan", "createPlan");
-	define ("layout", "createPlanLayoutEvaluator");
-	define ("view", "createPlanViewEvaluator");
-	define ("planTree", "createPlanTreeEvaluator");
-	define ("bfs", "bfsEvaluator");
-	define ("execute", "executeEvaluator");
+	defineTyped ("layout", "createPlanLayoutEvaluatorT");
+	defineTyped ("view", "createPlanViewEvaluatorT");
+	defineTyped ("planTree", "createPlanTreeEvaluatorT");
+	defineTyped ("bfs", "bfsEvaluatorT");
+	defineTyped ("execute", "executeEvaluatorT");
     }
 
     /**
@@ -111,72 +109,17 @@ public class PlanFunctions extends Definer
 	}
     }
 
-    public Object matchEvaluator (final List<Object> arguments)
+    public Object matchEvaluatorT (final List<Object> p, final List<Object> l)
     {
-	final LispList pattern = (LispList)arguments.get (0);
-	final LispList literal = (LispList)arguments.get (1);
+	final LispList pattern = new LispList (p);
+	final LispList literal = new LispList (l);
 	final Map<Symbol, Symbol> bindings = matcher.match (pattern, literal);
 	final LispList result = matcher.bindingsToLisp (bindings);
 	return result;
     }
 
-    public Object determineTruth1Evaluator (final List<Object> arguments)
+    public Object createNodeT (final Symbol name)
     {
-	final State state = (State)arguments.get (0);
-	final LispList pattern = (LispList)arguments.get (1);
-	LispList result = null;
-	for (final Object fact : state.getFacts ())
-	{
-	    final Map<Symbol, Symbol> bindings = matcher.match (pattern, (LispList)fact);
-	    if (bindings != null)
-	    {
-		System.out.printf ("Bindings %s %n", bindings);
-		final Object binds = matcher.bindingsToLisp (bindings);
-		if (result == null)
-		{
-		    result = new LispList ();
-		}
-		result.add (binds);
-	    }
-	}
-
-	return result;
-    }
-
-    public Object determineTruthEvaluator (final List<Object> arguments)
-    {
-	final LispList result = new LispList ();
-	final State state = (State)arguments.get (0);
-	final Bindings bindings = new Bindings ();
-	dte (result, state, arguments, 1, bindings);
-	return result;
-    }
-
-    private void dte (final LispList result, final State state, final List<Object> arguments, final int i,
-            final Bindings bindings)
-    {
-	if (i < arguments.size ())
-	{
-	    final LispList pattern = (LispList)arguments.get (i);
-	    for (final Object fact : state.getFacts ())
-	    {
-		final Bindings b = matcher.match (pattern, (LispList)fact, bindings);
-		if (b != null)
-		{
-		    dte (result, state, arguments, i + 1, b);
-		}
-	    }
-	}
-	else
-	{
-	    final Object binds = matcher.bindingsToLisp (bindings);
-	    result.add (binds);
-	}
-    }
-
-    public Object createNode (final List<Object> arguments)
-    {
-	final Symbol name = coerceSymbol (arguments.get (0), true);
 	final Node node = new Node (name);
 	name.setValue (node);
 	return name;
@@ -275,40 +218,35 @@ public class PlanFunctions extends Definer
 	return result;
     }
 
-    public Object createPlanLayoutEvaluator (final List<Object> arguments)
+    public Object createPlanLayoutEvaluatorT (final Plan plan)
     {
-	final Plan plan = (Plan)arguments.get (0);
 	final PlanLayout planLayout = new PlanLayout ();
 	final Rectangle r = new Rectangle (0, 0, 700, 400);
 	final List<Sprite> result = planLayout.getLayout (plan, r);
 	return result;
     }
 
-    public Object createPlanViewEvaluator (final List<Object> arguments)
+    public Object createPlanViewEvaluatorT (final Plan plan)
     {
-	final Plan plan = (Plan)arguments.get (0);
 	PlanView.makeView (plan);
 	return plan;
     }
 
-    public Object createPlanTreeEvaluator (final List<Object> arguments)
+    public Object createPlanTreeEvaluatorT (final Plan plan)
     {
-	final Plan plan = (Plan)arguments.get (0);
 	PlanTreeDemo.displayPlan (plan);
 	return plan;
     }
 
-    public Object bfsEvaluator (final List<Object> arguments)
+    public Object bfsEvaluatorT (final Plan plan)
     {
-	final Plan plan = (Plan)arguments.get (0);
 	final BestFirstSearch result = new BestFirstSearch ();
 	result.add (plan);
 	return result;
     }
 
-    public Object executeEvaluator (final List<Object> arguments)
+    public Object executeEvaluatorT (final Plan plan)
     {
-	final Plan plan = (Plan)arguments.get (0);
 	BlockworldSimulator.makeView (plan);
 	return plan;
     }
