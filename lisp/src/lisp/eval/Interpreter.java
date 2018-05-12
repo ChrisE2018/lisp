@@ -8,7 +8,7 @@ import lisp.*;
 import lisp.Package;
 
 /** Simple interpreter that using reflection to evaluate forms like Lisp functions. */
-public class Interpreter extends BasicDefiner
+public class Interpreter extends Definer
 {
     public Interpreter ()
     {

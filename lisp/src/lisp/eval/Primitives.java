@@ -37,11 +37,6 @@ public class Primitives extends Definer
 	// Work really done in static statement above.
     }
 
-    private Primitives ()
-    {
-	super (PackageFactory.getSystemPackage ());
-    }
-
     /**
      * Evaluator for quoted forms.
      *
