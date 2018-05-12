@@ -7,12 +7,34 @@ import java.util.Map.Entry;
 import lisp.*;
 import lisp.Package;
 
+/**
+ * Bind java functions to lisp symbols.
+ * <p>
+ * Note that special forms like quote and setq are passed the interpreter as a first parameter and
+ * the entire expression (including the function name) as the arguments. The real arguments start at
+ * the second position. This is convenient because the interpreter is already processing the whole
+ * expression and would have to allocate a new object to remove the function from the start of the
+ * expression.
+ * </p>
+ * <p>
+ * Normal functions are just passed the evaluated arguments. The real arguments start at the
+ * beginning. This is convenient since the interpreter creates a new list for the arguments anyhow.
+ * </p>
+ */
 public class Primitives extends Definer
 {
-    public static void initialize () throws NoSuchMethodException, SecurityException
+    // [TODO] Create immutable list
+    // [TODO] comparison, trig, abs
+    // [TODO] Property list access
+    // [TODO] Maps, sets, union, intersection, difference
+    // [TODO] Package creation, uses, export, import
+    // [TODO] File functions
+    @SuppressWarnings ("unused")
+    private static Primitives primitives = new Primitives ();
+
+    public static void initialize ()
     {
-	final Primitives primitives = new Primitives ();
-	primitives.definePrimitives ();
+	// Work really done in static statement above.
     }
 
     private Primitives ()
@@ -21,66 +43,13 @@ public class Primitives extends Definer
     }
 
     /**
-     * Bind java functions to lisp symbols.
-     * <p>
-     * Note that special forms like quote and setq are passed the interpreter as a first parameter
-     * and the entire expression (including the function name) as the arguments. The real arguments
-     * start at the second position. This is convenient because the interpreter is already
-     * processing the whole expression and would have to allocate a new object to remove the
-     * function from the start of the expression.
-     * </p>
-     * <p>
-     * Normal functions are just passed the evaluated arguments. The real arguments start at the
-     * beginning. This is convenient since the interpreter creates a new list for the arguments
-     * anyhow.
-     * </p>
-     *
-     * @throws NoSuchMethodException
-     * @throws SecurityException
-     */
-    private void definePrimitives () throws NoSuchMethodException, SecurityException
-    {
-	defspecial ("quote", "quoteEvaluator");
-	defspecial ("def", "defEvaluator");
-	defspecial ("setq", "setqEvaluator");
-	define ("list", "listEvaluator");
-	// [TODO] Create immutable list
-	define ("plus", "plusEvaluator");
-	define ("+", "plusEvaluator");
-	define ("times", "timesEvaluator");
-	define ("*", "timesEvaluator");
-	// [TODO] subtraction, division, comparison, trig, abs
-	defineTyped ("not", "notEvaluatorT");
-	defspecial ("or", "orEvaluator");
-	defspecial ("and", "andEvaluator");
-	defspecial ("if", "ifEvaluator");
-	// [TODO] Property list access
-	// [TODO] Maps, sets, union, intersection, difference
-	defineTyped ("in-package", "inPackageEvaluatorT");
-	// [TODO] Package creation, uses, export, import
-	defineTyped ("symbolValue", "symbolValueEvaluatorT");
-	defineTyped ("symbolFunction", "symbolFunctionEvaluatorT");
-	defineTyped ("symbolPlist", "symbolFunctionEvaluatorT");
-	defineTyped ("get", "symbolGetEvaluatorT");
-	defineTyped ("put", "symbolPutEvaluatorT");
-	defineTyped ("remove", "symbolRemoveEvaluatorT");
-	defineTyped ("describe", "describeEvaluatorT");
-	defineTyped ("getDefaultPackage", "getDefaultPackageEvaluatorT");
-	defineTyped ("getSystemPackage", "getSystemPackageEvaluatorT");
-	defineTyped ("getParentPackages", "getParentPackagesEvaluatorT");
-	defineTyped ("getChildPackages", "getChildPackagesEvaluatorT");
-	// [TODO] File functions
-	define ("printf", "printfEvaluator");
-    }
-
-    /**
      * Evaluator for quoted forms.
      *
      * @param interpreter Not used, but required by calling protocol.
      */
-    public Object quoteEvaluator (final Interpreter interpreter, final List<Object> arguments)
+    @DefineLisp (special = true, name = "quote")
+    public Object quoteEvaluator (final Interpreter interpreter, final Object result)
     {
-	final Object result = arguments.get (1);
 	return result;
     }
 
@@ -89,19 +58,13 @@ public class Primitives extends Definer
      *
      * @param interpreter Not used, but required by calling protocol.
      */
-    public Object defEvaluator (final Interpreter interpreter, final List<Object> arguments)
+    @DefineLisp (special = true, name = "def")
+    public Object defEvaluator (final Interpreter interpreter, final Symbol name, final LispList arglist, final List<Object> body)
     {
-	final Symbol name = coerceSymbol (arguments.get (1), true);
-	final LispList arglist = (LispList)arguments.get (2);
 	final List<Symbol> params = new ArrayList<Symbol> ();
 	for (final Object a : arglist)
 	{
 	    params.add ((Symbol)a);
-	}
-	final List<Object> body = new ArrayList<Object> ();
-	for (int i = 3; i < arguments.size (); i++)
-	{
-	    body.add (arguments.get (i));
 	}
 	final DefFunctionCell function = new DefFunctionCell (name, params, body);
 	name.setFunction (function);
@@ -115,92 +78,455 @@ public class Primitives extends Definer
      * @param arguments The symbol and value form.
      * @return The new value.
      */
-    public Object setqEvaluator (final Interpreter interpreter, final List<Object> arguments) throws Exception
+    @DefineLisp (special = true)
+    public Object setq (final Interpreter interpreter, final Symbol symbol, final Object form) throws Exception
     {
-	final Symbol name = coerceSymbol (arguments.get (1), true);
-	final Object form = arguments.get (2);
 	final Object value = interpreter.eval (form);
-	name.setValue (value);
+	symbol.setValue (value);
 	return value;
     }
 
-    public Object listEvaluator (final List<Object> arguments)
+    @DefineLisp
+    public Object list (final Object... arguments)
     {
 	return new LispList (arguments);
     }
 
-    public Object plusEvaluator (final List<Object> arguments)
+    @DefineLisp (name = "+")
+    public Object plus (final Object... arguments)
     {
-	int result = 0;
-	double dresult = 0;
-	boolean integer = true;
-	for (final Object a : arguments)
+	if (arguments.length > 0)
 	{
-	    if (a instanceof Integer)
+	    Object result = arguments[0];
+	    for (int i = 1; i < arguments.length; i++)
 	    {
-		result += (Integer)a;
+		result = plus (result, arguments[i]);
 	    }
-	    else if (a instanceof Double)
-	    {
-		integer = false;
-		dresult += (Double)a;
-	    }
-	    else
-	    {
-		throw new IllegalArgumentException ("Number required " + a);
-	    }
+	    return result;
 	}
-	if (integer)
-	{
-	    return new Integer (result);
-	}
-	return new Double (result + dresult);
+	return 0;
     }
 
-    public Object timesEvaluator (final List<Object> arguments)
+    private Object plus (final Integer a, final Object b)
     {
-	int result = 1;
-	double dresult = 1;
-	boolean integer = true;
-	for (final Object a : arguments)
+	if (b instanceof Integer)
 	{
-	    if (a instanceof Integer)
-	    {
-		result *= (Integer)a;
-	    }
-	    else if (a instanceof Double)
-	    {
-		integer = false;
-		dresult *= (Double)a;
-	    }
-	    else
-	    {
-		throw new IllegalArgumentException ("Number required " + a);
-	    }
+	    return a + (Integer)b;
 	}
-	if (integer)
+	else if (b instanceof Double)
 	{
-	    return new Integer (result);
+	    return a + (Double)b;
 	}
-	return new Double (result * dresult);
+	else if (b instanceof Short)
+	{
+	    return a + (Short)b;
+	}
+	else if (b instanceof Byte)
+	{
+	    return a + (Byte)b;
+	}
+	else if (b instanceof Float)
+	{
+	    return a + (Float)b;
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + b);
+	}
     }
 
-    // public Object notEvaluator (final List<Object> arguments)
-    // {
-    // if (arguments.size () != 1)
-    // {
-    // throw new IllegalArgumentException ("Exactly one argument required");
-    // }
-    // final Object arg = arguments.get (0);
-    // if (arg instanceof Boolean)
-    // {
-    // final Boolean b = (Boolean)arg;
-    // return !b;
-    // }
-    // return Boolean.FALSE;
-    // }
+    private Object plus (final Double a, final Object b)
+    {
+	if (b instanceof Integer)
+	{
+	    return a + (Integer)b;
+	}
+	else if (b instanceof Double)
+	{
+	    return a + (Double)b;
+	}
+	else if (b instanceof Short)
+	{
+	    return a + (Short)b;
+	}
+	else if (b instanceof Byte)
+	{
+	    return a + (Byte)b;
+	}
+	else if (b instanceof Float)
+	{
+	    return a + (Float)b;
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + b);
+	}
+    }
 
-    public Object notEvaluatorT (final Object arg)
+    private Object plus (final Object a, final Object b)
+    {
+	if (a instanceof Integer)
+	{
+	    return plus ((Integer)a, b);
+	}
+	else if (a instanceof Double)
+	{
+	    return plus ((Double)a, b);
+	}
+	else if (a instanceof Short)
+	{
+	    final int aa = (Short)a;
+	    final Integer aaa = aa;
+	    return plus (aaa, b);
+	}
+	else if (a instanceof Byte)
+	{
+	    final int aa = (Byte)a;
+	    final Integer aaa = aa;
+	    return plus (aaa, b);
+	}
+	else if (a instanceof Float)
+	{
+	    final double aa = (Float)a;
+	    final Double aaa = aa;
+	    return plus (aaa, b);
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + a);
+	}
+    }
+
+    @DefineLisp (name = "-")
+    public Object minus (final Object... arguments)
+    {
+	switch (arguments.length)
+	{
+	    case 0:
+		return 0;
+
+	    case 1:
+		return arguments[0];
+
+	    default:
+		Object result = arguments[0];
+		for (int i = 1; i < arguments.length; i++)
+		{
+		    result = minus (result, arguments[i]);
+		}
+		return result;
+	}
+    }
+
+    private Object minus (final Integer a, final Object b)
+    {
+	if (b instanceof Integer)
+	{
+	    return a - (Integer)b;
+	}
+	else if (b instanceof Double)
+	{
+	    return a - (Double)b;
+	}
+	else if (b instanceof Short)
+	{
+	    return a - (Short)b;
+	}
+	else if (b instanceof Byte)
+	{
+	    return a - (Byte)b;
+	}
+	else if (b instanceof Float)
+	{
+	    return a - (Float)b;
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + b);
+	}
+    }
+
+    private Object minus (final Double a, final Object b)
+    {
+	if (b instanceof Integer)
+	{
+	    return a - (Integer)b;
+	}
+	else if (b instanceof Double)
+	{
+	    return a - (Double)b;
+	}
+	else if (b instanceof Short)
+	{
+	    return a - (Short)b;
+	}
+	else if (b instanceof Byte)
+	{
+	    return a - (Byte)b;
+	}
+	else if (b instanceof Float)
+	{
+	    return a - (Float)b;
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + b);
+	}
+    }
+
+    private Object minus (final Object a, final Object b)
+    {
+	if (a instanceof Integer)
+	{
+	    return minus ((Integer)a, b);
+	}
+	else if (a instanceof Double)
+	{
+	    return minus ((Double)a, b);
+	}
+	else if (a instanceof Short)
+	{
+	    final int aa = (Short)a;
+	    final Integer aaa = aa;
+	    return minus (aaa, b);
+	}
+	else if (a instanceof Byte)
+	{
+	    final int aa = (Byte)a;
+	    final Integer aaa = aa;
+	    return minus (aaa, b);
+	}
+	else if (a instanceof Float)
+	{
+	    final double aa = (Float)a;
+	    final Double aaa = aa;
+	    return minus (aaa, b);
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + a);
+	}
+    }
+
+    @DefineLisp (name = "*")
+    public Object times (final Object... arguments)
+    {
+	if (arguments.length > 0)
+	{
+	    Object result = arguments[0];
+	    for (int i = 1; i < arguments.length; i++)
+	    {
+		result = times (result, arguments[i]);
+	    }
+	    return result;
+	}
+	return 1;
+    }
+
+    private Object times (final Integer a, final Object b)
+    {
+	if (b instanceof Integer)
+	{
+	    return a * (Integer)b;
+	}
+	else if (b instanceof Double)
+	{
+	    return a * (Double)b;
+	}
+	else if (b instanceof Short)
+	{
+	    return a * (Short)b;
+	}
+	else if (b instanceof Byte)
+	{
+	    return a * (Byte)b;
+	}
+	else if (b instanceof Float)
+	{
+	    return a * (Float)b;
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + b);
+	}
+    }
+
+    private Object times (final Double a, final Object b)
+    {
+	if (b instanceof Integer)
+	{
+	    return a * (Integer)b;
+	}
+	else if (b instanceof Double)
+	{
+	    return a * (Double)b;
+	}
+	else if (b instanceof Short)
+	{
+	    return a * (Short)b;
+	}
+	else if (b instanceof Byte)
+	{
+	    return a * (Byte)b;
+	}
+	else if (b instanceof Float)
+	{
+	    return a * (Float)b;
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + b);
+	}
+    }
+
+    private Object times (final Object a, final Object b)
+    {
+	if (a instanceof Integer)
+	{
+	    return times ((Integer)a, b);
+	}
+	else if (a instanceof Double)
+	{
+	    return times ((Double)a, b);
+	}
+	else if (a instanceof Short)
+	{
+	    final int aa = (Short)a;
+	    final Integer aaa = aa;
+	    return times (aaa, b);
+	}
+	else if (a instanceof Byte)
+	{
+	    final int aa = (Byte)a;
+	    final Integer aaa = aa;
+	    return times (aaa, b);
+	}
+	else if (a instanceof Float)
+	{
+	    final double aa = (Float)a;
+	    final Double aaa = aa;
+	    return times (aaa, b);
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + a);
+	}
+    }
+
+    @DefineLisp (name = "/")
+    public Object quotient (final Object... arguments)
+    {
+	switch (arguments.length)
+	{
+	    case 0:
+		return 1;
+
+	    case 1:
+		return arguments[0];
+
+	    default:
+		final Object numerator = arguments[0];
+		Object denominator = arguments[1];
+		for (int i = 2; i < arguments.length; i++)
+		{
+		    denominator = times (denominator, arguments[i]);
+		}
+		return quotient (numerator, denominator);
+	}
+    }
+
+    private Object quotient (final Integer a, final Object b)
+    {
+	if (b instanceof Integer)
+	{
+	    return a / (Integer)b;
+	}
+	else if (b instanceof Double)
+	{
+	    return a / (Double)b;
+	}
+	else if (b instanceof Short)
+	{
+	    return a / (Short)b;
+	}
+	else if (b instanceof Byte)
+	{
+	    return a - (Byte)b;
+	}
+	else if (b instanceof Float)
+	{
+	    return a / (Float)b;
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + b);
+	}
+    }
+
+    private Object quotient (final Double a, final Object b)
+    {
+	if (b instanceof Integer)
+	{
+	    return a / (Integer)b;
+	}
+	else if (b instanceof Double)
+	{
+	    return a / (Double)b;
+	}
+	else if (b instanceof Short)
+	{
+	    return a / (Short)b;
+	}
+	else if (b instanceof Byte)
+	{
+	    return a / (Byte)b;
+	}
+	else if (b instanceof Float)
+	{
+	    return a / (Float)b;
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + b);
+	}
+    }
+
+    private Object quotient (final Object a, final Object b)
+    {
+	if (a instanceof Integer)
+	{
+	    return quotient ((Integer)a, b);
+	}
+	else if (a instanceof Double)
+	{
+	    return quotient ((Double)a, b);
+	}
+	else if (a instanceof Short)
+	{
+	    final int aa = (Short)a;
+	    final Integer aaa = aa;
+	    return quotient (aaa, b);
+	}
+	else if (a instanceof Byte)
+	{
+	    final int aa = (Byte)a;
+	    final Integer aaa = aa;
+	    return quotient (aaa, b);
+	}
+	else if (a instanceof Float)
+	{
+	    final double aa = (Float)a;
+	    final Double aaa = aa;
+	    return quotient (aaa, b);
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + a);
+	}
+    }
+
+    @DefineLisp
+    public Object not (final Object arg)
     {
 	if (arg instanceof Boolean)
 	{
@@ -210,11 +536,12 @@ public class Primitives extends Definer
 	return Boolean.FALSE;
     }
 
-    public Object orEvaluator (final Interpreter interpreter, final List<Object> arguments) throws Exception
+    @DefineLisp (special = true)
+    public Object or (final Interpreter interpreter, final Object... arguments) throws Exception
     {
-	for (int i = 1; i < arguments.size (); i++)
+	for (int i = 0; i < arguments.length; i++)
 	{
-	    final Object arg = arguments.get (i);
+	    final Object arg = arguments[i];
 	    final Object value = interpreter.eval (arg);
 	    if (isTrue (value))
 	    {
@@ -224,12 +551,13 @@ public class Primitives extends Definer
 	return false;
     }
 
-    public Object andEvaluator (final Interpreter interpreter, final List<Object> arguments) throws Exception
+    @DefineLisp (special = true)
+    public Object and (final Interpreter interpreter, final Object... arguments) throws Exception
     {
 	Object result = Boolean.TRUE;
-	for (int i = 1; i < arguments.size (); i++)
+	for (int i = 0; i < arguments.length; i++)
 	{
-	    final Object arg = arguments.get (i);
+	    final Object arg = arguments[i];
 	    final Object value = interpreter.eval (arg);
 	    if (!isTrue (value))
 	    {
@@ -240,17 +568,18 @@ public class Primitives extends Definer
 	return result;
     }
 
-    public Object ifEvaluator (final Interpreter interpreter, final List<Object> arguments) throws Exception
+    @DefineLisp (special = true, name = "if")
+    public Object ifEvaluator (final Interpreter interpreter, final Object test, final Object trueClause,
+            final Object... arguments) throws Exception
     {
-	final Object test = interpreter.eval (arguments.get (1));
-	if (isTrue (test))
+	if (isTrue (interpreter.eval (test)))
 	{
-	    return interpreter.eval (arguments.get (2));
+	    return interpreter.eval (trueClause);
 	}
 	Object result = Boolean.TRUE;
-	for (int i = 3; i < arguments.size (); i++)
+	for (int i = 0; i < arguments.length; i++)
 	{
-	    final Object arg = arguments.get (i);
+	    final Object arg = arguments[i];
 	    final Object value = interpreter.eval (arg);
 	    result = value;
 	}
@@ -273,50 +602,52 @@ public class Primitives extends Definer
 	return false;
     }
 
-    public Object inPackageEvaluatorT (final Object pkg)
+    @DefineLisp
+    public Object inPackage (final Object pkg)
     {
 	final Package p = coercePackage (pkg, true);
 	PackageFactory.setDefaultPackage (p);
 	return pkg;
     }
 
-    public Object symbolValueEvaluatorT (final Symbol arg)
+    @DefineLisp
+    public Object symbolValue (final Symbol arg)
     {
 	return arg.getValue ();
     }
 
-    public Object symbolFunctionEvaluatorT (final Symbol arg)
+    @DefineLisp
+    public Object symbolFunction (final Symbol arg)
     {
 	return arg.getFunction ();
     }
 
-    public Object symbolPlistEvaluatorT (final Symbol arg)
+    @DefineLisp
+    public Object symbolPlist (final Symbol arg)
     {
 	return arg.getPlist ();
     }
 
-    public Object symbolGetEvaluatorT (final Symbol arg, final Symbol key)
+    @DefineLisp
+    public Object get (final Symbol arg, final Symbol key)
     {
 	return arg.get (key);
     }
 
-    public Object symbolPutEvaluatorT (final Symbol arg, final Symbol key, final Object value)
+    @DefineLisp
+    public Object put (final Symbol arg, final Symbol key, final Object value)
     {
 	return arg.put (key, value);
     }
 
-    public Object symbolRemoveEvaluatorT (final Symbol arg, final Symbol key)
+    @DefineLisp
+    public Object remove (final Symbol arg, final Symbol key)
     {
 	return arg.remove (key);
     }
 
-    public Object describeEvaluatorT (final Object arg)
-    {
-	describe (arg);
-	return Boolean.FALSE;
-    }
-
-    private void describe (final Object arg)
+    @DefineLisp
+    public Object describe (final Object arg)
     {
 	System.out.printf ("Describe: %s \n", arg);
 	if (arg != null)
@@ -331,6 +662,7 @@ public class Primitives extends Definer
 		System.out.printf ("Class: %s \n", arg.getClass ().getCanonicalName ());
 	    }
 	}
+	return Boolean.FALSE;
     }
 
     private Describer getDescriber (final Object arg)
@@ -378,7 +710,8 @@ public class Primitives extends Definer
      *
      * @param arguments
      */
-    public Object getDefaultPackageEvaluatorT ()
+    @DefineLisp
+    public Object getDefaultPackage ()
     {
 	return PackageFactory.getDefaultPackage ();
     }
@@ -388,12 +721,14 @@ public class Primitives extends Definer
      *
      * @param arguments
      */
-    public Object getSystemPackageEvaluatorT ()
+    @DefineLisp
+    public Object getSystemPackage ()
     {
 	return PackageFactory.getSystemPackage ();
     }
 
-    public Object getParentPackagesEvaluatorT (final Object pkg)
+    @DefineLisp
+    public Object getParentPackages (final Object pkg)
     {
 	final Package p = coercePackage (pkg, true);
 	final LispList result = new LispList ();
@@ -401,7 +736,8 @@ public class Primitives extends Definer
 	return result;
     }
 
-    public Object getChildPackagesEvaluatorT (final Object pkg)
+    @DefineLisp
+    public Object getChildPackages (final Object pkg)
     {
 	final Package p = coercePackage (pkg, true);
 	final LispList result = new LispList ();
@@ -409,14 +745,20 @@ public class Primitives extends Definer
 	return result;
     }
 
-    public Object printfEvaluator (final List<Object> arguments)
+    @DefineLisp
+    public Object printf (final String format, final Object... arguments)
     {
-	final String format = getString (arguments, 0);
-	final int size = arguments.size ();
-	final Object[] args = new Object[size - 1];
-	arguments.subList (1, size).toArray (args);
-	System.out.printf (format, args);
+	// final int size = arguments.size ();
+	// final Object[] args = new Object[size - 1];
+	// arguments.subList (1, size).toArray (args);
+	System.out.printf (format, arguments);
 	return null;
+    }
+
+    @DefineLisp
+    public Object test (final Object a, final Object b)
+    {
+	return plus (a, b);
     }
 
     @Override

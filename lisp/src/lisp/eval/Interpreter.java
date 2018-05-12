@@ -10,15 +10,9 @@ import lisp.Package;
 /** Simple interpreter that using reflection to evaluate forms like Lisp functions. */
 public class Interpreter extends BasicDefiner
 {
-    public Interpreter () throws NoSuchMethodException, SecurityException
+    public Interpreter ()
     {
-	final Symbol eval = PackageFactory.getSystemPackage ().internPublic ("eval");
-	final Symbol load = PackageFactory.getSystemPackage ().internPublic ("load");
-	final Symbol java = PackageFactory.getSystemPackage ().internPublic ("java");
-	defineTyped (eval, "evalEvaluatorT");
-	define (load, "loadEvaluator");
-	define (java, "javaEvaluator");
-	// [TODO] Need javaStatic, javaNew
+	Primitives.initialize ();
     }
 
     public Object eval (final Object form) throws Exception
@@ -44,8 +38,15 @@ public class Interpreter extends BasicDefiner
 	    }
 	    final Symbol f = (Symbol)fn;
 	    final FunctionCell function = f.getFunction ();
-	    if (function == null)
+	    if (function != null)
 	    {
+		// System.out.printf ("Eval %s%n", form);
+		final Object result = function.eval (this, list);
+		return result;
+	    }
+	    else
+	    {
+		// Handle unbound functions as calls to native Java methods
 		final Object target = eval (getObject (list, 1));
 		final String method = coerceString (f, true);
 		final Class<?> cls = target.getClass ();
@@ -59,41 +60,30 @@ public class Interpreter extends BasicDefiner
 		// System.out.printf ("Invoking %s.%s %s %n", target, method, arguments);
 		return javaMethodCall (target, cls, method, arguments);
 	    }
-	    // System.out.printf ("Eval %s%n", form);
-	    final Object result = function.eval (this, list);
-	    return result;
 	}
 	return form;
     }
 
     /** Evaluate a lisp expression and return the result. */
-    public Object evalEvaluatorT (final Object expression) throws Exception
+    @DefineLisp (name = "eval")
+    public Object evalT (final Object expression) throws Exception
     {
 	final Object value = eval (expression);
 	return value;
     }
 
     /** Load a file. First argument is the pathname. Optional second argument is the package. */
-    public Object loadEvaluator (final List<Object> arguments) throws Exception
+    @DefineLisp
+    public Object load (final String pathname, final Object... arguments) throws Exception
     {
-	final String pathname = coerceString (arguments.get (0));
 	Package pkg = PackageFactory.getDefaultPackage ();
-	if (arguments.size () > 1)
+	if (arguments.length > 0)
 	{
-	    pkg = coercePackage (arguments.get (1));
+	    pkg = coercePackage (arguments[0]);
 	}
 	final FileReader fileReader = new FileReader ();
 	final Object result = fileReader.read (this, pkg, pathname);
 	return result;
-    }
-
-    public Object javaEvaluator (final List<Object> arguments)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
-    {
-	final Object target = getObject (arguments, 0);
-	final String method = coerceString (arguments.get (1), true);
-	final Class<?> cls = target.getClass ();
-	return javaMethodCall (target, cls, method, arguments);
     }
 
     /**
@@ -128,7 +118,7 @@ public class Interpreter extends BasicDefiner
 	final Class<?> parentClass = cls.getSuperclass ();
 	if (parentClass == null)
 	{
-	    throw new IllegalArgumentException ("Can't apply method " + methodName + " to object " + target);
+	    throw new IllegalArgumentException ("Can't apply method '" + methodName + "' to object " + target);
 	}
 	return javaMethodCall (target, parentClass, methodName, arguments);
     }

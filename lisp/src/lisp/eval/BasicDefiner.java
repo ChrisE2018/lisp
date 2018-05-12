@@ -14,11 +14,13 @@ public class BasicDefiner
     public BasicDefiner (final Object source)
     {
 	this.source = source;
+	getAnnotations (source);
     }
 
     public BasicDefiner ()
     {
 	source = this;
+	getAnnotations (source);
     }
 
     public Object getSource ()
@@ -26,56 +28,47 @@ public class BasicDefiner
 	return source;
     }
 
-    /**
-     * Bind a symbol to a java implementation method. <br>
-     * [TODO] Should be able to specify the number and type of the arguments.
-     *
-     * @param symbol
-     * @param methodName
-     */
-    public void define (final Symbol symbol, final String methodName) throws NoSuchMethodException, SecurityException
+    private void getAnnotations (final Object object)
     {
-	final Method method = source.getClass ().getMethod (methodName, List.class);
-	symbol.setFunction (new StandardFunctionCell (source, method));
-    }
-
-    /**
-     * Bind a symbol to a java implementation method. <br>
-     * The method must be a unique local method of the source class and the number and type of
-     * arguments come from it.
-     *
-     * @param symbol
-     * @param methodName
-     */
-    public void defineTyped (final Symbol symbol, final String methodName) throws NoSuchMethodException, SecurityException
-    {
-	final Method method = getNamedMethod (methodName);
-	symbol.setFunction (new TypedFunctionCell (source, method));
-    }
-
-    private Method getNamedMethod (final String methodName) throws NoSuchMethodException
-    {
-	Method result = null;
-	final Method[] methods = source.getClass ().getDeclaredMethods ();
-	for (final Method method : methods)
+	final Class<?> objectClass = object.getClass ();
+	for (final Method method : objectClass.getDeclaredMethods ())
 	{
-	    if (method.getName ().equals (methodName))
+	    if (method.isAnnotationPresent (DefineLisp.class))
 	    {
-		if (result != null)
-		{
-		    final String cname = source.getClass ().getSimpleName ();
-		    throw new NoSuchMethodException (cname + " has more than one method named " + methodName);
-		}
-		result = method;
+		defineMethodFunction (object, method);
 	    }
 	}
-	if (result == null)
-	{
-	    final String cname = source.getClass ().getSimpleName ();
-	    throw new NoSuchMethodException (cname + " has more no method named " + methodName);
+    }
 
+    private void defineMethodFunction (final Object object, final Method method)
+    {
+	final DefineLisp a = method.getAnnotation (DefineLisp.class);
+	final String packageName = a.packageName ();
+	final Package p = PackageFactory.getPackage (packageName);
+	final boolean external = a.external ();
+	final boolean special = a.special ();
+	final boolean macro = a.macro ();
+	String symbolName = a.name ();
+	if (symbolName.isEmpty ())
+	{
+	    symbolName = method.getName ();
 	}
-	return result;
+	System.out.printf ("define %s as %s %n", symbolName, method);
+	final Symbol symbol = external ? p.internPublic (symbolName) : p.internPrivate (symbolName);
+	FunctionCell function = null;
+	if (special)
+	{
+	    function = new SpecialFunctionCell (object, method);
+	}
+	else if (macro)
+	{
+	    function = new MacroFunctionCell (object, method);
+	}
+	else
+	{
+	    function = new StandardFunctionCell (object, method);
+	}
+	symbol.setFunction (function);
     }
 
     /**
@@ -88,7 +81,7 @@ public class BasicDefiner
     public void defspecial (final Symbol symbol, final String methodName) throws NoSuchMethodException, SecurityException
     {
 	final Method method = source.getClass ().getMethod (methodName, Interpreter.class, List.class);
-	symbol.setFunction (new SpecialFunctionCell (source, method));
+	symbol.setFunction (new OldSpecialFunctionCell (source, method));
     }
 
     /**

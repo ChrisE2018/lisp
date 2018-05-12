@@ -3,7 +3,7 @@ package lisp.demo;
 
 import lisp.*;
 import lisp.Package;
-import lisp.eval.*;
+import lisp.eval.Interpreter;
 
 /** Simple toplevel loop that reads a lisp form, evaluates it and prints the result. */
 public class Repl
@@ -12,7 +12,7 @@ public class Repl
 
     private final Interpreter interpreter;
 
-    public static void main (final String[] args) throws NoSuchMethodException, SecurityException
+    public static void main (final String[] args)
     {
 	final Repl repl = new Repl ();
 	final LispStream stream = new LispStream (System.in);
@@ -20,9 +20,8 @@ public class Repl
     }
 
     /** Constructor for demo application. */
-    private Repl () throws NoSuchMethodException, SecurityException
+    private Repl ()
     {
-	Primitives.initialize ();
 	interpreter = new Interpreter ();
 	reader = new LispReader ();
     }

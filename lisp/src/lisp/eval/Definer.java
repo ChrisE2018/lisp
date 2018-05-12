@@ -21,45 +21,19 @@ public class Definer extends BasicDefiner
 	this.pkg = pkg;
     }
 
-    /**
-     * Bind a symbol to a java implementation method. <br>
-     * [TODO] Should be able to specify the number and type of the arguments.
-     *
-     * @param symbolName
-     * @param methodName
-     */
-    public void define (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
-    {
-	final Symbol symbol = pkg.internPublic (symbolName);
-	define (symbol, methodName);
-    }
-
-    /**
-     * Bind a symbol to a java implementation method. <br>
-     * The method must be a unique local method of the source class and the number and type of
-     * arguments come from it.
-     *
-     * @param symbolName
-     * @param methodName
-     */
-    public void defineTyped (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
-    {
-	final Symbol symbol = pkg.internPublic (symbolName);
-	defineTyped (symbol, methodName);
-    }
-
-    /**
-     * Bind a symbol to a java implementation method for a special form. <br>
-     * [TODO] Should be able to specify the number and type of the arguments.
-     *
-     * @param symbolName
-     * @param methodName
-     */
-    public void defspecial (final String symbolName, final String methodName) throws NoSuchMethodException, SecurityException
-    {
-	final Symbol symbol = pkg.internPublic (symbolName);
-	defspecial (symbol, methodName);
-    }
+    // /**
+    // * Bind a symbol to a java implementation method for a special form. <br>
+    // * [TODO] Should be able to specify the number and type of the arguments.
+    // *
+    // * @param symbolName
+    // * @param methodName
+    // */
+    // public void defspecial (final String symbolName, final String methodName) throws
+    // NoSuchMethodException, SecurityException
+    // {
+    // final Symbol symbol = pkg.internPublic (symbolName);
+    // defspecial (symbol, methodName);
+    // }
 
     /**
      * Bind a symbol to a java implementation method for a macro. <br>

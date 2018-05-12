@@ -41,6 +41,15 @@ public class LispList extends ArrayList<Object> implements Describer
 	this (parsing.getDefaultOpenChar (), parsing.getDefaultCloseChar (), p);
     }
 
+    public LispList (final Object[] p)
+    {
+	this (parsing.getDefaultOpenChar (), parsing.getDefaultCloseChar ());
+	for (final Object o : p)
+	{
+	    add (o);
+	}
+    }
+
     /** Character that starts the list. */
     public char getOpenChar ()
     {
