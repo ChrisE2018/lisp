@@ -11,46 +11,27 @@ import search.BestFirstSearch;
 
 public class PlanFunctions extends Definer
 {
-    private final Matcher matcher = new Matcher ();
+    @SuppressWarnings ("unused")
+    private static PlanFunctions planFunctions = new PlanFunctions ();
 
-    public static void initialize () throws NoSuchMethodException, SecurityException
+    public static void initialize ()
     {
-	Primitives.initialize ();
-	final PlanFunctions planFunctions = new PlanFunctions ();
-	planFunctions.defineLispFunctions ();
     }
+
+    private final Matcher matcher = new Matcher ();
 
     private PlanFunctions ()
     {
 	super (PackageFactory.getPackage ("user"));
     }
 
-    private void defineLispFunctions () throws NoSuchMethodException, SecurityException
-    {
-	defspecial ("defstate", "defstateEvaluator");
-	defspecial ("defaction", "defactionEvaluator");
-	defineTyped ("match", "matchEvaluatorT");
-	defineTyped ("node", "createNodeT");
-	defspecial ("plan", "createPlan");
-	defineTyped ("layout", "createPlanLayoutEvaluatorT");
-	defineTyped ("view", "createPlanViewEvaluatorT");
-	defineTyped ("planTree", "createPlanTreeEvaluatorT");
-	defineTyped ("bfs", "bfsEvaluatorT");
-	defineTyped ("execute", "executeEvaluatorT");
-    }
-
     /**
      * @param interpreter
      */
-    public Object defstateEvaluator (final Interpreter interpreter, final List<Object> arguments)
+    @DefineLisp (special = true)
+    public Object defstate (final Interpreter interpreter, final Symbol name, final LispList body)
     {
-	final Symbol name = (Symbol)arguments.get (1);
-	final LispList facts = new LispList ();
-	for (int i = 2; i < arguments.size (); i++)
-	{
-	    facts.add (arguments.get (i));
-	}
-	final State state = new State (facts);
+	final State state = new State (body);
 	name.setValue (state);
 	return name;
     }
@@ -62,14 +43,14 @@ public class PlanFunctions extends Definer
     /**
      * @param interpreter
      */
-    public Object defactionEvaluator (final Interpreter interpreter, final List<Object> arguments)
+    @DefineLisp (special = true)
+    public Object defaction (final Interpreter interpreter, final Symbol name, final Object... body)
     {
-	final Symbol name = (Symbol)arguments.get (1);
 	final List<Condition> preconditions = new ArrayList<Condition> ();
 	final List<Condition> postconditions = new ArrayList<Condition> ();
-	for (int i = 2; i < arguments.size (); i++)
+	for (int i = 0; i < body.length; i++)
 	{
-	    final LispList arg = (LispList)arguments.get (i);
+	    final LispList arg = (LispList)body[i];
 	    final Symbol key = coerceSymbol (arg.get (0), true);
 	    if (key == PRECONDITION_SYMBOL)
 	    {
@@ -109,41 +90,25 @@ public class PlanFunctions extends Definer
 	}
     }
 
-    public Object matchEvaluatorT (final List<Object> p, final List<Object> l)
-    {
-	final LispList pattern = new LispList (p);
-	final LispList literal = new LispList (l);
-	final Map<Symbol, Symbol> bindings = matcher.match (pattern, literal);
-	final LispList result = matcher.bindingsToLisp (bindings);
-	return result;
-    }
-
-    public Object createNodeT (final Symbol name)
-    {
-	final Node node = new Node (name);
-	name.setValue (node);
-	return name;
-    }
-
     /**
      * Create a plan from nodes and before link expressions.
      *
      * @param interpreter
      */
-    public Object createPlan (final Interpreter interpreter, final List<Object> arguments)
+    @DefineLisp (special = true, name = "plan")
+    public Object createPlan (final Interpreter interpreter, final Symbol name, final Object... body)
     {
-	final Symbol name = coerceSymbol (arguments.get (1), true);
 	final Plan plan = new Plan (name);
 	name.setValue (plan);
 	System.out.printf ("Create plan %s %n", name);
-	for (final Object c : arguments.subList (2, arguments.size ()))
+	for (final Object c : body)
 	{
 	    @SuppressWarnings ("unchecked")
 	    final List<Object> clause = (List<Object>)c;
 	    final Symbol key = coerceSymbol (clause.get (0), true);
 	    if (key.is ("node"))
 	    {
-		// System.out.printf (" Node %s %n", clause);
+		System.out.printf (" Node %s %n", clause);
 		final Node node = createPlanNode (clause);
 		System.out.printf ("  Node %s %n", node);
 		plan.addNode (node);
@@ -218,7 +183,26 @@ public class PlanFunctions extends Definer
 	return result;
     }
 
-    public Object createPlanLayoutEvaluatorT (final Plan plan)
+    @DefineLisp
+    public LispList match (final List<Object> p, final List<Object> l)
+    {
+	final LispList pattern = new LispList (p);
+	final LispList literal = new LispList (l);
+	final Map<Symbol, Symbol> bindings = matcher.match (pattern, literal);
+	final LispList result = matcher.bindingsToLisp (bindings);
+	return result;
+    }
+
+    @DefineLisp
+    public Node createNode (final Symbol name)
+    {
+	final Node node = new Node (name);
+	name.setValue (node);
+	return node;
+    }
+
+    @DefineLisp
+    public List<Sprite> layout (final Plan plan)
     {
 	final PlanLayout planLayout = new PlanLayout ();
 	final Rectangle r = new Rectangle (0, 0, 700, 400);
@@ -226,26 +210,30 @@ public class PlanFunctions extends Definer
 	return result;
     }
 
-    public Object createPlanViewEvaluatorT (final Plan plan)
+    @DefineLisp
+    public Plan view (final Plan plan)
     {
 	PlanView.makeView (plan);
 	return plan;
     }
 
-    public Object createPlanTreeEvaluatorT (final Plan plan)
+    @DefineLisp
+    public Plan planTree (final Plan plan)
     {
 	PlanTreeDemo.displayPlan (plan);
 	return plan;
     }
 
-    public Object bfsEvaluatorT (final Plan plan)
+    @DefineLisp
+    public BestFirstSearch bfs (final Plan plan)
     {
 	final BestFirstSearch result = new BestFirstSearch ();
 	result.add (plan);
 	return result;
     }
 
-    public Object executeEvaluatorT (final Plan plan)
+    @DefineLisp
+    public Plan execute (final Plan plan)
     {
 	BlockworldSimulator.makeView (plan);
 	return plan;
