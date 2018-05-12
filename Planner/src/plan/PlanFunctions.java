@@ -5,6 +5,7 @@ import java.awt.Rectangle;
 import java.util.*;
 
 import lisp.*;
+import lisp.Package;
 import lisp.eval.*;
 import plan.gui.*;
 import search.BestFirstSearch;
@@ -20,9 +21,10 @@ public class PlanFunctions extends Definer
 
     private final Matcher matcher = new Matcher ();
 
+    private final Package pkg = PackageFactory.getDefaultPackage ();
+
     private PlanFunctions ()
     {
-	super (PackageFactory.getPackage ("user"));
     }
 
     /**
@@ -36,9 +38,9 @@ public class PlanFunctions extends Definer
 	return name;
     }
 
-    private final Symbol NOT_SYMBOL = getPackage ().internPublic ("not");
-    private final Symbol PRECONDITION_SYMBOL = getPackage ().internPublic ("precondition");
-    private final Symbol POSTCONDITION_SYMBOL = getPackage ().internPublic ("postcondition");
+    private final Symbol NOT_SYMBOL = pkg.internPublic ("not");
+    private final Symbol PRECONDITION_SYMBOL = pkg.internPublic ("precondition");
+    private final Symbol POSTCONDITION_SYMBOL = pkg.internPublic ("postcondition");
 
     /**
      * @param interpreter
