@@ -35,6 +35,10 @@ public class Demo
 	    {
 		processArgument (key, value);
 	    }
+	    catch (final java.lang.reflect.InvocationTargetException e)
+	    {
+		e.getCause ().printStackTrace ();
+	    }
 	    catch (final Exception e)
 	    {
 		e.printStackTrace ();

@@ -14,9 +14,6 @@ public class Plan implements Describer, ProblemState
     /** Name of this plan. */
     private final Symbol name;
 
-    /** Name of the parent plan, if any, otherwise null. */
-    private final Plan parent;
-
     /** References to children. Note that the name is stored, not the object. */
     private final List<Symbol> children = new ArrayList<Symbol> ();
 
@@ -24,25 +21,24 @@ public class Plan implements Describer, ProblemState
     private Object revisionGoal = null;
     private Object revisionSupport = null;
 
-    private final List<Node> nodes = new ArrayList<Node> ();
+    /** The plan revision that created this plan. */
+    private final Achiever planAchiever;
 
-    private final double incrementCost;
+    private final List<Node> nodes = new ArrayList<Node> ();
 
     public Plan (final Symbol name)
     {
-	this (name, null, 0.0);
+	this.name = name;
+	planAchiever = new EmptyAchiever (this);
+	name.setValue (this);
     }
 
-    public Plan (final Symbol name, final Plan parent, final double incrementCost)
+    public Plan (final Symbol name, final Achiever achiever)
     {
 	this.name = name;
-	this.parent = parent;
-	this.incrementCost = incrementCost;
+	planAchiever = achiever;
 	name.setValue (this);
-	if (parent != null)
-	{
-	    parent.children.add (name);
-	}
+	planAchiever.getParent ().children.add (name);
     }
 
     /** Determine if this plan is a solution. */
@@ -109,24 +105,59 @@ public class Plan implements Describer, ProblemState
 	return result;
     }
 
-    private void insertLinks (final List<Plan> result, final Node node, final Condition condition)
+    /**
+     * Get all link achievers for this plan. This was implemented for testing, not for actual use.
+     * This returns achievers for all open conditions, but actual plan expansion should select one
+     * open condition.
+     *
+     * @return
+     */
+    public List<Achiever> getLinkAchievers ()
+    {
+	final List<Achiever> result = new ArrayList<Achiever> ();
+	for (final Node node : nodes)
+	{
+	    if (node.hasOpenSubgoals ())
+	    {
+		for (final Condition goal : node.getGoalConditions ())
+		{
+		    final List<LinkAchiever> achievers = getPossibleAchievers (node, goal);
+		    if (achievers != null)
+		    {
+			result.addAll (achievers);
+		    }
+		}
+	    }
+	}
+	return result;
+    }
+
+    private void insertLinks (final List<Plan> result, final Node protectedNode, final Condition condition)
     {
 	// Search for causal links that can make the condition true
-	final List<Node> achievers = getPossibleAchievers (node, condition);
+	final List<LinkAchiever> achievers = getPossibleAchievers (protectedNode, condition);
 	if (achievers != null)
 	{
-	    for (final Node n : achievers)
+	    for (final LinkAchiever achiever : achievers)
 	    {
 		// Create a child by adding a causal link from n to node
-		final PlanCopy copy = new PlanCopy (this, 1.0);
-		final Plan child = copy.getChild ();
+		final Bindings bindings = achiever.getBindings ();
+		if (!bindings.isEmpty ())
+		{
+		    System.out.printf ("Expanding bound link %n");
+		}
+		achiever.makeChild (bindings);
+		final Plan child = achiever.getChild ();
 		if (Symbol.value ("user:::PlanView") == Boolean.TRUE)
 		{
 		    PlanView.makeView (this);
 		    PlanView.makeView (child);
 		}
-		final Map<Node, Node> nodeMap = copy.getNodeMap ();
-		final ProtectionInterval pi = nodeMap.get (n).addPI (condition, nodeMap.get (node));
+		final Map<Node, Node> nodeMap = achiever.getNodeMap ();
+		final Node achNode = nodeMap.get (achiever.getAchieverNode ());
+		final Node protNode = nodeMap.get (protectedNode);
+		final Condition bCond = condition.bind (bindings);
+		final ProtectionInterval pi = achNode.addPI (bCond, protNode);
 		child.revisionGoal = pi;
 
 		child.determineAndResolveConflicts (result, pi);
@@ -134,20 +165,24 @@ public class Plan implements Describer, ProblemState
 	}
     }
 
-    public List<Node> getPossibleAchievers (final Node node, final Condition condition)
+    public List<LinkAchiever> getPossibleAchievers (final Node protectedNode, final Condition condition)
     {
-	List<Node> result = null;
-	for (final Node n : nodes)
+	List<LinkAchiever> result = null;
+	for (final Node possibleAchiever : nodes)
 	{
-	    if (!n.after (node))
+	    if (possibleAchiever != protectedNode && !possibleAchiever.after (protectedNode))
 	    {
-		if (n.causes (condition))
+		final List<Bindings> binds = possibleAchiever.causalBindings (condition);
+		if (binds != null)
 		{
-		    if (result == null)
+		    for (final Bindings b : binds)
 		    {
-			result = new ArrayList<Node> ();
+			if (result == null)
+			{
+			    result = new ArrayList<LinkAchiever> ();
+			}
+			result.add (new LinkAchiever (this, possibleAchiever, protectedNode, b));
 		    }
-		    result.add (n);
 		}
 	    }
 	}
@@ -157,26 +192,24 @@ public class Plan implements Describer, ProblemState
     private void insertActions (final List<Plan> result, final Node node, final Condition condition)
     {
 	// Search for actions that can be inserted to make the condition true
-	final List<Pair<Action, Bindings>> actions = getAchievingActions (condition);
+	final List<ActionAchiever> actions = getAchievingActions (condition);
 	if (actions != null)
 	{
-	    for (final Pair<Action, Bindings> matchedAction : actions)
+	    for (final ActionAchiever achiever : actions)
 	    {
-		final Action action = matchedAction.getFirst ();
-		final Bindings match = matchedAction.getSecond ();
 		// If the action can achieve the condition, then make an expanded plan by inserting
 		// the action. Figure out all variable bindings.
-		System.out.printf ("   Attempting %s with bindings %s %n", action, match);
+		System.out.printf ("   Attempting %s %n", achiever);
 		// Copy the plan and create a new node after the initial node and before 'node' with
 		// the action.
-		expand (result, node, condition, action, match);
+		expand (result, node, condition, achiever);
 	    }
 	}
     }
 
-    private List<Pair<Action, Bindings>> getAchievingActions (final Condition condition)
+    private List<ActionAchiever> getAchievingActions (final Condition condition)
     {
-	List<Pair<Action, Bindings>> result = null;
+	List<ActionAchiever> result = null;
 	final List<Action> actions = Action.getActions ();
 	for (final Action action : actions)
 	{
@@ -185,21 +218,21 @@ public class Plan implements Describer, ProblemState
 	    {
 		if (result == null)
 		{
-		    result = new ArrayList<Pair<Action, Bindings>> ();
+		    result = new ArrayList<ActionAchiever> ();
 		}
-		result.add (new Pair<Action, Bindings> (action, match));
+		result.add (new ActionAchiever (this, action, match, 2.0));
 	    }
 	}
 	return result;
     }
 
-    private void expand (final List<Plan> result, final Node node, final Condition condition, final Action action,
-            final Bindings match)
+    private void expand (final List<Plan> result, final Node node, final Condition condition, final ActionAchiever achiever)
     {
-	final PlanCopy copy = new PlanCopy (this, 2.0);
-	final Plan child = copy.getChild ();
-	final Map<Node, Node> nodeMap = copy.getNodeMap ();
+	achiever.makeChild ();
+	final Plan child = achiever.getChild ();
+	final Map<Node, Node> nodeMap = achiever.getNodeMap ();
 	// Make a new node for the action
+	final Action action = achiever.getAction ();
 	final Symbol actionNodeName = action.getName ().gensym ();
 	final Node a = new Node (actionNodeName);
 	a.setAction (action);
@@ -209,6 +242,7 @@ public class Plan implements Describer, ProblemState
 	final ProtectionInterval pi = a.addPI (condition, nodeMap.get (node));
 	child.revisionGoal = pi;
 	child.revisionSupport = action;
+	final Bindings match = achiever.getBindings ();
 	for (final Condition pre : action.getPrecondition ())
 	{
 	    a.getGoalConditions ().add (pre.bind (match));
@@ -276,18 +310,18 @@ public class Plan implements Describer, ProblemState
 	    partialResolutions.add (conflict.getResolutions ());
 	}
 	final List<List<Pair<Node, Node>>> fullResolutions = computeCombinations (partialResolutions);
-	// cartesianProduct (partialResolutions);
 	for (final List<Pair<Node, Node>> resolutions : fullResolutions)
 	{
 	    for (final Pair<Node, Node> resolution : resolutions)
 	    {
 		final Node before = resolution.getFirst ();
 		final Node after = resolution.getSecond ();
-		final PlanCopy copy = new PlanCopy (this, 1.0);
-		final Plan child = copy.getChild ();
+		final LinkAchiever achiever = new LinkAchiever (this, before, after);
+		achiever.makeChild ();
+		final Plan child = achiever.getChild ();
 		child.revisionGoal = conflicts;
 		child.revisionSupport = resolution;
-		final Map<Node, Node> nodeMap = copy.getNodeMap ();
+		final Map<Node, Node> nodeMap = achiever.getNodeMap ();
 		final Node nodeCopy = nodeMap.get (before);
 		final Node fromCopy = nodeMap.get (after);
 		nodeCopy.addSuccessor (fromCopy);
@@ -295,32 +329,6 @@ public class Plan implements Describer, ProblemState
 	    }
 	}
     }
-
-    // private List<List<Pair<Node, Node>>> cartesianProduct (final LinkedList<List<Pair<Node,
-    // Node>>> partialResolutions)
-    // {
-    // if (partialResolutions.size () == 0)
-    // {
-    // return new ArrayList<List<Pair<Node, Node>>> ();
-    // }
-    // else
-    // {
-    // final List<List<Pair<Node, Node>>> result = new ArrayList<List<Pair<Node, Node>>> ();
-    // final List<Pair<Node, Node>> r = partialResolutions.pop ();
-    // final List<List<Pair<Node, Node>>> recursiveResult = cartesianProduct (partialResolutions);
-    // for (final Pair<Node, Node> rr : r)
-    // {
-    // for (final List<Pair<Node, Node>> tail : recursiveResult)
-    // {
-    // final List<Pair<Node, Node>> option = new ArrayList<Pair<Node, Node>> ();
-    // option.add (rr);
-    // option.addAll (tail);
-    // result.add (option);
-    // }
-    // }
-    // return result;
-    // }
-    // }
 
     /**
      * Cartesian product implement from the WWW.
@@ -358,7 +366,7 @@ public class Plan implements Describer, ProblemState
     /** The parent plan, if any, otherwise null. */
     public Plan getParent ()
     {
-	return parent;
+	return planAchiever.getParent ();
     }
 
     // /** Name of the parent plan, if any, otherwise null. */
@@ -440,19 +448,20 @@ public class Plan implements Describer, ProblemState
     /** Cost of using this plan for search purposes. */
     public double getCost ()
     {
+	final Plan parent = planAchiever.getParent ();
 	if (parent == null)
 	{
-	    return incrementCost;
+	    return planAchiever.getIncrementCost ();
 	}
 	else
 	{
-	    return parent.getCost () + incrementCost;
+	    return parent.getCost () + planAchiever.getIncrementCost ();
 	}
     }
 
     public double getIncrementCost ()
     {
-	return incrementCost;
+	return planAchiever.getIncrementCost ();
     }
 
     /** Heuristic estimate for best first search algorithm. */
@@ -466,20 +475,6 @@ public class Plan implements Describer, ProblemState
 	}
 	return result;
     }
-
-    // public void setSearchState (final SearchState searchState)
-    // {
-    // if (this.searchState != null)
-    // {
-    // throw new IllegalStateException ("Double visit");
-    // }
-    // this.searchState = searchState;
-    // }
-    //
-    // public SearchState getSearchState ()
-    // {
-    // return searchState;
-    // }
 
     @Override
     public String toString ()
@@ -509,7 +504,7 @@ public class Plan implements Describer, ProblemState
 	{
 	    result.put (n.getName ().getName (), n);
 	}
-
+	result.put ("Achiever", planAchiever);
 	// result.put ("Parent", parent);
 	// result.put ("Children", children);
 	return result;

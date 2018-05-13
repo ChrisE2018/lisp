@@ -51,6 +51,26 @@ public class Node implements Describer
 	// Previous, next and causal links must be done later
     }
 
+    public Node (final Node parent, final Bindings bindings)
+    {
+	name = parent.name.gensym ();
+	name.setValue (this);
+	for (final Condition c : parent.addConditions)
+	{
+	    addConditions.add (c.bind (bindings));
+	}
+	for (final Condition c : parent.deleteConditions)
+	{
+	    deleteConditions.add (c.bind (bindings));
+	}
+	for (final Condition c : parent.goalConditions)
+	{
+	    goalConditions.add (c.bind (bindings));
+	}
+	action = parent.action;
+	// Previous, next and causal links must be done later
+    }
+
     public Action getAction ()
     {
 	return action;
@@ -68,6 +88,10 @@ public class Node implements Describer
      */
     public void addSuccessor (final Node node)
     {
+	if (this == node)
+	{
+	    throw new IllegalArgumentException ("Circular link");
+	}
 	if (!next.contains (node))
 	{
 	    next.add (node);
@@ -259,6 +283,36 @@ public class Node implements Describer
 	    }
 	}
 	return false;
+    }
+
+    public List<Bindings> causalBindings (final Condition c)
+    {
+	List<Bindings> result = null;
+	for (final Condition a : addConditions)
+	{
+	    final Bindings b = a.matches (c);
+	    if (b != null)
+	    {
+		if (result == null)
+		{
+		    result = new ArrayList<Bindings> ();
+		}
+		result.add (b);
+	    }
+	}
+	for (final Condition a : deleteConditions)
+	{
+	    final Bindings b = a.negatedMatches (c);
+	    if (b != null)
+	    {
+		if (result == null)
+		{
+		    result = new ArrayList<Bindings> ();
+		}
+		result.add (b);
+	    }
+	}
+	return result;
     }
 
     public boolean hasOpenSubgoals ()

@@ -19,9 +19,20 @@ public class PlanLayout
 	final Set<Node> marked = new HashSet<Node> ();
 	final List<List<Node>> columns = new ArrayList<List<Node>> ();
 	int maxColumnSize = 0;
-	while (marked.size () < plan.getNodes ().size ())
+	final int size = plan.getNodes ().size ();
+	for (int i = 0; i < size && marked.size () < size; i++)
 	{
 	    final List<Node> column = getFirstNodes (plan, marked);
+	    if (column.isEmpty ())
+	    {
+		System.out.printf ("No first nodes found in %s %n", plan);
+		List<Node> c2;
+		do
+		{
+		    c2 = getFirstNodes (plan, marked);
+		}
+		while (c2.isEmpty ());
+	    }
 	    marked.addAll (column);
 	    columns.add (column);
 	    final int columnSize = column.size ();
@@ -59,11 +70,6 @@ public class PlanLayout
 	{
 	    info.addLabel ("Expanded Goal: " + revisionGoal);
 	}
-	// final Object revisionSupport = plan.getRevisionSupport ();
-	// if (revisionSupport != null)
-	// {
-	// info.addLabel ("Revision Support: " + revisionSupport);
-	// }
 	final double b = plan.getIncrementCost ();
 	final double c = plan.getCost ();
 	if (parent == null)

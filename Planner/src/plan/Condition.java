@@ -149,7 +149,6 @@ public class Condition implements Describer
 
     public Bindings matches (final Condition condition)
     {
-	final Bindings result = new Bindings ();
 	if (negated != condition.negated)
 	{
 	    return null;
@@ -158,6 +157,25 @@ public class Condition implements Describer
 	{
 	    return null;
 	}
+	return matchTerms (condition);
+    }
+
+    public Bindings negatedMatches (final Condition condition)
+    {
+	if (negated == condition.negated)
+	{
+	    return null;
+	}
+	if (predicate != condition.predicate)
+	{
+	    return null;
+	}
+	return matchTerms (condition);
+    }
+
+    private Bindings matchTerms (final Condition condition)
+    {
+	Bindings result = null;
 	final int size = terms.size ();
 	if (size != condition.terms.size ())
 	{
@@ -169,6 +187,19 @@ public class Condition implements Describer
 	    final Symbol val = condition.terms.get (i);
 	    if (isVariable (var))
 	    {
+		// if (isVariable (val))
+		// {
+		// throw new IllegalStateException ("Can't bind variable " + var + " to variable " +
+		// val);
+		// }
+		if (isVariable (val))
+		{
+		    return null;
+		}
+		if (result == null)
+		{
+		    result = new Bindings ();
+		}
 		final Symbol binding = result.get (var);
 		if (binding == null)
 		{
@@ -180,11 +211,32 @@ public class Condition implements Describer
 		    return null;
 		}
 	    }
+	    else if (isVariable (val))
+	    {
+		if (result == null)
+		{
+		    result = new Bindings ();
+		}
+		final Symbol binding = result.get (val);
+		if (binding == null)
+		{
+		    result.put (val, var);
+		}
+		else if (binding != var)
+		{
+		    // Fail
+		    return null;
+		}
+	    }
 	    else if (var != val)
 	    {
 		// Fail
 		return null;
 	    }
+	}
+	if (result == null)
+	{
+	    result = new Bindings ();
 	}
 	return result;
     }
@@ -196,7 +248,14 @@ public class Condition implements Describer
 
     public Condition bind (final Bindings match)
     {
-	return bind (false, match);
+	for (final Symbol var : match.keySet ())
+	{
+	    if (terms.contains (var))
+	    {
+		return bind (false, match);
+	    }
+	}
+	return this;
     }
 
     public Condition bind (final boolean negate, final Bindings match)

@@ -24,9 +24,9 @@
 (setq PlanView false)
 
 (setq s (bfs p1))
-(setSearchLimit s 100)
+(setSearchLimit s 10)
 (printf "Call (solve s) now %n")
 (solve s)
 (planTree p1)
-(execute p14)
+(if p13 (execute p13))
 'done

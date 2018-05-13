@@ -6,9 +6,10 @@
 (plan p1
  ; Demonstrate use of unstack action
 	(node initial
-		(add
-			(on block1 block2)
-			(on block2 block3)))
+		(add (clear block1)
+		     (ontable block3)
+			 (on block1 block2)
+			 (on block2 block3)))
 	(node goal
 		(goal
 			(clear block2)))
@@ -18,7 +19,7 @@
 (setq PlanView false)
 
 (setq s (bfs p1))
-(setSearchLimit s 1)
+(setSearchLimit s 20)
 ;(printf "Call (solve s) now %n")
 (solve s)
 (planTree p1)

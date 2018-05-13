@@ -137,6 +137,10 @@ public class BlockworldSimulator extends JPanel implements ComponentListener, Ac
 		for (final Symbol s : c.getTerms ())
 		{
 		    final Sprite sprite = sprites.get (s);
+		    if (sprite == null)
+		    {
+			System.out.printf ("Null sprite %n");
+		    }
 
 		    sprite.destination.x = x;
 		    sprite.destination.y = y;
@@ -218,10 +222,15 @@ public class BlockworldSimulator extends JPanel implements ComponentListener, Ac
 
     public static void makeView (final Plan plan)
     {
+	if (plan == null)
+	{
+	    System.out.printf ("Can't view null plan %n");
+	    return;
+	}
 	JFrame frame = simulationViews.get (plan);
 	if (frame == null)
 	{
-	    frame = new JFrame (plan.getName ().getName () + " Simulation");
+	    frame = new JFrame ("" + plan.getName () + " Simulation");
 	    frame.setDefaultCloseOperation (JFrame.HIDE_ON_CLOSE);
 	    final BlockworldSimulator simulatorView = new BlockworldSimulator ();
 	    frame.setSize (900, 800);

@@ -16,7 +16,7 @@ public class Sprite extends Rectangle
     private final Color backColor = Color.white;
     private final Color labelColor = Color.black;
     private Object target = null;
-    public Rectangle destination = new Rectangle (0, 0, 0, 0);
+    public final Rectangle destination = new Rectangle (0, 0, 0, 0);
 
     public Sprite (final Object target, final int x, final int y, final int width, final int height, final String... lines)
     {
