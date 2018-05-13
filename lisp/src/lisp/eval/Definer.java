@@ -98,7 +98,7 @@ public class Definer
 	}
 	if (errorp)
 	{
-	    throw new IllegalArgumentException ("Can't coerce object to String: " + arg);
+	    throw new CoerceError ("Can't coerce object to String: %s", arg);
 	}
 	return null;
     }
@@ -119,7 +119,7 @@ public class Definer
 	}
 	if (errorp)
 	{
-	    throw new IllegalArgumentException ("Can't coerce object to Symbol: " + arg);
+	    throw new CoerceError ("Can't coerce object to Symbol: %s", arg);
 	}
 	return null;
     }
@@ -135,7 +135,7 @@ public class Definer
 	}
 	if (errorp)
 	{
-	    throw new IllegalArgumentException ("Can't coerce object to Integer: " + arg);
+	    throw new CoerceError ("Can't coerce object to Integer: %s", arg);
 	}
 	return null;
     }
@@ -161,7 +161,7 @@ public class Definer
 	}
 	if (errorp)
 	{
-	    throw new IllegalArgumentException ("Can't coerce object to Package: " + arg);
+	    throw new CoerceError ("Can't coerce object to Package: %s", arg);
 	}
 	return null;
     }
@@ -237,7 +237,7 @@ public class Definer
 		return arg;
 	    }
 	}
-	throw new CoerceError ("Can't coerce " + arg + " to " + p);
+	throw new CoerceError ("Can't coerce %s to %s", arg, p);
     }
 
     @Override

@@ -3,9 +3,9 @@ package lisp.eval;
 
 public class CoerceError extends Error
 {
-    public CoerceError (final String message)
+    public CoerceError (final String format, final Object... args)
     {
-	super (message);
+	super (String.format (format, args));
     }
 
     @Override

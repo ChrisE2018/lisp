@@ -14,6 +14,7 @@ public class StandardFunctionCell extends FunctionCell
 	this.obj = obj;
 	methods = new Method[]
 	    {method};
+	makeOverloadMap (methods);
     }
 
     @Override
@@ -29,7 +30,7 @@ public class StandardFunctionCell extends FunctionCell
     @Override
     public Object eval (final Interpreter interpreter, final List<?> form) throws Exception
     {
-	final Method method = selectMethod (methods, form.size () - 1);
+	final Method method = selectMethod (form.size () - 1);
 	if (method.isVarArgs ())
 	{
 	    return applyVarArgs (interpreter, method, form);

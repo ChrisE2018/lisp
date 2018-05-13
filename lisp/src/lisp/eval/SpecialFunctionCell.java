@@ -14,6 +14,7 @@ public class SpecialFunctionCell extends FunctionCell
 	this.obj = obj;
 	methods = new Method[]
 	    {method};
+	makeOverloadMap (methods);
     }
 
     @Override
@@ -31,7 +32,7 @@ public class SpecialFunctionCell extends FunctionCell
     {
 	// Form size is one extra due to the function name &
 	// Number of arguments is one extra due to the interpreter argument.
-	final Method method = selectMethod (methods, form.size ());
+	final Method method = selectMethod (form.size ());
 	if (method.isVarArgs ())
 	{
 	    return applyVarArgs (interpreter, method, form);

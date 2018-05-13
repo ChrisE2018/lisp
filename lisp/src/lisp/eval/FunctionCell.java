@@ -3,19 +3,41 @@ package lisp.eval;
 
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.Map.Entry;
 
 /** Base class of all function cells. */
 public abstract class FunctionCell
 {
+    private Method[] overloads = new Method[0];
+
     abstract public Object eval (final Interpreter interpreter, final List<?> form) throws Exception;
 
     abstract public void overload (DefineLisp a, Method method);
 
     /** Check an array of overloaded methods to for ambiguity. */
-    void makeOverloadMap (final Method[] newMethods)
+    void makeOverloadMap (final Method[] methods)
+    {
+	final Map<Integer, Method> selector = getOverloadSelector (methods);
+	int count = 0;
+	for (final int key : selector.keySet ())
+	{
+	    if (key > count)
+	    {
+		count = key;
+	    }
+	}
+	final Method[] result = new Method[count + 1];
+	for (final Entry<Integer, Method> entry : selector.entrySet ())
+	{
+	    result[entry.getKey ()] = entry.getValue ();
+	}
+	overloads = result;
+    }
+
+    Map<Integer, Method> getOverloadSelector (final Method[] methods)
     {
 	final Map<Integer, Method> selector = new HashMap<Integer, Method> ();
-	for (final Method method : newMethods)
+	for (final Method method : methods)
 	{
 	    final Class<?>[] parameters = method.getParameterTypes ();
 	    if (method.isVarArgs ())
@@ -41,6 +63,7 @@ public abstract class FunctionCell
 		selector.put (c, method);
 	    }
 	}
+	return selector;
     }
 
     /**
@@ -68,6 +91,30 @@ public abstract class FunctionCell
 	    }
 	}
 	throw new IllegalArgumentException ("No applicable method");
+    }
+
+    /** Select a method using the overloads table. */
+    Method selectMethod (final int argCount)
+    {
+	Method result = null;
+	if (argCount < overloads.length)
+	{
+	    result = overloads[argCount];
+	}
+	else
+	{
+	    final int n = overloads.length - 1;
+	    result = overloads[n];
+	    if (!result.isVarArgs ())
+	    {
+		result = null;
+	    }
+	}
+	if (result == null)
+	{
+	    throw new IllegalArgumentException ("No applicable method");
+	}
+	return result;
     }
 
     @Override
