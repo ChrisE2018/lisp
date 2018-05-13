@@ -1,6 +1,7 @@
 
 package lisp.eval;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -18,6 +19,12 @@ public class DefFunctionCell extends FunctionCell
 	this.name = name;
 	this.arglist = arglist;
 	this.body = body;
+    }
+
+    @Override
+    public void overload (final DefineLisp a, final Method method)
+    {
+	throw new UnsupportedOperationException ("Can't overload standard functions");
     }
 
     @Override

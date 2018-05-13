@@ -7,7 +7,7 @@ import java.util.List;
 import lisp.*;
 import lisp.Package;
 
-/** Simple interpreter that using reflection to evaluate forms like Lisp functions. */
+/** Simple interpreter that uses reflection to evaluate forms like Lisp functions. */
 public class Interpreter extends Definer
 {
     public Interpreter ()
@@ -25,8 +25,7 @@ public class Interpreter extends Definer
 	}
 	if (form instanceof List<?>)
 	{
-	    @SuppressWarnings ("unchecked")
-	    final List<Object> list = (List<Object>)form;
+	    final List<?> list = (List<?>)form;
 	    if (list.size () == 0)
 	    {
 		return form;
@@ -40,9 +39,7 @@ public class Interpreter extends Definer
 	    final FunctionCell function = f.getFunction ();
 	    if (function != null)
 	    {
-		// System.out.printf ("Eval %s%n", form);
-		final Object result = function.eval (this, list);
-		return result;
+		return function.eval (this, list);
 	    }
 	    else
 	    {
@@ -57,7 +54,6 @@ public class Interpreter extends Definer
 		{
 		    arguments.add (eval (list.get (i)));
 		}
-		// System.out.printf ("Invoking %s.%s %s %n", target, method, arguments);
 		return javaMethodCall (target, cls, method, arguments);
 	    }
 	}
@@ -72,15 +68,27 @@ public class Interpreter extends Definer
 	return value;
     }
 
+    @DefineLisp (special = true)
+    public Interpreter getInterpreter (final Interpreter result)
+    {
+	return result;
+    }
+
+    /** Load a file. First argument is the pathname. */
+    @DefineLisp
+    public Object load (final String pathname) throws Exception
+    {
+	final Package pkg = PackageFactory.getDefaultPackage ();
+	final FileReader fileReader = new FileReader ();
+	final Object result = fileReader.read (this, pkg, pathname);
+	return result;
+    }
+
     /** Load a file. First argument is the pathname. Optional second argument is the package. */
     @DefineLisp
-    public Object load (final String pathname, final Object... arguments) throws Exception
+    public Object load (final String pathname, final Object p) throws Exception
     {
-	Package pkg = PackageFactory.getDefaultPackage ();
-	if (arguments.length > 0)
-	{
-	    pkg = coercePackage (arguments[0]);
-	}
+	final Package pkg = coercePackage (p);
 	final FileReader fileReader = new FileReader ();
 	final Object result = fileReader.read (this, pkg, pathname);
 	return result;
@@ -130,11 +138,11 @@ public class Interpreter extends Definer
 	final Object[] actuals = new Object[parameters.length];
 	for (int i = 0; i < parameters.length; i++)
 	{
+	    // Scan arguments and try to coerce to valid types.
+	    // If all args can be coerced, then call the method.
 	    final Object arg = arguments.get (i + 2);
 	    final Object actual = coerceToParameter (parameters[i], arg);
 	    actuals[i] = actual;
-	    // Scan arguments and try to coerce to valid types.
-	    // If all args can be coerced, then call the method.
 	}
 	return method.invoke (target, actuals);
     }

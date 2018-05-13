@@ -51,12 +51,19 @@ public class Definer
 	String symbolName = a.name ();
 	if (symbolName.isEmpty ())
 	{
+	    // Default if the annotation does not specify the name is to use the name of the method
 	    symbolName = method.getName ();
 	}
 	System.out.printf ("define %s as %s %n", symbolName, method);
 	final Symbol symbol = external ? p.internPublic (symbolName) : p.internPrivate (symbolName);
-	FunctionCell function = null;
-	if (special)
+	FunctionCell function = symbol.getFunction ();
+	// [TODO] Overloading requires adding the method to an existing function cell
+	// [TODO] Lexical bindings
+	if (function != null)
+	{
+	    function.overload (a, method);
+	}
+	else if (special)
 	{
 	    function = new SpecialFunctionCell (object, method);
 	}
@@ -69,32 +76,6 @@ public class Definer
 	    function = new StandardFunctionCell (object, method);
 	}
 	symbol.setFunction (function);
-    }
-
-    /**
-     * Bind a symbol to a java implementation method for a special form. <br>
-     * [TODO] Should be able to specify the number and type of the arguments.
-     *
-     * @param symbol
-     * @param methodName
-     */
-    public void defspecial (final Symbol symbol, final String methodName) throws NoSuchMethodException, SecurityException
-    {
-	final Method method = source.getClass ().getMethod (methodName, Interpreter.class, List.class);
-	symbol.setFunction (new OldSpecialFunctionCell (source, method));
-    }
-
-    /**
-     * Bind a symbol to a java implementation method for a macro. <br>
-     * [TODO] Should be able to specify the number and type of the arguments.
-     *
-     * @param symbol
-     * @param methodName
-     */
-    public void defmacro (final Symbol symbol, final String methodName) throws NoSuchMethodException, SecurityException
-    {
-	final Method method = source.getClass ().getMethod (methodName, List.class);
-	symbol.setFunction (new MacroFunctionCell (source, method));
     }
 
     public String coerceString (final Object arg)
@@ -185,30 +166,30 @@ public class Definer
 	return null;
     }
 
-    public Object getObject (final List<Object> arguments, final int i)
+    public Object getObject (final List<?> arguments, final int i)
     {
 	return arguments.get (i);
     }
 
-    public String getString (final List<Object> arguments, final int i)
+    public String getString (final List<?> arguments, final int i)
     {
 	final Object arg = arguments.get (i);
 	return coerceString (arg, true);
     }
 
-    public Symbol getSymbol (final List<Object> arguments, final int i)
+    public Symbol getSymbol (final List<?> arguments, final int i)
     {
 	final Object arg = arguments.get (i);
 	return coerceSymbol (arg, true);
     }
 
-    public int getInt (final List<Object> arguments, final int i)
+    public int getInt (final List<?> arguments, final int i)
     {
 	final Object arg = arguments.get (i);
 	return coerceInteger (arg, true);
     }
 
-    public Package getPackage (final List<Object> arguments, final int i)
+    public Package getPackage (final List<?> arguments, final int i)
     {
 	final Object arg = arguments.get (i);
 	return coercePackage (arg, true);

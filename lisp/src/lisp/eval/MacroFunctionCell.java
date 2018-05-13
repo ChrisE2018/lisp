@@ -20,6 +20,12 @@ public class MacroFunctionCell extends FunctionCell
     }
 
     @Override
+    public void overload (final DefineLisp a, final Method m)
+    {
+	throw new UnsupportedOperationException ("Can't overload macro functions");
+    }
+
+    @Override
     public Object eval (final Interpreter interpreter, final List<?> form) throws Exception
     {
 	final Object expanded = method.invoke (obj, form);
