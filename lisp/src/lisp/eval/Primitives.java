@@ -54,7 +54,7 @@ public class Primitives extends Definer
      * @param interpreter Not used, but required by calling protocol.
      */
     @DefineLisp (special = true, name = "def")
-    public Object defEvaluator (final Interpreter interpreter, final Symbol name, final LispList arglist, final List<Object> body)
+    public Object defEvaluator (final Interpreter interpreter, final Symbol name, final LispList arglist, final Object... body)
     {
 	final List<Symbol> params = new ArrayList<Symbol> ();
 	for (final Object a : arglist)

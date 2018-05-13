@@ -12,9 +12,9 @@ public class DefFunctionCell extends FunctionCell
 {
     private final Symbol name;
     private final List<Symbol> arglist;
-    private final List<Object> body;
+    private final Object[] body;
 
-    public DefFunctionCell (final Symbol name, final List<Symbol> arglist, final List<Object> body)
+    public DefFunctionCell (final Symbol name, final List<Symbol> arglist, final Object... body)
     {
 	this.name = name;
 	this.arglist = arglist;
