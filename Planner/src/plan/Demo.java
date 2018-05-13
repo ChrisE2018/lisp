@@ -8,7 +8,7 @@ import lisp.eval.Interpreter;
 
 public class Demo
 {
-    public static void main (final String[] args) throws SecurityException, NoSuchMethodException
+    public static void main (final String[] args)
     {
 	final Demo d = new Demo ();
 	d.processArguments (args);
@@ -20,7 +20,7 @@ public class Demo
     private final FileReader fileReader = new FileReader ();
     private boolean doRepl = true;
 
-    private Demo () throws NoSuchMethodException, SecurityException
+    private Demo ()
     {
 	PlanFunctions.initialize ();
     }

@@ -1,19 +1,11 @@
-/*(defstate state1
-	(on block001 block002)
-	(on block002 block003)
-	(ontable block003)
-	(clear block001)
-	(red block001)
-	(blue block002)
-	(red block003))*/
+/* Sample blocks problems. */
 
 (def d (x)
-  (describe x))
-
-(def op (node)
-	(hasOpenSubgoals node))
+	(describe x))
 
 (plan p1
+ ; Demonstrate use of stack action
+ ; and conflict resolution
 	(node initial
 		(add
 			(ontable block1)
@@ -30,13 +22,7 @@
 	)
  
 (setq PlanView false)
-;(expand p1)
-;(expand p2)
-;(expand p3 false true)
-;(expand p4 false true)
-;(expand p5 false true)
-;(printf "Expanding p7 %n")
-;(expand p7 false true)
+
 (setq s (bfs p1))
 (setSearchLimit s 100)
 (printf "Call (solve s) now %n")

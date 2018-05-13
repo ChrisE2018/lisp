@@ -8,7 +8,7 @@ import plan.gui.PlanView;
 import search.ProblemState;
 import util.Pair;
 
-// [TODO] Implement ProblemState and use search on this
+/** Implementation of nonlinear plan. */
 public class Plan implements Describer, ProblemState
 {
     /** Name of this plan. */
@@ -26,7 +26,6 @@ public class Plan implements Describer, ProblemState
 
     private final List<Node> nodes = new ArrayList<Node> ();
 
-    // private SearchState searchState = null;
     private final double incrementCost;
 
     public Plan (final Symbol name)
@@ -92,18 +91,63 @@ public class Plan implements Describer, ProblemState
 		for (final Condition goal : node.getGoalConditions ())
 		{
 		    System.out.printf ("Expanding %s: %s %n", node, goal);
-		    if (useActions)
-		    {
-			insertActions (result, node, goal);
-		    }
 		    if (useLinks)
 		    {
 			insertLinks (result, node, goal);
+		    }
+		    if (useActions)
+		    {
+			insertActions (result, node, goal);
 		    }
 		    if (!result.isEmpty ())
 		    {
 			return result;
 		    }
+		}
+	    }
+	}
+	return result;
+    }
+
+    private void insertLinks (final List<Plan> result, final Node node, final Condition condition)
+    {
+	// Search for causal links that can make the condition true
+	final List<Node> achievers = getPossibleAchievers (node, condition);
+	if (achievers != null)
+	{
+	    for (final Node n : achievers)
+	    {
+		// Create a child by adding a causal link from n to node
+		final PlanCopy copy = new PlanCopy (this, 1.0);
+		final Plan child = copy.getChild ();
+		if (Symbol.value ("user:::PlanView") == Boolean.TRUE)
+		{
+		    PlanView.makeView (this);
+		    PlanView.makeView (child);
+		}
+		final Map<Node, Node> nodeMap = copy.getNodeMap ();
+		final ProtectionInterval pi = nodeMap.get (n).addPI (condition, nodeMap.get (node));
+		child.revisionGoal = pi;
+
+		child.determineAndResolveConflicts (result, pi);
+	    }
+	}
+    }
+
+    public List<Node> getPossibleAchievers (final Node node, final Condition condition)
+    {
+	List<Node> result = null;
+	for (final Node n : nodes)
+	{
+	    if (!n.after (node))
+	    {
+		if (n.causes (condition))
+		{
+		    if (result == null)
+		    {
+			result = new ArrayList<Node> ();
+		    }
+		    result.add (n);
 		}
 	    }
 	}
@@ -182,51 +226,6 @@ public class Plan implements Describer, ProblemState
 	}
 
 	child.determineAndResolveConflicts (result, pi);
-    }
-
-    private void insertLinks (final List<Plan> result, final Node node, final Condition condition)
-    {
-	// Search for causal links that can make the condition true
-	final List<Node> achievers = getPossibleAchievers (node, condition);
-	if (achievers != null)
-	{
-	    for (final Node n : achievers)
-	    {
-		// Create a child by adding a causal link from n to node
-		final PlanCopy copy = new PlanCopy (this, 1.0);
-		final Plan child = copy.getChild ();
-		if (Symbol.value ("user:::PlanView") == Boolean.TRUE)
-		{
-		    PlanView.makeView (this);
-		    PlanView.makeView (child);
-		}
-		final Map<Node, Node> nodeMap = copy.getNodeMap ();
-		final ProtectionInterval pi = nodeMap.get (n).addPI (condition, nodeMap.get (node));
-		child.revisionGoal = pi;
-
-		child.determineAndResolveConflicts (result, pi);
-	    }
-	}
-    }
-
-    public List<Node> getPossibleAchievers (final Node node, final Condition condition)
-    {
-	List<Node> result = null;
-	for (final Node n : nodes)
-	{
-	    if (!n.after (node))
-	    {
-		if (n.causes (condition))
-		{
-		    if (result == null)
-		    {
-			result = new ArrayList<Node> ();
-		    }
-		    result.add (n);
-		}
-	    }
-	}
-	return result;
     }
 
     /** Resolve conflicts with pi. */
