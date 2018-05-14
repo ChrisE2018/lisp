@@ -19,6 +19,7 @@ public class DefFunctionCell extends FunctionCell
 	this.name = name;
 	this.arglist = arglist;
 	this.body = body;
+	// [TODO] Partial or complete body compilation here.
     }
 
     @Override

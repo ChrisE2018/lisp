@@ -194,7 +194,7 @@ public class Symbol implements Describer
 	{
 	    return true;
 	}
-	return true;
+	return false;
     }
 
     /** Print value to a buffer. */
