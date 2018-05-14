@@ -9,6 +9,8 @@ import lisp.eval.FunctionCell;
 /** Unique named structure associated with a package. */
 public class Symbol implements Describer
 {
+    private static final char QUESTION_MARK = '?';
+
     /** Character to separate a package prefix from a symbol name. */
     public static final char PACKAGE_SEPARATOR = ':';
 
@@ -195,6 +197,11 @@ public class Symbol implements Describer
 	    return true;
 	}
 	return false;
+    }
+
+    public boolean isVariable ()
+    {
+	return symbolName.charAt (0) == QUESTION_MARK;
     }
 
     /** Print value to a buffer. */
