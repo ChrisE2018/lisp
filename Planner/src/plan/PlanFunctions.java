@@ -62,6 +62,7 @@ public class PlanFunctions extends Definer
 	}
 	final Action action = new Action (name, preconditions, postconditions);
 	name.setValue (action);
+	Action.getActions ().add (action);
 	return name;
     }
 

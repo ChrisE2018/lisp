@@ -24,7 +24,6 @@ public class Action implements Describer
 	this.name = name;
 	this.precondition = precondition;
 	this.postcondition = postcondition;
-	actions.add (this);
     }
 
     public Action (final Action action, final Bindings bindings)
@@ -56,32 +55,6 @@ public class Action implements Describer
     {
 	return postcondition;
     }
-
-    // public List<Condition> getAddConditions ()
-    // {
-    // final List<Condition> result = new ArrayList<Condition> ();
-    // for (final Condition c : postcondition)
-    // {
-    // if (!c.isNegated ())
-    // {
-    // result.add (c);
-    // }
-    // }
-    // return result;
-    // }
-    //
-    // public List<Condition> getDeleteConditions ()
-    // {
-    // final List<Condition> result = new ArrayList<Condition> ();
-    // for (final Condition c : postcondition)
-    // {
-    // if (c.isNegated ())
-    // {
-    // result.add (c);
-    // }
-    // }
-    // return result;
-    // }
 
     public Bindings canAchieve (final Condition condition)
     {

@@ -71,80 +71,175 @@ public class Plan implements Describer, ProblemState
 	return result;
     }
 
-    public List<Plan> expandPlan ()
+    public List<OpenGoalCondition> getOpenGoals ()
     {
-	return expandPlan (true, true);
-    }
-
-    public List<Plan> expandPlan (final boolean useActions, final boolean useLinks)
-    {
-	final List<Plan> result = new ArrayList<Plan> ();
+	final List<OpenGoalCondition> result = new ArrayList<OpenGoalCondition> ();
 	for (final Node node : nodes)
 	{
 	    if (node.hasOpenSubgoals ())
 	    {
 		for (final Condition goal : node.getGoalConditions ())
 		{
-		    System.out.printf ("Expanding %s: %s %n", node, goal);
-		    final List<Achiever> achievers = new ArrayList<Achiever> ();
-		    if (useLinks)
-		    {
-			getLinkAchievers (achievers, node, goal);
-		    }
-		    if (useActions)
-		    {
-			getActionAchievers (achievers, node, goal);
-		    }
-		    for (final Achiever achiever : achievers)
-		    {
-			final ProtectionInterval pi = achiever.expand ();
-			final Plan child = achiever.getChild ();
-			child.revisionGoal = pi;
-
-			final List<PIConflict> conflicts = child.getConflicts (pi);
-			if (conflicts.size () == 0)
-			{
-			    result.add (child);
-			}
-			else
-			{
-			    child.resolveConflicts (result, conflicts);
-			}
-		    }
-		    return result;
+		    result.add (new OpenGoalCondition (node, goal));
 		}
 	    }
 	}
 	return result;
     }
 
-    public void getLinkAchievers (final List<Achiever> result, final Node protectedNode, final Condition condition)
+    public List<Plan> expandPlan ()
+    {
+	System.out.printf ("%nExpanding %s %n", this);
+	OpenGoalCondition bestGoal = null;
+	final List<OpenGoalCondition> goals = getOpenGoals ();
+	for (final OpenGoalCondition goal : goals)
+	{
+	    final List<Achiever> achievers = goal.getAchievers ();
+	    getLinkAchievers (achievers, goal.getNode (), goal.getCondition ());
+	    getActionAchievers (achievers, goal.getNode (), goal.getCondition ());
+	    if (bestGoal == null || achievers.size () < bestGoal.getAchievers ().size ())
+	    {
+		bestGoal = goal;
+	    }
+	}
+	System.out.printf ("Expanding %s %n", bestGoal);
+	final List<Achiever> achievers = bestGoal.getAchievers ();
+	final List<Plan> result = new ArrayList<Plan> ();
+	for (final Achiever achiever : achievers)
+	{
+	    final ProtectionInterval pi = achiever.expand ();
+	    final Plan child = achiever.getChild ();
+	    child.revisionGoal = pi;
+
+	    final List<PIConflict> conflicts = child.getConflicts (pi);
+	    if (conflicts.size () == 0)
+	    {
+		result.add (child);
+	    }
+	    else
+	    {
+		child.resolveConflicts (result, conflicts);
+	    }
+	}
+	if (result.isEmpty ())
+	{
+	    System.out.printf ("Failure Expanding %s %n", bestGoal);
+	}
+	return result;
+    }
+
+    // public List<Plan> expandPlanx ()
+    // {
+    // System.out.printf ("%nExpanding %s %n", this);
+    // final List<Plan> result = new ArrayList<Plan> ();
+    // for (final Node node : nodes)
+    // {
+    // if (node.hasOpenSubgoals ())
+    // {
+    // for (final Condition goal : node.getGoalConditions ())
+    // {
+    // System.out.printf ("Expanding %s: %s %n", node, goal);
+    // final List<Achiever> achievers = new ArrayList<Achiever> ();
+    // getLinkAchievers (achievers, node, goal);
+    // getActionAchievers (achievers, node, goal);
+    // for (final Achiever achiever : achievers)
+    // {
+    // final ProtectionInterval pi = achiever.expand ();
+    // final Plan child = achiever.getChild ();
+    // child.revisionGoal = pi;
+    //
+    // final List<PIConflict> conflicts = child.getConflicts (pi);
+    // if (conflicts.size () == 0)
+    // {
+    // result.add (child);
+    // }
+    // else
+    // {
+    // child.resolveConflicts (result, conflicts);
+    // }
+    // }
+    // if (result.isEmpty ())
+    // {
+    // System.out.printf ("Failure Expanding %s: %s %n", node, goal);
+    // }
+    // return result;
+    // }
+    // }
+    // }
+    // return result;
+    // }
+
+    public void getLinkAchievers (final List<Achiever> result, final Node goalNode, final Condition goalCondition)
     {
 	for (final Node possibleAchiever : nodes)
 	{
-	    if (possibleAchiever != protectedNode && !possibleAchiever.after (protectedNode))
+	    if (possibleAchiever != goalNode && !possibleAchiever.after (goalNode))
 	    {
-		final List<Bindings> binds = possibleAchiever.causalBindings (condition);
+		final List<Bindings> binds = possibleAchiever.causalBindings (goalCondition);
 		if (binds != null)
 		{
 		    for (final Bindings b : binds)
 		    {
-			result.add (new LinkAchiever (this, protectedNode, condition, possibleAchiever, b));
+			result.add (new LinkAchiever (this, goalNode, goalCondition, possibleAchiever, b));
 		    }
 		}
 	    }
 	}
     }
 
-    private void getActionAchievers (final List<Achiever> result, final Node node, final Condition condition)
+    private void getActionAchievers (final List<Achiever> result, final Node goalNode, final Condition goalCondition)
     {
 	final List<Action> actions = Action.getActions ();
 	for (final Action action : actions)
 	{
-	    final Bindings match = action.canAchieve (condition);
+	    final Bindings match = action.canAchieve (goalCondition);
 	    if (match != null)
 	    {
-		result.add (new ActionAchiever (this, node, condition, action, match, 2.0));
+		final Bindings anonymousBindings = getAnonymousActionBindings (action);
+		final Action anonymousAction = getAnonymousAction (action, anonymousBindings);
+		final Bindings rebind = anonymousAction.canAchieve (goalCondition);
+		result.add (new ActionAchiever (this, goalNode, goalCondition, anonymousAction, rebind, 2.0));
+	    }
+	}
+    }
+
+    private Action getAnonymousAction (final Action action, final Bindings bindings)
+    {
+	final List<Condition> precondition = new ArrayList<Condition> ();
+	final List<Condition> postcondition = new ArrayList<Condition> ();
+	for (final Condition c : action.getPrecondition ())
+	{
+	    precondition.add (c.bind (bindings));
+	}
+	for (final Condition c : action.getPostcondition ())
+	{
+	    postcondition.add (c.bind (bindings));
+	}
+	return new Action (action.getName ().gensym (), precondition, postcondition);
+    }
+
+    private Bindings getAnonymousActionBindings (final Action action)
+    {
+	final Bindings bindings = new Bindings ();
+	anonymousVariables (bindings, action.getPrecondition ());
+	anonymousVariables (bindings, action.getPostcondition ());
+	return bindings;
+    }
+
+    private void anonymousVariables (final Bindings bindings, final List<Condition> conditions)
+    {
+	for (final Condition c : conditions)
+	{
+	    for (final Symbol s : c.getTerms ())
+	    {
+		if (s.isVariable ())
+		{
+		    final Symbol value = bindings.get (s);
+		    if (value == null)
+		    {
+			bindings.put (s, s.gensym ());
+		    }
+		}
 	    }
 	}
     }

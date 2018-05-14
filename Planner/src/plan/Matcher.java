@@ -8,13 +8,6 @@ import lisp.*;
 
 public class Matcher
 {
-    private static final char QUESTION_MARK = '?';
-
-    public static boolean isVariable (final Symbol symbol)
-    {
-	return symbol.getName ().charAt (0) == QUESTION_MARK;
-    }
-
     public Bindings match (final LispList pattern, final LispList literal)
     {
 	if (pattern.size () != literal.size ())
@@ -36,7 +29,7 @@ public class Matcher
 	{
 	    final Symbol symbol = (Symbol)pattern.get (i);
 	    final Symbol term = (Symbol)literal.get (i);
-	    if (isVariable (symbol))
+	    if (symbol.isVariable ())
 	    {
 		final Symbol binding = result.get (symbol);
 		if (binding == null)

@@ -12,7 +12,6 @@ import lisp.Symbol;
  */
 public class Bindings extends LinkedHashMap<Symbol, Symbol>
 {
-
     public Bindings ()
     {
 	super ();
@@ -22,6 +21,41 @@ public class Bindings extends LinkedHashMap<Symbol, Symbol>
     {
 	super (parent);
     }
+
+    // public Bindings replaceValues (final Bindings anonymousBindings)
+    // {
+    // Bindings result = this;
+    // if (replaceValuesMustCopy (anonymousBindings))
+    // {
+    // result = new Bindings ();
+    // for (final java.util.Map.Entry<Symbol, Symbol> entry : entrySet ())
+    // {
+    // final Symbol key = entry.getKey ();
+    // final Symbol value = entry.getValue ();
+    // if (anonymousBindings.containsKey (value))
+    // {
+    // result.put (key, anonymousBindings.get (value));
+    // }
+    // else
+    // {
+    // result.put (key, value);
+    // }
+    // }
+    // }
+    // return result;
+    // }
+    //
+    // private boolean replaceValuesMustCopy (final Bindings anonymousBindings)
+    // {
+    // for (final Symbol s : values ())
+    // {
+    // if (anonymousBindings.containsKey (s))
+    // {
+    // return true;
+    // }
+    // }
+    // return false;
+    // }
 
     @Override
     public String toString ()

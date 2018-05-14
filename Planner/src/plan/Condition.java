@@ -7,8 +7,6 @@ import lisp.*;
 
 public class Condition implements Describer
 {
-    private static final char QUESTION_MARK = '?';
-
     private final boolean negated;
     private final Symbol predicate;
     private final List<Symbol> terms;
@@ -44,11 +42,6 @@ public class Condition implements Describer
 	{
 	    terms.add ((Symbol)term);
 	}
-    }
-
-    private boolean isVariable (final Symbol symbol)
-    {
-	return symbol.getName ().charAt (0) == QUESTION_MARK;
     }
 
     public boolean isNegated ()
@@ -190,17 +183,8 @@ public class Condition implements Describer
 	{
 	    final Symbol var = terms.get (i);
 	    final Symbol val = condition.terms.get (i);
-	    if (isVariable (var))
+	    if (var.isVariable ())
 	    {
-		// if (isVariable (val))
-		// {
-		// throw new IllegalStateException ("Can't bind variable " + var + " to variable " +
-		// val);
-		// }
-		if (isVariable (val))
-		{
-		    return null;
-		}
 		if (result == null)
 		{
 		    result = new Bindings ();
@@ -216,7 +200,7 @@ public class Condition implements Describer
 		    return null;
 		}
 	    }
-	    else if (isVariable (val))
+	    else if (val.isVariable ())
 	    {
 		if (result == null)
 		{
@@ -263,7 +247,7 @@ public class Condition implements Describer
 	final List<Symbol> boundTerms = new ArrayList<Symbol> ();
 	for (final Symbol s : terms)
 	{
-	    if (isVariable (s))
+	    if (s.isVariable ())
 	    {
 		Symbol bs = match.get (s);
 		if (bs == null)

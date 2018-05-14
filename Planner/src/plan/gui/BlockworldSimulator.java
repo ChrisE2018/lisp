@@ -160,7 +160,7 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 			final Sprite sprite = sprites.get (s);
 			if (sprite == null)
 			{
-			    System.out.printf ("Null sprite %n");
+			    System.out.printf ("No sprite for %s %n", s);
 			}
 
 			sprite.destination.x = x;
@@ -195,67 +195,6 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 	}
     }
 
-    private void updateOLD (final Node node)
-    {
-	final int w = Math.max (100, getWidth ()) / blocks.size ();
-	final int size = Math.max (50, Math.min (getWidth (), getHeight ()) / 10);
-	final int height3 = getHeight () / 3;
-	final int height = size;
-	final int baseline = height3 * 2;
-	int x = size / 10;
-	final int y = Math.max (10, baseline - height + 10);
-	final Set<Symbol> literals = getLiterals (node);
-	final Set<Symbol> positionedBlocks = new HashSet<Symbol> ();
-	final List<Condition> addConditions = node.getAddConditions ();
-	final int limit = addConditions.size ();
-	for (int i = 0; positionedBlocks.size () < literals.size () && i < limit; i++)
-	{
-	    for (final Condition c : addConditions)
-	    {
-		final Symbol p = c.getPredicate ();
-		if (p.is ("ontable"))
-		{
-		    final Symbol s = c.getTerms ().get (0);
-		    if (!positionedBlocks.contains (s))
-		    {
-			final Sprite sprite = sprites.get (s);
-			if (sprite == null)
-			{
-			    System.out.printf ("Null sprite %n");
-			}
-
-			sprite.destination.x = x;
-			sprite.destination.y = y;
-			sprite.destination.width = size;
-			sprite.destination.height = height;
-			positionedBlocks.add (s);
-			System.out.printf ("[%s] Table block %s at %s %n", node, s, x);
-			x += w;
-		    }
-		}
-		else if (p.is ("on"))
-		{
-		    final Symbol upper = c.getTerms ().get (0);
-		    final Symbol lower = c.getTerms ().get (1);
-		    if (!positionedBlocks.contains (upper))
-		    {
-			if (positionedBlocks.contains (lower))
-			{
-			    final Sprite upperSprite = sprites.get (upper);
-			    final Sprite lowerSprite = sprites.get (lower);
-			    System.out.printf ("Simulate %s on %s %n", upper, lower);
-			    upperSprite.destination.x = lowerSprite.destination.x;
-			    upperSprite.destination.y = lowerSprite.destination.y - height;
-			    upperSprite.destination.width = size;
-			    upperSprite.destination.height = height;
-			    positionedBlocks.add (upper);
-			}
-		    }
-		}
-	    }
-	}
-    }
-
     private Set<Symbol> getLiterals (final Node node)
     {
 	final Set<Symbol> result = new HashSet<Symbol> ();
@@ -263,7 +202,7 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 	{
 	    for (final Symbol s : c.getTerms ())
 	    {
-		if (!Matcher.isVariable (s))
+		if (!s.isVariable ())
 		{
 		    result.add (s);
 		}

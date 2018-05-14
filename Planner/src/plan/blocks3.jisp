@@ -4,28 +4,23 @@
 	(describe x))
 
 (plan p1
- ; Demonstrate use of stack action
- ; and conflict resolution
+ ; Demonstrate use of unstack action
 	(node initial
-		(add
-			(ontable block1)
-			(ontable block2)
-			(ontable block3)
-			(clear block1)
-			(clear block2)
-			(clear block3)))
+		(add (clear block1)
+		     (ontable block3)
+			 (on block1 block2)
+			 (on block2 block3)))
 	(node goal
 		(goal
-			(on block1 block2)
-			(on block2 block3)))
+			(clear block3)))
 	(before initial goal)
 	)
  
 (setq PlanView false)
 
 (setq s (bfs p1))
-(setSearchLimit s 10)
-(printf "Call (solve s) now %n")
+(setSearchLimit s 100)
+;(printf "Call (solve s) now %n")
 (setq solutionState (solve s))
 (planTree p1)
 (setq solution (getProblemState solutionState))
