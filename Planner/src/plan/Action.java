@@ -27,6 +27,21 @@ public class Action implements Describer
 	actions.add (this);
     }
 
+    public Action (final Action action, final Bindings bindings)
+    {
+	name = action.name.gensym ();
+	precondition = new ArrayList<Condition> ();
+	postcondition = new ArrayList<Condition> ();
+	for (final Condition c : action.precondition)
+	{
+	    precondition.add (c.bind (bindings));
+	}
+	for (final Condition c : action.postcondition)
+	{
+	    postcondition.add (c.bind (bindings));
+	}
+    }
+
     public Symbol getName ()
     {
 	return name;

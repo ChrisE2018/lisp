@@ -24,6 +24,8 @@ public abstract class Achiever
 
     public abstract double getIncrementCost ();
 
+    public abstract ProtectionInterval expand ();
+
     public abstract Plan expand (final List<Plan> result);
 
     public Plan getChild ()

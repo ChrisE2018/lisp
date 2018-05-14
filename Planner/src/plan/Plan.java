@@ -4,7 +4,6 @@ package plan;
 import java.util.*;
 
 import lisp.*;
-import plan.gui.PlanView;
 import search.ProblemState;
 import util.Pair;
 
@@ -87,87 +86,40 @@ public class Plan implements Describer, ProblemState
 		for (final Condition goal : node.getGoalConditions ())
 		{
 		    System.out.printf ("Expanding %s: %s %n", node, goal);
+		    final List<Achiever> achievers = new ArrayList<Achiever> ();
 		    if (useLinks)
 		    {
-			insertLinks (result, node, goal);
+			getLinkAchievers (achievers, node, goal);
 		    }
 		    if (useActions)
 		    {
-			insertActions (result, node, goal);
+			getActionAchievers (achievers, node, goal);
 		    }
-		    if (!result.isEmpty ())
+		    for (final Achiever achiever : achievers)
 		    {
-			return result;
+			final ProtectionInterval pi = achiever.expand ();
+			final Plan child = achiever.getChild ();
+			child.revisionGoal = pi;
+
+			final List<PIConflict> conflicts = child.getConflicts (pi);
+			if (conflicts.size () == 0)
+			{
+			    result.add (child);
+			}
+			else
+			{
+			    child.resolveConflicts (result, conflicts);
+			}
 		    }
+		    return result;
 		}
 	    }
 	}
 	return result;
     }
 
-    /**
-     * Get all link achievers for this plan. This was implemented for testing, not for actual use.
-     * This returns achievers for all open conditions, but actual plan expansion should select one
-     * open condition.
-     *
-     * @return
-     */
-    public List<Achiever> getLinkAchievers ()
+    public void getLinkAchievers (final List<Achiever> result, final Node protectedNode, final Condition condition)
     {
-	final List<Achiever> result = new ArrayList<Achiever> ();
-	for (final Node node : nodes)
-	{
-	    if (node.hasOpenSubgoals ())
-	    {
-		for (final Condition goal : node.getGoalConditions ())
-		{
-		    final List<LinkAchiever> achievers = getPossibleAchievers (node, goal);
-		    if (achievers != null)
-		    {
-			result.addAll (achievers);
-		    }
-		}
-	    }
-	}
-	return result;
-    }
-
-    private void insertLinks (final List<Plan> result, final Node protectedNode, final Condition condition)
-    {
-	// Search for causal links that can make the condition true
-	final List<LinkAchiever> achievers = getPossibleAchievers (protectedNode, condition);
-	if (achievers != null)
-	{
-	    for (final LinkAchiever achiever : achievers)
-	    {
-		// Create a child by adding a causal link from n to node
-		final Bindings bindings = achiever.getBindings ();
-		// if (!bindings.isEmpty ())
-		// {
-		// System.out.printf ("Expanding bound link %n");
-		// }
-		achiever.makeChild (bindings);
-		final Plan child = achiever.getChild ();
-		if (Symbol.value ("user:::PlanView") == Boolean.TRUE)
-		{
-		    PlanView.makeView (this);
-		    PlanView.makeView (child);
-		}
-		final Map<Node, Node> nodeMap = achiever.getNodeMap ();
-		final Node achNode = nodeMap.get (achiever.getAchieverNode ());
-		final Node protNode = nodeMap.get (protectedNode);
-		final Condition bCond = condition.bind (bindings);
-		final ProtectionInterval pi = achNode.addPI (bCond, protNode);
-		child.revisionGoal = pi;
-
-		child.determineAndResolveConflicts (result, pi);
-	    }
-	}
-    }
-
-    public List<LinkAchiever> getPossibleAchievers (final Node protectedNode, final Condition condition)
-    {
-	List<LinkAchiever> result = null;
 	for (final Node possibleAchiever : nodes)
 	{
 	    if (possibleAchiever != protectedNode && !possibleAchiever.after (protectedNode))
@@ -177,108 +129,29 @@ public class Plan implements Describer, ProblemState
 		{
 		    for (final Bindings b : binds)
 		    {
-			if (result == null)
-			{
-			    result = new ArrayList<LinkAchiever> ();
-			}
-			result.add (new LinkAchiever (this, possibleAchiever, protectedNode, b));
+			result.add (new LinkAchiever (this, protectedNode, condition, possibleAchiever, b));
 		    }
 		}
 	    }
 	}
-	return result;
     }
 
-    private void insertActions (final List<Plan> result, final Node node, final Condition condition)
+    private void getActionAchievers (final List<Achiever> result, final Node node, final Condition condition)
     {
-	// Search for actions that can be inserted to make the condition true
-	final List<ActionAchiever> actions = getAchievingActions (condition);
-	if (actions != null)
-	{
-	    for (final ActionAchiever achiever : actions)
-	    {
-		// If the action can achieve the condition, then make an expanded plan by inserting
-		// the action. Figure out all variable bindings.
-		System.out.printf ("   Attempting %s %n", achiever);
-		// Copy the plan and create a new node after the initial node and before 'node' with
-		// the action.
-		expand (result, node, condition, achiever);
-	    }
-	}
-    }
-
-    private List<ActionAchiever> getAchievingActions (final Condition condition)
-    {
-	List<ActionAchiever> result = null;
 	final List<Action> actions = Action.getActions ();
 	for (final Action action : actions)
 	{
 	    final Bindings match = action.canAchieve (condition);
 	    if (match != null)
 	    {
-		if (result == null)
-		{
-		    result = new ArrayList<ActionAchiever> ();
-		}
-		result.add (new ActionAchiever (this, action, match, 2.0));
+		result.add (new ActionAchiever (this, node, condition, action, match, 2.0));
 	    }
 	}
-	return result;
     }
 
-    private void expand (final List<Plan> result, final Node node, final Condition condition, final ActionAchiever achiever)
-    {
-	achiever.makeChild ();
-	final Plan child = achiever.getChild ();
-	final Map<Node, Node> nodeMap = achiever.getNodeMap ();
-	// Make a new node for the action
-	final Action action = achiever.getAction ();
-	final Symbol actionNodeName = action.getName ().gensym ();
-	final Node a = new Node (actionNodeName);
-	a.setAction (action);
-	child.addNode (a);
-	nodeMap.get (getInitialNode ()).addSuccessor (a);
-	// Add a causal link from the action node to the goal node
-	final ProtectionInterval pi = a.addPI (condition, nodeMap.get (node));
-	child.revisionGoal = pi;
-	child.revisionSupport = action;
-	final Bindings match = achiever.getBindings ();
-	for (final Condition pre : action.getPrecondition ())
-	{
-	    a.getGoalConditions ().add (pre.bind (match));
-	}
-	for (final Condition c : action.getPostcondition ())
-	{
-	    if (!c.isNegated ())
-	    {
-		a.getAddConditions ().add (c.bind (match));
-	    }
-	    else
-	    {
-		a.getDeleteConditions ().add (c.bind (true, match));
-	    }
-	}
-
-	child.determineAndResolveConflicts (result, pi);
-    }
-
-    /** Resolve conflicts with pi. */
-    private void determineAndResolveConflicts (final List<Plan> result, final ProtectionInterval pi)
+    private List<PIConflict> getConflicts (final ProtectionInterval pi)
     {
 	final List<PIConflict> conflicts = new ArrayList<PIConflict> ();
-	getConflicts (conflicts, pi);
-	if (conflicts.size () == 0)
-	{
-	    result.add (this);
-	}
-	else
-	{
-	    resolveConflicts (result, conflicts);
-	}
-    }
-
-    private void getConflicts (final List<PIConflict> conflicts, final ProtectionInterval pi)
-    {
 	final Condition c = pi.getCondition ();
 	final Node from = pi.getAchiever ();
 	final Node to = pi.getProtectedNode ();
@@ -288,6 +161,8 @@ public class Plan implements Describer, ProblemState
 	    {
 		if (n.conflicts (c))
 		{
+		    // [TODO] If conditions in n or c itself have variables, then
+		    // neq (not equal) constraints can be used to deconflict.
 		    if (!n.before (from) && !to.before (n))
 		    {
 			// This is a possibly conflicting node
@@ -300,6 +175,7 @@ public class Plan implements Describer, ProblemState
 		}
 	    }
 	}
+	return conflicts;
     }
 
     private void resolveConflicts (final List<Plan> result, final List<PIConflict> conflicts)
@@ -316,7 +192,7 @@ public class Plan implements Describer, ProblemState
 	    {
 		final Node before = resolution.getFirst ();
 		final Node after = resolution.getSecond ();
-		final LinkAchiever achiever = new LinkAchiever (this, before, after);
+		final DeconflictAchiever achiever = new DeconflictAchiever (this, after, before);
 		achiever.makeChild ();
 		final Plan child = achiever.getChild ();
 		child.revisionGoal = conflicts;

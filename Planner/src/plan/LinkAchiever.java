@@ -1,27 +1,25 @@
 
 package plan;
 
-import java.util.List;
+import java.util.*;
+
+import lisp.Symbol;
+import plan.gui.PlanView;
 
 public class LinkAchiever extends Achiever
 {
-    private final Node achieverNode;
     private final Node protectedNode;
+    private final Condition condition;
+    private final Node achieverNode;
     private final Bindings bindings;
 
-    LinkAchiever (final Plan parent, final Node achieverNode, final Node protectedNode)
+    LinkAchiever (final Plan parent, final Node protectedNode, final Condition condition, final Node achieverNode,
+            final Bindings bindings)
     {
 	super (parent);
-	this.achieverNode = achieverNode;
 	this.protectedNode = protectedNode;
-	bindings = new Bindings ();
-    }
-
-    LinkAchiever (final Plan parent, final Node achieverNode, final Node protectedNode, final Bindings bindings)
-    {
-	super (parent);
+	this.condition = condition;
 	this.achieverNode = achieverNode;
-	this.protectedNode = protectedNode;
 	this.bindings = bindings;
     }
 
@@ -31,19 +29,44 @@ public class LinkAchiever extends Achiever
 	return 1.0;
     }
 
-    public Node getAchieverNode ()
-    {
-	return achieverNode;
-    }
-
     public Node getProtectedNode ()
     {
 	return protectedNode;
     }
 
+    public Node getAchieverNode ()
+    {
+	return achieverNode;
+    }
+
+    public Condition getCondition ()
+    {
+	return condition;
+    }
+
     public Bindings getBindings ()
     {
 	return bindings;
+    }
+
+    @Override
+    public ProtectionInterval expand ()
+    {
+	// Create a child by adding a causal link from n to node
+	makeChild (bindings);
+	final Plan child = getChild ();
+	if (Symbol.value ("user:::PlanView") == Boolean.TRUE)
+	{
+	    PlanView.makeView (getParent ());
+	    PlanView.makeView (child);
+	}
+	final Map<Node, Node> nodeMap = getNodeMap ();
+	final Node achNode = nodeMap.get (getAchieverNode ());
+	final Node protNode = nodeMap.get (protectedNode);
+	final Condition bCond = condition.bind (bindings);
+	final ProtectionInterval pi = achNode.addPI (bCond, protNode);
+	// child.revisionGoal = pi;
+	return pi;
     }
 
     @Override
@@ -59,6 +82,8 @@ public class LinkAchiever extends Achiever
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
+	buffer.append (condition);
+	buffer.append ("@");
 	buffer.append (achieverNode.getName ());
 	buffer.append ("=>");
 	buffer.append (protectedNode.getName ());

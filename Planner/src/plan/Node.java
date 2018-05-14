@@ -67,7 +67,7 @@ public class Node implements Describer
 	{
 	    goalConditions.add (c.bind (bindings));
 	}
-	action = parent.action;
+	action = parent.action == null ? null : new Action (parent.action, bindings);
 	// Previous, next and causal links must be done later
     }
 
@@ -88,10 +88,6 @@ public class Node implements Describer
      */
     public void addSuccessor (final Node node)
     {
-	if (this == node)
-	{
-	    throw new IllegalArgumentException ("Circular link");
-	}
 	if (!next.contains (node))
 	{
 	    next.add (node);

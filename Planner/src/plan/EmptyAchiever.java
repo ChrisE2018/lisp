@@ -20,6 +20,12 @@ public class EmptyAchiever extends Achiever
     }
 
     @Override
+    public ProtectionInterval expand ()
+    {
+	throw new UnsupportedOperationException ("Can't expand EmptyAchiever");
+    }
+
+    @Override
     public Plan expand (final List<Plan> result)
     {
 	throw new UnsupportedOperationException ("Can't expand EmptyAchiever");
