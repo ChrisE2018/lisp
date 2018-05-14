@@ -12,9 +12,9 @@ import javax.swing.Timer;
 import lisp.Symbol;
 import plan.*;
 
-public class BlockworldSimulator extends JPanel implements ComponentListener, ActionListener
+public class BlockworldSimulator extends JPanel implements ActionListener
 {
-    private static final long ACTION_INTERVAL = 1000;
+    private static final long ACTION_INTERVAL = 2000;
     private Plan plan;
 
     private final List<Node> simulatedNodes = new ArrayList<Node> ();
@@ -27,9 +27,11 @@ public class BlockworldSimulator extends JPanel implements ComponentListener, Ac
 
     private final Timer timer = new Timer (1, this);
 
+    /** Conditions that are currently true. */
+    private final List<Condition> state = new ArrayList<Condition> ();
+
     public BlockworldSimulator ()
     {
-	// addComponentListener (this);
 	timer.start ();
     }
 
@@ -45,7 +47,13 @@ public class BlockworldSimulator extends JPanel implements ComponentListener, Ac
 	    if (!selection.isEmpty ())
 	    {
 		final Node selected = selection.get (0);
+		System.out.printf ("Perform next action %s %n", selected);
 		simulate (selected);
+	    }
+	    else
+	    {
+		System.out.printf ("Simulation complete %n");
+		timer.stop ();
 	    }
 	    actionTimestamp = now;
 	}
@@ -115,11 +123,20 @@ public class BlockworldSimulator extends JPanel implements ComponentListener, Ac
     private void simulate (final Node node)
     {
 	System.out.printf ("Simulate %s %n", node);
-	update (node);
+	for (final Condition c : node.getDeleteConditions ())
+	{
+	    state.remove (c);
+	}
+	for (final Condition c : node.getAddConditions ())
+	{
+	    state.add (c);
+	}
+	System.out.printf ("State %s %n", state);
+	update ();
 	simulatedNodes.add (node);
     }
 
-    private void update (final Node node)
+    private void update ()
     {
 	final int w = Math.max (100, getWidth ()) / blocks.size ();
 	final int size = Math.max (50, Math.min (getWidth (), getHeight ()) / 10);
@@ -128,38 +145,131 @@ public class BlockworldSimulator extends JPanel implements ComponentListener, Ac
 	final int baseline = height3 * 2;
 	int x = size / 10;
 	final int y = Math.max (10, baseline - height + 10);
-
-	for (final Condition c : node.getAddConditions ())
+	final Set<Symbol> positionedBlocks = new HashSet<Symbol> ();
+	final int limit = state.size ();
+	for (int i = 0; positionedBlocks.size () < blocks.size () && i < limit; i++)
 	{
-	    final Symbol p = c.getPredicate ();
-	    if (p.is ("ontable"))
+	    for (final Condition c : state)
 	    {
-		for (final Symbol s : c.getTerms ())
+		final Symbol p = c.getPredicate ();
+		if (p.is ("ontable"))
 		{
-		    final Sprite sprite = sprites.get (s);
-		    if (sprite == null)
+		    final Symbol s = c.getTerms ().get (0);
+		    if (!positionedBlocks.contains (s))
 		    {
-			System.out.printf ("Null sprite %n");
-		    }
+			final Sprite sprite = sprites.get (s);
+			if (sprite == null)
+			{
+			    System.out.printf ("Null sprite %n");
+			}
 
-		    sprite.destination.x = x;
-		    sprite.destination.y = y;
-		    sprite.destination.width = size;
-		    sprite.destination.height = height;
-		    x += w;
+			sprite.destination.x = x;
+			sprite.destination.y = y;
+			sprite.destination.width = size;
+			sprite.destination.height = height;
+			positionedBlocks.add (s);
+			System.out.printf ("Table block %s at %s %n", s, x);
+			x += w;
+		    }
+		}
+		else if (p.is ("on"))
+		{
+		    final Symbol upper = c.getTerms ().get (0);
+		    final Symbol lower = c.getTerms ().get (1);
+		    if (!positionedBlocks.contains (upper))
+		    {
+			if (positionedBlocks.contains (lower))
+			{
+			    final Sprite upperSprite = sprites.get (upper);
+			    final Sprite lowerSprite = sprites.get (lower);
+			    System.out.printf ("Simulate %s on %s %n", upper, lower);
+			    upperSprite.destination.x = lowerSprite.destination.x;
+			    upperSprite.destination.y = lowerSprite.destination.y - height;
+			    upperSprite.destination.width = size;
+			    upperSprite.destination.height = height;
+			    positionedBlocks.add (upper);
+			}
+		    }
 		}
 	    }
-	    else if (p.is ("on"))
+	}
+    }
+
+    private void updateOLD (final Node node)
+    {
+	final int w = Math.max (100, getWidth ()) / blocks.size ();
+	final int size = Math.max (50, Math.min (getWidth (), getHeight ()) / 10);
+	final int height3 = getHeight () / 3;
+	final int height = size;
+	final int baseline = height3 * 2;
+	int x = size / 10;
+	final int y = Math.max (10, baseline - height + 10);
+	final Set<Symbol> literals = getLiterals (node);
+	final Set<Symbol> positionedBlocks = new HashSet<Symbol> ();
+	final List<Condition> addConditions = node.getAddConditions ();
+	final int limit = addConditions.size ();
+	for (int i = 0; positionedBlocks.size () < literals.size () && i < limit; i++)
+	{
+	    for (final Condition c : addConditions)
 	    {
-		final Symbol upper = c.getTerms ().get (0);
-		final Symbol lower = c.getTerms ().get (1);
-		System.out.printf ("Simulate %s on %s %n", upper, lower);
-		final Sprite upperSprite = sprites.get (upper);
-		final Sprite lowerSprite = sprites.get (lower);
-		upperSprite.destination.x = lowerSprite.destination.x;
-		upperSprite.destination.y = lowerSprite.destination.y - upperSprite.destination.height;
+		final Symbol p = c.getPredicate ();
+		if (p.is ("ontable"))
+		{
+		    final Symbol s = c.getTerms ().get (0);
+		    if (!positionedBlocks.contains (s))
+		    {
+			final Sprite sprite = sprites.get (s);
+			if (sprite == null)
+			{
+			    System.out.printf ("Null sprite %n");
+			}
+
+			sprite.destination.x = x;
+			sprite.destination.y = y;
+			sprite.destination.width = size;
+			sprite.destination.height = height;
+			positionedBlocks.add (s);
+			System.out.printf ("[%s] Table block %s at %s %n", node, s, x);
+			x += w;
+		    }
+		}
+		else if (p.is ("on"))
+		{
+		    final Symbol upper = c.getTerms ().get (0);
+		    final Symbol lower = c.getTerms ().get (1);
+		    if (!positionedBlocks.contains (upper))
+		    {
+			if (positionedBlocks.contains (lower))
+			{
+			    final Sprite upperSprite = sprites.get (upper);
+			    final Sprite lowerSprite = sprites.get (lower);
+			    System.out.printf ("Simulate %s on %s %n", upper, lower);
+			    upperSprite.destination.x = lowerSprite.destination.x;
+			    upperSprite.destination.y = lowerSprite.destination.y - height;
+			    upperSprite.destination.width = size;
+			    upperSprite.destination.height = height;
+			    positionedBlocks.add (upper);
+			}
+		    }
+		}
 	    }
 	}
+    }
+
+    private Set<Symbol> getLiterals (final Node node)
+    {
+	final Set<Symbol> result = new HashSet<Symbol> ();
+	for (final Condition c : node.getAddConditions ())
+	{
+	    for (final Symbol s : c.getTerms ())
+	    {
+		if (!Matcher.isVariable (s))
+		{
+		    result.add (s);
+		}
+	    }
+	}
+	return result;
     }
 
     @Override
@@ -249,46 +359,5 @@ public class BlockworldSimulator extends JPanel implements ComponentListener, Ac
 		f.toFront ();
 	    }
 	});
-    }
-
-    // public static void main (final String[] args)
-    // {
-    // final JFrame frame = new JFrame ("Blockworld Simulation");
-    // frame.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
-    // final BlockworldSimulator planView = new BlockworldSimulator ();
-    // planView.sprites.add (new Sprite (null, 5, 10, 100, 30, "sprite1"));
-    // planView.sprites.add (new Sprite (null, 50, 100, 100, 100, "sprite2", "b", "c"));
-    // frame.setSize (900, 500);
-    // // frame.pack ();
-    // frame.getContentPane ().add (planView);
-    // frame.setVisible (true);
-    // }
-
-    @Override
-    public void componentResized (final ComponentEvent e)
-    {
-	if (plan != null)
-	{
-	    setPlan (plan);
-	}
-	else
-	{
-	    sprites.clear ();
-	}
-    }
-
-    @Override
-    public void componentMoved (final ComponentEvent e)
-    {
-    }
-
-    @Override
-    public void componentShown (final ComponentEvent e)
-    {
-    }
-
-    @Override
-    public void componentHidden (final ComponentEvent e)
-    {
     }
 }

@@ -46,6 +46,11 @@ public class Condition implements Describer
 	}
     }
 
+    private boolean isVariable (final Symbol symbol)
+    {
+	return symbol.getName ().charAt (0) == QUESTION_MARK;
+    }
+
     public boolean isNegated ()
     {
 	return negated;
@@ -239,11 +244,6 @@ public class Condition implements Describer
 	    result = new Bindings ();
 	}
 	return result;
-    }
-
-    private boolean isVariable (final Symbol symbol)
-    {
-	return symbol.getName ().charAt (0) == QUESTION_MARK;
     }
 
     public Condition bind (final Bindings match)

@@ -142,10 +142,10 @@ public class Plan implements Describer, ProblemState
 	    {
 		// Create a child by adding a causal link from n to node
 		final Bindings bindings = achiever.getBindings ();
-		if (!bindings.isEmpty ())
-		{
-		    System.out.printf ("Expanding bound link %n");
-		}
+		// if (!bindings.isEmpty ())
+		// {
+		// System.out.printf ("Expanding bound link %n");
+		// }
 		achiever.makeChild (bindings);
 		final Plan child = achiever.getChild ();
 		if (Symbol.value ("user:::PlanView") == Boolean.TRUE)

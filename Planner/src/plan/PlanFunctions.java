@@ -27,17 +27,6 @@ public class PlanFunctions extends Definer
     {
     }
 
-    /**
-     * @param interpreter
-     */
-    @DefineLisp (special = true)
-    public Object defstate (final Interpreter interpreter, final Symbol name, final LispList body)
-    {
-	final State state = new State (body);
-	name.setValue (state);
-	return name;
-    }
-
     private final Symbol NOT_SYMBOL = pkg.internPublic ("not");
     private final Symbol PRECONDITION_SYMBOL = pkg.internPublic ("precondition");
     private final Symbol POSTCONDITION_SYMBOL = pkg.internPublic ("postcondition");
@@ -237,7 +226,10 @@ public class PlanFunctions extends Definer
     @DefineLisp
     public Plan execute (final Plan plan)
     {
-	BlockworldSimulator.makeView (plan);
+	if (plan != null)
+	{
+	    BlockworldSimulator.makeView (plan);
+	}
 	return plan;
     }
 

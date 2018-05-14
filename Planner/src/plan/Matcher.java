@@ -10,6 +10,11 @@ public class Matcher
 {
     private static final char QUESTION_MARK = '?';
 
+    public static boolean isVariable (final Symbol symbol)
+    {
+	return symbol.getName ().charAt (0) == QUESTION_MARK;
+    }
+
     public Bindings match (final LispList pattern, final LispList literal)
     {
 	if (pattern.size () != literal.size ())
@@ -51,11 +56,6 @@ public class Matcher
 	    }
 	}
 	return result;
-    }
-
-    private boolean isVariable (final Symbol symbol)
-    {
-	return symbol.getName ().charAt (0) == QUESTION_MARK;
     }
 
     public LispList bindingsToLisp (final Map<Symbol, Symbol> bindings)
