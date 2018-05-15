@@ -147,6 +147,27 @@ public class ControlPrimitives extends Definer
 	return result;
     }
 
+    @DefineLisp
+    public Object sleep (final Object a) throws InterruptedException
+    {
+	final Object result = null;
+	long ms = 0;
+	if (a instanceof Integer)
+	{
+	    ms = 1000 * ((int)a);
+	}
+	else if (a instanceof Double)
+	{
+	    ms = Math.round (1000 * (double)a);
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Sleep seconds required " + a);
+	}
+	Thread.sleep (ms);
+	return result;
+    }
+
     @Override
     public String toString ()
     {
