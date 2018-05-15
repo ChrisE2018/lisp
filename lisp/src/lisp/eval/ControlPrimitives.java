@@ -3,6 +3,26 @@ package lisp.eval;
 
 public class ControlPrimitives extends Definer
 {
+    /**
+     * All functions that are conditional on an argument being true use this definition. null and
+     * boolean false are considered false. Everything else is true.
+     */
+    private boolean isTrue (final Object value)
+    {
+	if (value != null)
+	{
+	    if (value instanceof Boolean)
+	    {
+		if (false == (Boolean)value)
+		{
+		    return false;
+		}
+	    }
+	    return true;
+	}
+	return false;
+    }
+
     @DefineLisp (special = true)
     public Object or (final Interpreter interpreter, final Object... arguments) throws Exception
     {
@@ -51,22 +71,6 @@ public class ControlPrimitives extends Definer
 	    result = value;
 	}
 	return result;
-    }
-
-    private boolean isTrue (final Object value)
-    {
-	if (value != null)
-	{
-	    if (value instanceof Boolean)
-	    {
-		if (false == (Boolean)value)
-		{
-		    return false;
-		}
-	    }
-	    return true;
-	}
-	return false;
     }
 
     @DefineLisp (special = true, name = "when")
@@ -127,6 +131,18 @@ public class ControlPrimitives extends Definer
 		final Object arg = arguments[i];
 		result = interpreter.eval (arg);
 	    }
+	}
+	return result;
+    }
+
+    @DefineLisp (special = true)
+    public Object progn (final Interpreter interpreter, final Object... arguments) throws Exception
+    {
+	Object result = null;
+	for (int i = 0; i < arguments.length; i++)
+	{
+	    final Object arg = arguments[i];
+	    result = interpreter.eval (arg);
 	}
 	return result;
     }
