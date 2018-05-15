@@ -1,0 +1,143 @@
+
+package lisp.eval;
+
+public class ControlPrimitives extends Definer
+{
+    @DefineLisp (special = true)
+    public Object or (final Interpreter interpreter, final Object... arguments) throws Exception
+    {
+	for (int i = 0; i < arguments.length; i++)
+	{
+	    final Object arg = arguments[i];
+	    final Object value = interpreter.eval (arg);
+	    if (isTrue (value))
+	    {
+		return value;
+	    }
+	}
+	return false;
+    }
+
+    @DefineLisp (special = true)
+    public Object and (final Interpreter interpreter, final Object... arguments) throws Exception
+    {
+	Object result = Boolean.TRUE;
+	for (int i = 0; i < arguments.length; i++)
+	{
+	    final Object arg = arguments[i];
+	    final Object value = interpreter.eval (arg);
+	    if (!isTrue (value))
+	    {
+		return false;
+	    }
+	    result = value;
+	}
+	return result;
+    }
+
+    @DefineLisp (special = true, name = "if")
+    public Object ifEvaluator (final Interpreter interpreter, final Object test, final Object trueClause,
+            final Object... arguments) throws Exception
+    {
+	if (isTrue (interpreter.eval (test)))
+	{
+	    return interpreter.eval (trueClause);
+	}
+	Object result = Boolean.TRUE;
+	for (int i = 0; i < arguments.length; i++)
+	{
+	    final Object arg = arguments[i];
+	    final Object value = interpreter.eval (arg);
+	    result = value;
+	}
+	return result;
+    }
+
+    private boolean isTrue (final Object value)
+    {
+	if (value != null)
+	{
+	    if (value instanceof Boolean)
+	    {
+		if (false == (Boolean)value)
+		{
+		    return false;
+		}
+	    }
+	    return true;
+	}
+	return false;
+    }
+
+    @DefineLisp (special = true, name = "when")
+    public Object whenForm (final Interpreter interpreter, final Object test, final Object... arguments) throws Exception
+    {
+	if (isTrue (interpreter.eval (test)))
+	{
+	    Object result = true;
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		final Object arg = arguments[i];
+		result = interpreter.eval (arg);
+	    }
+	    return result;
+	}
+	return false;
+    }
+
+    @DefineLisp (special = true, name = "unless")
+    public Object unlessForm (final Interpreter interpreter, final Object test, final Object... arguments) throws Exception
+    {
+	if (!isTrue (interpreter.eval (test)))
+	{
+	    Object result = true;
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		final Object arg = arguments[i];
+		result = interpreter.eval (arg);
+	    }
+	    return result;
+	}
+	return false;
+    }
+
+    @DefineLisp (special = true, name = "while")
+    public Object whileForm (final Interpreter interpreter, final Object test, final Object... arguments) throws Exception
+    {
+	Object result = true;
+	while (isTrue (interpreter.eval (test)))
+	{
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		final Object arg = arguments[i];
+		result = interpreter.eval (arg);
+	    }
+	}
+	return result;
+    }
+
+    @DefineLisp (special = true, name = "until")
+    public Object untilForm (final Interpreter interpreter, final Object test, final Object... arguments) throws Exception
+    {
+	Object result = true;
+	while (!isTrue (interpreter.eval (test)))
+	{
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		final Object arg = arguments[i];
+		result = interpreter.eval (arg);
+	    }
+	}
+	return result;
+    }
+
+    @Override
+    public String toString ()
+    {
+	final StringBuilder buffer = new StringBuilder ();
+	buffer.append ("#<");
+	buffer.append (getClass ().getSimpleName ());
+	buffer.append (">");
+	return buffer.toString ();
+    }
+}

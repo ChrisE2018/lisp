@@ -3,12 +3,35 @@ package lisp.eval;
 
 /**
  * Implementation of basic arithmetic operators. Definitions of plus, minus, times, quotient, =,
- * <, >=, <=, >=, trig, abs, sign [TODO] Consider using bigdecimal [TODO] Random
+ * <, >=, <=, >=, trig, abs, sign
  *
  * @author cre
  */
 public class ArithmeticPrimitives extends Definer
 {
+    // [TODO] Inverse trig (asin, acos, atan)
+    // [TODO] Exponentials, log
+    // [TODO] Consider using bigdecimal
+    // [TODO] Random
+    // [TODO] Statistical
+
+    @DefineLisp
+    public Object not (final Object arg)
+    {
+	if (arg instanceof Boolean)
+	{
+	    final Boolean b = (Boolean)arg;
+	    return !b;
+	}
+	return Boolean.FALSE;
+    }
+
+    @DefineLisp (name = "null")
+    public Object nullPredicate (final Object arg)
+    {
+	return arg == null;
+    }
+
     @DefineLisp (name = "+")
     public Object plus (final Object... arguments)
     {

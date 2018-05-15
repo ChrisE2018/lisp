@@ -8,25 +8,38 @@ import java.util.List;
 import lisp.*;
 import lisp.Package;
 
-/** Simple interpreter that uses reflection to evaluate forms like Lisp functions. */
+/**
+ * Simple interpreter that uses reflection to evaluate forms like Lisp functions. Everything
+ * required to process the init file is defined here in code. The init file is loaded and defines
+ * everything else.
+ */
 public class Interpreter extends Definer
 {
+    // [TODO] Define a way to call static functions.
+    // [TODO] Allow passing arguments to constructors
+
+    private static final String INIT_FILE = "init.jisp";
+    private boolean loadedInitFile = false;
+
     public Interpreter ()
     {
-	final URL url = Interpreter.class.getResource ("init.jisp");
-	if (url != null)
+	if (!loadedInitFile)
 	{
-	    final FileReader fileReader = new FileReader ();
-	    try
+	    loadedInitFile = true;
+	    final URL url = Interpreter.class.getResource (INIT_FILE);
+	    if (url != null)
 	    {
-		System.out.printf ("Loading init file %s %n", url);
-		fileReader.read (this, url);
+		final FileReader fileReader = new FileReader ();
+		try
+		{
+		    System.out.printf ("Loading init file %s %n", url);
+		    fileReader.read (this, url);
+		}
+		catch (final Exception e)
+		{
+		    e.printStackTrace ();
+		}
 	    }
-	    catch (final Exception e)
-	    {
-		e.printStackTrace ();
-	    }
-	    // Primitives.initialize ();
 	}
     }
 
@@ -77,56 +90,6 @@ public class Interpreter extends Definer
 	    }
 	}
 	return form;
-    }
-
-    /** Return a class for a name. This is required so the init file can load the primitives. */
-    @DefineLisp
-    public Object ClassForName (final String className) throws ClassNotFoundException
-    {
-	final Class<?> c = Class.forName (className);
-	return c;
-    }
-
-    @DefineLisp (name = "new")
-    public Object newFunction (final String className)
-            throws ClassNotFoundException, InstantiationException, IllegalAccessException
-    {
-	final Class<?> c = Class.forName (className);
-	return c.newInstance ();
-    }
-
-    /** Evaluate a lisp expression and return the result. */
-    @DefineLisp (name = "eval")
-    public Object evalT (final Object expression) throws Exception
-    {
-	final Object value = eval (expression);
-	return value;
-    }
-
-    @DefineLisp (special = true)
-    public Interpreter getInterpreter (final Interpreter result)
-    {
-	return result;
-    }
-
-    /** Load a file. First argument is the pathname. */
-    @DefineLisp
-    public Object load (final String pathname) throws Exception
-    {
-	final Package pkg = PackageFactory.getDefaultPackage ();
-	final FileReader fileReader = new FileReader ();
-	final Object result = fileReader.read (this, pkg, pathname);
-	return result;
-    }
-
-    /** Load a file. First argument is the pathname. Optional second argument is the package. */
-    @DefineLisp
-    public Object load (final String pathname, final Object p) throws Exception
-    {
-	final Package pkg = coercePackage (p);
-	final FileReader fileReader = new FileReader ();
-	final Object result = fileReader.read (this, pkg, pathname);
-	return result;
     }
 
     /**
@@ -181,6 +144,89 @@ public class Interpreter extends Definer
 	}
 	return method.invoke (target, actuals);
     }
+
+    /**
+     * Evaluator for quoted forms.
+     *
+     * @param interpreter Not used, but required by calling protocol.
+     */
+    @DefineLisp (special = true, name = "quote")
+    public Object quoteEvaluator (final Interpreter interpreter, final Object result)
+    {
+	return result;
+    }
+
+    /** Evaluate a lisp expression and return the result. */
+    @DefineLisp (name = "eval")
+    public Object evalT (final Object expression) throws Exception
+    {
+	final Object value = eval (expression);
+	return value;
+    }
+
+    @DefineLisp (special = true)
+    public Interpreter getInterpreter (final Interpreter result)
+    {
+	return result;
+    }
+
+    /** Return a class for a name. This is required so the init file can load the primitives. */
+    @DefineLisp
+    public Object ClassForName (final String className) throws ClassNotFoundException
+    {
+	final Class<?> c = Class.forName (className);
+	return c;
+    }
+
+    @DefineLisp (name = "new")
+    public Object newFunction (final String className)
+            throws ClassNotFoundException, InstantiationException, IllegalAccessException
+    {
+	final Class<?> c = Class.forName (className);
+	return c.newInstance ();
+    }
+
+    /** Load a file. First argument is the pathname. */
+    @DefineLisp
+    public Object load (final String pathname) throws Exception
+    {
+	final Package pkg = PackageFactory.getDefaultPackage ();
+	final FileReader fileReader = new FileReader ();
+	final Object result = fileReader.read (this, pkg, pathname);
+	return result;
+    }
+
+    /** Load a file. First argument is the pathname. Optional second argument is the package. */
+    @DefineLisp
+    public Object load (final String pathname, final Object p) throws Exception
+    {
+	final Package pkg = coercePackage (p);
+	final FileReader fileReader = new FileReader ();
+	final Object result = fileReader.read (this, pkg, pathname);
+	return result;
+    }
+
+    @DefineLisp (name = "throw")
+    public void throwFunction (final Throwable exception) throws Throwable
+    {
+	throw exception;
+    }
+
+    @DefineLisp
+    public void error (final String format, final Object... args) throws Throwable
+    {
+	final String message = String.format (format, args);
+	throw new Error (message);
+    }
+
+    @DefineLisp
+    public void warning (final String format, final Object... args) throws Throwable
+    {
+	final String message = String.format (format, args);
+	throw new Throwable (message);
+    }
+
+    // [TODO] Try-catch - how to implement?
 
     @Override
     public String toString ()

@@ -102,7 +102,7 @@ public class Symbol implements Describer
 	}
 	if (symbolFunction != null)
 	{
-	    System.out.printf ("%%Refining %s\n", this);
+	    System.out.printf ("%%Redefining %s from %s to %s\n", this, symbolFunction, function);
 	}
 	symbolFunction = function;
     }

@@ -36,6 +36,7 @@ public class Definer
 	if (!scannedDefiners.contains (objectClass))
 	{
 	    scannedDefiners.add (objectClass);
+	    System.out.printf ("Processing annotations for %s %n", object);
 	    for (final Method method : objectClass.getDeclaredMethods ())
 	    {
 		if (method.isAnnotationPresent (DefineLisp.class))
@@ -63,7 +64,7 @@ public class Definer
 	System.out.printf ("define %s as %s %n", symbolName, method);
 	final Symbol symbol = external ? p.internPublic (symbolName) : p.internPrivate (symbolName);
 	FunctionCell function = symbol.getFunction ();
-	// [TODO] Overloading requires adding the method to an existing function cell
+	// Overloading requires adding the method to an existing function cell
 	// [TODO] Lexical bindings
 	if (function != null)
 	{
@@ -72,16 +73,18 @@ public class Definer
 	else if (special)
 	{
 	    function = new SpecialFunctionCell (object, method);
+	    symbol.setFunction (function);
 	}
 	else if (macro)
 	{
 	    function = new MacroFunctionCell (object, method);
+	    symbol.setFunction (function);
 	}
 	else
 	{
 	    function = new StandardFunctionCell (object, method);
+	    symbol.setFunction (function);
 	}
-	symbol.setFunction (function);
     }
 
     public String coerceString (final Object arg)
