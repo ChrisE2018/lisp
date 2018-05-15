@@ -24,18 +24,10 @@ import lisp.Package;
 public class Primitives extends Definer
 {
     // [TODO] Create immutable list
-    // [TODO] comparison, trig, abs
-    // [TODO] Property list access
+    // Property list access
     // [TODO] Maps, sets, union, intersection, difference
     // [TODO] Package creation, uses, export, import
     // [TODO] File functions
-    @SuppressWarnings ("unused")
-    private static Primitives primitives = new Primitives ();
-
-    public static void initialize ()
-    {
-	// Work really done in static statement above.
-    }
 
     /**
      * Evaluator for quoted forms.
@@ -87,439 +79,6 @@ public class Primitives extends Definer
 	return new LispList (arguments);
     }
 
-    @DefineLisp (name = "+")
-    public Object plus (final Object... arguments)
-    {
-	if (arguments.length > 0)
-	{
-	    Object result = arguments[0];
-	    for (int i = 1; i < arguments.length; i++)
-	    {
-		result = plus (result, arguments[i]);
-	    }
-	    return result;
-	}
-	return 0;
-    }
-
-    private Object plus (final Integer a, final Object b)
-    {
-	if (b instanceof Integer)
-	{
-	    return a + (Integer)b;
-	}
-	else if (b instanceof Double)
-	{
-	    return a + (Double)b;
-	}
-	else if (b instanceof Short)
-	{
-	    return a + (Short)b;
-	}
-	else if (b instanceof Byte)
-	{
-	    return a + (Byte)b;
-	}
-	else if (b instanceof Float)
-	{
-	    return a + (Float)b;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + b);
-	}
-    }
-
-    private Object plus (final Double a, final Object b)
-    {
-	if (b instanceof Integer)
-	{
-	    return a + (Integer)b;
-	}
-	else if (b instanceof Double)
-	{
-	    return a + (Double)b;
-	}
-	else if (b instanceof Short)
-	{
-	    return a + (Short)b;
-	}
-	else if (b instanceof Byte)
-	{
-	    return a + (Byte)b;
-	}
-	else if (b instanceof Float)
-	{
-	    return a + (Float)b;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + b);
-	}
-    }
-
-    private Object plus (final Object a, final Object b)
-    {
-	if (a instanceof Integer)
-	{
-	    return plus ((Integer)a, b);
-	}
-	else if (a instanceof Double)
-	{
-	    return plus ((Double)a, b);
-	}
-	else if (a instanceof Short)
-	{
-	    final int aa = (Short)a;
-	    final Integer aaa = aa;
-	    return plus (aaa, b);
-	}
-	else if (a instanceof Byte)
-	{
-	    final int aa = (Byte)a;
-	    final Integer aaa = aa;
-	    return plus (aaa, b);
-	}
-	else if (a instanceof Float)
-	{
-	    final double aa = (Float)a;
-	    final Double aaa = aa;
-	    return plus (aaa, b);
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + a);
-	}
-    }
-
-    @DefineLisp (name = "-")
-    public Object minus (final Object... arguments)
-    {
-	switch (arguments.length)
-	{
-	    case 0:
-		return 0;
-
-	    case 1:
-		return arguments[0];
-
-	    default:
-		Object result = arguments[0];
-		for (int i = 1; i < arguments.length; i++)
-		{
-		    result = minus (result, arguments[i]);
-		}
-		return result;
-	}
-    }
-
-    private Object minus (final Integer a, final Object b)
-    {
-	if (b instanceof Integer)
-	{
-	    return a - (Integer)b;
-	}
-	else if (b instanceof Double)
-	{
-	    return a - (Double)b;
-	}
-	else if (b instanceof Short)
-	{
-	    return a - (Short)b;
-	}
-	else if (b instanceof Byte)
-	{
-	    return a - (Byte)b;
-	}
-	else if (b instanceof Float)
-	{
-	    return a - (Float)b;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + b);
-	}
-    }
-
-    private Object minus (final Double a, final Object b)
-    {
-	if (b instanceof Integer)
-	{
-	    return a - (Integer)b;
-	}
-	else if (b instanceof Double)
-	{
-	    return a - (Double)b;
-	}
-	else if (b instanceof Short)
-	{
-	    return a - (Short)b;
-	}
-	else if (b instanceof Byte)
-	{
-	    return a - (Byte)b;
-	}
-	else if (b instanceof Float)
-	{
-	    return a - (Float)b;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + b);
-	}
-    }
-
-    private Object minus (final Object a, final Object b)
-    {
-	if (a instanceof Integer)
-	{
-	    return minus ((Integer)a, b);
-	}
-	else if (a instanceof Double)
-	{
-	    return minus ((Double)a, b);
-	}
-	else if (a instanceof Short)
-	{
-	    final int aa = (Short)a;
-	    final Integer aaa = aa;
-	    return minus (aaa, b);
-	}
-	else if (a instanceof Byte)
-	{
-	    final int aa = (Byte)a;
-	    final Integer aaa = aa;
-	    return minus (aaa, b);
-	}
-	else if (a instanceof Float)
-	{
-	    final double aa = (Float)a;
-	    final Double aaa = aa;
-	    return minus (aaa, b);
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + a);
-	}
-    }
-
-    @DefineLisp (name = "*")
-    public Object times (final Object... arguments)
-    {
-	if (arguments.length > 0)
-	{
-	    Object result = arguments[0];
-	    for (int i = 1; i < arguments.length; i++)
-	    {
-		result = times (result, arguments[i]);
-	    }
-	    return result;
-	}
-	return 1;
-    }
-
-    private Object times (final Integer a, final Object b)
-    {
-	if (b instanceof Integer)
-	{
-	    return a * (Integer)b;
-	}
-	else if (b instanceof Double)
-	{
-	    return a * (Double)b;
-	}
-	else if (b instanceof Short)
-	{
-	    return a * (Short)b;
-	}
-	else if (b instanceof Byte)
-	{
-	    return a * (Byte)b;
-	}
-	else if (b instanceof Float)
-	{
-	    return a * (Float)b;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + b);
-	}
-    }
-
-    private Object times (final Double a, final Object b)
-    {
-	if (b instanceof Integer)
-	{
-	    return a * (Integer)b;
-	}
-	else if (b instanceof Double)
-	{
-	    return a * (Double)b;
-	}
-	else if (b instanceof Short)
-	{
-	    return a * (Short)b;
-	}
-	else if (b instanceof Byte)
-	{
-	    return a * (Byte)b;
-	}
-	else if (b instanceof Float)
-	{
-	    return a * (Float)b;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + b);
-	}
-    }
-
-    private Object times (final Object a, final Object b)
-    {
-	if (a instanceof Integer)
-	{
-	    return times ((Integer)a, b);
-	}
-	else if (a instanceof Double)
-	{
-	    return times ((Double)a, b);
-	}
-	else if (a instanceof Short)
-	{
-	    final int aa = (Short)a;
-	    final Integer aaa = aa;
-	    return times (aaa, b);
-	}
-	else if (a instanceof Byte)
-	{
-	    final int aa = (Byte)a;
-	    final Integer aaa = aa;
-	    return times (aaa, b);
-	}
-	else if (a instanceof Float)
-	{
-	    final double aa = (Float)a;
-	    final Double aaa = aa;
-	    return times (aaa, b);
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + a);
-	}
-    }
-
-    @DefineLisp (name = "/")
-    public Object quotient (final Object... arguments)
-    {
-	switch (arguments.length)
-	{
-	    case 0:
-		return 1;
-
-	    case 1:
-		return arguments[0];
-
-	    default:
-		final Object numerator = arguments[0];
-		Object denominator = arguments[1];
-		for (int i = 2; i < arguments.length; i++)
-		{
-		    denominator = times (denominator, arguments[i]);
-		}
-		return quotient (numerator, denominator);
-	}
-    }
-
-    private Object quotient (final Integer a, final Object b)
-    {
-	if (b instanceof Integer)
-	{
-	    return a / (Integer)b;
-	}
-	else if (b instanceof Double)
-	{
-	    return a / (Double)b;
-	}
-	else if (b instanceof Short)
-	{
-	    return a / (Short)b;
-	}
-	else if (b instanceof Byte)
-	{
-	    return a - (Byte)b;
-	}
-	else if (b instanceof Float)
-	{
-	    return a / (Float)b;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + b);
-	}
-    }
-
-    private Object quotient (final Double a, final Object b)
-    {
-	if (b instanceof Integer)
-	{
-	    return a / (Integer)b;
-	}
-	else if (b instanceof Double)
-	{
-	    return a / (Double)b;
-	}
-	else if (b instanceof Short)
-	{
-	    return a / (Short)b;
-	}
-	else if (b instanceof Byte)
-	{
-	    return a / (Byte)b;
-	}
-	else if (b instanceof Float)
-	{
-	    return a / (Float)b;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + b);
-	}
-    }
-
-    private Object quotient (final Object a, final Object b)
-    {
-	if (a instanceof Integer)
-	{
-	    return quotient ((Integer)a, b);
-	}
-	else if (a instanceof Double)
-	{
-	    return quotient ((Double)a, b);
-	}
-	else if (a instanceof Short)
-	{
-	    final int aa = (Short)a;
-	    final Integer aaa = aa;
-	    return quotient (aaa, b);
-	}
-	else if (a instanceof Byte)
-	{
-	    final int aa = (Byte)a;
-	    final Integer aaa = aa;
-	    return quotient (aaa, b);
-	}
-	else if (a instanceof Float)
-	{
-	    final double aa = (Float)a;
-	    final Double aaa = aa;
-	    return quotient (aaa, b);
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + a);
-	}
-    }
-
     @DefineLisp
     public Object not (final Object arg)
     {
@@ -529,6 +88,12 @@ public class Primitives extends Definer
 	    return !b;
 	}
 	return Boolean.FALSE;
+    }
+
+    @DefineLisp (name = "null")
+    public Object nullPredicate (final Object arg)
+    {
+	return arg == null;
     }
 
     @DefineLisp (special = true)
@@ -597,12 +162,66 @@ public class Primitives extends Definer
 	return false;
     }
 
-    @DefineLisp
-    public Object inPackage (final Object pkg)
+    @DefineLisp (special = true, name = "when")
+    public Object whenForm (final Interpreter interpreter, final Object test, final Object... arguments) throws Exception
     {
-	final Package p = coercePackage (pkg, true);
-	PackageFactory.setDefaultPackage (p);
-	return pkg;
+	if (isTrue (interpreter.eval (test)))
+	{
+	    Object result = true;
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		final Object arg = arguments[i];
+		result = interpreter.eval (arg);
+	    }
+	    return result;
+	}
+	return false;
+    }
+
+    @DefineLisp (special = true, name = "unless")
+    public Object unlessForm (final Interpreter interpreter, final Object test, final Object... arguments) throws Exception
+    {
+	if (!isTrue (interpreter.eval (test)))
+	{
+	    Object result = true;
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		final Object arg = arguments[i];
+		result = interpreter.eval (arg);
+	    }
+	    return result;
+	}
+	return false;
+    }
+
+    @DefineLisp (special = true, name = "while")
+    public Object whileForm (final Interpreter interpreter, final Object test, final Object... arguments) throws Exception
+    {
+	Object result = true;
+	while (isTrue (interpreter.eval (test)))
+	{
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		final Object arg = arguments[i];
+		result = interpreter.eval (arg);
+	    }
+	}
+	return result;
+    }
+
+    @DefineLisp (special = true, name = "until")
+    public Object untilForm (final Interpreter interpreter, final Object test, final Object... arguments) throws Exception
+    {
+	Object result = true;
+	while (!isTrue (interpreter.eval (test)))
+	{
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		final Object arg = arguments[i];
+		result = interpreter.eval (arg);
+	    }
+	}
+	return result;
     }
 
     @DefineLisp
@@ -639,6 +258,61 @@ public class Primitives extends Definer
     public Object remove (final Symbol arg, final Symbol key)
     {
 	return arg.remove (key);
+    }
+
+    @DefineLisp
+    public Object inPackage (final Object pkg)
+    {
+	final Package p = coercePackage (pkg, true);
+	PackageFactory.setDefaultPackage (p);
+	return pkg;
+    }
+
+    /**
+     * Lookup and return the default (user) package.
+     *
+     * @param arguments
+     */
+    @DefineLisp
+    public Object getDefaultPackage ()
+    {
+	return PackageFactory.getDefaultPackage ();
+    }
+
+    /**
+     * Lookup and return the system package.
+     *
+     * @param arguments
+     */
+    @DefineLisp
+    public Object getSystemPackage ()
+    {
+	return PackageFactory.getSystemPackage ();
+    }
+
+    @DefineLisp
+    public Object getParentPackages (final Object pkg)
+    {
+	final Package p = coercePackage (pkg, true);
+	final LispList result = new LispList ();
+	result.addAll (p.getParents ());
+	return result;
+    }
+
+    @DefineLisp
+    public Object getChildPackages (final Object pkg)
+    {
+	final Package p = coercePackage (pkg, true);
+	final LispList result = new LispList ();
+	result.addAll (p.getChildren ());
+	return result;
+    }
+
+    @DefineLisp
+    public Object printf (final String format, final Object... arguments)
+    {
+	System.out.printf (format, arguments);
+	return null;
     }
 
     @DefineLisp
@@ -698,62 +372,6 @@ public class Primitives extends Definer
 		System.out.printf ("[%5s] %s: %s (%s)\n", symbol, key, value, type);
 	    }
 	}
-    }
-
-    /**
-     * Lookup and return the default (user) package.
-     *
-     * @param arguments
-     */
-    @DefineLisp
-    public Object getDefaultPackage ()
-    {
-	return PackageFactory.getDefaultPackage ();
-    }
-
-    /**
-     * Lookup and return the system package.
-     *
-     * @param arguments
-     */
-    @DefineLisp
-    public Object getSystemPackage ()
-    {
-	return PackageFactory.getSystemPackage ();
-    }
-
-    @DefineLisp
-    public Object getParentPackages (final Object pkg)
-    {
-	final Package p = coercePackage (pkg, true);
-	final LispList result = new LispList ();
-	result.addAll (p.getParents ());
-	return result;
-    }
-
-    @DefineLisp
-    public Object getChildPackages (final Object pkg)
-    {
-	final Package p = coercePackage (pkg, true);
-	final LispList result = new LispList ();
-	result.addAll (p.getChildren ());
-	return result;
-    }
-
-    @DefineLisp
-    public Object printf (final String format, final Object... arguments)
-    {
-	// final int size = arguments.size ();
-	// final Object[] args = new Object[size - 1];
-	// arguments.subList (1, size).toArray (args);
-	System.out.printf (format, arguments);
-	return null;
-    }
-
-    @DefineLisp
-    public Object test (final Object a, final Object b)
-    {
-	return plus (a, b);
     }
 
     @Override

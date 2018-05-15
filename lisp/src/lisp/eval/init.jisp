@@ -1,0 +1,4 @@
+;; Default initialization file
+
+(new "lisp.eval.Primitives")
+(new "lisp.eval.ArithmeticPrimitives")

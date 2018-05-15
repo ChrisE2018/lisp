@@ -2,6 +2,7 @@
 package lisp.eval;
 
 import java.lang.reflect.*;
+import java.net.URL;
 import java.util.List;
 
 import lisp.*;
@@ -12,7 +13,21 @@ public class Interpreter extends Definer
 {
     public Interpreter ()
     {
-	Primitives.initialize ();
+	final URL url = Interpreter.class.getResource ("init.jisp");
+	if (url != null)
+	{
+	    final FileReader fileReader = new FileReader ();
+	    try
+	    {
+		System.out.printf ("Loading init file %s %n", url);
+		fileReader.read (this, url);
+	    }
+	    catch (final Exception e)
+	    {
+		e.printStackTrace ();
+	    }
+	    // Primitives.initialize ();
+	}
     }
 
     public Object eval (final Object form) throws Exception
@@ -46,6 +61,10 @@ public class Interpreter extends Definer
 		// Handle unbound functions as calls to native Java methods
 		final Object target = eval (getObject (list, 1));
 		final String method = coerceString (f, true);
+		if (target == null)
+		{
+		    throw new NullPointerException ("Can't apply " + method + " to null");
+		}
 		final Class<?> cls = target.getClass ();
 		final List<Object> arguments = new LispList ();
 		arguments.add (target);
@@ -58,6 +77,22 @@ public class Interpreter extends Definer
 	    }
 	}
 	return form;
+    }
+
+    /** Return a class for a name. This is required so the init file can load the primitives. */
+    @DefineLisp
+    public Object ClassForName (final String className) throws ClassNotFoundException
+    {
+	final Class<?> c = Class.forName (className);
+	return c;
+    }
+
+    @DefineLisp (name = "new")
+    public Object newFunction (final String className)
+            throws ClassNotFoundException, InstantiationException, IllegalAccessException
+    {
+	final Class<?> c = Class.forName (className);
+	return c.newInstance ();
     }
 
     /** Evaluate a lisp expression and return the result. */

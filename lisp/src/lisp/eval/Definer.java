@@ -2,13 +2,15 @@
 package lisp.eval;
 
 import java.lang.reflect.Method;
-import java.util.List;
+import java.util.*;
 
 import lisp.*;
 import lisp.Package;
 
 public class Definer
 {
+    private static Set<Class<?>> scannedDefiners = new HashSet<Class<?>> ();
+
     private final Object source;
 
     public Definer (final Object source)
@@ -31,11 +33,15 @@ public class Definer
     private void getAnnotations (final Object object)
     {
 	final Class<?> objectClass = object.getClass ();
-	for (final Method method : objectClass.getDeclaredMethods ())
+	if (!scannedDefiners.contains (objectClass))
 	{
-	    if (method.isAnnotationPresent (DefineLisp.class))
+	    scannedDefiners.add (objectClass);
+	    for (final Method method : objectClass.getDeclaredMethods ())
 	    {
-		defineMethodFunction (object, method);
+		if (method.isAnnotationPresent (DefineLisp.class))
+		{
+		    defineMethodFunction (object, method);
+		}
 	    }
 	}
     }

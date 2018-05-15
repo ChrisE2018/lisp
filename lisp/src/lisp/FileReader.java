@@ -2,8 +2,9 @@
 package lisp;
 
 import java.io.*;
+import java.net.URL;
 
-import lisp.eval.*;
+import lisp.eval.Interpreter;
 
 /** Class to read a lisp file and evaluate the forms in the file. */
 public class FileReader
@@ -30,20 +31,37 @@ public class FileReader
 	return read (interpreter, PackageFactory.getDefaultPackage (), file);
     }
 
-    public Object read (final Interpreter interpreter, final Package pkg, final File file) throws Exception
+    public Object read (final Interpreter interpreter, final URL url) throws Exception
+    {
+	return read (interpreter, PackageFactory.getDefaultPackage (), url);
+    }
+
+    public Object read (final Interpreter interpreter, final Package pkg, final URL url) throws Exception
     {
 	Object result = null;
-	final FileInputStream in = new FileInputStream (file);
-	try
+	try (InputStream in = url.openStream ())
 	{
 	    final BufferedInputStream b = new BufferedInputStream (in);
 	    final LispStream stream = new LispStream (b);
 	    result = read (interpreter, pkg, stream);
 	}
-	finally
+	return result;
+    }
+
+    public Object read (final Interpreter interpreter, final Package pkg, final File file) throws Exception
+    {
+	Object result = null;
+	// final FileInputStream in = new FileInputStream (file);
+	try (FileInputStream in = new FileInputStream (file))
 	{
-	    in.close ();
+	    final BufferedInputStream b = new BufferedInputStream (in);
+	    final LispStream stream = new LispStream (b);
+	    result = read (interpreter, pkg, stream);
 	}
+	// finally
+	// {
+	// in.close ();
+	// }
 	return result;
     }
 
@@ -85,7 +103,7 @@ public class FileReader
 
     public static void main (final String[] args) throws Exception
     {
-	Primitives.initialize ();
+	// Primitives.initialize ();
 	final Interpreter interpreter = new Interpreter ();
 	final FileReader fr = new FileReader ();
 	final File file = new File ("sample.lisp");
