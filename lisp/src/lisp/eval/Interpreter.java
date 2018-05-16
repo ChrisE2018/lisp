@@ -1,6 +1,7 @@
 
 package lisp.eval;
 
+import java.io.EOFException;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.util.List;
@@ -34,6 +35,10 @@ public class Interpreter extends Definer
 		{
 		    System.out.printf ("Loading init file %s %n", url);
 		    fileReader.read (this, url);
+		}
+		catch (final EOFException e)
+		{
+		    System.out.printf ("EOF on init file%n", url);
 		}
 		catch (final Exception e)
 		{
@@ -69,7 +74,7 @@ public class Interpreter extends Definer
 	    {
 		return function.eval (this, list);
 	    }
-	    else
+	    else if (list.size () > 1)
 	    {
 		// Handle unbound functions as calls to native Java methods
 		final Object target = eval (getObject (list, 1));
@@ -87,6 +92,10 @@ public class Interpreter extends Definer
 		    arguments.add (eval (list.get (i)));
 		}
 		return javaMethodCall (target, cls, method, arguments);
+	    }
+	    else
+	    {
+		throw new IllegalArgumentException ("Undefined function " + fn);
 	    }
 	}
 	return form;
@@ -179,11 +188,58 @@ public class Interpreter extends Definer
     }
 
     @DefineLisp (name = "new")
-    public Object newFunction (final String className)
+    public Object newFunction (final String className, final Object... args)
             throws ClassNotFoundException, InstantiationException, IllegalAccessException
     {
-	final Class<?> c = Class.forName (className);
-	return c.newInstance ();
+	final Class<?> cls = Class.forName (className);
+	if (args.length > 0)
+	{
+	    final Constructor<?>[] constructors = cls.getDeclaredConstructors ();
+	    for (final Constructor<?> c : constructors)
+	    {
+		try
+		{
+		    final Object result = c.newInstance (args);
+		    return result;
+		}
+		catch (final InstantiationException | IllegalArgumentException | InvocationTargetException
+		        | IllegalAccessException x)
+		{
+
+		}
+	    }
+	}
+	return cls.newInstance ();
+    }
+
+    /**
+     * Test case: (static "java.lang.System" "exit" 1)
+     *
+     * @throws NoSuchMethodException
+     */
+    @DefineLisp (name = "static")
+    public Object staticClass (final String className, final String methodName, final Object... args)
+            throws ClassNotFoundException, NoSuchMethodException
+    {
+	final Class<?> cls = Class.forName (className);
+
+	final Method[] methods = cls.getDeclaredMethods ();
+	for (final Method m : methods)
+	{
+	    try
+	    {
+		if (Modifier.isStatic (m.getModifiers ()) && m.getName ().equals (methodName))
+		{
+		    final Object result = m.invoke (cls, args);
+		    return result;
+		}
+	    }
+	    catch (IllegalArgumentException | InvocationTargetException | IllegalAccessException ex)
+	    {
+		ex.printStackTrace ();
+	    }
+	}
+	throw new NoSuchMethodException ("Method " + className + "." + methodName + " not found");
     }
 
     /** Load a file. First argument is the pathname. */

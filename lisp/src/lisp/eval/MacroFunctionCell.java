@@ -2,7 +2,7 @@
 package lisp.eval;
 
 import java.lang.reflect.Method;
-import java.util.List;
+import java.util.*;
 
 /**
  * Function cell that processes the original form and returns an expanded form for further
@@ -30,6 +30,21 @@ public class MacroFunctionCell extends FunctionCell
     {
 	final Object expanded = method.invoke (obj, form);
 	final Object result = interpreter.eval (expanded);
+	return result;
+    }
+
+    /**
+     * Get a map describing an object. The return value is intended to be used by a debugger to
+     * print an object decomposition.
+     *
+     * @param target
+     * @return
+     */
+    public Map<String, Object> getDescriberValues (final Object target)
+    {
+	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	result.put ("Object", obj);
+	result.put ("Method", method);
 	return result;
     }
 

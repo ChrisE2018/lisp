@@ -2,6 +2,7 @@
 package lisp;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 /** Wrapper around an InputStream for use by the Lisp reader. */
 public class LispStream
@@ -10,14 +11,35 @@ public class LispStream
 
     private boolean eof = false;
 
+    private boolean eofThrows = true;
+
     public LispStream (final InputStream stream)
     {
 	this.stream = stream;
     }
 
+    public LispStream (final String text)
+    {
+	stream = new ByteArrayInputStream (text.getBytes (StandardCharsets.UTF_8));
+    }
+
+    public void setEofThrows (final boolean eofThrows)
+    {
+	this.eofThrows = eofThrows;
+    }
+
     public boolean eof ()
     {
 	return eof;
+    }
+
+    private void markEof () throws EOFException
+    {
+	eof = true;
+	if (eofThrows)
+	{
+	    throw new EOFException ();
+	}
     }
 
     /** Peek at the next char without advancing the stream. */
@@ -27,7 +49,7 @@ public class LispStream
 	final int result = stream.read ();
 	if (result == -1)
 	{
-	    eof = true;
+	    markEof ();
 	}
 	stream.reset ();
 	return (char)result;
@@ -40,7 +62,7 @@ public class LispStream
 	final int result = stream.read ();
 	if (result == -1)
 	{
-	    eof = true;
+	    markEof ();
 	}
 	stream.reset ();
 	return (char)result == expected;
@@ -54,7 +76,7 @@ public class LispStream
 	final int result = stream.read ();
 	if (result == -1)
 	{
-	    eof = true;
+	    markEof ();
 	}
 	stream.reset ();
 	return (char)result == expected;
@@ -66,7 +88,7 @@ public class LispStream
 	final int result = stream.read ();
 	if (result == -1)
 	{
-	    eof = true;
+	    markEof ();
 	}
 	return (char)result;
     }
@@ -77,7 +99,7 @@ public class LispStream
 	final int result = stream.read ();
 	if (result == -1)
 	{
-	    eof = true;
+	    markEof ();
 	}
 	if (result != expected)
 	{

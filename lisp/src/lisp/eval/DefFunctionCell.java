@@ -68,6 +68,22 @@ public class DefFunctionCell extends FunctionCell
 	return result;
     }
 
+    /**
+     * Get a map describing an object. The return value is intended to be used by a debugger to
+     * print an object decomposition.
+     *
+     * @param target
+     * @return
+     */
+    public Map<String, Object> getDescriberValues (final Object target)
+    {
+	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	result.put ("name", name);
+	result.put ("arglist", arglist);
+	result.put ("body", body);
+	return result;
+    }
+
     @Override
     public String toString ()
     {

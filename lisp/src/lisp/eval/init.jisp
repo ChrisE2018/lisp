@@ -7,3 +7,13 @@
 (new "lisp.eval.IOPrimitives")
 (new "lisp.eval.ListPrimitives")
 (new "lisp.eval.PackagePrimitives")
+
+(def d (x)
+	(describe x))
+
+(setq *menus* '(("File" 
+					("foo" (printf "foo hit"))
+					("exit" (static "java.lang.System" "exit" 0))
+					)
+			    ("Edit" "bar")))
+

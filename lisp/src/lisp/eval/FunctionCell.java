@@ -5,8 +5,10 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 
+import lisp.Describer;
+
 /** Base class of all function cells. */
-public abstract class FunctionCell
+public abstract class FunctionCell implements Describer
 {
     private Method[] overloads = new Method[0];
 
@@ -113,6 +115,23 @@ public abstract class FunctionCell
 	if (result == null)
 	{
 	    throw new IllegalArgumentException ("No applicable method");
+	}
+	return result;
+    }
+
+    /**
+     * Get a map describing an object. The return value is intended to be used by a debugger to
+     * print an object decomposition.
+     *
+     * @param target
+     * @return
+     */
+    public Map<String, Object> getDescriberValues (final Object target)
+    {
+	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	for (final Method method : overloads)
+	{
+	    result.put ("Overload", method);
 	}
 	return result;
     }

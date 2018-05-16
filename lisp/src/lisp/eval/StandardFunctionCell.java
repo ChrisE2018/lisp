@@ -76,6 +76,26 @@ public class StandardFunctionCell extends FunctionCell
 	return method.invoke (obj, arguments);
     }
 
+    /**
+     * Get a map describing an object. The return value is intended to be used by a debugger to
+     * print an object decomposition.
+     *
+     * @param target
+     * @return
+     */
+    @Override
+    public Map<String, Object> getDescriberValues (final Object target)
+    {
+	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	result.put ("Object", obj);
+	for (final Method method : methods)
+	{
+	    result.put ("Method", method);
+	}
+	super.getDescriberValues (target);
+	return result;
+    }
+
     @Override
     public String toString ()
     {

@@ -214,23 +214,27 @@ public class Package implements Describer
 	    result.put ("Child" + childCount, child);
 	    childCount++;
 	}
-	result.put ("Public", publicSymbols.size ());
-	getSymbolDescriptions (result, publicSymbols, 5);
-	result.put ("Private", privateSymbols.size ());
-	getSymbolDescriptions (result, privateSymbols, 5);
+	// result.put ("Public", publicSymbols.size ());
+	getSymbolDescriptions (result, publicSymbols, "Public", 5);
+	// result.put ("Private", privateSymbols.size ());
+	getSymbolDescriptions (result, privateSymbols, "Private", 5);
 	return result;
     }
 
-    private void getSymbolDescriptions (final Map<String, Object> result, final Map<String, Symbol> symbols, final int limit)
+    private void getSymbolDescriptions (final Map<String, Object> result, final Map<String, Symbol> symbols, final String prefix,
+            final int limit)
     {
 	int count = 0;
 	for (final Entry<String, Symbol> entry : symbols.entrySet ())
 	{
 	    if (++count > limit)
 	    {
+		final int extra = symbols.size () - limit;
+		result.put ("Hidden " + prefix + " symbols", extra);
 		return;
 	    }
-	    result.put (entry.getKey (), entry.getValue ());
+	    final String key = prefix + "-" + count + " " + entry.getKey ();
+	    result.put (key, entry.getValue ());
 	}
     }
 }
