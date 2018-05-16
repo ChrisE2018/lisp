@@ -11,6 +11,9 @@
 (def d (x)
 	(describe x))
 
+(def exit (x)
+  (static "java.lang.System" "exit" x))
+  
 (setq *menus* '(("File" 
 					("foo" (printf "foo hit"))
 					("exit" (static "java.lang.System" "exit" 0))

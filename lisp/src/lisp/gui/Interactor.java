@@ -4,6 +4,7 @@ package lisp.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -21,41 +22,52 @@ import lisp.eval.Interpreter;
  *
  * @author cre
  */
-public class Interactor extends JTextPane implements DocumentListener, Runnable
+public class Interactor extends JTextPane implements DocumentListener, Runnable, MouseListener, MouseMotionListener
 {
     // High priority:
-    // [TODO] Not get confused if text before current entry point is deleted
     // [TODO] Indent current form on enter key
     // [TODO] Show balancing paren on entry
-    // [TODO] Buttons to halt long computations
+    // [skip] Buttons to halt long computations
     // [TODO] User defined buttons bound to forms
     // [done] Set form/value to variables like repl
     // [done] Print error backtrace into the window.
     // [done] User defined menus bound to forms
+    // [done] Not get confused if text before current entry point is deleted
     // [TODO] Graphic Inspector embedded or as separate window
     // [TODO] A window or split pane that shows variables (or forms) and values updated each cycle
     // [TODO] Hyperlinks in Interactor output
+    // Note: editable text won't normally process hyperlinks. @see
+    // http://java-sl.com/tip_links_in_editable.html
     // [done] Make System.out print to the interactor
 
     // Low priority:
-    // [TODO] Save/reload window size & position
-    // [TODO] Menu or lisp function to control styles.
-    // [TODO] Bind the Interactor to a Lisp variable
+    // [skip] Save/reload window size & position
+    // [skip] Menu or lisp function to control styles.
+    // [skip] Bind the Interactor to a Lisp variable
     // [TODO] Save interactor text to a file
-    // [TODO] Find/Replace window
+    // [skip] Find/Replace window
     // [TODO] File editor window for source code
-    // [TODO] Help system with hypertext for all functions
+    // [skip] Help system with hypertext for all functions
     // [TODO] Make this an RCP split window type application?
     // [done] Make prompt into a variable
     // [done] Styles should have different fonts/styles
 
+    // @see https://docs.oracle.com/javase/8/javafx/user-interface-tutorial/editor.htm
+
+    private static final MutableAttributeSet UNBOLD = new SimpleAttributeSet ();
     private static final MutableAttributeSet BOLD = new SimpleAttributeSet ();
     private static final MutableAttributeSet ITALIC = new SimpleAttributeSet ();
+    private static final MutableAttributeSet HILITE_ON = new SimpleAttributeSet ();
+    private static final MutableAttributeSet HILITE_OFF = new SimpleAttributeSet ();
 
     static
     {
 	StyleConstants.setBold (BOLD, true);
 	StyleConstants.setItalic (ITALIC, true);
+	StyleConstants.setBold (HILITE_ON, true);
+	StyleConstants.setUnderline (HILITE_ON, true);
+	StyleConstants.setBold (HILITE_OFF, false);
+	StyleConstants.setUnderline (HILITE_OFF, false);
     }
 
     private static final String PROMPT = ": ";
@@ -71,7 +83,12 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
     private final Style outputStyle;
 
     private final StyledDocument doc;
-    private int position = 0;
+
+    /**
+     * Position of the character before the input form. We record the position before so it will
+     * move correctly if characters are added or removed before the start of the input form.
+     */
+    private Position inputPosition = null;
     private boolean readInput = false;
 
     private final LispReader reader;
@@ -79,6 +96,11 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
     private final Interpreter interpreter;
     private final Thread thread = new Thread (this);
     private final Queue<Object> queue = new ConcurrentLinkedDeque<Object> ();
+
+    private final PrintStream out = System.out;
+    private final PrintStream err = System.err;
+
+    private final List<HyperLink> links = new ArrayList<HyperLink> ();
 
     public Interactor ()
     {
@@ -104,10 +126,10 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
 	    log (noticeStyle, initString[i]);
 	}
 	log (promptStyle, "%n%n");
-
-	position = doc.getLength ();
-	setCaretPosition (position);
+	setInputAtEnd ();
 	doc.addDocumentListener (this);
+	addMouseListener (this);
+	addMouseMotionListener (this);
 	interpreter = new Interpreter ();
 	reader = new LispReader ();
 
@@ -187,11 +209,6 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
 	    }
 	    menubar.add (menu);
 	}
-	final JMenu menu1 = new JMenu ("Colour");
-	menubar.add (menu1);
-	final JMenu menu2 = new JMenu ("Size");
-	menubar.add (menu2);
-
 	frame.setJMenuBar (menubar);
     }
 
@@ -220,8 +237,9 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
 	    if (readInput)
 	    {
 		final Package pkg = PackageFactory.getDefaultPackage ();
-		final String change = doc.getText (position, doc.getLength () - position);
-		// System.out.printf ("'%s'%n", change);
+		final int offset = inputPosition.getOffset () + 1;
+		final String change = doc.getText (offset, doc.getLength () - offset);
+		// out.printf ("[%d] '%s'%n", offset, change);
 		final LispStream stream = new LispStream (change);
 		stream.setEofThrows (true);
 		final Object form = reader.read (stream, pkg);
@@ -245,16 +263,21 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
 
     public void run ()
     {
+	out.printf ("Starting interactor thread%n");
 	while (true)
 	{
-	    final Package pkg = PackageFactory.getDefaultPackage ();
-	    final Symbol exprSymbol = pkg.internPrivate ("e").gensym ();
-	    log (promptStyle, "[%s] %s", exprSymbol, PROMPT);
-	    position = doc.getLength ();
-	    setCaretPosition (position);
-	    readInput = true;
 	    try
 	    {
+		final Package pkg = PackageFactory.getDefaultPackage ();
+		final Symbol exprSymbol = pkg.internPrivate ("e").gensym ();
+		final int startPos = doc.getLength ();
+		log (promptStyle, "[%s]", exprSymbol);
+		final int endPos = doc.getLength ();
+		log (promptStyle, " %s", PROMPT);
+		links.add (new HyperLink (this, doc.createPosition (startPos), doc.createPosition (endPos), exprSymbol));
+		setCaretPosition (doc.getLength ());
+		readInput = true;
+		// Now get next form
 		Object form = null;
 		while (form == null)
 		{
@@ -282,8 +305,12 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
 			final Symbol valueSymbol = pkg.internPrivate ("v").gensym ();
 			final String valueText = value.toString ();
 			// [TODO] Scan the valueText for format markup and hyperlinks.
-			log (outputStyle, "%n[%s] =>%s%n", valueSymbol, valueText);
+			final int p1 = doc.getLength ();
+			log (outputStyle, "%n[%s] =>%s", valueSymbol, valueText);
+			final int p2 = doc.getLength ();
+			log (outputStyle, "%n");
 			valueSymbol.setValue (value);
+			links.add (new HyperLink (this, doc.createPosition (p1), doc.createPosition (p2), valueSymbol));
 		    }
 		}
 	    }
@@ -291,18 +318,17 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
 	    {
 		final Throwable cause = e.getCause ();
 
-		// System.out.printf ("Eval Error %s%n", cause);
+		err.printf ("Eval Error %s%n", cause);
 		logError (cause);
 	    }
 	    catch (final Throwable e)
 	    {
-		// System.out.printf ("Eval Error %s%n", e);
+		err.printf ("Eval Error %s%n", e);
 		logError (e);
 	    }
 	    finally
 	    {
-		position = doc.getLength ();
-		setCaretPosition (position);
+		setInputAtEnd ();
 		readInput = true;
 	    }
 	}
@@ -322,8 +348,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
 	}
 	finally
 	{
-	    position = doc.getLength ();
-	    setCaretPosition (position);
+	    setInputAtEnd ();
 	    readInput = true;
 	}
     }
@@ -341,11 +366,6 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
 	    log (errorStyle, "   at %s.%s(%s:%s)%n", className, methodName, fileName, lineNumber);
 	}
     }
-
-    // protected PrintStream outputFile (final String name)
-    // {
-    // return new PrintStream (new BufferedOutputStream (new FileOutputStream (name)), true);
-    // }
 
     /** A private stream that sends characters to the interactor window. */
     private class InteractorOutputStream extends OutputStream
@@ -371,10 +391,23 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
 	    }
 	    finally
 	    {
-		position = doc.getLength ();
-		setCaretPosition (position);
+		setInputAtEnd ();
 		readInput = true;
 	    }
+	}
+    }
+
+    private void setInputAtEnd ()
+    {
+	try
+	{
+	    final int offset = doc.getLength ();
+	    setCaretPosition (offset);
+	    inputPosition = doc.createPosition (offset - 1);
+	}
+	catch (final BadLocationException e)
+	{
+	    e.printStackTrace ();
 	}
     }
 
@@ -398,6 +431,76 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable
 	catch (final Exception e)
 	{
 	    e.printStackTrace ();
+	}
+    }
+
+    public void eval (final Object form)
+    {
+	queue.add (form);
+	thread.interrupt ();
+    }
+
+    @Override
+    public void mouseClicked (final MouseEvent e)
+    {
+	final int pos = viewToModel (e.getPoint ());
+	for (final HyperLink link : links)
+	{
+	    // out.printf ("Checking link %s %n", link);
+	    if (link.click (pos))
+	    {
+		out.printf ("Mouse in %s at %s %n", link, pos);
+		return;
+	    }
+	}
+    }
+
+    @Override
+    public void mousePressed (final MouseEvent e)
+    {
+    }
+
+    @Override
+    public void mouseReleased (final MouseEvent e)
+    {
+    }
+
+    @Override
+    public void mouseEntered (final MouseEvent e)
+    {
+    }
+
+    @Override
+    public void mouseExited (final MouseEvent e)
+    {
+    }
+
+    @Override
+    public void mouseDragged (final MouseEvent e)
+    {
+    }
+
+    @Override
+    public void mouseMoved (final MouseEvent e)
+    {
+	final int pos = viewToModel (e.getPoint ());
+	for (final HyperLink link : links)
+	{
+	    // out.printf ("Checking link %s %n", link);
+	    if (link.contains (pos))
+	    {
+		if (!link.isHilight ())
+		{
+		    // out.printf ("Mouse in %s at %s %n", link, pos);
+		    doc.setParagraphAttributes (link.getOffset (), link.getLength (), HILITE_ON, false);
+		    link.setHilight (true);
+		}
+	    }
+	    else if (link.isHilight ())
+	    {
+		doc.setParagraphAttributes (link.getOffset (), link.getLength (), HILITE_OFF, false);
+		link.setHilight (false);
+	    }
 	}
     }
 }
