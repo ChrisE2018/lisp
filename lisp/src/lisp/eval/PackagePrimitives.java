@@ -103,7 +103,7 @@ public class PackagePrimitives extends Definer
     }
 
     @DefineLisp
-    public Object remove (final Symbol arg, final Symbol key)
+    public Object remProp (final Symbol arg, final Symbol key)
     {
 	return arg.remove (key);
     }
