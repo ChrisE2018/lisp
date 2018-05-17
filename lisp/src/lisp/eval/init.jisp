@@ -6,13 +6,14 @@
 (new "lisp.eval.FunctionPrimitives")
 (new "lisp.eval.IOPrimitives")
 (new "lisp.eval.ListPrimitives")
+(new "lisp.eval.NetPrimitives")
 (new "lisp.eval.PackagePrimitives")
 
 (def d (x)
 	(describe x))
 
-(def exit (x)
-  (static "java.lang.System" "exit" x))
+;(def exit (x)
+;  (static "java.lang.System" "exit" x))
   
 (setq *menus* '(("File" 
 					("foo" (printf "foo hit"))

@@ -60,7 +60,8 @@ public abstract class FunctionCell implements Describer
 		final int c = parameters.length;
 		if (selector.containsKey (c))
 		{
-		    throw new IllegalArgumentException ("Overloaded method is ambiguous with " + c + " arguments");
+		    throw new IllegalArgumentException (
+		            "Overloaded method " + method.getName () + " is ambiguous with " + c + " arguments");
 		}
 		selector.put (c, method);
 	    }

@@ -157,11 +157,11 @@ public class ListPrimitives extends Definer
 	return c.contains (x);
     }
 
-    @DefineLisp
-    public boolean remove (final Object x, final Collection<?> c)
-    {
-	return c.remove (x);
-    }
+    // @DefineLisp
+    // public boolean remove (final Object x, final Collection<?> c)
+    // {
+    // return c.remove (x);
+    // }
 
     @DefineLisp
     public int count (final Object x, final Collection<?> c)

@@ -35,7 +35,8 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
     // [done] Not get confused if text before current entry point is deleted
     // [TODO] Graphic Inspector embedded or as separate window
     // [TODO] A window or split pane that shows variables (or forms) and values updated each cycle
-    // [TODO] Hyperlinks in Interactor output
+    // [done] Hyperlinks in Interactor output
+    // [TODO] Make hyperlinks easier to use in client code and better appearance
     // Note: editable text won't normally process hyperlinks. @see
     // http://java-sl.com/tip_links_in_editable.html
     // [done] Make System.out print to the interactor

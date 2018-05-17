@@ -168,6 +168,18 @@ public class ControlPrimitives extends Definer
 	return result;
     }
 
+    @DefineLisp
+    public void exit (final int status)
+    {
+	System.exit (status);
+    }
+
+    @DefineLisp
+    public void exit ()
+    {
+	System.exit (0);
+    }
+
     @Override
     public String toString ()
     {

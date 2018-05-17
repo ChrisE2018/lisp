@@ -16,9 +16,6 @@ import lisp.Package;
  */
 public class Interpreter extends Definer
 {
-    // [TODO] Define a way to call static functions.
-    // [TODO] Allow passing arguments to constructors
-
     private static final String INIT_FILE = "init.jisp";
     private boolean loadedInitFile = false;
 
@@ -39,6 +36,10 @@ public class Interpreter extends Definer
 		catch (final EOFException e)
 		{
 		    System.out.printf ("EOF on init file%n", url);
+		}
+		catch (final java.lang.reflect.InvocationTargetException e)
+		{
+		    e.getCause ().printStackTrace ();
 		}
 		catch (final Exception e)
 		{
@@ -102,7 +103,7 @@ public class Interpreter extends Definer
     }
 
     /**
-     * Recursive method to perform a java method call.Actual arguments start at argument 2.
+     * Recursive method to perform a java method call. Actual arguments start at argument 2.
      *
      * @throws InvocationTargetException
      * @throws IllegalArgumentException
@@ -282,7 +283,57 @@ public class Interpreter extends Definer
 	throw new Throwable (message);
     }
 
-    // [TODO] Try-catch - how to implement?
+    /**
+     * Try-catch implementation. (try <protectedForm> <catchClause>*) Where <catchClause> ::=
+     * (<exceptionClass> <ExceptionVariable> <expression>*)
+     *
+     * @param interpreter
+     * @param form
+     * @param catchClauses
+     * @return
+     * @throws Exception
+     */
+    @DefineLisp (name = "try", special = true)
+    public Object tryCatch (final Interpreter interpreter, final Object form, final Object... catchClauses) throws Exception
+    {
+	Object result = null;
+	try
+	{
+	    result = interpreter.eval (form);
+	}
+	catch (final Throwable e)
+	{
+	    final Class<?> eclass = e.getClass ();
+	    for (final Object clause : catchClauses)
+	    {
+		@SuppressWarnings ("unchecked")
+		final List<Object> c = (List<Object>)clause;
+		final String className = (String)c.get (0);
+		final Class<?> cls = Class.forName (className);
+		if (cls.isAssignableFrom (eclass))
+		{
+		    final Symbol var = (Symbol)c.get (1);
+		    final Object oldValue = var.getValue ();
+		    try
+		    {
+			var.setValue (e);
+			for (int i = 2; i < c.size (); i++)
+			{
+			    result = interpreter.eval (c.get (i));
+			}
+		    }
+		    finally
+		    {
+			var.setValue (oldValue);
+		    }
+		    return result;
+		}
+	    }
+	    // Didn't actually want to catch it.
+	    throw e;
+	}
+	return result;
+    }
 
     @Override
     public String toString ()
