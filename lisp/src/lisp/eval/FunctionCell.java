@@ -97,7 +97,7 @@ public abstract class FunctionCell implements Describer
     }
 
     /** Select a method using the overloads table. */
-    Method selectMethod (final int argCount)
+    public Method selectMethod (final int argCount)
     {
 	Method result = null;
 	if (argCount < overloads.length)

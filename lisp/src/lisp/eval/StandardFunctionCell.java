@@ -1,7 +1,7 @@
 
 package lisp.eval;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 
 public class StandardFunctionCell extends FunctionCell
@@ -74,6 +74,24 @@ public class StandardFunctionCell extends FunctionCell
 	    arguments[i - 1] = interpreter.eval (f);
 	}
 	return method.invoke (obj, arguments);
+    }
+
+    public Object apply (final Object... arguments)
+            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    {
+	final Method method = selectMethod (arguments.length);
+	if (method.isVarArgs ())
+	{
+	    final Object[] vargs =
+		{arguments};
+	    final Object result = method.invoke (obj, vargs);
+	    return result;
+	}
+	else
+	{
+	    final Object result = method.invoke (obj, arguments);
+	    return result;
+	}
     }
 
     /**

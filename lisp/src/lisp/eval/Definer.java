@@ -68,6 +68,7 @@ public class Definer
 	// [TODO] Lexical bindings
 	if (function != null)
 	{
+	    // [TODO] The a parameter is never used and should be removed
 	    function.overload (a, method);
 	}
 	else if (special)

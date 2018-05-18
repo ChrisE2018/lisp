@@ -103,7 +103,8 @@ public class ArithmeticPrimitives extends Definer
 	}
     }
 
-    private Object plus (final Object a, final Object b)
+    @DefineLisp
+    public Object plus (final Object a, final Object b)
     {
 	if (a instanceof Integer)
 	{

@@ -9,6 +9,8 @@
 (new "lisp.eval.NetPrimitives")
 (new "lisp.eval.PackagePrimitives")
 
+(new "lisp.cc.CompilerPrimitives")
+
 (def d (x)
 	(describe x))
 

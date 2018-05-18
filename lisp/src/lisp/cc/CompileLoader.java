@@ -1,0 +1,176 @@
+
+package lisp.cc;
+
+import java.io.*;
+import java.lang.reflect.*;
+
+import org.objectweb.asm.*;
+// @see https://www.beyondjava.net/blog/quick-guide-writing-byte-code-asm/
+
+import lisp.*;
+import lisp.Symbol;
+
+public class CompileLoader extends ClassLoader
+{
+    private static final String SHELL_CLASS = "lisp.cc.CompiledShell";
+
+    public Class<?> compile (final String methodName, final LispList methodArgs, final LispList methodBody)
+    {
+	try
+	{
+	    System.out.printf ("Creating compiled class: %s for function %s %s %n", SHELL_CLASS, methodName, methodArgs);
+	    final Class<?> c = compileClass (SHELL_CLASS, methodName, methodArgs, methodBody);
+	    System.out.printf ("%n");
+	    return c;
+	}
+	catch (final Exception e)
+	{
+	    e.printStackTrace ();
+	}
+	catch (final Throwable e)
+	{
+	    e.printStackTrace ();
+	}
+	return null;
+    }
+
+    /** Load the shell class resource and run the ClassVisitor on it to add our new method. */
+    private Class<?> compileClass (final String className, final String methodName, final LispList methodArgs,
+            final LispList methodBody) throws IOException
+    {
+	System.out.printf ("Adding method %s %s to class: %s %n", methodName, methodArgs, className);
+	final String resourceName = className.replace ('.', '/');
+	final String resource = resourceName + ".class";
+	final InputStream is = getResourceAsStream (resource);
+	final ClassReader cr = new ClassReader (is);
+	final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_MAXS);
+	final ClassVisitor cv = new FunctionCompileClassAdaptor (cw, resourceName, methodName, methodArgs, methodBody);
+	cr.accept (cv, 0);
+	final byte[] b = cw.toByteArray ();
+	return defineClass (className, b, 0, b.length);
+    }
+
+    private void checkCreatedClass (final Class<?> c) throws InstantiationException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
+    {
+	System.out.printf ("List of Declared Methods%n");
+	for (final Method method : c.getDeclaredMethods ())
+	{
+	    System.out.printf ("* Method: %s %n", method);
+	}
+	System.out.printf ("%n");
+
+	System.out.printf ("Calling newInstance()%n");
+	final Object instance = c.newInstance ();
+	System.out.printf ("=> Instance: %s %n", instance);
+	System.out.printf ("%n");
+	checkNewInstance (c, instance);
+
+	final Class<?>[] types =
+	    {int.class};
+	final Constructor<?> con = c.getConstructor (types);
+	System.out.printf ("Calling newInstance(1)%n");
+	final Object in2 = con.newInstance (1);
+	System.out.printf ("=> Instance: %s %n", in2);
+	checkNewInstance (c, in2);
+    }
+
+    private void checkNewInstance (final Class<?> c, final Object instance)
+            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    {
+	System.out.printf ("Calling Zero Param Instance Methods%n");
+	for (final Method method : c.getDeclaredMethods ())
+	{
+	    if (Modifier.isPublic (method.getModifiers ()))
+	    {
+		final Class<?>[] params = method.getParameterTypes ();
+		if (params.length == 0)
+		{
+		    final Object result = method.invoke (instance);
+		    if (result == null)
+		    {
+			System.out.printf ("* Invoke Method %s() => %s [null] %n", method.getName (), result);
+		    }
+		    else
+		    {
+			System.out.printf ("* Invoke Method %s() => %s %s %n", method.getName (), result, result.getClass ());
+		    }
+		}
+	    }
+	}
+	System.out.printf ("%n");
+
+	System.out.printf ("Calling One Param Instance Methods%n");
+	for (final Method method : c.getDeclaredMethods ())
+	{
+	    // System.out.printf ("Method: %s %n", method);
+	    if (Modifier.isPublic (method.getModifiers ()))
+	    {
+		final Class<?>[] params = method.getParameterTypes ();
+		if (params.length == 1)
+		{
+		    final String arg = "blah";
+		    final Object result = method.invoke (instance, arg);
+		    if (result == null)
+		    {
+			System.out.printf ("* Invoke Method %s() => %s [null] %n", method.getName (), result);
+		    }
+		    else
+		    {
+			System.out.printf ("* Invoke method %s('%s') => %s %s%n", method.getName (), arg, result,
+			        result.getClass ());
+		    }
+		}
+	    }
+	}
+	System.out.printf ("%n");
+    }
+
+    @Override
+    public String toString ()
+    {
+	final StringBuilder buffer = new StringBuilder ();
+	buffer.append ("#<");
+	buffer.append (getClass ().getSimpleName ());
+	buffer.append (">");
+	return buffer.toString ();
+    }
+
+    public static void main (final String[] args)
+    {
+	try
+	{
+	    final lisp.Package pkg = PackageFactory.getDefaultPackage ();
+	    final Symbol aSymbol = pkg.internPublic ("a");
+	    final Symbol bSymbol = pkg.internPublic ("b");
+	    final Symbol cSymbol = pkg.internPublic ("c");
+	    final Symbol s = pkg.internPublic ("lispfoo");
+	    s.setValue ("my symbol value");
+	    // s.setValue (new Integer (1234));
+	    final CompileLoader cl = new CompileLoader ();
+	    final String methodName = "userMethodName";
+	    final LispList methodArgs = new LispList ();
+	    methodArgs.add (aSymbol);
+	    methodArgs.add (bSymbol);
+	    methodArgs.add (cSymbol);
+	    final LispList methodBody = new LispList ();
+	    methodBody.add ("this is from the main method");
+	    methodBody.add (new Integer (123));
+	    methodBody.add ("str two");
+	    methodBody.add (s);
+	    methodBody.add (new Integer (4123));
+	    methodBody.add (new Byte ((byte)4));
+	    methodBody.add (new Long (42));
+	    methodBody.add (new Double (4.2));
+	    methodBody.add (new Float (4.2f));
+	    methodBody.add (s);
+	    System.out.printf ("Expression to compile: %s %n", methodBody);
+	    final Class<?> c = cl.compile (methodName, methodArgs, methodBody);
+	    cl.checkCreatedClass (c);
+	}
+	catch (final Throwable e)
+	{
+	    e.printStackTrace ();
+	}
+    }
+}
