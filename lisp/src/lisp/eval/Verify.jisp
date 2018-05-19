@@ -1,0 +1,26 @@
+;; Self test script
+;; (load "src/lisp/eval/Verify.jisp")
+
+(resetTestStatistics)
+
+(verify 1 1)
+(verify 2 2)
+(verify (+ 2 3) 5)
+(setq a 5)
+(verify a 5)
+(verify (+ a 3) 8)
+
+(define alpha (x)
+   (+ a x 4))
+
+(verify a 5)
+(verify (alpha 3) 12)
+
+(setq a 6) 
+(verify (alpha 3) 13)  
+
+(verify (if true 1 2) 1)
+(verify (if false 1 2) 2)
+
+(sleep 0.1)
+(printTestStatistics)

@@ -4,24 +4,25 @@ package lisp.eval;
 import java.lang.reflect.*;
 import java.util.*;
 
+import lisp.Symbol;
+
 public class SpecialFunctionCell extends FunctionCell
 {
-    private final Object obj;
-    private Method[] methods;
+    private ObjectMethod[] methods;
 
-    public SpecialFunctionCell (final Object obj, final Method method)
+    public SpecialFunctionCell (final Symbol symbol, final Object obj, final Method method)
     {
-	this.obj = obj;
-	methods = new Method[]
-	    {method};
+	super (symbol);
+	methods = new ObjectMethod[]
+	    {new ObjectMethod (obj, method)};
 	makeOverloadMap (methods);
     }
 
     @Override
-    public void overload (final DefineLisp a, final Method method)
+    public void overload (final DefineLisp a, final Object obj, final Method method)
     {
-	final Method[] newMethods = Arrays.copyOf (methods, methods.length + 1, Method[].class);
-	newMethods[methods.length] = method;
+	final ObjectMethod[] newMethods = Arrays.copyOf (methods, methods.length + 1, ObjectMethod[].class);
+	newMethods[methods.length] = new ObjectMethod (obj, method);
 	// Scan methods and determine if there are possible ambiguous ones
 	makeOverloadMap (newMethods);
 	methods = newMethods;
@@ -32,7 +33,7 @@ public class SpecialFunctionCell extends FunctionCell
     {
 	// Form size is one extra due to the function name &
 	// Number of arguments is one extra due to the interpreter argument.
-	final Method method = selectMethod (form.size ());
+	final ObjectMethod method = selectMethod (form.size ());
 	if (method.isVarArgs ())
 	{
 	    return applyVarArgs (interpreter, method, form);
@@ -43,7 +44,7 @@ public class SpecialFunctionCell extends FunctionCell
 	}
     }
 
-    private Object applyVarArgs (final Interpreter interpreter, final Method method, final List<?> form)
+    private Object applyVarArgs (final Interpreter interpreter, final ObjectMethod method, final List<?> form)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	final Class<?>[] parameters = method.getParameterTypes ();
@@ -62,10 +63,10 @@ public class SpecialFunctionCell extends FunctionCell
 	    args[i] = form.get (paramsLengthActual + i);
 	}
 	arguments[parameters.length - 1] = args;
-	return method.invoke (obj, arguments);
+	return method.method.invoke (method.object, arguments);
     }
 
-    private Object applyFixedArgs (final Interpreter interpreter, final Method method, final List<?> form)
+    private Object applyFixedArgs (final Interpreter interpreter, final ObjectMethod method, final List<?> form)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	final Class<?>[] parameters = method.getParameterTypes ();
@@ -77,7 +78,7 @@ public class SpecialFunctionCell extends FunctionCell
 	{
 	    arguments[i] = form.get (i);
 	}
-	return method.invoke (obj, arguments);
+	return method.method.invoke (method.object, arguments);
     }
 
     /**
@@ -91,8 +92,7 @@ public class SpecialFunctionCell extends FunctionCell
     public Map<String, Object> getDescriberValues (final Object target)
     {
 	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
-	result.put ("Object", obj);
-	for (final Method method : methods)
+	for (final ObjectMethod method : methods)
 	{
 	    result.put ("Method", method);
 	}
@@ -106,7 +106,9 @@ public class SpecialFunctionCell extends FunctionCell
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
-	for (final Method m : methods)
+	buffer.append (" ");
+	buffer.append (getFunctionName ());
+	for (final ObjectMethod m : methods)
 	{
 	    buffer.append (" ");
 	    buffer.append (m);

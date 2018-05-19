@@ -107,6 +107,8 @@ public class Repl
 	    interpreter.eval (form);
 	}
 	final long duration = System.currentTimeMillis () - startTime;
+	// Provide time for output to display
+	Thread.sleep (50);
 	v.setValue (value);
 	t.setValue (duration);
 	buffer.setLength (0);

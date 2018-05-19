@@ -100,6 +100,44 @@ public class Symbol implements Describer
 	return defaultValue;
     }
 
+    /**
+     * If the current value of this symbol can be coerced to an double, return that. Otherwise
+     * return the defaultValue.
+     *
+     * @param defaultValue
+     * @return
+     */
+    public double getDoubleValue (final double defaultValue)
+    {
+	if (symbolValue != null)
+	{
+	    if (symbolValue instanceof Double)
+	    {
+		return (double)symbolValue;
+	    }
+	}
+	return defaultValue;
+    }
+
+    /**
+     * If the current value of this symbol can be coerced to a String, return that. Otherwise return
+     * the defaultValue.
+     *
+     * @param defaultValue
+     * @return
+     */
+    public String getStringValue (final String defaultValue)
+    {
+	if (symbolValue != null)
+	{
+	    if (symbolValue instanceof String)
+	    {
+		return (String)symbolValue;
+	    }
+	}
+	return defaultValue;
+    }
+
     /** When true it is illegal to set the value of this symbol. */
     public void setConstantValue (final boolean constantValue)
     {

@@ -51,17 +51,19 @@ public class FileReader
     public Object read (final Interpreter interpreter, final Package pkg, final File file) throws Exception
     {
 	Object result = null;
-	// final FileInputStream in = new FileInputStream (file);
 	try (FileInputStream in = new FileInputStream (file))
 	{
 	    final BufferedInputStream b = new BufferedInputStream (in);
 	    final LispStream stream = new LispStream (b);
-	    result = read (interpreter, pkg, stream);
+	    try
+	    {
+		result = read (interpreter, pkg, stream);
+	    }
+	    catch (final EOFException e)
+	    {
+
+	    }
 	}
-	// finally
-	// {
-	// in.close ();
-	// }
 	return result;
     }
 

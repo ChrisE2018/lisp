@@ -4,24 +4,41 @@ package lisp.eval;
 import java.lang.reflect.*;
 import java.util.*;
 
+import lisp.Symbol;
+
 public class StandardFunctionCell extends FunctionCell
 {
-    private final Object obj;
-    private Method[] methods;
+    private ObjectMethod[] methods;
 
-    public StandardFunctionCell (final Object obj, final Method method)
+    public StandardFunctionCell (final Symbol symbol, final Object obj, final Method method)
     {
-	this.obj = obj;
-	methods = new Method[]
-	    {method};
+	super (symbol);
+	methods = new ObjectMethod[]
+	    {new ObjectMethod (obj, method)};
 	makeOverloadMap (methods);
     }
 
     @Override
-    public void overload (final DefineLisp a, final Method method)
+    public void overload (final DefineLisp a, final Object obj, final Method method)
     {
-	final Method[] newMethods = Arrays.copyOf (methods, methods.length + 1, Method[].class);
-	newMethods[methods.length] = method;
+	final int c = getMethodSelectorCount (method);
+	final ObjectMethod previousDefinition = getOverload (c);
+	if (previousDefinition != null)
+	{
+	    System.out.printf ("Redefining %s as %s %n", previousDefinition, method);
+	    for (int i = 0; i < methods.length; i++)
+	    {
+		final ObjectMethod m = methods[i];
+		if (m.method == previousDefinition.method)
+		{
+		    methods[i] = new ObjectMethod (obj, method);
+		}
+	    }
+	    makeOverloadMap (methods);
+	    return;
+	}
+	final ObjectMethod[] newMethods = Arrays.copyOf (methods, methods.length + 1, ObjectMethod[].class);
+	newMethods[methods.length] = new ObjectMethod (obj, method);
 	// Scan methods and determine if there are possible ambiguous ones
 	makeOverloadMap (newMethods);
 	methods = newMethods;
@@ -30,7 +47,7 @@ public class StandardFunctionCell extends FunctionCell
     @Override
     public Object eval (final Interpreter interpreter, final List<?> form) throws Exception
     {
-	final Method method = selectMethod (form.size () - 1);
+	final ObjectMethod method = selectMethod (form.size () - 1);
 	if (method.isVarArgs ())
 	{
 	    return applyVarArgs (interpreter, method, form);
@@ -41,7 +58,7 @@ public class StandardFunctionCell extends FunctionCell
 	}
     }
 
-    private Object applyVarArgs (final Interpreter interpreter, final Method method, final List<?> form) throws Exception
+    private Object applyVarArgs (final Interpreter interpreter, final ObjectMethod method, final List<?> form) throws Exception
     {
 	final Class<?>[] parameters = method.getParameterTypes ();
 	final Object[] arguments = new Object[parameters.length];
@@ -61,10 +78,10 @@ public class StandardFunctionCell extends FunctionCell
 	    args[i] = interpreter.eval (f);
 	}
 	arguments[parameters.length - 1] = args;
-	return method.invoke (obj, arguments);
+	return method.method.invoke (method.object, arguments);
     }
 
-    private Object applyFixedArgs (final Interpreter interpreter, final Method method, final List<?> form) throws Exception
+    private Object applyFixedArgs (final Interpreter interpreter, final ObjectMethod method, final List<?> form) throws Exception
     {
 	final Class<?>[] parameters = method.getParameterTypes ();
 	final Object[] arguments = new Object[parameters.length];
@@ -73,23 +90,23 @@ public class StandardFunctionCell extends FunctionCell
 	    final Object f = form.get (i);
 	    arguments[i - 1] = interpreter.eval (f);
 	}
-	return method.invoke (obj, arguments);
+	return method.method.invoke (method.object, arguments);
     }
 
     public Object apply (final Object... arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-	final Method method = selectMethod (arguments.length);
+	final ObjectMethod method = selectMethod (arguments.length);
 	if (method.isVarArgs ())
 	{
 	    final Object[] vargs =
 		{arguments};
-	    final Object result = method.invoke (obj, vargs);
+	    final Object result = method.method.invoke (method.object, vargs);
 	    return result;
 	}
 	else
 	{
-	    final Object result = method.invoke (obj, arguments);
+	    final Object result = method.method.invoke (method.object, arguments);
 	    return result;
 	}
     }
@@ -105,10 +122,11 @@ public class StandardFunctionCell extends FunctionCell
     public Map<String, Object> getDescriberValues (final Object target)
     {
 	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
-	result.put ("Object", obj);
-	for (final Method method : methods)
+	for (int i = 0; i < methods.length; i++)
 	{
-	    result.put ("Method", method);
+	    final ObjectMethod m = methods[i];
+	    result.put ("Object", m.object);
+	    result.put ("Method", m.method);
 	}
 	super.getDescriberValues (target);
 	return result;
@@ -120,7 +138,9 @@ public class StandardFunctionCell extends FunctionCell
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
-	for (final Method m : methods)
+	buffer.append (" ");
+	buffer.append (getFunctionName ());
+	for (final ObjectMethod m : methods)
 	{
 	    buffer.append (" ");
 	    buffer.append (m);

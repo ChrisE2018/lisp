@@ -69,21 +69,21 @@ public class Definer
 	if (function != null)
 	{
 	    // [TODO] The a parameter is never used and should be removed
-	    function.overload (a, method);
+	    function.overload (a, object, method);
 	}
 	else if (special)
 	{
-	    function = new SpecialFunctionCell (object, method);
+	    function = new SpecialFunctionCell (symbol, object, method);
 	    symbol.setFunction (function);
 	}
 	else if (macro)
 	{
-	    function = new MacroFunctionCell (object, method);
+	    function = new MacroFunctionCell (symbol, object, method);
 	    symbol.setFunction (function);
 	}
 	else
 	{
-	    function = new StandardFunctionCell (object, method);
+	    function = new StandardFunctionCell (symbol, object, method);
 	    symbol.setFunction (function);
 	}
     }

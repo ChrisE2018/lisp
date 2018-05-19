@@ -16,6 +16,7 @@ public class DefFunctionCell extends FunctionCell
 
     public DefFunctionCell (final Symbol name, final List<Symbol> arglist, final Object... body)
     {
+	super (name);
 	this.name = name;
 	this.arglist = arglist;
 	this.body = body;
@@ -23,7 +24,7 @@ public class DefFunctionCell extends FunctionCell
     }
 
     @Override
-    public void overload (final DefineLisp a, final Method method)
+    public void overload (final DefineLisp a, final Object obj, final Method method)
     {
 	throw new UnsupportedOperationException ("Can't overload standard functions");
     }
@@ -75,6 +76,7 @@ public class DefFunctionCell extends FunctionCell
      * @param target
      * @return
      */
+    @Override
     public Map<String, Object> getDescriberValues (final Object target)
     {
 	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
