@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import lisp.Symbol;
-import lisp.eval.*;
+import lisp.eval.Interpreter;
 
 /** Function cell for a function definition of a named function that binds arguments to values. */
 public class DefFunctionCell extends FunctionCell
@@ -25,7 +25,7 @@ public class DefFunctionCell extends FunctionCell
     }
 
     @Override
-    public void overload (final DefineLisp a, final Object obj, final Method method)
+    public void overload (final Object obj, final Method method)
     {
 	throw new UnsupportedOperationException ("Can't overload standard functions");
     }

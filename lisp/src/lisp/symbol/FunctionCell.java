@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import lisp.*;
-import lisp.eval.*;
+import lisp.eval.Interpreter;
 
 /** Base class of all function cells. */
 public abstract class FunctionCell implements Describer
@@ -59,7 +59,7 @@ public abstract class FunctionCell implements Describer
 
     abstract public Object eval (final Interpreter interpreter, final List<?> form) throws Exception;
 
-    abstract public void overload (DefineLisp a, Object obj, Method method);
+    abstract public void overload (Object obj, Method method);
 
     FunctionCell (final Symbol symbol)
     {

@@ -5,7 +5,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import lisp.Symbol;
-import lisp.eval.*;
+import lisp.eval.Interpreter;
 
 public class StandardFunctionCell extends FunctionCell
 {
@@ -20,7 +20,7 @@ public class StandardFunctionCell extends FunctionCell
     }
 
     @Override
-    public void overload (final DefineLisp a, final Object obj, final Method method)
+    public void overload (final Object obj, final Method method)
     {
 	final int c = getMethodSelectorCount (method);
 	final ObjectMethod previousDefinition = getOverload (c);

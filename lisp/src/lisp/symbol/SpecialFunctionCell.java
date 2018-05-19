@@ -5,7 +5,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import lisp.Symbol;
-import lisp.eval.*;
+import lisp.eval.Interpreter;
 
 public class SpecialFunctionCell extends FunctionCell
 {
@@ -20,7 +20,7 @@ public class SpecialFunctionCell extends FunctionCell
     }
 
     @Override
-    public void overload (final DefineLisp a, final Object obj, final Method method)
+    public void overload (final Object obj, final Method method)
     {
 	final ObjectMethod[] newMethods = Arrays.copyOf (methods, methods.length + 1, ObjectMethod[].class);
 	newMethods[methods.length] = new ObjectMethod (obj, method);

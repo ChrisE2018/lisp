@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import lisp.Symbol;
-import lisp.eval.*;
+import lisp.eval.Interpreter;
 
 /**
  * Function cell that processes the original form and returns an expanded form for further
@@ -19,12 +19,12 @@ public class MacroFunctionCell extends FunctionCell
     public MacroFunctionCell (final Symbol symbol, final Object obj, final Method method)
     {
 	super (symbol);
-	this.object = obj;
+	object = obj;
 	this.method = method;
     }
 
     @Override
-    public void overload (final DefineLisp a, final Object obj, final Method m)
+    public void overload (final Object obj, final Method m)
     {
 	throw new UnsupportedOperationException ("Can't overload macro functions");
     }

@@ -42,7 +42,7 @@ public class CompilerPrimitives extends Definer
 
     /**
      * Create a compiled function definition from lisp sources.
-     * 
+     *
      * @throws IOException
      */
     private Class<?> createCompiledFunction (final Symbol symbol, final LispList args, final LispList body)
@@ -73,7 +73,7 @@ public class CompilerPrimitives extends Definer
 	// Overloading requires adding the method to an existing function cell
 	if (function != null)
 	{
-	    function.overload (null, instance, method);
+	    function.overload (instance, method);
 	}
 	else
 	{
