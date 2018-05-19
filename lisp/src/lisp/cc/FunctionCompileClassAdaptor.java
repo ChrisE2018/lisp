@@ -18,6 +18,9 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
     private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
 
+    // Compiler control.
+    // On a simple example, using fields for symbol and function references makes the code 10%
+    // faster.
     private final boolean useFieldForSymbolReferences = true;
     private final boolean useFieldForFunctionReferences = true;
 
@@ -47,8 +50,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitVarInsn (ALOAD, 0);
 	mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
 
-	// C reate initialization code for all entries in symbolReferences.
-	// new[
+	// Create initialization code for all entries in symbolReferences.
 	for (final Symbol symbol : symbolReferences)
 	{
 	    final String javaName = createJavaSymbolName (symbol);
@@ -62,7 +64,6 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 
 	    System.out.printf ("Init: private Symbol %s %s; %n", javaName, symbol);
 	}
-	// ]new
 	mv.visitInsn (RETURN);
 	// Define local variables here.
 	// final Label l3 = new Label ();

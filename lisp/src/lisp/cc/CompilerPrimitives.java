@@ -1,6 +1,7 @@
 
 package lisp.cc;
 
+import java.io.IOException;
 import java.lang.reflect.*;
 
 import lisp.*;
@@ -38,10 +39,14 @@ public class CompilerPrimitives extends Definer
 	return functionName;
     }
 
-    /** Create a compiled function definition from lisp sources. */
+    /**
+     * Create a compiled function definition from lisp sources.
+     * 
+     * @throws IOException
+     */
     private Class<?> createCompiledFunction (final Symbol symbol, final LispList args, final LispList body)
             throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
-            IllegalArgumentException, InvocationTargetException
+            IllegalArgumentException, InvocationTargetException, IOException
     {
 	// Need to accept function arguments.
 	// [TODO] Need to handle nested forms

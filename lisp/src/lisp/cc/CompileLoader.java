@@ -12,32 +12,19 @@ import lisp.Symbol;
 
 public class CompileLoader extends ClassLoader
 {
+    /**
+     * Predefined shell class structure with support methods. To create a compiled function we load
+     * this shell class and inject our new method. Each compile requires a new instance of this
+     * ClassLoaded so we get a distinct class as a result. <br/>
+     * [TODO] Maybe use a gensym in the defineClass call to allow ClassLoader re-use?
+     */
     private static final String SHELL_CLASS = "lisp.cc.CompiledShell";
 
-    public Class<?> compile (final String methodName, final LispList methodArgs, final LispList methodBody)
-    {
-	try
-	{
-	    System.out.printf ("Creating compiled class: %s for function %s %s %n", SHELL_CLASS, methodName, methodArgs);
-	    final Class<?> c = compileClass (SHELL_CLASS, methodName, methodArgs, methodBody);
-	    System.out.printf ("%n");
-	    return c;
-	}
-	catch (final Exception e)
-	{
-	    e.printStackTrace ();
-	}
-	catch (final Throwable e)
-	{
-	    e.printStackTrace ();
-	}
-	return null;
-    }
-
     /** Load the shell class resource and run the ClassVisitor on it to add our new method. */
-    private Class<?> compileClass (final String className, final String methodName, final LispList methodArgs,
-            final LispList methodBody) throws IOException
+    public Class<?> compile (final String methodName, final LispList methodArgs, final LispList methodBody) throws IOException
     {
+	System.out.printf ("Creating compiled class: %s for function %s %s %n", SHELL_CLASS, methodName, methodArgs);
+	final String className = SHELL_CLASS;
 	System.out.printf ("Adding method %s %s to class: %s %n", methodName, methodArgs, className);
 	final String resourceName = className.replace ('.', '/');
 	final String resource = resourceName + ".class";
@@ -47,7 +34,9 @@ public class CompileLoader extends ClassLoader
 	final ClassVisitor cv = new FunctionCompileClassAdaptor (cw, resourceName, methodName, methodArgs, methodBody);
 	cr.accept (cv, 0);
 	final byte[] b = cw.toByteArray ();
-	return defineClass (className, b, 0, b.length);
+	final Class<?> c = defineClass (className, b, 0, b.length);
+	System.out.printf ("%n");
+	return c;
     }
 
     private void checkCreatedClass (final Class<?> c) throws InstantiationException, IllegalAccessException,
