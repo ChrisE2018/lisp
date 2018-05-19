@@ -160,6 +160,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	addMenubar (frame);
 	frame.setContentPane (scrollPane);
 	frame.pack ();
+	frame.setLocationRelativeTo (null);
 	if (visible)
 	{
 	    frame.setVisible (visible);
@@ -296,7 +297,9 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 		    readInput = false;
 		    exprSymbol.setValue (form);
 		    log (outputStyle, "%n");
+		    final long startTime = System.currentTimeMillis ();
 		    final Object value = interpreter.eval (form);
+		    final long duration = System.currentTimeMillis () - startTime;
 		    if (value == null)
 		    {
 			log (outputStyle, "=>null%n");
@@ -313,6 +316,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 			valueSymbol.setValue (value);
 			links.add (new HyperLink (this, doc.createPosition (p1), doc.createPosition (p2), valueSymbol));
 		    }
+		    log (outputStyle, "%d ms%n", duration);
 		}
 	    }
 	    catch (final java.lang.reflect.InvocationTargetException e)

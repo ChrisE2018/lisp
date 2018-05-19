@@ -16,6 +16,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     private final LispList methodArgs;
     private final List<Object> methodBody;
     private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
+    private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
+
+    private final boolean useFieldForSymbolReferences = true;
+    private final boolean useFieldForFunctionReferences = true;
 
     public FunctionCompileClassAdaptor (final ClassVisitor cv, final String className, final String methodName,
             final LispList methodArgs, final List<Object> methodBody)
@@ -27,42 +31,43 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	this.methodBody = methodBody;
     }
 
-    @Override
-    public void visitEnd ()
-    {
-	// createField (ACC_PRIVATE, "foo", "Ljava/lang/Object;");
-	createInitI ();
-
-	// createField (ACC_PRIVATE, NEW_FIELD_NAME, "Ljava/lang/String;");
-	// createIGetter ("getX", "X");
-	// createGetter ("getNewField", NEW_FIELD_NAME, "Ljava/lang/String;");
-	// createGetter ("getFooField", "foo", "Ljava/lang/Object;");
-	compileDefinition ();
-	cv.visitEnd ();
-    }
-
+    /**
+     * The int constructor is added to the CompiledShell class. Removing the no-arg constructor
+     * proved to be difficult, but this is easy. This constructor should create fields for all
+     * Symbol and structure references needed by the functions. Support classes might have to be
+     * used as a repository to hold references to complex structures so they don't get copied.
+     */
     private void createInitI ()
     {
+	System.out.printf ("Creating <init>(int) method for %s %n", className);
 	final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, "<init>", "(I)V", null, null);
 	mv.visitCode ();
-	final Label l0 = new Label ();
-	mv.visitLabel (l0);
-	mv.visitLineNumber (8, l0);
+
+	// Call super constructor.
 	mv.visitVarInsn (ALOAD, 0);
 	mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-	final Label l1 = new Label ();
-	mv.visitLabel (l1);
-	mv.visitLineNumber (6, l1);
-	// mv.visitVarInsn (ALOAD, 0);
-	// mv.visitLdcInsn ("abc");
-	// mv.visitFieldInsn (PUTFIELD, className, "foo", "Ljava/lang/Object;");
-	final Label l2 = new Label ();
-	mv.visitLabel (l2);
-	mv.visitLineNumber (11, l2);
+
+	// C reate initialization code for all entries in symbolReferences.
+	// new[
+	for (final Symbol symbol : symbolReferences)
+	{
+	    final String javaName = createJavaSymbolName (symbol);
+	    mv.visitVarInsn (ALOAD, 0);
+	    mv.visitVarInsn (ALOAD, 0);
+	    mv.visitLdcInsn (symbol.getPackage ().getName ());
+	    mv.visitLdcInsn (symbol.getName ());
+	    mv.visitMethodInsn (INVOKESPECIAL, className, "getPublicSymbol",
+	            "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;", false);
+	    mv.visitFieldInsn (PUTFIELD, className, javaName, "Llisp/Symbol;");
+
+	    System.out.printf ("Init: private Symbol %s %s; %n", javaName, symbol);
+	}
+	// ]new
 	mv.visitInsn (RETURN);
-	final Label l3 = new Label ();
-	mv.visitLabel (l3);
-	mv.visitLocalVariable ("this", "Llisp/cc/BytecodeSandbox;", null, l0, l3, 0);
+	// Define local variables here.
+	// final Label l3 = new Label ();
+	// mv.visitLabel (l3);
+	// mv.visitLocalVariable ("this", className, null, l0, l3, 0);
 	mv.visitMaxs (0, 0);
 	mv.visitEnd ();
     }
@@ -77,6 +82,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
     }
 
+    @SuppressWarnings ("unused")
     private void createIGetter (final String mName, final String pName)
     {
 	final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, mName, "()I", null, null);
@@ -87,6 +93,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitEnd ();
     }
 
+    @SuppressWarnings ("unused")
     private void createGetter (final String mName, final String pName, final String returnType)
     {
 	final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, mName, "()" + returnType, null, null);
@@ -137,7 +144,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    final List<?> ee = (List<?>)e;
 	    if (ee.size () == 0)
 	    {
-		// Return ee unchanged
+		// Return e unchanged
 		mv.visitInsn (ACONST_NULL);
 	    }
 	    else
@@ -150,20 +157,36 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    if (methodArgs.contains (e))
 	    {
 		// Parameter reference
+		// [TODO] If we can determine the type, use that information.
 		final int p = methodArgs.indexOf (e) + 1;
 		mv.visitVarInsn (ALOAD, p);
 	    }
 	    else
 	    {
-		// For a symbol we should create a static field to hold the symbol and initialize it
-		// once.
-		// We should get the package from the original symbol package.
 		final Symbol symbol = (Symbol)e;
-		final String name = symbol.getName ();
-		mv.visitVarInsn (ALOAD, 0);
-		mv.visitLdcInsn (name);
-		mv.visitMethodInsn (INVOKESPECIAL, className, "getPublicSymbol", "(Ljava/lang/String;)Llisp/Symbol;", false);
-		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
+		if (useFieldForSymbolReferences)
+		{
+		    if (!symbolReferences.contains (symbol))
+		    {
+			symbolReferences.add (symbol);
+		    }
+		    System.out.printf ("Symbol reference to %s %n", symbol);
+		    // [TODO] If the symbol valueCell is constant, use the current value.
+		    // [TODO] If the valueCell is a TypedValueCell, use the type information.
+		    mv.visitVarInsn (ALOAD, 0);
+		    mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
+		    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
+		}
+		else
+		{
+		    mv.visitVarInsn (ALOAD, 0);
+		    mv.visitLdcInsn (symbol.getPackage ().getName ());
+		    mv.visitLdcInsn (symbol.getName ());
+		    mv.visitMethodInsn (INVOKESPECIAL, className, "getPublicSymbol",
+		            "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;", false);
+		    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
+		}
+
 		if (!globalReferences.contains (symbol))
 		{
 		    globalReferences.add (symbol);
@@ -172,6 +195,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    }
 	}
 	// Compile constant expressions
+	// [TODO] All of these box the constant in a class wrapper. If we can use the primitive type
+	// instead, that is more efficient.
 	else if (e instanceof Byte)
 	{
 	    mv.visitLdcInsn (e);
@@ -263,14 +288,32 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     }
 
     // (define foo () (not true))
-    private void compileStandardFunctionCall (final MethodVisitor mv, final Symbol f, final List<?> e)
+    private void compileStandardFunctionCall (final MethodVisitor mv, final Symbol symbol, final List<?> e)
     {
-	// [TODO] We should get the package from the original symbol package.
-	// [TODO] Save the symbol in a class field.
-	final String name = f.getName ();
-	mv.visitVarInsn (ALOAD, 0);
-	mv.visitLdcInsn (name);
-	mv.visitMethodInsn (INVOKESPECIAL, className, "getPublicSymbol", "(Ljava/lang/String;)Llisp/Symbol;", false);
+	// Save the symbol in a class field.
+	// [TODO] If we are compiling for speed and can assume that the current definition won't
+	// change, then compile a direct call to the current function method.
+	if (useFieldForFunctionReferences)
+	{
+	    if (!symbolReferences.contains (symbol))
+	    {
+		symbolReferences.add (symbol);
+	    }
+	    System.out.printf ("Function symbol reference to %s %n", symbol);
+
+	    mv.visitVarInsn (ALOAD, 0);
+	    mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
+	}
+	else
+	{
+	    final String name = symbol.getName ();
+	    mv.visitVarInsn (ALOAD, 0);
+	    // Get the package final from the original symbol package.
+	    mv.visitLdcInsn (symbol.getPackage ().getName ());
+	    mv.visitLdcInsn (name);
+	    mv.visitMethodInsn (INVOKESPECIAL, className, "getPublicSymbol",
+	            "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;", false);
+	}
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getFunction", "()Llisp/eval/FunctionCell;", false);
 	mv.visitTypeInsn (CHECKCAST, "lisp/eval/StandardFunctionCell");
 	// Compile the arguments
@@ -288,6 +331,62 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Assume the function will have the same definition when we execute this code.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/eval/StandardFunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;",
 	        false);
+    }
+
+    /**
+     * Finish the class visit. This method produces the fields for all references and an init method
+     * to set them up. (define foo (x) (+ x a))
+     */
+    @Override
+    public void visitEnd ()
+    {
+	compileDefinition ();
+
+	// Create field definitions for all entries in symbolReferences.
+	for (final Symbol symbol : symbolReferences)
+	{
+	    final String name = createJavaSymbolName (symbol);
+	    createField (ACC_PRIVATE, name, "Llisp/Symbol;");
+	    System.out.printf ("Field: private Symbol %s; [%s]%n", name, symbol);
+	}
+	createInitI ();
+	// createIGetter ("getX", "X");
+	// createGetter ("getNewField", NEW_FIELD_NAME, "Ljava/lang/String;");
+	// createGetter ("getFooField", "foo", "Ljava/lang/Object;");
+	cv.visitEnd ();
+    }
+
+    /**
+     * Turn a symbol name into something acceptable to Java. Lisp symbols can include characters
+     * like '+' that are not allowed in Java.
+     */
+    private String createJavaSymbolName (final Symbol symbol)
+    {
+	final StringBuilder buffer = new StringBuilder ();
+	buffer.append ("SYM_");
+	final String name = symbol.getName ();
+	for (int i = 0; i < name.length (); i++)
+	{
+	    final char c = name.charAt (i);
+	    if (Character.isJavaIdentifierPart (c))
+	    {
+		buffer.append (c);
+	    }
+	    else
+	    {
+		final int codePoint = name.codePointAt (i);
+		final String cn = Character.getName (codePoint);
+		if (cn != null)
+		{
+		    buffer.append (c);
+		}
+		else
+		{
+		    buffer.append (String.format ("%03d", codePoint));
+		}
+	    }
+	}
+	return buffer.toString ();
     }
 
     @Override

@@ -81,6 +81,25 @@ public class Symbol implements Describer
 	symbolValue = value;
     }
 
+    /**
+     * If the current value of this symbol can be coerced to an int, return that. Otherwise return
+     * the defaultValue.
+     *
+     * @param defaultValue
+     * @return
+     */
+    public int getIntValue (final int defaultValue)
+    {
+	if (symbolValue != null)
+	{
+	    if (symbolValue instanceof Integer)
+	    {
+		return (int)symbolValue;
+	    }
+	}
+	return defaultValue;
+    }
+
     /** When true it is illegal to set the value of this symbol. */
     public void setConstantValue (final boolean constantValue)
     {

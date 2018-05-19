@@ -8,7 +8,6 @@ import java.util.List;
 
 import lisp.*;
 import lisp.Package;
-import lisp.cc.LispDemo;
 
 /**
  * Simple interpreter that uses reflection to evaluate forms like Lisp functions. Everything
@@ -46,27 +45,6 @@ public class Interpreter extends Definer
 		{
 		    e.printStackTrace ();
 		}
-	    }
-
-	    // START OF TEST CODE
-	    final Package pkg = PackageFactory.getDefaultPackage ();
-	    final LispDemo ld = new LispDemo ();
-	    final Symbol functionName = pkg.internPublic ("frob");
-	    final LispList args = new LispList ();
-	    args.add (pkg.internPublic ("a"));
-	    final LispList body = new LispList ();
-	    try
-	    {
-		body.add ("foo bar baz");
-		final Symbol foobar = pkg.internPublic ("foobar");
-		body.add (foobar);
-		System.out.printf ("Compiling %s as %s %n", functionName, body);
-		ld.createCompiledFunction (functionName, args, body);
-		System.out.printf ("Compiled %s %n", functionName);
-	    }
-	    catch (final Exception e)
-	    {
-		e.printStackTrace ();
 	    }
 	}
     }

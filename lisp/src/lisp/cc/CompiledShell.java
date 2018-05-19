@@ -22,6 +22,12 @@ public class CompiledShell
 	return PackageFactory.getDefaultPackage ().findPrivate (name);
     }
 
+    @SuppressWarnings ("unused")
+    private Symbol getPublicSymbol (final String packageName, final String symbolName)
+    {
+	return PackageFactory.getPackage (packageName).findPrivate (symbolName);
+    }
+
     @Override
     public String toString ()
     {

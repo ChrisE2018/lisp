@@ -466,6 +466,33 @@ public class ArithmeticPrimitives extends Definer
 	}
     }
 
+    // Generic comparison
+    @DefineLisp
+    public boolean equals (final Object a, final Object... arguments)
+    {
+	for (int i = 0; i < arguments.length; i++)
+	{
+	    if (!a.equals (arguments[i]))
+	    {
+		return false;
+	    }
+	}
+	return true;
+    }
+
+    @DefineLisp
+    public boolean eq (final Object a, final Object... arguments)
+    {
+	for (int i = 0; i < arguments.length; i++)
+	{
+	    if (a != arguments[i])
+	    {
+		return false;
+	    }
+	}
+	return true;
+    }
+
     // Arithmetic comparison
     @DefineLisp (name = "=")
     public boolean eql (final Object a, final Object... arguments)

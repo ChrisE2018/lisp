@@ -45,7 +45,12 @@ public class Repl
 	    }
 	    catch (final java.lang.reflect.InvocationTargetException e)
 	    {
-		e.getCause ().printStackTrace ();
+		Throwable ee = e;
+		for (int i = 0; i < 10 && ee instanceof java.lang.reflect.InvocationTargetException; i++)
+		{
+		    ee = ee.getCause ();
+		}
+		ee.printStackTrace ();
 	    }
 	    catch (final Throwable e)
 	    {
@@ -91,9 +96,19 @@ public class Repl
 	// buffer.append (form.toString ());
 	// System.out.println (buffer);
 	final Symbol v = pkg.internPrivate ("v" + index);
+	final Symbol t = pkg.internPrivate ("t" + index);
+	final Symbol repeat = pkg.internPrivate ("*repeat*");
+	final int repeatCount = repeat.getIntValue (1);
 	System.out.printf ("[%s] ==> ", v);
+	final long startTime = System.currentTimeMillis ();
 	final Object value = interpreter.eval (form);
+	for (int i = 1; i < repeatCount; i++)
+	{
+	    interpreter.eval (form);
+	}
+	final long duration = System.currentTimeMillis () - startTime;
 	v.setValue (value);
+	t.setValue (duration);
 	buffer.setLength (0);
 	if (value == null)
 	{
@@ -103,7 +118,19 @@ public class Repl
 	{
 	    LispReader.printElement (buffer, value);
 	}
-	System.out.println (buffer);
+	buffer.append ("\n");
+	buffer.append (duration);
+	buffer.append (" ms");
+	if (repeatCount > 1)
+	{
+	    // buffer.append (" in ");
+	    // buffer.append (repeatCount);
+	    // buffer.append ("iterations. ");
+	    final double tt = (double)duration / repeatCount;
+	    buffer.append (String.format (" %.3f ms/iteration. ", tt));
+	}
+	buffer.append ("\n");
+	System.out.print (buffer);
     }
 
     @Override
