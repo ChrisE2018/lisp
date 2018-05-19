@@ -4,7 +4,7 @@ package lisp;
 import java.io.IOException;
 import java.util.*;
 
-import lisp.eval.FunctionCell;
+import lisp.symbol.FunctionCell;
 
 /** Unique named structure associated with a package. */
 public class Symbol implements Describer

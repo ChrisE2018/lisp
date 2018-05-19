@@ -1,10 +1,11 @@
 
-package lisp.eval;
+package lisp.symbol;
 
 import java.lang.reflect.Method;
 import java.util.*;
 
 import lisp.Symbol;
+import lisp.eval.*;
 
 /**
  * Function cell that processes the original form and returns an expanded form for further

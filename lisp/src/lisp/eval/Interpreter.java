@@ -8,6 +8,7 @@ import java.util.List;
 
 import lisp.*;
 import lisp.Package;
+import lisp.symbol.FunctionCell;
 
 /**
  * Simple interpreter that uses reflection to evaluate forms like Lisp functions. Everything

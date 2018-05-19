@@ -6,6 +6,7 @@ import java.util.*;
 
 import lisp.*;
 import lisp.Package;
+import lisp.symbol.*;
 
 public class Definer
 {

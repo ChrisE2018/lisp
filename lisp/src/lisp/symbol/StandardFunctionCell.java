@@ -1,10 +1,11 @@
 
-package lisp.eval;
+package lisp.symbol;
 
 import java.lang.reflect.*;
 import java.util.*;
 
 import lisp.Symbol;
+import lisp.eval.*;
 
 public class StandardFunctionCell extends FunctionCell
 {

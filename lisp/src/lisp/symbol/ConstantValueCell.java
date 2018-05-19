@@ -1,5 +1,5 @@
 
-package lisp.eval;
+package lisp.symbol;
 
 public class ConstantValueCell extends TypedValueCell
 {

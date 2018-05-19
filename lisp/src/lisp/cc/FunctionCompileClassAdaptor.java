@@ -7,7 +7,7 @@ import org.objectweb.asm.*;
 
 import lisp.LispList;
 import lisp.Symbol;
-import lisp.eval.*;
+import lisp.symbol.*;
 
 public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 {
@@ -315,8 +315,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    mv.visitMethodInsn (INVOKESPECIAL, className, "getPublicSymbol",
 	            "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;", false);
 	}
-	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getFunction", "()Llisp/eval/FunctionCell;", false);
-	mv.visitTypeInsn (CHECKCAST, "lisp/eval/StandardFunctionCell");
+	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getFunction", "()Llisp/symbol/FunctionCell;", false);
+	mv.visitTypeInsn (CHECKCAST, "lisp/symbol/StandardFunctionCell");
 	// Compile the arguments
 	final int argCount = e.size () - 1;
 	mv.visitInsn (ICONST_0 + argCount);
@@ -330,7 +330,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
 	// Call invoke on the method.
 	// Assume the function will have the same definition when we execute this code.
-	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/eval/StandardFunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;",
+	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/StandardFunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;",
 	        false);
     }
 

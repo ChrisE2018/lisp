@@ -6,6 +6,7 @@ import java.lang.reflect.*;
 
 import lisp.*;
 import lisp.eval.*;
+import lisp.symbol.*;
 
 public class CompilerPrimitives extends Definer
 {

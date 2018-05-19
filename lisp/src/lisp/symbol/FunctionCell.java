@@ -1,11 +1,12 @@
 
-package lisp.eval;
+package lisp.symbol;
 
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 
 import lisp.*;
+import lisp.eval.*;
 
 /** Base class of all function cells. */
 public abstract class FunctionCell implements Describer

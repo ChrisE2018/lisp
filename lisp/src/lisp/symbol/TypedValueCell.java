@@ -1,5 +1,5 @@
 
-package lisp.eval;
+package lisp.symbol;
 
 import javax.lang.model.type.NullType;
 

@@ -1,11 +1,12 @@
 
-package lisp.eval;
+package lisp.symbol;
 
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 
 import lisp.Symbol;
+import lisp.eval.*;
 
 /** Function cell for a function definition of a named function that binds arguments to values. */
 public class DefFunctionCell extends FunctionCell

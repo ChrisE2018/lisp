@@ -4,6 +4,7 @@ package lisp.eval;
 import java.util.*;
 
 import lisp.*;
+import lisp.symbol.DefFunctionCell;
 
 /**
  * Bind java functions to lisp symbols.

@@ -16,7 +16,10 @@
 
 ;(def exit (x)
 ;  (static "java.lang.System" "exit" x))
-  
+ 
+ (def v ()
+   (load "src/lisp/eval/Verify.jisp")) 
+
 (setq *menus* '(("File" 
 					("foo" (printf "foo hit"))
 					("exit" (static "java.lang.System" "exit" 0))
