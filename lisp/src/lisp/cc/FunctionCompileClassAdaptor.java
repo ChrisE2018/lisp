@@ -323,13 +323,15 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitTypeInsn (ANEWARRAY, "java/lang/Object");
 	for (int i = 0; i < argCount; i++)
 	{
+	    // [TODO] If we know argument types of the function we are about to call we can try to
+	    // compile the expression more efficiently.
 	    mv.visitInsn (DUP);
 	    mv.visitInsn (ICONST_0 + i);
 	    compileExpression (mv, e.get (i + 1));
 	    mv.visitInsn (AASTORE);
 	}
 	// Call invoke on the method.
-	// Assume the function will have the same definition when we execute this code.
+	// Assume the function will still be defined when we execute this code.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/StandardFunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;",
 	        false);
     }

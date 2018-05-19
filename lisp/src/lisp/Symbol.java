@@ -4,7 +4,8 @@ package lisp;
 import java.io.IOException;
 import java.util.*;
 
-import lisp.symbol.FunctionCell;
+import lisp.eval.UnboundVariableError;
+import lisp.symbol.*;
 
 /** Unique named structure associated with a package. */
 public class Symbol implements Describer
@@ -21,19 +22,13 @@ public class Symbol implements Describer
     private final String symbolName;
 
     /** The global value of the symbol. */
-    private Object symbolValue;
+    private ValueCell symbolValue;
 
     /** The global function definition for a symbol. */
     private FunctionCell symbolFunction;
 
     /** Symbol properties with lazy initialization. */
     private Map<Symbol, Object> symbolPlist = null;
-
-    /** When true it is illegal to set the value of this symbol. */
-    private boolean constantValue = false;
-
-    /** When true it is illegal to set the function of this symbol. */
-    private boolean constantFunction = false;
 
     public Symbol (final String name)
     {
@@ -65,20 +60,44 @@ public class Symbol implements Describer
 	return symbolName.equals (s);
     }
 
+    /** Get the low level value cell for this symbol. The result may be null. */
+    public ValueCell getValueCell ()
+    {
+	return symbolValue;
+    }
+
+    /**
+     * Set the low level value cell for this symbol. The value may be null. No error checking is
+     * performed. This is intended to support the interpreter saving and restoring global values
+     * while binding function arguments.
+     */
+    public void setValueCell (final ValueCell value)
+    {
+	symbolValue = value;
+    }
+
     /** The global value of the symbol. */
     public Object getValue ()
     {
-	return symbolValue;
+	if (symbolValue != null)
+	{
+	    return symbolValue.getValue ();
+	}
+	// Throw an unbound variable exception here.
+	throw new UnboundVariableError (this);
     }
 
     /** The global value of the symbol. */
     public void setValue (final Object value)
     {
-	if (constantValue)
+	if (symbolValue != null)
 	{
-	    throw new IllegalStateException ("Symbol value is constant " + symbolName);
+	    symbolValue.setValue (value);
 	}
-	symbolValue = value;
+	else
+	{
+	    symbolValue = new SimpleValueCell (value);
+	}
     }
 
     /**
@@ -92,9 +111,10 @@ public class Symbol implements Describer
     {
 	if (symbolValue != null)
 	{
-	    if (symbolValue instanceof Integer)
+	    final Object value = symbolValue.getValue ();
+	    if (value instanceof Integer)
 	    {
-		return (int)symbolValue;
+		return (int)value;
 	    }
 	}
 	return defaultValue;
@@ -111,9 +131,10 @@ public class Symbol implements Describer
     {
 	if (symbolValue != null)
 	{
-	    if (symbolValue instanceof Double)
+	    final Object value = symbolValue.getValue ();
+	    if (value instanceof Double)
 	    {
-		return (double)symbolValue;
+		return (double)value;
 	    }
 	}
 	return defaultValue;
@@ -130,9 +151,10 @@ public class Symbol implements Describer
     {
 	if (symbolValue != null)
 	{
-	    if (symbolValue instanceof String)
+	    final Object value = symbolValue.getValue ();
+	    if (value instanceof String)
 	    {
-		return (String)symbolValue;
+		return (String)value;
 	    }
 	}
 	return defaultValue;
@@ -141,7 +163,28 @@ public class Symbol implements Describer
     /** When true it is illegal to set the value of this symbol. */
     public void setConstantValue (final boolean constantValue)
     {
-	this.constantValue = constantValue;
+	if (symbolValue != null)
+	{
+	    if (symbolValue instanceof ConstantValueCell)
+	    {
+		if (!constantValue)
+		{
+		    final ConstantValueCell cvc = (ConstantValueCell)symbolValue;
+		    final Object value = cvc.getValue ();
+		    symbolValue = new TypedValueCell (cvc.getType (), value);
+		}
+	    }
+	    else if (constantValue)
+	    {
+		final Object value = symbolValue.getValue ();
+		symbolValue = new ConstantValueCell (value.getClass (), value);
+	    }
+	}
+	else if (constantValue)
+	{
+	    throw new UnboundVariableError (this);
+	}
+
     }
 
     /** The global function definition for a symbol. */
@@ -153,21 +196,12 @@ public class Symbol implements Describer
     /** The global function definition for a symbol. */
     public void setFunction (final FunctionCell function)
     {
-	if (constantFunction)
-	{
-	    throw new IllegalStateException ("Symbol function is constant " + symbolName);
-	}
+	// Check the function value cell to determine if changes are allowed
 	if (symbolFunction != null)
 	{
 	    System.out.printf ("%%Redefining %s from %s to %s\n", this, symbolFunction, function);
 	}
 	symbolFunction = function;
-    }
-
-    /** When true it is illegal to set the function of this symbol. */
-    public void setConstantFunction (final boolean constantFunction)
-    {
-	this.constantFunction = constantFunction;
     }
 
     /** Symbol properties with lazy initialization. */
@@ -266,8 +300,11 @@ public class Symbol implements Describer
     {
 	if (symbolPackage != null && symbolPackage != PackageFactory.getDefaultPackage ())
 	{
-	    buffer.append (symbolPackage.getName ());
-	    buffer.append (PACKAGE_SEPARATOR);
+	    if (symbolPackage.findPublic (symbolName) != this)
+	    {
+		buffer.append (symbolPackage.getName ());
+		buffer.append (PACKAGE_SEPARATOR);
+	    }
 	}
 	buffer.append (symbolName);
     }

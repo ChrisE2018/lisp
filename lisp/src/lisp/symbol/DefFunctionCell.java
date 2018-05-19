@@ -40,7 +40,7 @@ public class DefFunctionCell extends FunctionCell
 	    arguments.add (interpreter.eval (f));
 	}
 	Object result = null;
-	final Map<Symbol, Object> savedValues = new HashMap<Symbol, Object> ();
+	final Map<Symbol, ValueCell> savedValues = new HashMap<Symbol, ValueCell> ();
 	try
 	{
 	    // Bind arguments to arglist
@@ -51,7 +51,7 @@ public class DefFunctionCell extends FunctionCell
 	    for (int i = 0; i < arglist.size (); i++)
 	    {
 		final Symbol arg = arglist.get (i);
-		savedValues.put (arg, arg.getValue ());
+		savedValues.put (arg, arg.getValueCell ());
 		arg.setValue (arguments.get (i));
 	    }
 	    // Evaluate the method body
@@ -62,9 +62,9 @@ public class DefFunctionCell extends FunctionCell
 	}
 	finally
 	{
-	    for (final Entry<Symbol, Object> entry : savedValues.entrySet ())
+	    for (final Entry<Symbol, ValueCell> entry : savedValues.entrySet ())
 	    {
-		entry.getKey ().setValue (entry.getValue ());
+		entry.getKey ().setValueCell (entry.getValue ());
 	    }
 	}
 	return result;
