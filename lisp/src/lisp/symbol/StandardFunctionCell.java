@@ -13,7 +13,7 @@ public class StandardFunctionCell extends FunctionCell
 
     public StandardFunctionCell (final Symbol symbol, final Object obj, final Method method)
     {
-	super (symbol);
+	super (symbol, false);
 	methods = new ObjectMethod[]
 	    {new ObjectMethod (obj, method)};
 	makeOverloadMap (methods);

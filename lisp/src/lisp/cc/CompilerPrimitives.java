@@ -71,7 +71,7 @@ public class CompilerPrimitives extends Definer
 	final Method method = cls.getDeclaredMethod (methodName, parameterTypes);
 	FunctionCell function = symbol.getFunction ();
 	// Overloading requires adding the method to an existing function cell
-	if (function != null)
+	if (function != null && !(function instanceof DefFunctionCell))
 	{
 	    function.overload (instance, method);
 	}

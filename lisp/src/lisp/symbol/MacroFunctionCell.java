@@ -18,7 +18,7 @@ public class MacroFunctionCell extends FunctionCell
 
     public MacroFunctionCell (final Symbol symbol, final Object obj, final Method method)
     {
-	super (symbol);
+	super (symbol, false);
 	object = obj;
 	this.method = method;
     }

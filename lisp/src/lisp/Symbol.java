@@ -199,6 +199,11 @@ public class Symbol implements Describer
 	// Check the function value cell to determine if changes are allowed
 	if (symbolFunction != null)
 	{
+	    if (!symbolFunction.isAllowRedefinition ())
+	    {
+		throw new IllegalStateException (
+		        String.format ("Can't Redefine %s from %s to %s\n", this, symbolFunction, function));
+	    }
 	    System.out.printf ("%%Redefining %s from %s to %s\n", this, symbolFunction, function);
 	}
 	symbolFunction = function;

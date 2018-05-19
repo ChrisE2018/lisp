@@ -8,10 +8,24 @@ import lisp.*;
 import lisp.Package;
 import lisp.symbol.*;
 
+/**
+ * Base class for classes that contain Lisp primitives. This class can scan for methods with
+ * DefineLisp annotations and make them into functions.
+ *
+ * @author cre
+ */
 public class Definer
 {
+    /**
+     * Keep track of Definer classes that have already been processed. Once a class has been
+     * processed it will not be scanned again. This allows Definer classes to be instantiated more
+     * than once.
+     */
     private static Set<Class<?>> scannedDefiners = new HashSet<Class<?>> ();
 
+    /**
+     * The object bound to the defined methods. Normally the same as this but not required to be.
+     */
     private final Object source;
 
     public Definer (final Object source)
@@ -26,11 +40,15 @@ public class Definer
 	getAnnotations (source);
     }
 
+    /**
+     * The object bound to the defined methods. Normally the same as 'this' but not required to be.
+     */
     public Object getSource ()
     {
 	return source;
     }
 
+    /** Scan an object class for DefineLisp annotations if not done already. */
     private void getAnnotations (final Object object)
     {
 	final Class<?> objectClass = object.getClass ();
@@ -48,6 +66,7 @@ public class Definer
 	}
     }
 
+    /** Make a method into a Lisp function after a DefineLisp annotation is found. */
     private void defineMethodFunction (final Object object, final Method method)
     {
 	final DefineLisp a = method.getAnnotation (DefineLisp.class);
@@ -66,7 +85,6 @@ public class Definer
 	final Symbol symbol = external ? p.internPublic (symbolName) : p.internPrivate (symbolName);
 	FunctionCell function = symbol.getFunction ();
 	// Overloading requires adding the method to an existing function cell
-	// [TODO] Lexical bindings
 	if (function != null)
 	{
 	    function.overload (object, method);
@@ -88,11 +106,13 @@ public class Definer
 	}
     }
 
+    /** Make an Object into a String. Convenience method to simplify function definition. */
     public String coerceString (final Object arg)
     {
 	return coerceString (arg, true);
     }
 
+    /** Make an Object into a String. Convenience method to simplify function definition. */
     public String coerceString (final Object arg, final boolean errorp)
     {
 	if (arg != null)
@@ -113,11 +133,13 @@ public class Definer
 	return null;
     }
 
+    /** Make an Object into a Symbol. Convenience method to simplify function definition. */
     public Symbol coerceSymbol (final Object arg)
     {
 	return coerceSymbol (arg, true);
     }
 
+    /** Make an Object into a Symbol. Convenience method to simplify function definition. */
     public Symbol coerceSymbol (final Object arg, final boolean errorp)
     {
 	if (arg != null)
@@ -134,6 +156,7 @@ public class Definer
 	return null;
     }
 
+    /** Make an Object into an Integer. Convenience method to simplify function definition. */
     public Integer coerceInteger (final Object arg, final boolean errorp)
     {
 	if (arg != null)
@@ -150,11 +173,13 @@ public class Definer
 	return null;
     }
 
+    /** Make an Object into a Package. Convenience method to simplify function definition. */
     public Package coercePackage (final Object arg)
     {
 	return coercePackage (arg, true);
     }
 
+    /** Make an Object into a Package. Convenience method to simplify function definition. */
     public Package coercePackage (final Object arg, final boolean errorp)
     {
 	if (arg != null)
@@ -174,80 +199,6 @@ public class Definer
 	    throw new CoerceError ("Can't coerce object to Package: %s", arg);
 	}
 	return null;
-    }
-
-    public Object getObject (final List<?> arguments, final int i)
-    {
-	return arguments.get (i);
-    }
-
-    public String getString (final List<?> arguments, final int i)
-    {
-	final Object arg = arguments.get (i);
-	return coerceString (arg, true);
-    }
-
-    public Symbol getSymbol (final List<?> arguments, final int i)
-    {
-	final Object arg = arguments.get (i);
-	return coerceSymbol (arg, true);
-    }
-
-    public int getInt (final List<?> arguments, final int i)
-    {
-	final Object arg = arguments.get (i);
-	return coerceInteger (arg, true);
-    }
-
-    public Package getPackage (final List<?> arguments, final int i)
-    {
-	final Object arg = arguments.get (i);
-	return coercePackage (arg, true);
-    }
-
-    public Object coerceToParameter (final Class<?> p, final Object arg)
-    {
-	final Class<?> argClass = arg.getClass ();
-	if (p.isAssignableFrom (argClass))
-	{
-	    return arg;
-	}
-	if (p == String.class)
-	{
-	    // Handle String from Symbol or String
-	    if (arg instanceof Symbol)
-	    {
-		return ((Symbol)arg).getName ();
-	    }
-	    if (arg instanceof String)
-	    {
-		return arg;
-	    }
-	}
-	// [TODO] Handle char, long, short etc.
-	if (p == int.class || p == Integer.class)
-	{
-	    // Handle int from Lisp int
-	    if (arg instanceof Integer)
-	    {
-		return arg;
-	    }
-	}
-	if (p == double.class || p == Double.class)
-	{
-	    if (arg instanceof Double)
-	    {
-		return arg;
-	    }
-	}
-	if (p == boolean.class || p == Boolean.class)
-	{
-	    if (arg instanceof Boolean)
-	    {
-		return arg;
-	    }
-	}
-	throw new CoerceError ("Can't coerce %s to %s", arg, p);
     }
 
     @Override

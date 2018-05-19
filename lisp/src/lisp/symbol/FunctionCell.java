@@ -55,20 +55,28 @@ public abstract class FunctionCell implements Describer
     /** The symbol this function cell is attached to. */
     private final Symbol symbol;
 
+    private final boolean allowRedefinition;
+
     private ObjectMethod[] overloads = new ObjectMethod[0];
 
     abstract public Object eval (final Interpreter interpreter, final List<?> form) throws Exception;
 
     abstract public void overload (Object obj, Method method);
 
-    FunctionCell (final Symbol symbol)
+    FunctionCell (final Symbol symbol, final boolean allowRedefinition)
     {
 	this.symbol = symbol;
+	this.allowRedefinition = allowRedefinition;
     }
 
     public Symbol getFunctionName ()
     {
 	return symbol;
+    }
+
+    public boolean isAllowRedefinition ()
+    {
+	return allowRedefinition;
     }
 
     /**

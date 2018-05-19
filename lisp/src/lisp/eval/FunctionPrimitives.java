@@ -22,12 +22,6 @@ import lisp.symbol.DefFunctionCell;
  */
 public class FunctionPrimitives extends Definer
 {
-    // [TODO] Create immutable list
-    // Property list access
-    // [TODO] Maps, sets, union, intersection, difference
-    // [TODO] Package creation, uses, export, import
-    // [TODO] File functions
-
     /**
      * Implementation of function definition. This could compile the function body into bytecode. A
      * preliminary process would be code analysis to determine the lexical variable references and

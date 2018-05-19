@@ -79,7 +79,7 @@ public class Interpreter extends Definer
 	    else if (list.size () > 1)
 	    {
 		// Handle unbound functions as calls to native Java methods
-		final Object target = eval (getObject (list, 1));
+		final Object target = eval (list.get (1));
 		final String method = coerceString (f, true);
 		if (target == null)
 		{
@@ -154,6 +154,51 @@ public class Interpreter extends Definer
 	    actuals[i] = actual;
 	}
 	return method.invoke (target, actuals);
+    }
+
+    private Object coerceToParameter (final Class<?> p, final Object arg)
+    {
+	final Class<?> argClass = arg.getClass ();
+	if (p.isAssignableFrom (argClass))
+	{
+	    return arg;
+	}
+	if (p == String.class)
+	{
+	    // Handle String from Symbol or String
+	    if (arg instanceof Symbol)
+	    {
+		return ((Symbol)arg).getName ();
+	    }
+	    if (arg instanceof String)
+	    {
+		return arg;
+	    }
+	}
+	// [TODO] Handle char, long, short etc.
+	if (p == int.class || p == Integer.class)
+	{
+	    // Handle int from Lisp int
+	    if (arg instanceof Integer)
+	    {
+		return arg;
+	    }
+	}
+	if (p == double.class || p == Double.class)
+	{
+	    if (arg instanceof Double)
+	    {
+		return arg;
+	    }
+	}
+	if (p == boolean.class || p == Boolean.class)
+	{
+	    if (arg instanceof Boolean)
+	    {
+		return arg;
+	    }
+	}
+	throw new CoerceError ("Can't coerce %s to %s", arg, p);
     }
 
     /**

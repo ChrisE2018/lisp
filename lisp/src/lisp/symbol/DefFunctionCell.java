@@ -17,7 +17,7 @@ public class DefFunctionCell extends FunctionCell
 
     public DefFunctionCell (final Symbol name, final List<Symbol> arglist, final Object... body)
     {
-	super (name);
+	super (name, true);
 	this.name = name;
 	this.arglist = arglist;
 	this.body = body;
@@ -27,7 +27,7 @@ public class DefFunctionCell extends FunctionCell
     @Override
     public void overload (final Object obj, final Method method)
     {
-	throw new UnsupportedOperationException ("Can't overload standard functions");
+	throw new UnsupportedOperationException ("Can't overload interpreted function definitions");
     }
 
     @Override
