@@ -59,8 +59,6 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Call super constructor.
 	mv.visitVarInsn (ALOAD, 0);
 	mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-	// final Label l0 = new Label ();
-	// mv.visitLabel (l0);
 
 	// Create initialization code for all entries in symbolReferences.
 	for (final Symbol symbol : symbolReferences)
@@ -76,8 +74,6 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 
 	    System.out.printf ("Init: private Symbol %s %s; %n", javaName, symbol);
 	}
-	// final Label l1 = new Label ();
-	// mv.visitLabel (l1);
 	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
 	{
 	    // (define foo () (quote bar))
@@ -92,17 +88,12 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 
 	    mv.visitLdcInsn (reference.getName ());
 	    mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
-	    String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
-	    typeDescriptor = "Ljava/lang/Object;";
+	    final Type quotedType = Type.getType (quoted.getClass ());
+	    final String typeDescriptor = quotedType.getDescriptor ();
+	    mv.visitTypeInsn (CHECKCAST, quotedType.getInternalName ());
 	    mv.visitFieldInsn (PUTFIELD, className, reference.getName (), typeDescriptor);
-	    // mv.visitInsn (POP);
 	}
-	// final Label l2 = new Label ();
-	// mv.visitLabel (l2);
 	mv.visitInsn (RETURN);
-	// mv.visitLocalVariable ("this", "L" + className + ";", null, l0, l2, 0);
-	// mv.visitLocalVariable ("dummy", "I", null, l0, l2, 1);
-	// mv.visitLocalVariable ("cl", "Llisp/cc/CompileLoader;", null, l1, l2, 2);
 	mv.visitMaxs (0, 0);
 	mv.visitEnd ();
     }
@@ -117,27 +108,27 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
     }
 
-    @SuppressWarnings ("unused")
-    private void createIGetter (final String mName, final String pName)
-    {
-	final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, mName, "()I", null, null);
-	mv.visitVarInsn (ALOAD, 0);
-	mv.visitFieldInsn (GETFIELD, className, pName, "I");
-	mv.visitInsn (IRETURN);
-	mv.visitMaxs (0, 0);
-	mv.visitEnd ();
-    }
+    // @SuppressWarnings ("unused")
+    // private void createIGetter (final String mName, final String pName)
+    // {
+    // final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, mName, "()I", null, null);
+    // mv.visitVarInsn (ALOAD, 0);
+    // mv.visitFieldInsn (GETFIELD, className, pName, "I");
+    // mv.visitInsn (IRETURN);
+    // mv.visitMaxs (0, 0);
+    // mv.visitEnd ();
+    // }
 
-    @SuppressWarnings ("unused")
-    private void createGetter (final String mName, final String pName, final String returnType)
-    {
-	final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, mName, "()" + returnType, null, null);
-	mv.visitVarInsn (ALOAD, 0);
-	mv.visitFieldInsn (GETFIELD, className, pName, returnType);
-	mv.visitInsn (ARETURN);
-	mv.visitMaxs (0, 0);
-	mv.visitEnd ();
-    }
+    // @SuppressWarnings ("unused")
+    // private void createGetter (final String mName, final String pName, final String returnType)
+    // {
+    // final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, mName, "()" + returnType, null, null);
+    // mv.visitVarInsn (ALOAD, 0);
+    // mv.visitFieldInsn (GETFIELD, className, pName, returnType);
+    // mv.visitInsn (ARETURN);
+    // mv.visitMaxs (0, 0);
+    // mv.visitEnd ();
+    // }
 
     private void compileDefinition ()
     {
@@ -383,8 +374,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     private void compileSpecialFunctionCall (final MethodVisitor mv, final Symbol symbol, final LispList e)
     {
 	// (getAllSpecialFunctionSymbols)
-	// Done: (progn when if unless and or setq repeat while until)
-	// Todo: (quote try)
+	// Done: (quote progn when if unless and or setq repeat while until)
+	// Todo: (try)
 	// Skip: (def getInterpreter verify define)
 	// Future: (let loop block return block-named)
 	if (symbol.is ("quote"))
@@ -449,9 +440,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    quotedReferences.put (quoted, reference);
 	    quotedReferencesMap.put (reference.getName (), quoted);
 	}
-	String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
-	typeDescriptor = "Ljava/lang/Object;";
-	System.out.printf ("Quoted reference to %s (%s)%n", typeDescriptor, quoted);
+	final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
+	// System.out.printf ("Quoted reference to %s (%s)%n", typeDescriptor, quoted);
 	mv.visitVarInsn (ALOAD, 0);
 	mv.visitFieldInsn (GETFIELD, className, reference.getName (), typeDescriptor);
     }
@@ -844,21 +834,17 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    final String name = createJavaSymbolName (symbol);
 	    final String typeDescriptor = Type.getType (symbol.getClass ()).getDescriptor ();
 	    createField (ACC_PRIVATE, name, typeDescriptor);
-	    System.out.printf ("Field: private Symbol %s; [%s]%n", name, symbol);
+	    // System.out.printf ("Field: private Symbol %s; [%s]%n", name, symbol);
 	}
 	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
 	{
 	    final Object quoted = entry.getKey ();
 	    final Symbol reference = entry.getValue ();
-	    String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
-	    typeDescriptor = "Ljava/lang/Object;";
-	    System.out.printf ("Field: private Quoted %s; [%s]%n", reference, quoted);
+	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
+	    // System.out.printf ("Field: private Quoted %s; [%s]%n", reference, quoted);
 	    createField (ACC_PRIVATE, reference.getName (), typeDescriptor);
 	}
 	createInitI ();
-	// createIGetter ("getX", "X");
-	// createGetter ("getNewField", NEW_FIELD_NAME, "Ljava/lang/String;");
-	// createGetter ("getFooField", "foo", "Ljava/lang/Object;");
 	cv.visitEnd ();
     }
 

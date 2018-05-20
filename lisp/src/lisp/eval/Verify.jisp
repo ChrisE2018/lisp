@@ -27,5 +27,8 @@
 (foo 5)
 (verify a 5)
 
+(define foo () (quote bar))
+(eq (foo) 'bar)
+
 (sleep 0.2)
 (printTestStatistics)
