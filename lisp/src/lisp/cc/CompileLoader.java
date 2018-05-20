@@ -3,6 +3,7 @@ package lisp.cc;
 
 import java.io.*;
 import java.lang.reflect.*;
+import java.util.*;
 
 import org.objectweb.asm.*;
 // @see https://www.beyondjava.net/blog/quick-guide-writing-byte-code-asm/
@@ -22,6 +23,8 @@ public class CompileLoader extends ClassLoader
     private static final String SHELL_CLASS = "lisp.cc.CompiledShell";
 
     private static final boolean SHOW_BYTECODE = true;
+
+    private final Map<String, Object> quotedReferences = new HashMap<String, Object> ();
 
     /** Load the shell class resource and run the ClassVisitor on it to add our new method. */
     public Class<?> compile (final String methodName, final LispList methodArgs, final LispList methodBody) throws IOException
@@ -43,7 +46,8 @@ public class CompileLoader extends ClassLoader
 	    final Printer printer = new Textifier ();
 	    cv2 = new TraceClassVisitor (cw, printer, new PrintWriter (sw));
 	}
-	final ClassVisitor cv = new FunctionCompileClassAdaptor (cv2, resourceName, methodName, methodArgs, methodBody);
+	final ClassVisitor cv =
+	    new FunctionCompileClassAdaptor (cv2, resourceName, methodName, methodArgs, methodBody, quotedReferences);
 
 	cr.accept (cv, 0);
 	if (SHOW_BYTECODE)
@@ -130,6 +134,16 @@ public class CompileLoader extends ClassLoader
 	    }
 	}
 	System.out.printf ("%n");
+    }
+
+    /**
+     * Get the name from created names to quoted objects. This only works because compiled code is
+     * being loaded into the same environment where it is compiled. To save compiled code to a file
+     * would required building the structure in the init method when the class is loaded.
+     */
+    public Map<String, Object> getQuotedReferences ()
+    {
+	return quotedReferences;
     }
 
     @Override

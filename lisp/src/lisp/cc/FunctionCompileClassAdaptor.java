@@ -3,6 +3,7 @@ package lisp.cc;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.objectweb.asm.*;
 
@@ -18,6 +19,13 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     private final List<Object> methodBody;
     private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
     private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
+    private final Map<Object, Symbol> quotedReferences = new LinkedHashMap<Object, Symbol> ();
+
+    /**
+     * Inverse map of quoted references. This is created in the CompileLoader and saved here. When
+     * it is modified, the class can get at it by getClassLoader().getQuotedReferences ();
+     */
+    private final Map<String, Object> quotedReferencesMap;
 
     // Compiler control.
     // On a simple example, using fields for symbol and function references makes the code 10%
@@ -26,13 +34,14 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     private final boolean useFieldForFunctionReferences = true;
 
     public FunctionCompileClassAdaptor (final ClassVisitor cv, final String className, final String methodName,
-            final LispList methodArgs, final LispList methodBody)
+            final LispList methodArgs, final LispList methodBody, final Map<String, Object> quotedReferencesMap)
     {
 	super (Opcodes.ASM5, cv);
 	this.className = className;
 	this.methodName = methodName;
 	this.methodArgs = methodArgs;
 	this.methodBody = methodBody;
+	this.quotedReferencesMap = quotedReferencesMap;
     }
 
     /**
@@ -50,6 +59,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Call super constructor.
 	mv.visitVarInsn (ALOAD, 0);
 	mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+	// final Label l0 = new Label ();
+	// mv.visitLabel (l0);
 
 	// Create initialization code for all entries in symbolReferences.
 	for (final Symbol symbol : symbolReferences)
@@ -65,11 +76,33 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 
 	    System.out.printf ("Init: private Symbol %s %s; %n", javaName, symbol);
 	}
+	// final Label l1 = new Label ();
+	// mv.visitLabel (l1);
+	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
+	{
+	    // (define foo () (quote bar))
+	    final Object quoted = entry.getKey ();
+	    final Symbol reference = entry.getValue ();
+	    mv.visitVarInsn (ALOAD, 0);
+	    mv.visitInsn (DUP);
+	    mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
+	    mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
+	    mv.visitTypeInsn (CHECKCAST, "lisp/cc/CompileLoader");
+	    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/cc/CompileLoader", "getQuotedReferences", "()Ljava/util/Map;", false);
+
+	    mv.visitLdcInsn (reference.getName ());
+	    mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
+	    String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
+	    typeDescriptor = "Ljava/lang/Object;";
+	    mv.visitFieldInsn (PUTFIELD, className, reference.getName (), typeDescriptor);
+	    // mv.visitInsn (POP);
+	}
+	// final Label l2 = new Label ();
+	// mv.visitLabel (l2);
 	mv.visitInsn (RETURN);
-	// Define local variables here.
-	// final Label l3 = new Label ();
-	// mv.visitLabel (l3);
-	// mv.visitLocalVariable ("this", className, null, l0, l3, 0);
+	// mv.visitLocalVariable ("this", "L" + className + ";", null, l0, l2, 0);
+	// mv.visitLocalVariable ("dummy", "I", null, l0, l2, 1);
+	// mv.visitLocalVariable ("cl", "Llisp/cc/CompileLoader;", null, l1, l2, 2);
 	mv.visitMaxs (0, 0);
 	mv.visitEnd ();
     }
@@ -351,10 +384,14 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     {
 	// (getAllSpecialFunctionSymbols)
 	// Done: (progn when if unless and or setq repeat while until)
-	// Todo: (quote try define verify)
-	// Skip: (def getInterpreter)
+	// Todo: (quote try)
+	// Skip: (def getInterpreter verify define)
 	// Future: (let loop block return block-named)
-	if (symbol.is ("progn"))
+	if (symbol.is ("quote"))
+	{
+	    compileQuote (mv, e);
+	}
+	else if (symbol.is ("progn"))
 	{
 	    compileProgn (mv, e);
 	}
@@ -398,6 +435,25 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	{
 	    throw new IllegalArgumentException ("NYI special form " + symbol);
 	}
+    }
+
+    private void compileQuote (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo () (quote bar))
+	final Symbol quote = (Symbol)e.get (0);
+	final Symbol reference = quote.gensym ();
+	final Object quoted = e.get (1);
+	if (!quotedReferences.containsKey (quoted))
+	{
+	    // Save the reference and build it in the init method.
+	    quotedReferences.put (quoted, reference);
+	    quotedReferencesMap.put (reference.getName (), quoted);
+	}
+	String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
+	typeDescriptor = "Ljava/lang/Object;";
+	System.out.printf ("Quoted reference to %s (%s)%n", typeDescriptor, quoted);
+	mv.visitVarInsn (ALOAD, 0);
+	mv.visitFieldInsn (GETFIELD, className, reference.getName (), typeDescriptor);
     }
 
     private void compileProgn (final MethodVisitor mv, final LispList e)
@@ -786,8 +842,18 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	for (final Symbol symbol : symbolReferences)
 	{
 	    final String name = createJavaSymbolName (symbol);
-	    createField (ACC_PRIVATE, name, "Llisp/Symbol;");
+	    final String typeDescriptor = Type.getType (symbol.getClass ()).getDescriptor ();
+	    createField (ACC_PRIVATE, name, typeDescriptor);
 	    System.out.printf ("Field: private Symbol %s; [%s]%n", name, symbol);
+	}
+	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
+	{
+	    final Object quoted = entry.getKey ();
+	    final Symbol reference = entry.getValue ();
+	    String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
+	    typeDescriptor = "Ljava/lang/Object;";
+	    System.out.printf ("Field: private Quoted %s; [%s]%n", reference, quoted);
+	    createField (ACC_PRIVATE, reference.getName (), typeDescriptor);
 	}
 	createInitI ();
 	// createIGetter ("getX", "X");
