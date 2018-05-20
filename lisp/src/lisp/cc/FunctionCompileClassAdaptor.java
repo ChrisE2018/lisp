@@ -378,6 +378,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Todo: (try)
 	// Skip: (def getInterpreter verify define)
 	// Future: (let loop block return block-named)
+	// Calls to Java methods, new & static
+	// [TODO] Optimization
 	if (symbol.is ("quote"))
 	{
 	    compileQuote (mv, e);
