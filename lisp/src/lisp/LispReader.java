@@ -28,12 +28,12 @@ public class LispReader
 	{
 	    return readString (parsing.getStringDelimiter (), in);
 	}
-	// final Map<Object, Object> mapResult = parsing.getMapResult (chr);
-	// if (mapResult != null)
-	// {
-	// in.read ();
-	// return readMap (in, pkg, mapResult);
-	// }
+	final LispList mapResult = parsing.getMapResult (chr);
+	if (mapResult != null)
+	{
+	    in.read ();
+	    return readMap (in, pkg, mapResult);
+	}
 	final LispList listResult = parsing.getParenList (chr);
 	if (listResult != null)
 	{
@@ -70,35 +70,52 @@ public class LispReader
 	return result;
     }
 
-    // /** Read a map using colon and comma to separate entries. */
-    // private Object readMap (final LispStream in, final Package pkg, final Map<Object, Object>
-    // mapResult) throws IOException
-    // {
-    // final Parsing parsing = pkg.getParsing ();
-    // final char close = parsing.getMapClose ();
-    // final char mapCombiner = parsing.getMapCombiner ();
-    // final char mapSeparator = parsing.getMapSeparator ();
-    // boolean done = in.peek (close);
-    // while (!done)
-    // {
-    // final Object key = read (in, pkg);
-    // parsing.skipBlanks (in);
-    // in.read (mapCombiner);
-    // final Object value = read (in, pkg);
-    // mapResult.put (key, value);
-    // parsing.skipBlanks (in);
-    // if (in.peek (close))
-    // {
-    // done = true;
-    // }
-    // else
-    // {
-    // in.read (mapSeparator);
-    // }
-    // }
-    // in.read ();
-    // return mapResult;
-    // }
+    /** Read a map where comma separates entries. */
+    private Object readMap (final LispStream in, final Package pkg, final LispList result) throws IOException
+    {
+	final Parsing parsing = pkg.getParsing ();
+	final char close = result.getCloseChar ();
+	final char separator = parsing.getMapSeparator ();
+
+	LispList element = null;
+	while (true)
+	{
+	    parsing.skipBlanks (in);
+	    final char p = in.peek (); // For debug
+	    if (p == separator)
+	    {
+		in.read (p);
+		if (element == null)
+		{
+		    element = new LispList ();
+		}
+		result.add (element);
+		element = new LispList ();
+	    }
+	    else if (p == close)
+	    {
+		in.read (p);
+		if (element != null)
+		{
+		    result.add (element);
+		}
+		return result;
+	    }
+	    else if (p == -1)
+	    {
+		return result;
+	    }
+	    else
+	    {
+		final Object key = read (in, pkg);
+		if (element == null)
+		{
+		    element = new LispList ();
+		}
+		element.add (key);
+	    }
+	}
+    }
 
     /**
      * Read a double quoted string as a java String.

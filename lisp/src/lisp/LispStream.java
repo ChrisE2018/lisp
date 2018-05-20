@@ -42,6 +42,26 @@ public class LispStream
 	}
     }
 
+    /** Take the next char if it is expected, otherwise don't advance the stream. */
+    public boolean tryChar (final char expected) throws IOException
+    {
+	stream.mark (1);
+	final int result = stream.read ();
+	if (result == -1)
+	{
+	    markEof ();
+	}
+	if ((char)result == expected)
+	{
+	    return true;
+	}
+	else
+	{
+	    stream.reset ();
+	    return false;
+	}
+    }
+
     /** Peek at the next char without advancing the stream. */
     public char peek () throws IOException
     {

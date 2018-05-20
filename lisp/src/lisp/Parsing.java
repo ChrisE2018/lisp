@@ -2,7 +2,6 @@
 package lisp;
 
 import java.io.IOException;
-import java.util.*;
 
 /**
  * Control over parsing syntax is collected into the Parsing object. Various constants in this class
@@ -21,12 +20,6 @@ public class Parsing
     private static final char CLOSE_PAREN = ')';
     private static final char CLOSE_BRACE = '}';
     private static final char CLOSE_BRACKET = ']';
-
-    /**
-     * As an experiment the syntax {var1:val1, var2:val2} was used to define a map. It didn't work
-     * out. Some remaining parts of that implementation can be controlled by this flag.
-     */
-    private static final boolean MAP_SYNTAX = false;
 
     /**
      * Map from list type to concrete class. Don't use angle brackets so they are available for
@@ -105,38 +98,47 @@ public class Parsing
 	    case CLOSE_PAREN:
 	    case CLOSE_BRACE:
 	    case CLOSE_BRACKET:
-	    {
-		return false;
-	    }
-	    case COLON:
 	    case COMMA:
 	    {
-		return !MAP_SYNTAX;
+		return false;
 	    }
 	}
 	return true;
     }
 
-    public Map<Object, Object> getMapResult (final char open)
+    public LispList getMapResult (final char open)
     {
 	if (open == OPEN_BRACE)
 	{
-	    return new LinkedHashMap<Object, Object> ();
+	    // Can't return a brace list or print/read would not round trip.
+	    // Special logic in print could turn nested lists into brace lists, but that would not
+	    // be an exact reverse either.
+	    return new LispList (OPEN_BRACE, CLOSE_BRACE);
 	}
 	return null;
     }
 
+    // public char getMapClose ()
+    // {
+    // return '}';
+    // }
+    //
+    // public char getMapSeparator ()
+    // {
+    // return COLON;
+    // }
+
+    public char getMapOpen ()
+    {
+	return OPEN_BRACE;
+    }
+
     public char getMapClose ()
     {
-	return '}';
+	return CLOSE_BRACE;
     }
 
     public char getMapSeparator ()
-    {
-	return COLON;
-    }
-
-    public char getMapCombiner ()
     {
 	return COMMA;
     }
