@@ -152,6 +152,16 @@ public class Package implements Describer
 	return publicSymbols.values ().contains (symbol);
     }
 
+    public Collection<Symbol> getPublicSymbols ()
+    {
+	return publicSymbols.values ();
+    }
+
+    public Collection<Symbol> getPrivateSymbols ()
+    {
+	return privateSymbols.values ();
+    }
+
     /** Control over parsing syntax is collected into a Parsing object. */
     public Parsing getParsing ()
     {

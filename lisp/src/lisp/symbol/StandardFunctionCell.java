@@ -100,15 +100,24 @@ public class StandardFunctionCell extends FunctionCell
 	final ObjectMethod method = selectMethod (arguments.length);
 	if (method.isVarArgs ())
 	{
-	    final Object[] vargs =
-		{arguments};
-	    final Object result = method.method.invoke (method.object, vargs);
-	    return result;
+	    final Method m = method.method;
+	    final int argCount = m.getParameterTypes ().length;
+	    final Object[] args = new Object[argCount];
+	    for (int i = 0; i < argCount - 1; i++)
+	    {
+		args[i] = arguments[i];
+	    }
+	    final Object[] vargs = new Object[arguments.length + 1 - argCount];
+	    for (int i = 0; i < vargs.length; i++)
+	    {
+		vargs[i] = arguments[i + argCount - 1];
+	    }
+	    args[argCount - 1] = vargs;
+	    return method.method.invoke (method.object, args);
 	}
 	else
 	{
-	    final Object result = method.method.invoke (method.object, arguments);
-	    return result;
+	    return method.method.invoke (method.object, arguments);
 	}
     }
 
@@ -126,8 +135,7 @@ public class StandardFunctionCell extends FunctionCell
 	for (int i = 0; i < methods.length; i++)
 	{
 	    final ObjectMethod m = methods[i];
-	    result.put ("Object", m.object);
-	    result.put ("Method", m.method);
+	    result.put ("Method", m);
 	}
 	super.getDescriberValues (target);
 	return result;

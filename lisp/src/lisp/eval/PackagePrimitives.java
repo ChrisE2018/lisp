@@ -3,6 +3,7 @@ package lisp.eval;
 
 import lisp.*;
 import lisp.Package;
+import lisp.symbol.*;
 
 /** Primitives for packages and symbols. */
 public class PackagePrimitives extends Definer
@@ -106,6 +107,89 @@ public class PackagePrimitives extends Definer
     public Object remProp (final Symbol arg, final Symbol key)
     {
 	return arg.remove (key);
+    }
+
+    @DefineLisp
+    public Object getAllSymbols ()
+    {
+	final LispList result = new LispList ();
+	for (final Package pkg : PackageFactory.getPackageMap ().values ())
+	{
+	    for (final Symbol symbol : pkg.getPublicSymbols ())
+	    {
+		result.add (symbol);
+	    }
+	    for (final Symbol symbol : pkg.getPrivateSymbols ())
+	    {
+		result.add (symbol);
+	    }
+	}
+	return result;
+    }
+
+    @DefineLisp
+    public Object getAllSymbols (final Package pkg)
+    {
+	final LispList result = new LispList ();
+	for (final Symbol symbol : pkg.getPublicSymbols ())
+	{
+	    result.add (symbol);
+	}
+	for (final Symbol symbol : pkg.getPrivateSymbols ())
+	{
+	    result.add (symbol);
+	}
+	return result;
+    }
+
+    @DefineLisp
+    public Object getAllFunctionSymbols ()
+    {
+	final LispList result = new LispList ();
+	for (final Package pkg : PackageFactory.getPackageMap ().values ())
+	{
+	    for (final Symbol symbol : pkg.getPublicSymbols ())
+	    {
+		if (symbol.getFunction () != null)
+		{
+		    result.add (symbol);
+		}
+	    }
+	    for (final Symbol symbol : pkg.getPrivateSymbols ())
+	    {
+		if (symbol.getFunction () != null)
+		{
+		    result.add (symbol);
+		}
+	    }
+	}
+	return result;
+    }
+
+    @DefineLisp
+    public Object getAllSpecialFunctionSymbols ()
+    {
+	final LispList result = new LispList ();
+	for (final Package pkg : PackageFactory.getPackageMap ().values ())
+	{
+	    for (final Symbol symbol : pkg.getPublicSymbols ())
+	    {
+		final FunctionCell fc = symbol.getFunction ();
+		if (fc != null && fc instanceof SpecialFunctionCell)
+		{
+		    result.add (symbol);
+		}
+	    }
+	    for (final Symbol symbol : pkg.getPrivateSymbols ())
+	    {
+		final FunctionCell fc = symbol.getFunction ();
+		if (fc != null && fc instanceof SpecialFunctionCell)
+		{
+		    result.add (symbol);
+		}
+	    }
+	}
+	return result;
     }
 
     @Override

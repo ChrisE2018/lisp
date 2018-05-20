@@ -22,5 +22,10 @@
 (verify (if true 1 2) 1)
 (verify (if false 1 2) 2)
 
-(sleep 0.1)
+(define foo (x) (repeat x (setq a (+ a 1))))
+(setq a 0)
+(foo 5)
+(verify a 5)
+
+(sleep 0.2)
 (printTestStatistics)

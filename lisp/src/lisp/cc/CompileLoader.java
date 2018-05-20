@@ -6,6 +6,7 @@ import java.lang.reflect.*;
 
 import org.objectweb.asm.*;
 // @see https://www.beyondjava.net/blog/quick-guide-writing-byte-code-asm/
+import org.objectweb.asm.util.*;
 
 import lisp.*;
 import lisp.Symbol;
@@ -20,6 +21,8 @@ public class CompileLoader extends ClassLoader
      */
     private static final String SHELL_CLASS = "lisp.cc.CompiledShell";
 
+    private static final boolean SHOW_BYTECODE = true;
+
     /** Load the shell class resource and run the ClassVisitor on it to add our new method. */
     public Class<?> compile (final String methodName, final LispList methodArgs, final LispList methodBody) throws IOException
     {
@@ -30,9 +33,23 @@ public class CompileLoader extends ClassLoader
 	final String resource = resourceName + ".class";
 	final InputStream is = getResourceAsStream (resource);
 	final ClassReader cr = new ClassReader (is);
-	final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_MAXS);
-	final ClassVisitor cv = new FunctionCompileClassAdaptor (cw, resourceName, methodName, methodArgs, methodBody);
+	// final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_MAXS);
+	final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
+	ClassVisitor cv2 = cw;
+
+	final StringWriter sw = new StringWriter ();
+	if (SHOW_BYTECODE)
+	{
+	    final Printer printer = new Textifier ();
+	    cv2 = new TraceClassVisitor (cw, printer, new PrintWriter (sw));
+	}
+	final ClassVisitor cv = new FunctionCompileClassAdaptor (cv2, resourceName, methodName, methodArgs, methodBody);
+
 	cr.accept (cv, 0);
+	if (SHOW_BYTECODE)
+	{
+	    System.out.printf ("%n=%n%s%n=%n", sw.toString ());
+	}
 	final byte[] b = cw.toByteArray ();
 	final Class<?> c = defineClass (className, b, 0, b.length);
 	System.out.printf ("%n");

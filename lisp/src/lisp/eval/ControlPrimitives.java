@@ -135,6 +135,22 @@ public class ControlPrimitives extends Definer
 	return result;
     }
 
+    @DefineLisp (special = true, name = "repeat")
+    public Object repeat (final Interpreter interpreter, final Object count, final Object... arguments) throws Exception
+    {
+	Object result = true;
+	final int n = (Integer)interpreter.eval (count);
+	for (int j = 0; j < n; j++)
+	{
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		final Object arg = arguments[i];
+		result = interpreter.eval (arg);
+	    }
+	}
+	return result;
+    }
+
     @DefineLisp (special = true)
     public Object progn (final Interpreter interpreter, final Object... arguments) throws Exception
     {

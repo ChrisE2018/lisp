@@ -11,7 +11,7 @@ import lisp.eval.Interpreter;
 /** Base class of all function cells. */
 public abstract class FunctionCell implements Describer
 {
-    class ObjectMethod
+    class ObjectMethod implements Describer
     {
 	Object object;
 	Method method;
@@ -35,6 +35,15 @@ public abstract class FunctionCell implements Describer
 	Class<?>[] getParameterTypes ()
 	{
 	    return method.getParameterTypes ();
+	}
+
+	@Override
+	public Map<String, Object> getDescriberValues (final Object target)
+	{
+	    final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	    result.put ("Object", object);
+	    result.put ("Method", method);
+	    return result;
 	}
 
 	@Override

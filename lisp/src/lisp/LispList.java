@@ -62,6 +62,11 @@ public class LispList extends ArrayList<Object> implements Describer
 	return closeChar;
     }
 
+    public Object last ()
+    {
+	return get (size () - 1);
+    }
+
     /** Print in the same format as the reader. */
     public void print (final StringBuilder buffer)
     {

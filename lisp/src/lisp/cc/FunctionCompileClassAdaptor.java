@@ -1,6 +1,7 @@
 
 package lisp.cc;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import org.objectweb.asm.*;
@@ -25,7 +26,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     private final boolean useFieldForFunctionReferences = true;
 
     public FunctionCompileClassAdaptor (final ClassVisitor cv, final String className, final String methodName,
-            final LispList methodArgs, final List<Object> methodBody)
+            final LispList methodArgs, final LispList methodBody)
     {
 	super (Opcodes.ASM5, cv);
 	this.className = className;
@@ -140,9 +141,9 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    System.out.printf ("Ignoring nested null %s%n", e);
 	    mv.visitInsn (ACONST_NULL);
 	}
-	else if (e instanceof List<?>)
+	else if (e instanceof LispList)
 	{
-	    final List<?> ee = (List<?>)e;
+	    final LispList ee = (LispList)e;
 	    if (ee.size () == 0)
 	    {
 		// Return e unchanged
@@ -150,7 +151,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    }
 	    else
 	    {
-		compileFunctionCall (mv, (List<?>)e);
+		compileFunctionCall (mv, ee);
 	    }
 	}
 	else if (e instanceof Symbol)
@@ -239,7 +240,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
     }
 
-    private void compileFunctionCall (final MethodVisitor mv, final List<?> e)
+    private void compileFunctionCall (final MethodVisitor mv, final LispList e)
     {
 	System.out.printf ("Compile nested form %s%n", e);
 	final Object head = e.get (0);
@@ -259,12 +260,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	final FunctionCell function = f.getFunction ();
 	if (function != null)
 	{
-	    if (function instanceof MacroFunctionCell)
-	    {
-		// Expand and replace
-		throw new IllegalArgumentException ("NYI macro call " + f);
-	    }
-	    else if (function instanceof StandardFunctionCell)
+	    if (function instanceof StandardFunctionCell)
 	    {
 		compileStandardFunctionCall (mv, f, e);
 	    }
@@ -272,7 +268,22 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    {
 		// Unless this is a known special function, we are stuck and can't
 		// proceed
-		throw new IllegalArgumentException ("NYI special form " + f);
+		compileSpecialFunctionCall (mv, f, e);
+	    }
+	    else if (function instanceof MacroFunctionCell)
+	    {
+		// Expand and replace
+		final MacroFunctionCell macro = (MacroFunctionCell)function;
+		Object replacement;
+		try
+		{
+		    replacement = macro.expand (e);
+		}
+		catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e1)
+		{
+		    throw new Error ("Error expanding macro " + f, e1);
+		}
+		compileExpression (mv, replacement);
 	    }
 	}
 	else if (e.size () > 1)
@@ -289,7 +300,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     }
 
     // (define foo () (not true))
-    private void compileStandardFunctionCall (final MethodVisitor mv, final Symbol symbol, final List<?> e)
+    private void compileStandardFunctionCall (final MethodVisitor mv, final Symbol symbol, final LispList e)
     {
 	// Save the symbol in a class field.
 	// [TODO] If we are compiling for speed and can assume that the current definition won't
@@ -334,6 +345,432 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Assume the function will still be defined when we execute this code.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/StandardFunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;",
 	        false);
+    }
+
+    private void compileSpecialFunctionCall (final MethodVisitor mv, final Symbol symbol, final LispList e)
+    {
+	// (getAllSpecialFunctionSymbols)
+	// Done: (progn when if unless and or setq repeat while until)
+	// Todo: (quote try define verify)
+	// Skip: (def getInterpreter)
+	// Future: (let loop block return block-named)
+	if (symbol.is ("progn"))
+	{
+	    compileProgn (mv, e);
+	}
+	else if (symbol.is ("if"))
+	{
+	    compileIf (mv, e);
+	}
+	else if (symbol.is ("and"))
+	{
+	    compileAnd (mv, e);
+	}
+	else if (symbol.is ("or"))
+	{
+	    compileOr (mv, e);
+	}
+	else if (symbol.is ("when"))
+	{
+	    compileWhen (mv, e);
+	}
+	else if (symbol.is ("unless"))
+	{
+	    compileUnless (mv, e);
+	}
+	else if (symbol.is ("setq"))
+	{
+	    compileSetq (mv, e);
+	}
+	else if (symbol.is ("repeat"))
+	{
+	    compileRepeat (mv, e);
+	}
+	else if (symbol.is ("while"))
+	{
+	    compileWhile (mv, e);
+	}
+	else if (symbol.is ("until"))
+	{
+	    compileUntil (mv, e);
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("NYI special form " + symbol);
+	}
+    }
+
+    private void compileProgn (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo () (progn (printf "a%n") (printf "b%n") 3))
+	if (e.size () == 0)
+	{
+	    mv.visitInsn (ACONST_NULL);
+	}
+	else
+	{
+	    for (int i = 1; i < e.size () - 1; i++)
+	    {
+		compileExpression (mv, e.get (i));
+		mv.visitInsn (POP);
+	    }
+	    compileExpression (mv, e.last ());
+	}
+    }
+
+    private void compileIf (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (if x 1 2))
+	// (define foo (x) (if x 1 (printf "a%n") (printf "b%n") 3))
+	mv.visitVarInsn (ALOAD, 0);
+	compileExpression (mv, e.get (1));
+	mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+	final Label l1 = new Label ();
+	mv.visitJumpInsn (IFEQ, l1);
+
+	// True case
+	compileExpression (mv, e.get (2));
+	final Label l2 = new Label ();
+	mv.visitJumpInsn (GOTO, l2);
+
+	mv.visitLabel (l1);
+	// mv.visitFrame (Opcodes.F_SAME, 0, null, 0, null);
+	if (e.size () <= 3)
+	{
+	    // No else case
+	    mv.visitInsn (ACONST_NULL);
+	}
+	else
+	{
+	    // Else case
+	    for (int i = 3; i < e.size () - 1; i++)
+	    {
+		compileExpression (mv, e.get (i));
+		mv.visitInsn (POP);
+	    }
+	    // Don't pop the last value
+	    compileExpression (mv, e.last ());
+	}
+	// Jump here after true case or fall through after else.
+	// Return final value.
+	mv.visitLabel (l2);
+	// mv.visitFrame (Opcodes.F_SAME1, 0, null, 1, new Object[]
+	// {"java/lang/Object"});
+    }
+
+    private void compileAnd (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (a b) (and))
+	// (define foo (a b) (and a b))
+	if (e.size () <= 1)
+	{
+	    // True case
+	    final Label l0 = new Label ();
+	    mv.visitLabel (l0);
+	    mv.visitLineNumber (99, l0);
+	    mv.visitInsn (ICONST_1);
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+	}
+	else
+	{
+	    final Label l1 = new Label ();
+	    final Label l2 = new Label ();
+	    for (int i = 1; i < e.size (); i++)
+	    {
+		mv.visitVarInsn (ALOAD, 0);
+		compileExpression (mv, e.get (i));
+		mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+		mv.visitJumpInsn (IFEQ, l1);
+	    }
+	    // True case
+	    mv.visitInsn (ICONST_1);
+	    mv.visitJumpInsn (GOTO, l2);
+
+	    // False case
+	    mv.visitLabel (l1);
+	    // mv.visitFrame (Opcodes.F_SAME, 0, null, 0, null);
+	    mv.visitInsn (ICONST_0);
+
+	    // Jump here after true case or fall through after false.
+	    // Return final value.
+	    mv.visitLabel (l2);
+	    // mv.visitFrame (Opcodes.F_SAME1, 0, null, 1, new Object[]
+	    // {INTEGER});
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+	}
+    }
+
+    private void compileOr (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (a b) (or))
+	// (define foo (a b) (or a b))
+	if (e.size () <= 1)
+	{
+	    // True case
+	    final Label l0 = new Label ();
+	    mv.visitLabel (l0);
+	    mv.visitLineNumber (99, l0);
+	    mv.visitInsn (ICONST_0);
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+	}
+	else
+	{
+	    final Label l1 = new Label ();
+	    final Label l2 = new Label ();
+	    for (int i = 1; i < e.size (); i++)
+	    {
+		mv.visitVarInsn (ALOAD, 0);
+		compileExpression (mv, e.get (i));
+		mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+		mv.visitJumpInsn (IFNE, l1);
+	    }
+	    // False case
+	    mv.visitInsn (ICONST_0);
+	    mv.visitJumpInsn (GOTO, l2);
+
+	    // True case
+	    mv.visitLabel (l1);
+	    // mv.visitFrame (Opcodes.F_SAME, 0, null, 0, null);
+	    mv.visitInsn (ICONST_1);
+
+	    // Jump here after false case or fall through after true.
+	    // Return final value.
+	    mv.visitLabel (l2);
+	    // mv.visitFrame (Opcodes.F_SAME1, 0, null, 1, new Object[]
+	    // {INTEGER});
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+	}
+    }
+
+    private void compileWhen (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (when x 1 2))
+	// (define foo (x) (when x 1 (printf "a%n") (printf "b%n") 3))
+	mv.visitVarInsn (ALOAD, 0);
+	compileExpression (mv, e.get (1));
+	mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+	final Label l1 = new Label ();
+	mv.visitJumpInsn (IFEQ, l1);
+
+	// True case
+	for (int i = 2; i < e.size () - 1; i++)
+	{
+	    compileExpression (mv, e.get (i));
+	    mv.visitInsn (POP);
+	}
+	// Don't pop the last value
+	compileExpression (mv, e.last ());
+	final Label l2 = new Label ();
+	mv.visitJumpInsn (GOTO, l2);
+
+	mv.visitLabel (l1);
+	// mv.visitFrame (Opcodes.F_SAME, 0, null, 0, null);
+	mv.visitInsn (ACONST_NULL);
+
+	// Jump here after true case or fall through after else.
+	// Return final value.
+	mv.visitLabel (l2);
+	// mv.visitFrame (Opcodes.F_SAME1, 0, null, 1, new Object[]
+	// {"java/lang/Object"});
+    }
+
+    private void compileUnless (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (unless x 1 2))
+	// (define foo (x) (unless x 1 (printf "a%n") (printf "b%n") 3))
+	mv.visitVarInsn (ALOAD, 0);
+	compileExpression (mv, e.get (1));
+	mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+	final Label l1 = new Label ();
+	mv.visitJumpInsn (IFNE, l1);
+
+	// True case
+	for (int i = 2; i < e.size () - 1; i++)
+	{
+	    compileExpression (mv, e.get (i));
+	    mv.visitInsn (POP);
+	}
+	// Don't pop the last value
+	compileExpression (mv, e.last ());
+	final Label l2 = new Label ();
+	mv.visitJumpInsn (GOTO, l2);
+
+	mv.visitLabel (l1);
+	// mv.visitFrame (Opcodes.F_SAME, 0, null, 0, null);
+	mv.visitInsn (ACONST_NULL);
+
+	// Jump here after true case or fall through after else.
+	// Return final value.
+	mv.visitLabel (l2);
+	// mv.visitFrame (Opcodes.F_SAME1, 0, null, 1, new Object[]
+	// {"java/lang/Object"});
+    }
+
+    private void compileSetq (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (setq x 3))
+	// (define foo (x) (setq x 3) x)
+	// (define foo (x) (setq a x))
+	final Symbol symbol = (Symbol)e.get (1);
+	if (methodArgs.contains (symbol))
+	{
+	    // Parameter reference
+	    // [TODO] If we can determine the type, use that information.
+	    final int p = methodArgs.indexOf (symbol) + 1;
+	    System.out.printf ("Setq parameter %s (%d) %n", symbol, p);
+	    compileExpression (mv, e.get (2));
+	    mv.visitInsn (DUP);
+	    mv.visitVarInsn (ASTORE, p);
+	}
+	else
+	{
+	    if (useFieldForSymbolReferences)
+	    {
+		if (!symbolReferences.contains (symbol))
+		{
+		    symbolReferences.add (symbol);
+		}
+		System.out.printf ("Symbol assignment to %s %n", symbol);
+		// [TODO] If the symbol valueCell is constant, use the current value.
+		// [TODO] If the valueCell is a TypedValueCell, use the type information.
+		mv.visitVarInsn (ALOAD, 0);
+		mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
+	    }
+	    else
+	    {
+		mv.visitVarInsn (ALOAD, 0);
+		mv.visitLdcInsn (symbol.getPackage ().getName ());
+		mv.visitLdcInsn (symbol.getName ());
+		mv.visitMethodInsn (INVOKESPECIAL, className, "getPublicSymbol",
+		        "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;", false);
+	    }
+	    compileExpression (mv, e.get (2));
+	    // Copy the expression value one back on the stack so it becomes the return value
+	    mv.visitInsn (DUP_X1);
+	    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "setValue", "(Ljava/lang/Object;)V", false);
+	    // Return the expression value
+	    if (!globalReferences.contains (symbol))
+	    {
+		globalReferences.add (symbol);
+		System.out.printf ("Compiled global assignment to %s %n", symbol);
+	    }
+	}
+    }
+
+    private void compileRepeat (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (repeat x 3))
+	// (define foo (x) (printf "bar%n"))
+	// (define foo (x) (repeat x (printf "bar%n")))
+	// (define foo (x) (repeat x (not true)))
+	// (define foo (x) (repeat x true))
+	// (define foo (x) (repeat x (abs 5)))
+	// (define foo (x) (repeat x (printf "bar %s%n" x)))
+	// (define foo (x) (repeat x (setq a (+ a 1))))
+	// (define foo (x) (repeat (+ x 5) (setq a (+ a 1))))
+	// (define foo (x y) (repeat (+ x 5) (setq a (+ a y))))
+
+	// Compute repeat count
+	compileExpression (mv, e.get (1));
+	mv.visitTypeInsn (CHECKCAST, "java/lang/Integer");
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+	// Leave repeat count on the stack
+
+	// Push iteration number onto the stack
+	mv.visitInsn (ICONST_0);
+
+	// Jump to termination test
+	final Label l1 = new Label ();
+	mv.visitJumpInsn (GOTO, l1);
+
+	// Start of iteration body
+	final Label l2 = new Label ();
+	mv.visitLabel (l2);
+	// <body code goes here>
+	for (int i = 2; i < e.size (); i++)
+	{
+	    compileExpression (mv, e.get (i));
+	    mv.visitInsn (POP);
+	}
+
+	// Loop increment
+	mv.visitInsn (ICONST_1);
+	mv.visitInsn (IADD);
+
+	// Termination test
+	mv.visitLabel (l1);
+
+	mv.visitInsn (DUP2);
+	mv.visitInsn (SWAP);
+	mv.visitJumpInsn (IF_ICMPLT, l2);
+
+	// Remove iteration count
+	mv.visitInsn (POP);
+	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+    }
+
+    private void compileWhile (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (while (< a x) (printf "A: %s%n" a) (setq a (+ a 1))))
+
+	// Load default value
+	mv.visitInsn (ACONST_NULL);
+
+	// Perform iteration test
+	final Label l0 = new Label ();
+	mv.visitLabel (l0);
+	mv.visitVarInsn (ALOAD, 0);
+	compileExpression (mv, e.get (1));
+	mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+	final Label l1 = new Label ();
+	mv.visitJumpInsn (IFEQ, l1);
+
+	// Get rid of previous value
+	mv.visitInsn (POP);
+
+	// Loop body
+	for (int i = 2; i < e.size () - 1; i++)
+	{
+	    compileExpression (mv, e.get (i));
+	    mv.visitInsn (POP);
+	}
+	// Don't pop the last value
+	compileExpression (mv, e.last ());
+	mv.visitJumpInsn (GOTO, l0);
+
+	mv.visitLabel (l1);
+    }
+
+    private void compileUntil (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (setq a 0) (until (> a x) (printf "A: %s%n" a) (setq a (+ a 1))))
+
+	// Load default value
+	mv.visitInsn (ACONST_NULL);
+
+	// Perform iteration test
+	final Label l0 = new Label ();
+	mv.visitLabel (l0);
+	mv.visitVarInsn (ALOAD, 0);
+	compileExpression (mv, e.get (1));
+	mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+	final Label l1 = new Label ();
+	mv.visitJumpInsn (IFNE, l1);
+
+	// Get rid of previous value
+	mv.visitInsn (POP);
+
+	// Loop body
+	for (int i = 2; i < e.size () - 1; i++)
+	{
+	    compileExpression (mv, e.get (i));
+	    mv.visitInsn (POP);
+	}
+	// Don't pop the last value
+	compileExpression (mv, e.last ());
+	mv.visitJumpInsn (GOTO, l0);
+
+	mv.visitLabel (l1);
     }
 
     /**

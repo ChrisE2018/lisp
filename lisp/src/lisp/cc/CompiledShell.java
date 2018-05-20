@@ -16,16 +16,27 @@ public class CompiledShell
     @SuppressWarnings ("unused")
     private final LispList methodBody = null;
 
-    // @SuppressWarnings ("unused")
-    // private Symbol getPublicSymbol (final String name)
-    // {
-    // return PackageFactory.getDefaultPackage ().findPrivate (name);
-    // }
-
     @SuppressWarnings ("unused")
     private Symbol getPublicSymbol (final String packageName, final String symbolName)
     {
 	return PackageFactory.getPackage (packageName).findPrivate (symbolName);
+    }
+
+    @SuppressWarnings ("unused")
+    private boolean isTrue (final Object value)
+    {
+	if (value != null)
+	{
+	    if (value instanceof Boolean)
+	    {
+		if (false == (Boolean)value)
+		{
+		    return false;
+		}
+	    }
+	    return true;
+	}
+	return false;
     }
 
     @Override

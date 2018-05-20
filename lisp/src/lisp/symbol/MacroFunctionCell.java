@@ -1,7 +1,7 @@
 
 package lisp.symbol;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 
 import lisp.Symbol;
@@ -35,6 +35,11 @@ public class MacroFunctionCell extends FunctionCell
 	final Object expanded = method.invoke (object, form);
 	final Object result = interpreter.eval (expanded);
 	return result;
+    }
+
+    public Object expand (final List<?> form) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    {
+	return method.invoke (object, form);
     }
 
     /**
