@@ -28,7 +28,7 @@ public class PackageFactory
      */
     private static final Object[][] CONSTANT_SYMBOLS =
 	{
-	 {GLOBAL_PACKAGE_NAME, "true", Boolean.TRUE, "false", Boolean.FALSE}};
+	 {GLOBAL_PACKAGE_NAME, "true", Boolean.TRUE, "false", Boolean.FALSE, "null", null}};
 
     /** Map from package name to package object for all packages that exist. */
     private static final Map<String, Package> packages = new HashMap<String, Package> ();

@@ -54,6 +54,20 @@
 (verify (foo) 22)
 (verify (bar) 11)
 
+(define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma) (true 'delta)))
+(verify (foo 1) 'alpha)
+(verify (foo 2) 'beta)
+(verify (foo 3) 'gamma)
+(verify (foo 4) 'delta)
+(verify (foo 5) 'delta)
+
+(define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma)))
+(verify (foo 1) 'alpha)
+(verify (foo 2) 'beta)
+(verify (foo 3) 'gamma)
+(verify (foo 4) null)
+(verify (foo 5) null)
+
 ; Can't compile a call to an undefined function yet.
 (define factorial (n) n)
 

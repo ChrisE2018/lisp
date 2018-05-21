@@ -138,7 +138,7 @@ public class CompilerPrimitives extends Definer
 	    testCount++;
 	    final Object value = context.eval (expr);
 	    final Object expected = context.eval (expect);
-	    if (value.equals (expected))
+	    if (same (value, expected))
 	    {
 		System.err.printf ("Pass: value of %s is %s while expecting %s%n", expr, value, expected);
 		passCount++;
@@ -164,7 +164,7 @@ public class CompilerPrimitives extends Definer
 	{
 	    testCount++;
 	    final Object value = context.eval (expr);
-	    if (value.equals (expected))
+	    if (same (value, expected))
 	    {
 		System.err.printf ("Fail: value of %s is %s while expecting error %s%n", expr, value, expected);
 		failCount++;
@@ -189,6 +189,23 @@ public class CompilerPrimitives extends Definer
 	    }
 	}
 	return null;
+    }
+
+    private boolean same (final Object a, final Object b)
+    {
+	if (a == b)
+	{
+	    return true;
+	}
+	if (a == null && b != null)
+	{
+	    return false;
+	}
+	if (a != null && b == null)
+	{
+	    return false;
+	}
+	return a.equals (b);
     }
 
     @Override

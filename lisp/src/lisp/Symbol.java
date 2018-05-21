@@ -4,6 +4,8 @@ package lisp;
 import java.io.IOException;
 import java.util.*;
 
+import javax.lang.model.type.NullType;
+
 import lisp.eval.UnboundVariableError;
 import lisp.symbol.*;
 
@@ -187,7 +189,14 @@ public class Symbol implements Describer
 	    else if (constantValue)
 	    {
 		final Object value = symbolValue.getValue ();
-		symbolValue = new ConstantValueCell (value.getClass (), value);
+		if (value == null)
+		{
+		    symbolValue = new ConstantValueCell (NullType.class, value);
+		}
+		else
+		{
+		    symbolValue = new ConstantValueCell (value.getClass (), value);
+		}
 	    }
 	}
 	else if (constantValue)

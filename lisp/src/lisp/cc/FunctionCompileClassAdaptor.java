@@ -8,7 +8,8 @@ import java.util.Map.Entry;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
-import lisp.LispList;
+import lisp.*;
+import lisp.Package;
 import lisp.Symbol;
 import lisp.symbol.*;
 
@@ -448,6 +449,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	else if (symbol.is ("let*"))
 	{
 	    compileLetStar (mv, e);
+	}
+	else if (symbol.is ("cond"))
+	{
+	    compileCond (mv, e);
 	}
 	else
 	{
@@ -923,6 +928,44 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
 	// Restore original local variables map
 	localVariableMap = savedLocalVariableMap;
+    }
+
+    private void compileCond (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma) (true 'delta)))
+	final Package system = PackageFactory.getSystemPackage ();
+	final Symbol var = system.internPrivate ("result").gensym ();
+	final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
+	final int resultRef = lvs.newLocal (Type.getType (Object.class));
+	localVariableMap.put (var, resultRef);
+	mv.visitInsn (ACONST_NULL);
+	mv.visitVarInsn (ASTORE, resultRef);
+	// Label to goto and return result
+	final Label l0 = new Label ();
+	for (int i = 1; i < e.size (); i++)
+	{
+	    final LispList clause = (LispList)e.get (i);
+	    final Object key = clause.get (0);
+	    compileExpression (mv, key);
+	    mv.visitInsn (DUP);
+	    mv.visitVarInsn (ALOAD, 0);
+	    mv.visitInsn (SWAP);
+	    mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+	    final Label l1 = new Label ();
+	    mv.visitJumpInsn (IFEQ, l1);
+	    mv.visitVarInsn (ASTORE, resultRef);
+	    for (int j = 1; j < clause.size (); j++)
+	    {
+		compileExpression (mv, clause.get (j));
+		mv.visitVarInsn (ASTORE, resultRef);
+	    }
+	    mv.visitJumpInsn (GOTO, l0);
+	    mv.visitLabel (l1);
+	    mv.visitInsn (POP);
+	}
+	// Return result
+	mv.visitLabel (l0);
+	mv.visitVarInsn (ALOAD, resultRef);
     }
 
     /**
