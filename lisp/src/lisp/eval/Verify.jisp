@@ -30,5 +30,12 @@
 (define foo () (quote bar))
 (eq (foo) 'bar)
 
+(verify (> (static "java.lang.System" "currentTimeMillis") 1526859416568) true)
+
+(define foo ()
+	(static "java.lang.System" "currentTimeMillis"))
+
+(verify (> (foo) 152685941) true)
+
 (sleep 0.2)
 (printTestStatistics)

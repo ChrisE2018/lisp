@@ -22,7 +22,7 @@ public class CompileLoader extends ClassLoader
      */
     private static final String SHELL_CLASS = "lisp.cc.CompiledShell";
 
-    private static final boolean SHOW_BYTECODE = true;
+    private static final boolean SHOW_BYTECODE = false;
 
     private final Map<String, Object> quotedReferences = new HashMap<String, Object> ();
 
@@ -36,7 +36,6 @@ public class CompileLoader extends ClassLoader
 	final String resource = resourceName + ".class";
 	final InputStream is = getResourceAsStream (resource);
 	final ClassReader cr = new ClassReader (is);
-	// final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_MAXS);
 	final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
 	ClassVisitor cv2 = cw;
 

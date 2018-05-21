@@ -88,6 +88,16 @@ public class Symbol implements Describer
     }
 
     /** The global value of the symbol. */
+    public Object getValue (final Object defaultValue)
+    {
+	if (symbolValue != null)
+	{
+	    return symbolValue.getValue ();
+	}
+	return defaultValue;
+    }
+
+    /** The global value of the symbol. */
     public void setValue (final Object value)
     {
 	if (symbolValue != null)
@@ -347,7 +357,7 @@ public class Symbol implements Describer
      * Quick way for Java code to get at Lisp symbol values. This uses a LispReader so package
      * prefix notation can be used.
      *
-     * @throws IOException
+     * @throws UnboundVariableError
      */
     public static Object value (final String name)
     {
@@ -356,11 +366,30 @@ public class Symbol implements Describer
 	    final LispReader lispReader = new LispReader ();
 	    final Package p = PackageFactory.getDefaultPackage ();
 	    final Symbol symbol = lispReader.readSymbol (p, name);
-	    return symbol.symbolValue;
+	    return symbol.getValue ();
 	}
 	catch (final IOException e)
 	{
 	    return null;
+	}
+    }
+
+    /**
+     * Quick way for Java code to get at Lisp symbol values. This uses a LispReader so package
+     * prefix notation can be used.
+     */
+    public static Object value (final String name, final Object defaultValue)
+    {
+	try
+	{
+	    final LispReader lispReader = new LispReader ();
+	    final Package p = PackageFactory.getDefaultPackage ();
+	    final Symbol symbol = lispReader.readSymbol (p, name);
+	    return symbol.getValue (defaultValue);
+	}
+	catch (final IOException e)
+	{
+	    return defaultValue;
 	}
     }
 }

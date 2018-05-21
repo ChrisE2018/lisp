@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import org.objectweb.asm.*;
+import org.objectweb.asm.commons.LocalVariablesSorter;
 
 import lisp.LispList;
 import lisp.Symbol;
@@ -144,11 +145,16 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	buffer.append (returnType);
 	final String signature = buffer.toString ();
 	final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, methodName, signature, null, null);
-
+	// With LocalVariablesSorter we can allocate new local variables.
+	// For example:
+	// int time = newLocal(Type.LONG_TYPE);
+	// creates a variable entry for a long that can be used like this:
+	// mv.visitVarInsn(LSTORE, time);
+	final LocalVariablesSorter mv2 = new LocalVariablesSorter (ACC_PUBLIC, signature, mv);
 	// Compile method body
 	for (final Object e : methodBody)
 	{
-	    compileExpression (mv, e);
+	    compileExpression (mv2, e);
 	}
 
 	// Return and method coda
@@ -375,10 +381,13 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     {
 	// (getAllSpecialFunctionSymbols)
 	// Done: (quote progn when if unless and or setq repeat while until)
+	// Done: Calls to new & static
 	// Todo: (try)
 	// Skip: (def getInterpreter verify define)
 	// Future: (let loop block return block-named)
-	// Calls to Java methods, new & static
+	// [TODO] Calls to Java methods
+	// Defmacro
+	// &optional, &key, &rest
 	// [TODO] Optimization
 	if (symbol.is ("quote"))
 	{

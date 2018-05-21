@@ -1,53 +1,25 @@
 
 package lisp.eval;
 
-import java.io.EOFException;
+import java.io.*;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.util.List;
 
 import lisp.*;
+import lisp.FileReader;
 import lisp.Package;
 import lisp.symbol.FunctionCell;
 
 /**
  * Simple interpreter that uses reflection to evaluate forms like Lisp functions. Everything
- * required to process the init file is defined here in code. The init file is loaded and defines
- * everything else.
+ * required to process the init file is defined here in code. <br/>
+ * The init file is loaded and defines everything else.
  */
 public class Interpreter extends Definer
 {
-    private static final String INIT_FILE = "init.jisp";
-    private boolean loadedInitFile = false;
-
     public Interpreter ()
     {
-	if (!loadedInitFile)
-	{
-	    loadedInitFile = true;
-	    final URL url = Interpreter.class.getResource (INIT_FILE);
-	    if (url != null)
-	    {
-		final FileReader fileReader = new FileReader ();
-		try
-		{
-		    System.out.printf ("Loading init file %s %n", url);
-		    fileReader.read (this, url);
-		}
-		catch (final EOFException e)
-		{
-		    System.out.printf ("EOF on init file%n", url);
-		}
-		catch (final java.lang.reflect.InvocationTargetException e)
-		{
-		    e.getCause ().printStackTrace ();
-		}
-		catch (final Exception e)
-		{
-		    e.printStackTrace ();
-		}
-	    }
-	}
     }
 
     public Object eval (final Object form) throws Exception
@@ -289,19 +261,54 @@ public class Interpreter extends Definer
 	throw new NoSuchMethodException ("Method " + className + "." + methodName + " not found");
     }
 
+    @DefineLisp
+    public boolean loadResource (final String pathname) throws Exception
+    {
+	final URL url = Interpreter.class.getResource (pathname);
+	if (url != null)
+	{
+	    final FileReader fileReader = new FileReader ();
+	    try
+	    {
+		System.out.printf ("Loading resource file %s %n", url);
+		fileReader.read (this, url);
+		return true;
+	    }
+	    catch (final EOFException e)
+	    {
+		System.out.printf ("EOF loading resource file%n", url);
+		return true;
+	    }
+	}
+	return false;
+    }
+
     /** Load a file. First argument is the pathname. */
     @DefineLisp
-    public Object load (final String pathname) throws Exception
+    public boolean loadFile (final String pathname) throws Exception
     {
-	final Package pkg = PackageFactory.getDefaultPackage ();
-	final FileReader fileReader = new FileReader ();
-	final Object result = fileReader.read (this, pkg, pathname);
-	return result;
+	final File file = new File (pathname);
+	if (file.canRead ())
+	{
+	    try
+	    {
+		System.out.printf ("Loading system file %s %n", pathname);
+		final Package pkg = PackageFactory.getDefaultPackage ();
+		final FileReader fileReader = new FileReader ();
+		fileReader.read (this, pkg, file);
+	    }
+	    catch (final EOFException e)
+	    {
+		System.out.printf ("EOF reading system file%n", pathname);
+		return true;
+	    }
+	}
+	return false;
     }
 
     /** Load a file. First argument is the pathname. Optional second argument is the package. */
     @DefineLisp
-    public Object load (final String pathname, final Object p) throws Exception
+    public Object loadFile (final String pathname, final Object p) throws Exception
     {
 	final Package pkg = coercePackage (p);
 	final FileReader fileReader = new FileReader ();

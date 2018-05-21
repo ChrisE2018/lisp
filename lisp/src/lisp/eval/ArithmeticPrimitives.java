@@ -14,6 +14,7 @@ public class ArithmeticPrimitives extends Definer
     // [TODO] Consider using bigdecimal
     // [TODO] Random
     // [TODO] Statistical
+    // [TODO] Case for 'long' needed everywhere
 
     @DefineLisp
     public Object not (final Object arg)
@@ -668,6 +669,10 @@ public class ArithmeticPrimitives extends Definer
 	{
 	    return lessp ((int)a, b);
 	}
+	else if (a instanceof Long)
+	{
+	    return lessp ((long)a, b);
+	}
 	else if (a instanceof Double)
 	{
 	    return lessp ((double)a, b);
@@ -693,11 +698,47 @@ public class ArithmeticPrimitives extends Definer
 	}
     }
 
+    private boolean lessp (final long a, final Object b)
+    {
+	if (b instanceof Integer)
+	{
+	    return a < (int)b;
+	}
+	else if (b instanceof Long)
+	{
+	    return a < (long)b;
+	}
+	else if (b instanceof Double)
+	{
+	    return (double)a < (Double)b;
+	}
+	else if (b instanceof Short)
+	{
+	    return a < (int)(Short)b;
+	}
+	else if (b instanceof Byte)
+	{
+	    return a < (int)(Byte)b;
+	}
+	else if (b instanceof Float)
+	{
+	    return (float)a < (Float)b;
+	}
+	else
+	{
+	    throw new IllegalArgumentException ("Number required " + b);
+	}
+    }
+
     private boolean lessp (final int a, final Object b)
     {
 	if (b instanceof Integer)
 	{
 	    return a < (int)b;
+	}
+	else if (b instanceof Long)
+	{
+	    return a < (long)b;
 	}
 	else if (b instanceof Double)
 	{
@@ -725,7 +766,11 @@ public class ArithmeticPrimitives extends Definer
     {
 	if (b instanceof Integer)
 	{
-	    return a < (double)(Integer)b;
+	    return a < (Integer)b;
+	}
+	else if (b instanceof Long)
+	{
+	    return a < (Long)b;
 	}
 	else if (b instanceof Double)
 	{

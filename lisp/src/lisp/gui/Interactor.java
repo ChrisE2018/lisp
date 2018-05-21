@@ -103,7 +103,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 
     private final List<HyperLink> links = new ArrayList<HyperLink> ();
 
-    public Interactor ()
+    public Interactor (final String[] args) throws Exception
     {
 	setBackground (Color.lightGray);
 	doc = getStyledDocument ();
@@ -133,13 +133,29 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	addMouseMotionListener (this);
 	interpreter = new Interpreter ();
 	reader = new LispReader ();
-
+	initArgs (args);
 	// Bind stdout and stderr after constructing the Interpreter so reads from loading the init
 	// file are not echoed to the interactor.
 	System.setOut (new PrintStream (new InteractorOutputStream (normalStyle)));
 	System.setErr (new PrintStream (new InteractorOutputStream (errorStyle)));
 
 	thread.start ();
+    }
+
+    private void initArgs (final String[] args) throws Exception
+    {
+	for (int i = 1; i < args.length; i++)
+	{
+	    final String key = args[i - 1];
+	    final String value = args[i];
+	    if (key.equals ("-l") || key.equals ("--load"))
+	    {
+		if (!interpreter.loadResource (value))
+		{
+		    interpreter.loadFile (value);
+		}
+	    }
+	}
     }
 
     public JFrame open (final String title)
@@ -172,7 +188,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
     private void addMenubar (final JFrame frame)
     {
 	final JMenuBar menubar = new JMenuBar ();
-	final List<Object> menus = (List<Object>)Symbol.value ("user:::*menus*");
+	final List<Object> menus = (List<Object>)Symbol.value ("user:::*menus*", new LispList ());
 	for (final Object ms : menus)
 	{
 	    final List<Object> menuSpec = (List<Object>)ms;
@@ -428,14 +444,26 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 
     public static void main (final String[] args)
     {
+	final PrintStream err = System.err;
 	try
 	{
-	    final Interactor interactor = new Interactor ();
-	    interactor.open ("demo");
+	    final Interactor interactor = new Interactor (args);
+	    interactor.open ("Interactor");
 	}
-	catch (final Exception e)
+	catch (final java.lang.reflect.InvocationTargetException e)
 	{
-	    e.printStackTrace ();
+	    Throwable ee = e;
+	    for (int i = 0; i < 10 && ee instanceof java.lang.reflect.InvocationTargetException; i++)
+	    {
+		ee = ee.getCause ();
+	    }
+	    err.printf ("Initialization error %s %n", ee);
+	    ee.printStackTrace (err);
+	}
+	catch (final Throwable e)
+	{
+	    err.printf ("Initialization error %s %n", e);
+	    e.printStackTrace (err);
 	}
     }
 

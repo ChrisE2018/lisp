@@ -16,6 +16,8 @@ public class FileReader
 	this.trace = trace;
     }
 
+    // [TODO] All of these should return boolean true if the file is loaded, false if not found or
+    // otherwise not loaded.
     public Object read (final Interpreter interpreter, final Package pkg, final String pathname) throws Exception
     {
 	return read (interpreter, pkg, new File (pathname));

@@ -14,16 +14,50 @@ public class Repl
 
     public static void main (final String[] args)
     {
-	final Repl repl = new Repl ();
-	final LispStream stream = new LispStream (System.in);
-	repl.toplevel (stream);
+	try
+	{
+	    final Repl repl = new Repl (args);
+	    final LispStream stream = new LispStream (System.in);
+	    repl.toplevel (stream);
+	}
+	catch (final java.lang.reflect.InvocationTargetException e)
+	{
+	    Throwable ee = e;
+	    for (int i = 0; i < 10 && ee instanceof java.lang.reflect.InvocationTargetException; i++)
+	    {
+		ee = ee.getCause ();
+	    }
+	    System.out.printf ("Initialization error %s %n", ee);
+	    ee.printStackTrace ();
+	}
+	catch (final Throwable e)
+	{
+	    System.out.printf ("Initialization error %s %n", e);
+	    e.printStackTrace ();
+	}
     }
 
-    /** Constructor for demo application. */
-    private Repl ()
+    /**
+     * Constructor for demo application.
+     *
+     * @throws Exception
+     */
+    private Repl (final String[] args) throws Exception
     {
 	interpreter = new Interpreter ();
 	reader = new LispReader ();
+	for (int i = 1; i < args.length; i++)
+	{
+	    final String key = args[i - 1];
+	    final String value = args[i];
+	    if (key.equals ("-l") || key.equals ("--load"))
+	    {
+		if (!interpreter.loadResource (value))
+		{
+		    interpreter.loadFile (value);
+		}
+	    }
+	}
     }
 
     /** Constructor to use an interpreter built elsewhere. */

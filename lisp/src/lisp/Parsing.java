@@ -12,7 +12,7 @@ public class Parsing
     private static final char EXCLAMATION = '!';
     private static final char DOUBLE_QUOTE = '"';
     private static final char SINGLE_QUOTE = '\'';
-    private static final char COLON = ':';
+    // private static final char COLON = ':';
     private static final char COMMA = ',';
     private static final char OPEN_PAREN = '(';
     private static final char OPEN_BRACE = '{';

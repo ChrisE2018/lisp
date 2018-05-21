@@ -104,25 +104,40 @@ public class CompilerPrimitives extends Definer
 	if (testCount > 0)
 	{
 	    System.out.printf ("%n");
-	    System.out.printf ("%6s %4d of %4d %4.1f%%\n", "Pass", passCount, testCount, (passCount * 100.0 / testCount));
-	    System.out.printf ("%6s %4d of %4d %4.1f%%\n", "Fail", failCount, testCount, (failCount * 100.0 / testCount));
-	    System.out.printf ("%6s %4d of %4d %4.1f%%\n", "Error", errorCount, testCount, (errorCount * 100.0 / testCount));
-	    System.out.printf ("%6s %4d of %4d %4.1f%%\n", "Total", testCount, testCount, (testCount * 100.0 / testCount));
+	    System.out.printf ("%6s %4d of %4d %4.1f%%%n", "Pass", passCount, testCount, (passCount * 100.0 / testCount));
+	    if (failCount > 0)
+	    {
+		System.out.printf ("%6s %4d of %4d %4.1f%%%n", "Fail", failCount, testCount, (failCount * 100.0 / testCount));
+	    }
+	    if (errorCount > 0)
+	    {
+		System.out.printf ("%6s %4d of %4d %4.1f%%%n", "Error", errorCount, testCount, (errorCount * 100.0 / testCount));
+	    }
+	    System.out.printf ("%6s %4d of %4d %4.1f%%%n", "Total", testCount, testCount, (testCount * 100.0 / testCount));
+	    if (passCount == testCount && failCount == 0 && errorCount == 0)
+	    {
+		System.out.printf ("%nAll tests passed!%n");
+	    }
+	    else
+	    {
+		System.out.printf ("%nThere were test failures%n");
+	    }
 	}
 	else
 	{
-	    System.out.printf ("No tests have been run. Call verify to submit test data.\n");
+	    System.out.printf ("No tests have been run. Call verify to submit test data.%n");
 	}
 	return null;
     }
 
     @DefineLisp (special = true)
-    public Object verify (final Interpreter interpreter, final Object expr, final Object expected)
+    public Object verify (final Interpreter interpreter, final Object expr, final Object expect)
     {
 	try
 	{
 	    testCount++;
 	    final Object value = interpreter.eval (expr);
+	    final Object expected = interpreter.eval (expect);
 	    if (value.equals (expected))
 	    {
 		System.err.printf ("Pass: value of %s is %s while expecting %s%n", expr, value, expected);
