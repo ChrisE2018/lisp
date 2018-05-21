@@ -391,7 +391,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Done: (quote progn when if unless and or setq repeat while until let let*)
 	// Done: Calls to new & static
 	// Todo: (try cond)
-	// Skip: (def getInterpreter verify define)
+	// Skip: (def verify verifyError define)
 	// Future: (loop block return block-named)
 	// [TODO] Calls to Java methods
 	// Defmacro
