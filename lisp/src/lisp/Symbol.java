@@ -213,6 +213,16 @@ public class Symbol implements Describer
     }
 
     /** The global function definition for a symbol. */
+    public FunctionCell getDefaultHandlerFunction ()
+    {
+	if (symbolFunction == null)
+	{
+	    symbolFunction = new DefaultFunctionCell (this, true);
+	}
+	return symbolFunction;
+    }
+
+    /** The global function definition for a symbol. */
     public void setFunction (final FunctionCell function)
     {
 	// Check the function value cell to determine if changes are allowed

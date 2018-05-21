@@ -1,7 +1,7 @@
 
 package lisp.symbol;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -217,6 +217,19 @@ public abstract class FunctionCell implements Describer
 	    throw new IllegalArgumentException ("No applicable method calling " + symbol + " with " + argCount + " arguments");
 	}
 	return result;
+    }
+
+    /**
+     * @param arguments
+     * @throws InvocationTargetException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     */
+    @SuppressWarnings ("unused")
+    public Object apply (final Object... arguments)
+            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    {
+	throw new UnsupportedOperationException ();
     }
 
     /**

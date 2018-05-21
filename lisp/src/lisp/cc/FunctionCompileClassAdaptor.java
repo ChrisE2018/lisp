@@ -35,7 +35,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     // On a simple example, using fields for symbol and function references makes the code 10%
     // faster.
     private final boolean useFieldForSymbolReferences = true;
-    private final boolean useFieldForFunctionReferences = true;
+    // private final boolean useFieldForFunctionReferences = true;
 
     public FunctionCompileClassAdaptor (final ClassVisitor cv, final String className, final String methodName,
             final LispList methodArgs, final LispList methodBody, final Map<String, Object> quotedReferencesMap)
@@ -297,44 +297,30 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// definition changes, the code should be recompiled.
 	final Symbol f = (Symbol)head;
 	final FunctionCell function = f.getFunction ();
-	if (function != null)
+	if (function != null && function instanceof SpecialFunctionCell)
 	{
-	    if (function instanceof StandardFunctionCell)
-	    {
-		compileStandardFunctionCall (mv, f, e);
-	    }
-	    else if (function instanceof SpecialFunctionCell)
-	    {
-		// Unless this is a known special function, we are stuck and can't
-		// proceed
-		compileSpecialFunctionCall (mv, f, e);
-	    }
-	    else if (function instanceof MacroFunctionCell)
-	    {
-		// Expand and replace
-		final MacroFunctionCell macro = (MacroFunctionCell)function;
-		Object replacement;
-		try
-		{
-		    replacement = macro.expand (e);
-		}
-		catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e1)
-		{
-		    throw new Error ("Error expanding macro " + f, e1);
-		}
-		compileExpression (mv, replacement);
-	    }
+	    // Unless this is a known special function, we are stuck and can't
+	    // proceed
+	    compileSpecialFunctionCall (mv, f, e);
 	}
-	else if (e.size () > 1)
+	else if (function != null && function instanceof MacroFunctionCell)
 	{
-	    // Handle unbound functions as calls to native Java methods
-	    throw new IllegalArgumentException ("NYI java method call " + f);
+	    // Expand and replace
+	    final MacroFunctionCell macro = (MacroFunctionCell)function;
+	    Object replacement;
+	    try
+	    {
+		replacement = macro.expand (e);
+	    }
+	    catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e1)
+	    {
+		throw new Error ("Error expanding macro " + f, e1);
+	    }
+	    compileExpression (mv, replacement);
 	}
 	else
 	{
-	    // Instead of throwing a compile time exception, this could produce runtime
-	    // code to extract the symbol function.
-	    throw new IllegalArgumentException ("Undefined function " + f);
+	    compileStandardFunctionCall (mv, f, e);
 	}
     }
 
@@ -344,29 +330,19 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Save the symbol in a class field.
 	// [TODO] If we are compiling for speed and can assume that the current definition won't
 	// change, then compile a direct call to the current function method.
-	if (useFieldForFunctionReferences)
-	{
-	    if (!symbolReferences.contains (symbol))
-	    {
-		symbolReferences.add (symbol);
-	    }
-	    System.out.printf ("Function symbol reference to %s %n", symbol);
 
-	    mv.visitVarInsn (ALOAD, 0);
-	    mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
-	}
-	else
+	if (!symbolReferences.contains (symbol))
 	{
-	    final String name = symbol.getName ();
-	    mv.visitVarInsn (ALOAD, 0);
-	    // Get the package final from the original symbol package.
-	    mv.visitLdcInsn (symbol.getPackage ().getName ());
-	    mv.visitLdcInsn (name);
-	    mv.visitMethodInsn (INVOKESPECIAL, className, "getPublicSymbol",
-	            "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;", false);
+	    symbolReferences.add (symbol);
 	}
-	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getFunction", "()Llisp/symbol/FunctionCell;", false);
-	mv.visitTypeInsn (CHECKCAST, "lisp/symbol/StandardFunctionCell");
+	System.out.printf ("Function symbol reference to %s %n", symbol);
+
+	mv.visitVarInsn (ALOAD, 0);
+	mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
+
+	// [TODO] The call to getFunction should be changed to call a smarter method that
+	// can return a special FunctionCell which invokes the java method on arg 1 instead.
+	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;", false);
 	// Compile the arguments
 	final int argCount = e.size () - 1;
 	mv.visitInsn (ICONST_0 + argCount);
@@ -382,19 +358,19 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
 	// Call invoke on the method.
 	// Assume the function will still be defined when we execute this code.
-	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/StandardFunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;",
-	        false);
+	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
     }
 
     private void compileSpecialFunctionCall (final MethodVisitor mv, final Symbol symbol, final LispList e)
     {
 	// (getAllSpecialFunctionSymbols)
-	// Done: (quote progn when if unless and or setq repeat while until let let*)
+	// Done: (quote progn when if unless and or setq repeat while until let let* cond)
 	// Done: Calls to new & static
-	// Todo: (try cond)
+	// Todo: (try)
 	// Skip: (def verify verifyError define)
 	// Future: (loop block return block-named)
-	// [TODO] Calls to Java methods
+	// Think: Multiple value calls?
+	// [done] Calls to Java methods
 	// Defmacro
 	// &optional, &key, &rest
 	// [TODO] Optimization

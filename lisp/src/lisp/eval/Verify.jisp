@@ -68,16 +68,16 @@
 (verify (foo 4) null)
 (verify (foo 5) null)
 
-; Can't compile a call to an undefined function yet.
-(define factorial (n) n)
-
+; This will test compilation of a call to an undefined function.
 (define factorial (n)
 	(if (<= n 0)
 		1
 		(* n (factorial (- n 1)))))
 
-;(verify (factorial 5) 120)
+(verify (factorial 5) 120)
 	
+(define foo (x) (length x))
+(verify (foo "foobar") 6)
 
 (sleep 0.2)
 (printTestStatistics)
