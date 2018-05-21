@@ -49,6 +49,13 @@ public class FunctionPrimitives extends Definer
 	throw new Error ("Can't evaluate interpreted let form");
     }
 
+    @DefineLisp (special = true, name = "let*")
+    public Object letStarEvaluator (final Interpreter interpreter, final LispList arglist, final Object body1,
+            final Object... body)
+    {
+	throw new Error ("Can't evaluate interpreted let* form");
+    }
+
     @Override
     public String toString ()
     {

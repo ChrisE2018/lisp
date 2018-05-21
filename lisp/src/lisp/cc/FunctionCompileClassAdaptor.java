@@ -279,6 +279,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 
     private void compileFunctionCall (final MethodVisitor mv, final LispList e)
     {
+	// [TODO] Need to be able to compile a call to an undefined function (i.e. recursive call)
 	System.out.printf ("Compile nested form %s%n", e);
 	final Object head = e.get (0);
 	if (!(head instanceof Symbol))
@@ -387,11 +388,11 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     private void compileSpecialFunctionCall (final MethodVisitor mv, final Symbol symbol, final LispList e)
     {
 	// (getAllSpecialFunctionSymbols)
-	// Done: (quote progn when if unless and or setq repeat while until)
+	// Done: (quote progn when if unless and or setq repeat while until let let*)
 	// Done: Calls to new & static
-	// Todo: (try)
+	// Todo: (try cond)
 	// Skip: (def getInterpreter verify define)
-	// Future: (let loop block return block-named)
+	// Future: (loop block return block-named)
 	// [TODO] Calls to Java methods
 	// Defmacro
 	// &optional, &key, &rest
@@ -443,6 +444,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	else if (symbol.is ("let"))
 	{
 	    compileLet (mv, e);
+	}
+	else if (symbol.is ("let*"))
+	{
+	    compileLetStar (mv, e);
 	}
 	else
 	{
@@ -867,6 +872,43 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    final Symbol var = (Symbol)c.get (0);
 	    final int localRef = lvs.newLocal (Type.getType (Object.class));
 	    mv.visitVarInsn (ASTORE, localRef); // Reverse order
+	    localVariableMap.put (var, localRef);
+	}
+
+	// Evaluate first (required) body form
+	compileExpression (mv, e.get (2));
+	// Evaluate remaining (optional) body forms
+	for (int i = 3; i < e.size (); i++)
+	{
+	    // Get rid of previous value
+	    mv.visitInsn (POP);
+	    compileExpression (mv, e.get (i));
+	}
+	// Restore original local variables map
+	localVariableMap = savedLocalVariableMap;
+    }
+
+    private void compileLetStar (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (let* ((a 1) (b 2)) (+ a b x)))
+	// (define foo () (let* ((a 1) (b 2)) a))
+	// (define foo () (let* ((a b) (b a)) b))
+	// (define bar () (let ((a b) (b a)) b))
+	// (define foo (x) (let* ((a b) (b a)) (if x a b)))
+	final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
+
+	// Compile expression values onto the stack in order
+	// Bind the variables as each value is computed
+	final Map<Symbol, Integer> savedLocalVariableMap = localVariableMap;
+	localVariableMap = new LinkedHashMap<Symbol, Integer> (localVariableMap);
+	final LispList args = (LispList)e.get (1);
+	for (final Object clause : args)
+	{
+	    final LispList c = (LispList)clause;
+	    final Symbol var = (Symbol)c.get (0);
+	    compileExpression (mv, c.get (1));
+	    final int localRef = lvs.newLocal (Type.getType (Object.class));
+	    mv.visitVarInsn (ASTORE, localRef);
 	    localVariableMap.put (var, localRef);
 	}
 

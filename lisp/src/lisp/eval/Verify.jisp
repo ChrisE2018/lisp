@@ -48,6 +48,22 @@
 (define foo (x) (let ((a b) (b a)) (if x a b)))
 (verify (foo true) 22)
 (verify (foo false) 11)
+
+(define foo () (let* ((a b) (b a)) b))
+(define bar () (let ((a b) (b a)) b))
+(verify (foo) 22)
+(verify (bar) 11)
+
+; Can't compile a call to an undefined function yet.
+(define factorial (n) n)
+
+(define factorial (n)
+	(if (<= n 0)
+		1
+		(* n (factorial (- n 1)))))
+
+;(verify (factorial 5) 120)
 	
+
 (sleep 0.2)
 (printTestStatistics)
