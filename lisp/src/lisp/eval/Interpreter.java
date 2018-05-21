@@ -175,6 +175,7 @@ public class Interpreter extends Definer
     /**
      * Evaluator for quoted forms.
      *
+     * @param context Required by calling convention but not used.
      * @param interpreter Not used, but required by calling protocol.
      */
     @DefineLisp (special = true, name = "quote")

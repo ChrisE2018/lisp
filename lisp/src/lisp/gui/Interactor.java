@@ -55,7 +55,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 
     // @see https://docs.oracle.com/javase/8/javafx/user-interface-tutorial/editor.htm
 
-    private static final MutableAttributeSet UNBOLD = new SimpleAttributeSet ();
+    // private static final MutableAttributeSet UNBOLD = new SimpleAttributeSet ();
     private static final MutableAttributeSet BOLD = new SimpleAttributeSet ();
     private static final MutableAttributeSet ITALIC = new SimpleAttributeSet ();
     private static final MutableAttributeSet HILITE_ON = new SimpleAttributeSet ();

@@ -212,7 +212,12 @@ public class Symbol implements Describer
 	return symbolFunction;
     }
 
-    /** The global function definition for a symbol. */
+    /**
+     * The global function definition for a symbol. If this symbol does not current have a
+     * FunctionCell, create a DefaultFunctionCell and install it. The DefaultFunctionCell will use
+     * Java reflection to attempt to call a class method if it is called. The process is not
+     * efficient, but it provides an easy to use way of calling Java methods from Lisp.
+     */
     public FunctionCell getDefaultHandlerFunction ()
     {
 	if (symbolFunction == null)

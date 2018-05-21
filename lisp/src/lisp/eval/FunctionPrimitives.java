@@ -27,6 +27,7 @@ public class FunctionPrimitives extends Definer
      * preliminary process would be code analysis to determine the lexical variable references and
      * replace these with a reference distinct from the global symbol reference.
      *
+     * @param context Required by calling convention but not used.
      * @param interpreter Not used, but required by calling protocol.
      */
     @DefineLisp (special = true, name = "def")

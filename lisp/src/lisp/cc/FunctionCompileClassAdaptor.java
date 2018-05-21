@@ -373,6 +373,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// [done] Calls to Java methods
 	// Defmacro
 	// &optional, &key, &rest
+	// [TODO] Hookup definition of special function calls to DefineLisp annotation.
 	// [TODO] Optimization
 	if (symbol.is ("quote"))
 	{
