@@ -5,7 +5,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import lisp.Symbol;
-import lisp.eval.Interpreter;
+import lisp.eval.LexicalContext;
 
 /**
  * Function cell that processes the original form and returns an expanded form for further
@@ -30,10 +30,10 @@ public class MacroFunctionCell extends FunctionCell
     }
 
     @Override
-    public Object eval (final Interpreter interpreter, final List<?> form) throws Exception
+    public Object eval (final LexicalContext context, final List<?> form) throws Exception
     {
 	final Object expanded = method.invoke (object, form);
-	final Object result = interpreter.eval (expanded);
+	final Object result = context.eval (expanded);
 	return result;
     }
 

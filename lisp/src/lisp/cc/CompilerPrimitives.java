@@ -13,7 +13,7 @@ public class CompilerPrimitives extends Definer
     // (define foo (x) alpha)
     // (define foo (a b) (+ 3 4))
     @DefineLisp (special = true, name = "define")
-    public Symbol define (@SuppressWarnings ("unused") final Interpreter interpreter, final Symbol functionName,
+    public Symbol define (@SuppressWarnings ("unused") final LexicalContext context, final Symbol functionName,
             final LispList args, final Object... forms)
     {
 	try
@@ -131,13 +131,13 @@ public class CompilerPrimitives extends Definer
     }
 
     @DefineLisp (special = true)
-    public Object verify (final Interpreter interpreter, final Object expr, final Object expect)
+    public Object verify (final LexicalContext context, final Object expr, final Object expect)
     {
 	try
 	{
 	    testCount++;
-	    final Object value = interpreter.eval (expr);
-	    final Object expected = interpreter.eval (expect);
+	    final Object value = context.eval (expr);
+	    final Object expected = context.eval (expect);
 	    if (value.equals (expected))
 	    {
 		System.err.printf ("Pass: value of %s is %s while expecting %s%n", expr, value, expected);
@@ -153,6 +153,40 @@ public class CompilerPrimitives extends Definer
 	{
 	    System.err.printf ("Error: while evaluating %s: %s%n", expr, e);
 	    errorCount++;
+	}
+	return null;
+    }
+
+    @DefineLisp (special = true)
+    public Object verifyError (final LexicalContext context, final Object expr, final String expected)
+    {
+	try
+	{
+	    testCount++;
+	    final Object value = context.eval (expr);
+	    if (value.equals (expected))
+	    {
+		System.err.printf ("Fail: value of %s is %s while expecting error %s%n", expr, value, expected);
+		failCount++;
+	    }
+	    else
+	    {
+		System.err.printf ("Fail: value of %s is %s while expecting error %s%n", expr, value, expected);
+		failCount++;
+	    }
+	}
+	catch (final Throwable e)
+	{
+	    if (e.getMessage ().equals (expected))
+	    {
+		System.err.printf ("Pass: Expected error %s found while evaluating %s%n", expected, expr);
+		passCount++;
+	    }
+	    else
+	    {
+		System.err.printf ("Fail: Expected error %s not found while evaluating %s: %s%n", expected, expr, e);
+		passCount++;
+	    }
 	}
 	return null;
     }

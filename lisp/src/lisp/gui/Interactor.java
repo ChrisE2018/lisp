@@ -15,7 +15,7 @@ import javax.swing.text.*;
 
 import lisp.*;
 import lisp.Package;
-import lisp.eval.Interpreter;
+import lisp.eval.*;
 
 /**
  * Swing window for lisp interactions.
@@ -210,7 +210,9 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 			{
 			    try
 			    {
-				interpreter.eval (action);
+				// Evaluate menu item action
+				final LexicalContext context = new LexicalContext (interpreter);
+				context.eval (action);
 			    }
 			    catch (final Exception e1)
 			    {
@@ -313,8 +315,9 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 		    readInput = false;
 		    exprSymbol.setValue (form);
 		    log (outputStyle, "%n");
+		    final LexicalContext context = new LexicalContext (interpreter);
 		    final long startTime = System.currentTimeMillis ();
-		    final Object value = interpreter.eval (form);
+		    final Object value = context.eval (form);
 		    final long duration = System.currentTimeMillis () - startTime;
 		    if (value == null)
 		    {
