@@ -66,9 +66,9 @@ public class PackagePrimitives extends Definer
      * @return The new value.
      */
     @DefineLisp (special = true)
-    public Object setq (final Interpreter interpreter, final Symbol symbol, final Object form) throws Exception
+    public Object setq (final LexicalContext context, final Symbol symbol, final Object form) throws Exception
     {
-	final Object value = interpreter.eval (form);
+	final Object value = context.eval (form);
 	symbol.setValue (value);
 	return value;
     }

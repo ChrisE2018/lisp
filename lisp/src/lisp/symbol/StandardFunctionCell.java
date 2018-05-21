@@ -5,7 +5,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import lisp.Symbol;
-import lisp.eval.Interpreter;
+import lisp.eval.LexicalContext;
 
 public class StandardFunctionCell extends FunctionCell
 {
@@ -46,20 +46,20 @@ public class StandardFunctionCell extends FunctionCell
     }
 
     @Override
-    public Object eval (final Interpreter interpreter, final List<?> form) throws Exception
+    public Object eval (final LexicalContext context, final List<?> form) throws Exception
     {
 	final ObjectMethod method = selectMethod (form.size () - 1);
 	if (method.isVarArgs ())
 	{
-	    return applyVarArgs (interpreter, method, form);
+	    return applyVarArgs (context, method, form);
 	}
 	else
 	{
-	    return applyFixedArgs (interpreter, method, form);
+	    return applyFixedArgs (context, method, form);
 	}
     }
 
-    private Object applyVarArgs (final Interpreter interpreter, final ObjectMethod method, final List<?> form) throws Exception
+    private Object applyVarArgs (final LexicalContext context, final ObjectMethod method, final List<?> form) throws Exception
     {
 	final Class<?>[] parameters = method.getParameterTypes ();
 	final Object[] arguments = new Object[parameters.length];
@@ -67,7 +67,7 @@ public class StandardFunctionCell extends FunctionCell
 	for (int i = 1; i < parameters.length; i++)
 	{
 	    final Object f = form.get (i);
-	    arguments[i - 1] = interpreter.eval (f);
+	    arguments[i - 1] = context.eval (f);
 	}
 	// Collect the optional arguments
 	final int count = form.size () - parameters.length;
@@ -76,20 +76,20 @@ public class StandardFunctionCell extends FunctionCell
 	{
 
 	    final Object f = form.get (parameters.length + i);
-	    args[i] = interpreter.eval (f);
+	    args[i] = context.eval (f);
 	}
 	arguments[parameters.length - 1] = args;
 	return method.method.invoke (method.object, arguments);
     }
 
-    private Object applyFixedArgs (final Interpreter interpreter, final ObjectMethod method, final List<?> form) throws Exception
+    private Object applyFixedArgs (final LexicalContext context, final ObjectMethod method, final List<?> form) throws Exception
     {
 	final Class<?>[] parameters = method.getParameterTypes ();
 	final Object[] arguments = new Object[parameters.length];
 	for (int i = 1; i < form.size (); i++)
 	{
 	    final Object f = form.get (i);
-	    arguments[i - 1] = interpreter.eval (f);
+	    arguments[i - 1] = context.eval (f);
 	}
 	return method.method.invoke (method.object, arguments);
     }

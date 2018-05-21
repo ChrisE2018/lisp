@@ -3,7 +3,7 @@ package lisp.demo;
 
 import lisp.*;
 import lisp.Package;
-import lisp.eval.Interpreter;
+import lisp.eval.*;
 
 /** Simple toplevel loop that reads a lisp form, evaluates it and prints the result. */
 public class Repl
@@ -138,11 +138,12 @@ public class Repl
 	final Symbol repeat = pkg.internPrivate ("*repeat*");
 	final int repeatCount = repeat.getIntValue (1);
 	System.out.printf ("[%s] ==> ", v);
+	final LexicalContext context = new LexicalContext (interpreter);
 	final long startTime = System.currentTimeMillis ();
-	final Object value = interpreter.eval (form);
+	final Object value = context.eval (form);
 	for (int i = 1; i < repeatCount; i++)
 	{
-	    interpreter.eval (form);
+	    context.eval (form);
 	}
 	final long duration = System.currentTimeMillis () - startTime;
 	// Provide time for output to display

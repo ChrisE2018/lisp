@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import lisp.*;
-import lisp.eval.Interpreter;
+import lisp.eval.LexicalContext;
 
 /** Base class of all function cells. */
 public abstract class FunctionCell implements Describer
@@ -68,7 +68,7 @@ public abstract class FunctionCell implements Describer
 
     private ObjectMethod[] overloads = new ObjectMethod[0];
 
-    abstract public Object eval (final Interpreter interpreter, final List<?> form) throws Exception;
+    abstract public Object eval (final LexicalContext context, final List<?> form) throws Exception;
 
     abstract public void overload (Object obj, Method method);
 

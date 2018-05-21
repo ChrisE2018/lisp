@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import lisp.Symbol;
-import lisp.eval.Interpreter;
+import lisp.eval.LexicalContext;
 
 /** Function cell for a function definition of a named function that binds arguments to values. */
 public class DefFunctionCell extends FunctionCell
@@ -31,13 +31,13 @@ public class DefFunctionCell extends FunctionCell
     }
 
     @Override
-    public Object eval (final Interpreter interpreter, final List<?> form) throws Exception
+    public Object eval (final LexicalContext context, final List<?> form) throws Exception
     {
 	final List<Object> arguments = new ArrayList<Object> ();
 	for (int i = 1; i < form.size (); i++)
 	{
 	    final Object f = form.get (i);
-	    arguments.add (interpreter.eval (f));
+	    arguments.add (context.eval (f));
 	}
 	Object result = null;
 	final Map<Symbol, ValueCell> savedValues = new HashMap<Symbol, ValueCell> ();
@@ -57,7 +57,7 @@ public class DefFunctionCell extends FunctionCell
 	    // Evaluate the method body
 	    for (final Object f : body)
 	    {
-		result = interpreter.eval (f);
+		result = context.eval (f);
 	    }
 	}
 	finally

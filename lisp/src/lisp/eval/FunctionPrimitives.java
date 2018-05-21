@@ -30,7 +30,7 @@ public class FunctionPrimitives extends Definer
      * @param interpreter Not used, but required by calling protocol.
      */
     @DefineLisp (special = true, name = "def")
-    public Object defEvaluator (final Interpreter interpreter, final Symbol name, final LispList arglist, final Object... body)
+    public Object defEvaluator (final LexicalContext context, final Symbol name, final LispList arglist, final Object... body)
     {
 	System.err.printf ("Warning: usage of obsolete def %s %n", name);
 	final List<Symbol> params = new ArrayList<Symbol> ();
@@ -44,16 +44,47 @@ public class FunctionPrimitives extends Definer
     }
 
     @DefineLisp (special = true, name = "let")
-    public Object letEvaluator (final Interpreter interpreter, final LispList arglist, final Object body1, final Object... body)
+    public Object letEvaluator (final LexicalContext context, final LispList arglist, final Object body1, final Object... body)
+            throws Exception
     {
-	throw new Error ("Can't evaluate interpreted let form");
+	final LexicalContext newContext = new LexicalContext (context);
+	for (final Object c : arglist)
+	{
+	    final LispList clause = (LispList)c;
+	    final Symbol var = (Symbol)clause.get (0);
+	    final Object expr = clause.get (1);
+	    // Evaluate expressions in the original context and bind in the newContext
+	    newContext.set (var, context.eval (expr));
+	}
+	// Evaluate body expressions in the newContext
+	Object result = newContext.eval (body1);
+	for (final Object expr : body)
+	{
+	    result = newContext.eval (expr);
+	}
+	return result;
     }
 
     @DefineLisp (special = true, name = "let*")
-    public Object letStarEvaluator (final Interpreter interpreter, final LispList arglist, final Object body1,
-            final Object... body)
+    public Object letStarEvaluator (final LexicalContext context, final LispList arglist, final Object body1,
+            final Object... body) throws Exception
     {
-	throw new Error ("Can't evaluate interpreted let* form");
+	final LexicalContext newContext = new LexicalContext (context);
+	for (final Object c : arglist)
+	{
+	    final LispList clause = (LispList)c;
+	    final Symbol var = (Symbol)clause.get (0);
+	    final Object expr = clause.get (1);
+	    // Evaluate expressions in the newContext and bind in the newContext
+	    newContext.set (var, newContext.eval (expr));
+	}
+	// Evaluate body expressions in the newContext
+	Object result = newContext.eval (body1);
+	for (final Object expr : body)
+	{
+	    result = newContext.eval (expr);
+	}
+	return result;
     }
 
     @Override

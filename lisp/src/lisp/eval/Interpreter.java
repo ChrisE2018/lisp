@@ -22,12 +22,11 @@ public class Interpreter extends Definer
     {
     }
 
-    public Object eval (final Object form) throws Exception
+    public Object eval (final LexicalContext context, final Object form) throws Exception
     {
 	if (form instanceof Symbol)
 	{
-	    final Symbol symbol = (Symbol)form;
-	    final Object result = symbol.getValue ();
+	    final Object result = context.get ((Symbol)form);
 	    return result;
 	}
 	if (form instanceof List<?>)
@@ -46,12 +45,12 @@ public class Interpreter extends Definer
 	    final FunctionCell function = f.getFunction ();
 	    if (function != null)
 	    {
-		return function.eval (this, list);
+		return function.eval (context, list);
 	    }
 	    else if (list.size () > 1)
 	    {
 		// Handle unbound functions as calls to native Java methods
-		final Object target = eval (list.get (1));
+		final Object target = eval (context, list.get (1));
 		final String method = coerceString (f, true);
 		if (target == null)
 		{
@@ -63,7 +62,7 @@ public class Interpreter extends Definer
 		arguments.add (method);
 		for (int i = 2; i < list.size (); i++)
 		{
-		    arguments.add (eval (list.get (i)));
+		    arguments.add (eval (context, list.get (i)));
 		}
 		return javaMethodCall (target, cls, method, arguments);
 	    }
@@ -179,7 +178,7 @@ public class Interpreter extends Definer
      * @param interpreter Not used, but required by calling protocol.
      */
     @DefineLisp (special = true, name = "quote")
-    public Object quoteEvaluator (final Interpreter interpreter, final Object result)
+    public Object quoteEvaluator (final LexicalContext context, final Object result)
     {
 	return result;
     }
@@ -188,15 +187,16 @@ public class Interpreter extends Definer
     @DefineLisp (name = "eval")
     public Object evalT (final Object expression) throws Exception
     {
-	final Object value = eval (expression);
+	final LexicalContext context = new LexicalContext (this);
+	final Object value = eval (context, expression);
 	return value;
     }
 
-    @DefineLisp (special = true)
-    public Interpreter getInterpreter (final Interpreter result)
-    {
-	return result;
-    }
+    // @DefineLisp (special = true)
+    // public Interpreter getInterpreter (final Interpreter result)
+    // {
+    // return result;
+    // }
 
     /** Return a class for a name. This is required so the init file can load the primitives. */
     @DefineLisp
@@ -271,7 +271,8 @@ public class Interpreter extends Definer
 	    try
 	    {
 		System.out.printf ("Loading resource file %s %n", url);
-		fileReader.read (this, url);
+		final LexicalContext context = new LexicalContext (this);
+		fileReader.read (context, url);
 		return true;
 	    }
 	    catch (final EOFException e)
@@ -294,8 +295,9 @@ public class Interpreter extends Definer
 	    {
 		System.out.printf ("Loading system file %s %n", pathname);
 		final Package pkg = PackageFactory.getDefaultPackage ();
+		final LexicalContext context = new LexicalContext (this);
 		final FileReader fileReader = new FileReader ();
-		fileReader.read (this, pkg, file);
+		fileReader.read (context, pkg, file);
 	    }
 	    catch (final EOFException e)
 	    {
@@ -311,8 +313,9 @@ public class Interpreter extends Definer
     public Object loadFile (final String pathname, final Object p) throws Exception
     {
 	final Package pkg = coercePackage (p);
+	final LexicalContext context = new LexicalContext (this);
 	final FileReader fileReader = new FileReader ();
-	final Object result = fileReader.read (this, pkg, pathname);
+	final Object result = fileReader.read (context, pkg, pathname);
 	return result;
     }
 
@@ -347,12 +350,12 @@ public class Interpreter extends Definer
      * @throws Exception
      */
     @DefineLisp (name = "try", special = true)
-    public Object tryCatch (final Interpreter interpreter, final Object form, final Object... catchClauses) throws Exception
+    public Object tryCatch (final LexicalContext context, final Object form, final Object... catchClauses) throws Exception
     {
 	Object result = null;
 	try
 	{
-	    result = interpreter.eval (form);
+	    result = context.eval (form);
 	}
 	catch (final Throwable e)
 	{
@@ -372,7 +375,7 @@ public class Interpreter extends Definer
 			var.setValue (e);
 			for (int i = 2; i < c.size (); i++)
 			{
-			    result = interpreter.eval (c.get (i));
+			    result = context.eval (c.get (i));
 			}
 		    }
 		    finally

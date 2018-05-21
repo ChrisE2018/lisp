@@ -5,7 +5,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import lisp.Symbol;
-import lisp.eval.Interpreter;
+import lisp.eval.LexicalContext;
 
 public class SpecialFunctionCell extends FunctionCell
 {
@@ -30,29 +30,29 @@ public class SpecialFunctionCell extends FunctionCell
     }
 
     @Override
-    public Object eval (final Interpreter interpreter, final List<?> form) throws Exception
+    public Object eval (final LexicalContext context, final List<?> form) throws Exception
     {
 	// Form size is one extra due to the function name &
 	// Number of arguments is one extra due to the interpreter argument.
 	final ObjectMethod method = selectMethod (form.size ());
 	if (method.isVarArgs ())
 	{
-	    return applyVarArgs (interpreter, method, form);
+	    return applyVarArgs (context, method, form);
 	}
 	else
 	{
-	    return applyFixedArgs (interpreter, method, form);
+	    return applyFixedArgs (context, method, form);
 	}
     }
 
-    private Object applyVarArgs (final Interpreter interpreter, final ObjectMethod method, final List<?> form)
+    private Object applyVarArgs (final LexicalContext context, final ObjectMethod method, final List<?> form)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	final Class<?>[] parameters = method.getParameterTypes ();
 	// Number of parameters excluding the interpreter
 	final int paramsLengthActual = parameters.length - 1;
 	final Object[] arguments = new Object[parameters.length];
-	arguments[0] = interpreter;
+	arguments[0] = context;
 	for (int i = 1; i < paramsLengthActual; i++)
 	{
 	    arguments[i] = form.get (i);
@@ -67,14 +67,14 @@ public class SpecialFunctionCell extends FunctionCell
 	return method.method.invoke (method.object, arguments);
     }
 
-    private Object applyFixedArgs (final Interpreter interpreter, final ObjectMethod method, final List<?> form)
+    private Object applyFixedArgs (final LexicalContext context, final ObjectMethod method, final List<?> form)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	final Class<?>[] parameters = method.getParameterTypes ();
 	// Form includes an extra element for the function name
 	// parameters includes an extra element for the interpreter
 	final Object[] arguments = new Object[parameters.length];
-	arguments[0] = interpreter;
+	arguments[0] = context;
 	for (int i = 1; i < parameters.length; i++)
 	{
 	    arguments[i] = form.get (i);
