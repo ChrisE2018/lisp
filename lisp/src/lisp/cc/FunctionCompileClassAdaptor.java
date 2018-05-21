@@ -28,6 +28,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
      */
     private final Map<String, Object> quotedReferencesMap;
 
+    private Map<Symbol, Integer> localVariableMap = new LinkedHashMap<Symbol, Integer> ();
+
     // Compiler control.
     // On a simple example, using fields for symbol and function references makes the code 10%
     // faster.
@@ -190,8 +192,13 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    {
 		// Parameter reference
 		// [TODO] If we can determine the type, use that information.
-		final int p = methodArgs.indexOf (e) + 1;
-		mv.visitVarInsn (ALOAD, p);
+		final int argRef = methodArgs.indexOf (e) + 1;
+		mv.visitVarInsn (ALOAD, argRef);
+	    }
+	    else if (localVariableMap.containsKey (e))
+	    {
+		final int localRef = localVariableMap.get (e);
+		mv.visitVarInsn (ALOAD, localRef);
 	    }
 	    else
 	    {
@@ -432,6 +439,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	else if (symbol.is ("until"))
 	{
 	    compileUntil (mv, e);
+	}
+	else if (symbol.is ("let"))
+	{
+	    compileLet (mv, e);
 	}
 	else
 	{
@@ -828,6 +839,48 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitJumpInsn (GOTO, l0);
 
 	mv.visitLabel (l1);
+    }
+
+    private void compileLet (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (let ((a 1) (b 2)) (+ a b x)))
+	// (define foo () (let ((a 1) (b 2)) a))
+	// (define foo () (let ((a b) (b a)) a))
+	// (define foo (x) (let ((a b) (b a)) (if x a b)))
+	final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
+
+	// Compile expression values onto the stack in order
+	final LispList args = (LispList)e.get (1);
+	for (final Object clause : args)
+	{
+	    final LispList c = (LispList)clause;
+	    compileExpression (mv, c.get (1));
+	}
+
+	// Now bind the variables in reverse order
+	final Map<Symbol, Integer> savedLocalVariableMap = localVariableMap;
+	localVariableMap = new LinkedHashMap<Symbol, Integer> (localVariableMap);
+	for (int i = args.size () - 1; i >= 0; i--)
+	{
+	    final Object clause = args.get (i);
+	    final LispList c = (LispList)clause;
+	    final Symbol var = (Symbol)c.get (0);
+	    final int localRef = lvs.newLocal (Type.getType (Object.class));
+	    mv.visitVarInsn (ASTORE, localRef); // Reverse order
+	    localVariableMap.put (var, localRef);
+	}
+
+	// Evaluate first (required) body form
+	compileExpression (mv, e.get (2));
+	// Evaluate remaining (optional) body forms
+	for (int i = 3; i < e.size (); i++)
+	{
+	    // Get rid of previous value
+	    mv.visitInsn (POP);
+	    compileExpression (mv, e.get (i));
+	}
+	// Restore original local variables map
+	localVariableMap = savedLocalVariableMap;
     }
 
     /**

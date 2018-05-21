@@ -37,5 +37,17 @@
 
 (verify (> (foo) 152685941) true)
 
+(define foo (x) (let ((a 1) (b 2)) (+ a b x)))
+(verify (foo 3) 6)
+
+(define foo () (let ((a 1) (b 2)) a))
+(verify (foo) 1)
+
+(setq a 11)
+(setq b 22)
+(define foo (x) (let ((a b) (b a)) (if x a b)))
+(verify (foo true) 22)
+(verify (foo false) 11)
+	
 (sleep 0.2)
 (printTestStatistics)

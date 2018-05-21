@@ -214,7 +214,7 @@ public abstract class FunctionCell implements Describer
 	}
 	if (result == null)
 	{
-	    throw new IllegalArgumentException ("No applicable method");
+	    throw new IllegalArgumentException ("No applicable method calling " + symbol + " with " + argCount + " arguments");
 	}
 	return result;
     }

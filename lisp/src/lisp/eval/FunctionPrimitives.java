@@ -32,6 +32,7 @@ public class FunctionPrimitives extends Definer
     @DefineLisp (special = true, name = "def")
     public Object defEvaluator (final Interpreter interpreter, final Symbol name, final LispList arglist, final Object... body)
     {
+	System.err.printf ("Warning: usage of obsolete def %s %n", name);
 	final List<Symbol> params = new ArrayList<Symbol> ();
 	for (final Object a : arglist)
 	{
@@ -40,6 +41,12 @@ public class FunctionPrimitives extends Definer
 	final DefFunctionCell function = new DefFunctionCell (name, params, body);
 	name.setFunction (function);
 	return name;
+    }
+
+    @DefineLisp (special = true, name = "let")
+    public Object letEvaluator (final Interpreter interpreter, final LispList arglist, final Object body1, final Object... body)
+    {
+	throw new Error ("Can't evaluate interpreted let form");
     }
 
     @Override
