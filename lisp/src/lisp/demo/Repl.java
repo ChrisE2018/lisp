@@ -4,12 +4,11 @@ package lisp.demo;
 import lisp.*;
 import lisp.Package;
 import lisp.eval.*;
+import lisp.symbol.LispThread;
 
 /** Simple toplevel loop that reads a lisp form, evaluates it and prints the result. */
-public class Repl
+public class Repl extends LispThread
 {
-    private final LispReader reader;
-
     private final Interpreter interpreter;
 
     public static void main (final String[] args)
@@ -17,8 +16,7 @@ public class Repl
 	try
 	{
 	    final Repl repl = new Repl (args);
-	    final LispStream stream = new LispStream (System.in);
-	    repl.toplevel (stream);
+	    repl.start ();
 	}
 	catch (final java.lang.reflect.InvocationTargetException e)
 	{
@@ -37,6 +35,13 @@ public class Repl
 	}
     }
 
+    @Override
+    public void run ()
+    {
+	final LispStream stream = new LispStream (System.in);
+	toplevel (stream);
+    }
+
     /**
      * Constructor for demo application.
      *
@@ -46,7 +51,7 @@ public class Repl
     {
 	// [TODO] Move argument processing into Interpreter class
 	interpreter = new Interpreter ();
-	reader = new LispReader ();
+	// reader = new LispReader ();
 	for (int i = 1; i < args.length; i++)
 	{
 	    final String key = args[i - 1];
@@ -62,13 +67,6 @@ public class Repl
 		}
 	    }
 	}
-    }
-
-    /** Constructor to use an interpreter built elsewhere. */
-    public Repl (final Interpreter interpreter)
-    {
-	this.interpreter = interpreter;
-	reader = new LispReader ();
     }
 
     public void toplevel (final LispStream stream)
@@ -105,7 +103,7 @@ public class Repl
 	Object form = null;
 	try
 	{
-	    form = reader.read (stream, pkg);
+	    form = LispThread.getLispThreadReader ().read (stream, pkg);
 	}
 	catch (final Throwable ex)
 	{

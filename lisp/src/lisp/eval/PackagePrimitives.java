@@ -192,6 +192,12 @@ public class PackagePrimitives extends Definer
 	return result;
     }
 
+    @DefineLisp
+    public LispReader getLispReader ()
+    {
+	return LispThread.getLispThreadReader ();
+    }
+
     @Override
     public String toString ()
     {

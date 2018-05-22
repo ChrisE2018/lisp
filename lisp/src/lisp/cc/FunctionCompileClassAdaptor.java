@@ -425,6 +425,23 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
 	else if (symbol.is ("let*"))
 	{
+	    // [CONSIDER] Change reader so that a:b reads as (the a b) and define:
+	    // (the <type> <reference>)
+	    // to be a type declaration. Then:
+	    // (define int:foo (int : a int : b) (+ a b))
+	    // becomes integer addition. (Problem, colon is already used as a package separator.
+	    // Maybe change that to dot to be be Java.)
+
+	    // [IDEA] Eliminate package public/private distinction. Make import affect a reader
+	    // (like Java). If you write a fully qualified name, you get it (always). Define default
+	    // imports for a reader. Import functions should allow for import of all functions, or
+	    // symbols with specified attributes. (selective-import <attributes> "org.foo.*")
+
+	    // [IDEA] Implement a defpackage function or package manipulation functions. Define
+	    // default imports for any reader that is in a package.
+
+	    // [IDEA] Symbols could have attributes (like, public, protected, private) that affect
+	    // things.
 	    compileLetStar (mv, e);
 	}
 	else if (symbol.is ("cond"))

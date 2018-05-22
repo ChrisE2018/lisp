@@ -16,6 +16,7 @@ import javax.swing.text.*;
 import lisp.*;
 import lisp.Package;
 import lisp.eval.*;
+import lisp.symbol.LispThread;
 
 /**
  * Swing window for lisp interactions.
@@ -95,7 +96,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
     private final LispReader reader;
 
     private final Interpreter interpreter;
-    private final Thread thread = new Thread (this);
+    private final Thread thread = new LispThread (this);
     private final Queue<Object> queue = new ConcurrentLinkedDeque<Object> ();
 
     private final PrintStream out = System.out;

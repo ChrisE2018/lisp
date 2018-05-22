@@ -1,5 +1,5 @@
 ;; Self test script
-;; (load "src/lisp/eval/Verify.jisp")
+;; (loadFile "src/lisp/eval/Verify.jisp")
 
 (resetTestStatistics)
 

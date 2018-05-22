@@ -4,6 +4,7 @@ package lisp.cc;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
 // @see https://www.beyondjava.net/blog/quick-guide-writing-byte-code-asm/
@@ -14,6 +15,8 @@ import lisp.Symbol;
 
 public class CompileLoader extends ClassLoader
 {
+    private static final Logger LOGGER = Logger.getLogger (CompileLoader.class.getName ());
+
     /**
      * Predefined shell class structure with support methods. To create a compiled function we load
      * this shell class and inject our new method. Each compile requires a new instance of this
@@ -22,16 +25,30 @@ public class CompileLoader extends ClassLoader
      */
     private static final String SHELL_CLASS = "lisp.cc.CompiledShell";
 
+    /**
+     * Flag to control display of bytecode after compile. <br/>
+     * [TODO] Should use logger configuration instead of hard-coded flags.
+     */
     private static final boolean SHOW_BYTECODE = false;
 
+    /**
+     * Trick to compile references to quoted data. This map is obtained by the method compiler and
+     * changed by side effect using unique gensym keys. The bytecode uses the gensym Symbol name to
+     * locate the quoted data. This works only because we are loading compiled bytecode into the
+     * same instance of the JVM that we used to compile the code. If we need to save compiled code
+     * to a file and load it later, the quoted structure would have to be reconstructed at load
+     * time.
+     */
     private final Map<String, Object> quotedReferences = new HashMap<String, Object> ();
 
-    /** Load the shell class resource and run the ClassVisitor on it to add our new method. */
+    /**
+     * Load the shell class resource and run the ClassVisitor on it to add our new method.
+     */
     public Class<?> compile (final String methodName, final LispList methodArgs, final LispList methodBody) throws IOException
     {
-	System.out.printf ("Creating compiled class: %s for function %s %s %n", SHELL_CLASS, methodName, methodArgs);
+	LOGGER.info (String.format ("Creating compiled class: %s for function %s %s", SHELL_CLASS, methodName, methodArgs));
 	final String className = SHELL_CLASS;
-	System.out.printf ("Adding method %s %s to class: %s %n", methodName, methodArgs, className);
+	LOGGER.info (String.format ("Adding method %s %s to class: %s", methodName, methodArgs, className));
 	final String resourceName = className.replace ('.', '/');
 	final String resource = resourceName + ".class";
 	final InputStream is = getResourceAsStream (resource);
@@ -49,38 +66,32 @@ public class CompileLoader extends ClassLoader
 	    new FunctionCompileClassAdaptor (cv2, resourceName, methodName, methodArgs, methodBody, quotedReferences);
 
 	cr.accept (cv, 0);
-	if (SHOW_BYTECODE)
-	{
-	    System.out.printf ("%n=%n%s%n=%n", sw.toString ());
-	}
 	final byte[] b = cw.toByteArray ();
 	final Class<?> c = defineClass (className, b, 0, b.length);
-	System.out.printf ("%n");
 	return c;
     }
 
     private void checkCreatedClass (final Class<?> c) throws InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
     {
-	System.out.printf ("List of Declared Methods%n");
+	LOGGER.info (String.format ("List of Declared Methods"));
 	for (final Method method : c.getDeclaredMethods ())
 	{
-	    System.out.printf ("* Method: %s %n", method);
+	    LOGGER.info (String.format ("* Method: %s", method));
 	}
-	System.out.printf ("%n");
 
-	System.out.printf ("Calling newInstance()%n");
+	// System.out.printf ("Calling newInstance()%n");
 	final Object instance = c.newInstance ();
-	System.out.printf ("=> Instance: %s %n", instance);
-	System.out.printf ("%n");
+	// System.out.printf ("=> Instance: %s %n", instance);
+	// System.out.printf ("%n");
 	checkNewInstance (c, instance);
 
 	final Class<?>[] types =
 	    {int.class};
 	final Constructor<?> con = c.getConstructor (types);
-	System.out.printf ("Calling newInstance(1)%n");
+	// System.out.printf ("Calling newInstance(1)%n");
 	final Object in2 = con.newInstance (1);
-	System.out.printf ("=> Instance: %s %n", in2);
+	// System.out.printf ("=> Instance: %s %n", in2);
 	checkNewInstance (c, in2);
     }
 

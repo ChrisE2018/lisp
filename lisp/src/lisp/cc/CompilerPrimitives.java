@@ -18,6 +18,16 @@ public class CompilerPrimitives extends Definer
     {
 	try
 	{
+	    // [TODO] If first form is a string it should be saved as documentation. The
+	    // FunctionCell should have a field to store documentation.
+	    // [TODO] Before the functionName we should require a return type. The package system
+	    // should mirror the java package system, so java.lang.Object would be an allowed type,
+	    // with abbreviation of Object allowed. The Symbol class should have a getClass method
+	    // that returns the corresponding Java type. Declarations associated with the function
+	    // definition should determine if a compiled call will strongly depend on the current
+	    // definition.
+	    // [TODO] Function calls should not create new argument arrays. Use exception handling
+	    // to detect the case where a function definition changes since it was compiled.
 	    final LispList body = new LispList ();
 	    for (final Object f : forms)
 	    {
