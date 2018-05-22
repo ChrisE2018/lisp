@@ -12,7 +12,6 @@ public class Parsing
     private static final char EXCLAMATION = '!';
     private static final char DOUBLE_QUOTE = '"';
     private static final char SINGLE_QUOTE = '\'';
-    // private static final char COLON = ':';
     private static final char COMMA = ',';
     private static final char OPEN_PAREN = '(';
     private static final char OPEN_BRACE = '{';
@@ -20,6 +19,8 @@ public class Parsing
     private static final char CLOSE_PAREN = ')';
     private static final char CLOSE_BRACE = '}';
     private static final char CLOSE_BRACKET = ']';
+
+    private static final char COLON = ':';
 
     /**
      * Map from list type to concrete class. Don't use angle brackets so they are available for
@@ -99,6 +100,7 @@ public class Parsing
 	    case CLOSE_BRACE:
 	    case CLOSE_BRACKET:
 	    case COMMA:
+	    case COLON:
 	    {
 		return false;
 	    }
@@ -117,16 +119,6 @@ public class Parsing
 	}
 	return null;
     }
-
-    // public char getMapClose ()
-    // {
-    // return '}';
-    // }
-    //
-    // public char getMapSeparator ()
-    // {
-    // return COLON;
-    // }
 
     public char getMapOpen ()
     {
@@ -178,6 +170,11 @@ public class Parsing
     public char getStringDelimiter ()
     {
 	return DOUBLE_QUOTE;
+    }
+
+    public char getTheMarker ()
+    {
+	return COLON;
     }
 
     @Override

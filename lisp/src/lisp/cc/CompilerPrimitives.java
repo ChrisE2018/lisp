@@ -36,6 +36,7 @@ public class CompilerPrimitives extends Definer
 	    {
 		body.add (f);
 	    }
+	    // [TODO] If functionName looks like (the <type> <name>) then declare a return type.
 	    LOGGER.info (String.format ("Compiling %s as %s", functionName, body));
 	    final Class<?> c = createCompiledFunction (functionName, args, body);
 	    LOGGER.info (String.format ("Compiled %s", functionName));

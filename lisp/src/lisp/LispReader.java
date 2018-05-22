@@ -47,10 +47,13 @@ public class LispReader
     private final List<Package> importedPackages = new ArrayList<Package> ();
     private Package currentPackage;
 
+    private final Symbol theSymbol;
+
     public LispReader ()
     {
 	importPackage (PackageFactory.getSystemPackage ());
 	currentPackage = PackageFactory.getDefaultPackage ();
+	theSymbol = PackageFactory.getSystemPackage ().internSymbol ("the");
     }
 
     public void importSymbol (final Symbol symbol)
@@ -143,7 +146,20 @@ public class LispReader
 	while (!in.peek (close))
 	{
 	    final Object element = read (in, pkg);
-	    result.add (element);
+	    parsing.skipBlanks (in);
+	    if (in.tryChar (parsing.getTheMarker ()))
+	    {
+		final Object e2 = read (in, pkg);
+		final LispList the = new LispList ();
+		the.add (theSymbol);
+		the.add (element);
+		the.add (e2);
+		result.add (the);
+	    }
+	    else
+	    {
+		result.add (element);
+	    }
 	    parsing.skipBlanks (in);
 	}
 	in.read ();
@@ -156,6 +172,7 @@ public class LispReader
 	final Parsing parsing = pkg.getParsing ();
 	final char close = result.getCloseChar ();
 	final char separator = parsing.getMapSeparator ();
+	final char theMarker = parsing.getTheMarker ();
 
 	LispList element = null;
 	while (true)
@@ -188,11 +205,23 @@ public class LispReader
 	    else
 	    {
 		final Object key = read (in, pkg);
+		parsing.skipBlanks (in);
 		if (element == null)
 		{
 		    element = new LispList ();
 		}
-		element.add (key);
+		if (in.tryChar (theMarker))
+		{
+		    final LispList the = new LispList ();
+		    the.add (theSymbol);
+		    the.add (key);
+		    the.add (read (in, pkg));
+		    element.add (the);
+		}
+		else
+		{
+		    element.add (key);
+		}
 	    }
 	}
     }
