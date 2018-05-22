@@ -63,9 +63,6 @@ public class CompilerPrimitives extends Definer
             throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException, IOException
     {
-	// Need to accept function arguments.
-	// [TODO] Need to handle nested forms
-	// [TODO] Constants like symbols need to be created in the compiled class <init> method.
 	final CompileLoader cl = new CompileLoader ();
 
 	final String methodName = symbol.gensym ().getName ();

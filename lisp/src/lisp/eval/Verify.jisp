@@ -79,6 +79,31 @@
 (define foo (x) (length x))
 (verify (foo "foobar") 6)
 
+(verify (* 3 4) 12)
+(verify (* 3.0 4) 12.0)
+(verify (* 3 4.0) 12.0)
+(verify (* 3.0 4.0) 12.0)
+
+(verify (not true) false)
+(verify (not false) true)
+(verify (not 1) false)
+(verify (null null) true)
+(verify (null 'foo) false)
+(verify (null 0) false)
+(verify (null (list)) false)
+
+(verify (sign 1) 1)
+(verify (sign -1) -1)
+(verify (sign 0) 0)
+(verify (sign 2) 1)
+(verify (sign -2) -1)
+
+(verify (sign 1.0) 1)
+(verify (sign -1.0) -1)
+(verify (sign 0.0) 0)
+(verify (sign 2.5) 1)
+(verify (sign -2.5) -1)
+
 (sleep 0.2)
 (printTestStatistics)
 

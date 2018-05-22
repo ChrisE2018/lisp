@@ -280,7 +280,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 
     private void compileFunctionCall (final MethodVisitor mv, final LispList e)
     {
-	// [TODO] Need to be able to compile a call to an undefined function (i.e. recursive call)
+	// Need to be able to compile a call to an undefined function (i.e. recursive call)
 	System.out.printf ("Compile nested form %s%n", e);
 	final Object head = e.get (0);
 	if (!(head instanceof Symbol))

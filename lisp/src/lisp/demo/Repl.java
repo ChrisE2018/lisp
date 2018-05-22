@@ -20,9 +20,6 @@ public class Repl
     {
 	try
 	{
-	    logManager.readConfiguration (Interactor.class.getResource ("logging.properties").openStream ());
-
-	    LOGGER.info ("Starting Repl");
 	    final Repl repl = new Repl (args);
 	    final LispStream stream = new LispStream (System.in);
 	    repl.toplevel (stream);
@@ -51,21 +48,26 @@ public class Repl
      */
     private Repl (final String[] args) throws Exception
     {
+	logManager.readConfiguration (Interactor.class.getResource ("loggingBootstrap.properties").openStream ());
 	// [TODO] Move argument processing into Interpreter class
 	interpreter = new Interpreter ();
-	for (int i = 1; i < args.length; i++)
+	for (int i = 1; i < args.length; i += 2)
 	{
 	    final String key = args[i - 1];
 	    final String value = args[i];
 	    // [TODO] --setq "var=form"
 	    // [TODO] --package pkg
-	    // [TODO] --log log4jconfiguration
 	    if (key.equals ("-l") || key.equals ("--load"))
 	    {
 		if (!interpreter.loadResource (value))
 		{
 		    interpreter.loadFile (value);
 		}
+	    }
+	    if (key.equals ("-g") || key.equals ("--log"))
+	    {
+		logManager.readConfiguration (Interactor.class.getResource (value).openStream ());
+		LOGGER.info ("Starting Repl");
 	    }
 	}
     }
