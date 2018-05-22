@@ -21,7 +21,6 @@ public class DefFunctionCell extends FunctionCell
 	this.name = name;
 	this.arglist = arglist;
 	this.body = body;
-	// [TODO] Partial or complete body compilation here.
     }
 
     @Override
@@ -44,8 +43,7 @@ public class DefFunctionCell extends FunctionCell
 	try
 	{
 	    // Bind arguments to arglist
-	    // [TODO] This is not thread safe because the global symbol value is visible.
-	    // Should use a hashmap type binding environment to keep global symbol value clean.
+	    // Context is a binding environment to keep global symbol value clean.
 	    // That requires changing the interpreter eval function to accept and use a binding
 	    // environment.
 	    for (int i = 0; i < arglist.size (); i++)
@@ -93,6 +91,8 @@ public class DefFunctionCell extends FunctionCell
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
+	buffer.append (" ");
+	buffer.append (System.identityHashCode (this));
 	buffer.append (" ");
 	buffer.append (name);
 	buffer.append (">");

@@ -340,8 +340,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitVarInsn (ALOAD, 0);
 	mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
 
-	// [TODO] The call to getFunction should be changed to call a smarter method that
-	// can return a special FunctionCell which invokes the java method on arg 1 instead.
+	// The call to getDefaultHandlerFunction will return a DefaultHandler that tries to invoke
+	// the java method on arg 1 if the function has not been given any other definition.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;", false);
 	// Compile the arguments
 	final int argCount = e.size () - 1;

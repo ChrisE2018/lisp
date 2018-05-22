@@ -3,6 +3,7 @@ package lisp.eval;
 
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.logging.Logger;
 
 import lisp.*;
 import lisp.Package;
@@ -16,6 +17,8 @@ import lisp.symbol.*;
  */
 public class Definer
 {
+    private static final Logger LOGGER = Logger.getLogger (Definer.class.getName ());
+
     /**
      * Keep track of Definer classes that have already been processed. Once a class has been
      * processed it will not be scanned again. This allows Definer classes to be instantiated more
@@ -55,7 +58,7 @@ public class Definer
 	if (!scannedDefiners.contains (objectClass))
 	{
 	    scannedDefiners.add (objectClass);
-	    System.out.printf ("Processing annotations for %s %n", object);
+	    LOGGER.info (String.format ("Processing annotations for %s", object));
 	    for (final Method method : objectClass.getDeclaredMethods ())
 	    {
 		if (method.isAnnotationPresent (DefineLisp.class))
@@ -81,7 +84,7 @@ public class Definer
 	    // Default if the annotation does not specify the name is to use the name of the method
 	    symbolName = method.getName ();
 	}
-	System.out.printf ("define %s as %s %n", symbolName, method);
+	LOGGER.info (String.format ("define %s as %s", symbolName, method));
 	// final Symbol symbol = external ? p.internPublic (symbolName) : p.internPublic
 	// (symbolName);
 	final Symbol symbol = p.internSymbol (symbolName);

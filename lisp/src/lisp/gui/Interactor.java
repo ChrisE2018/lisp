@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.logging.LogManager;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -54,6 +55,8 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
     // [done] Styles should have different fonts/styles
 
     // @see https://docs.oracle.com/javase/8/javafx/user-interface-tutorial/editor.htm
+
+    private static final LogManager logManager = LogManager.getLogManager ();
 
     // private static final MutableAttributeSet UNBOLD = new SimpleAttributeSet ();
     private static final MutableAttributeSet BOLD = new SimpleAttributeSet ();
@@ -144,6 +147,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 
     private void initArgs (final String[] args) throws Exception
     {
+	logManager.readConfiguration (getClass ().getResource ("logging.properties").openStream ());
 	for (int i = 1; i < args.length; i++)
 	{
 	    final String key = args[i - 1];

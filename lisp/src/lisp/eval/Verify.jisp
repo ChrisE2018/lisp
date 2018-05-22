@@ -81,3 +81,6 @@
 
 (sleep 0.2)
 (printTestStatistics)
+
+; And quit
+(exit)

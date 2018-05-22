@@ -1,19 +1,28 @@
 
 package lisp.demo;
 
+import java.util.logging.*;
+
 import lisp.*;
 import lisp.Package;
 import lisp.eval.*;
+import lisp.gui.Interactor;
 
 /** Simple toplevel loop that reads a lisp form, evaluates it and prints the result. */
 public class Repl
 {
+    private static final LogManager logManager = LogManager.getLogManager ();
+    private static final Logger LOGGER = Logger.getLogger (Repl.class.getName ());
+
     private final Interpreter interpreter;
 
     public static void main (final String[] args)
     {
 	try
 	{
+	    logManager.readConfiguration (Interactor.class.getResource ("logging.properties").openStream ());
+
+	    LOGGER.info ("Starting Repl");
 	    final Repl repl = new Repl (args);
 	    final LispStream stream = new LispStream (System.in);
 	    repl.toplevel (stream);

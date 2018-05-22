@@ -23,8 +23,6 @@ public class ListPrimitives extends Definer
 {
     // [TODO] Maps, sets,
     // [done] union, intersection, difference
-    // [TODO] Package creation, uses, export, import
-    // [TODO] File functions
 
     @DefineLisp
     public Object list (final Object... arguments)
