@@ -4,10 +4,9 @@ package lisp.demo;
 import lisp.*;
 import lisp.Package;
 import lisp.eval.*;
-import lisp.symbol.LispThread;
 
 /** Simple toplevel loop that reads a lisp form, evaluates it and prints the result. */
-public class Repl extends LispThread
+public class Repl
 {
     private final Interpreter interpreter;
 
@@ -16,7 +15,8 @@ public class Repl extends LispThread
 	try
 	{
 	    final Repl repl = new Repl (args);
-	    repl.start ();
+	    final LispStream stream = new LispStream (System.in);
+	    repl.toplevel (stream);
 	}
 	catch (final java.lang.reflect.InvocationTargetException e)
 	{
@@ -35,13 +35,6 @@ public class Repl extends LispThread
 	}
     }
 
-    @Override
-    public void run ()
-    {
-	final LispStream stream = new LispStream (System.in);
-	toplevel (stream);
-    }
-
     /**
      * Constructor for demo application.
      *
@@ -51,7 +44,6 @@ public class Repl extends LispThread
     {
 	// [TODO] Move argument processing into Interpreter class
 	interpreter = new Interpreter ();
-	// reader = new LispReader ();
 	for (int i = 1; i < args.length; i++)
 	{
 	    final String key = args[i - 1];
@@ -98,12 +90,13 @@ public class Repl extends LispThread
     private void rep (final LispStream stream, final int index) throws Exception
     {
 	final Package pkg = PackageFactory.getDefaultPackage ();
-	final Symbol e = pkg.internPrivate ("e" + index);
+	final Symbol e = pkg.internSymbol ("e" + index);
 	System.out.printf ("[%s] ", e);
 	Object form = null;
 	try
 	{
-	    form = LispThread.getLispThreadReader ().read (stream, pkg);
+	    final LispReader lispReader = LispReader.getLispThreadReader ();
+	    form = lispReader.read (stream, pkg);
 	}
 	catch (final Throwable ex)
 	{
@@ -131,9 +124,9 @@ public class Repl extends LispThread
 	final StringBuilder buffer = new StringBuilder ();
 	// buffer.append (form.toString ());
 	// System.out.println (buffer);
-	final Symbol v = pkg.internPrivate ("v" + index);
-	final Symbol t = pkg.internPrivate ("t" + index);
-	final Symbol repeat = pkg.internPrivate ("*repeat*");
+	final Symbol v = pkg.internSymbol ("v" + index);
+	final Symbol t = pkg.internSymbol ("t" + index);
+	final Symbol repeat = pkg.internSymbol ("*repeat*");
 	final int repeatCount = repeat.getIntValue (1);
 	System.out.printf ("[%s] ==> ", v);
 	final LexicalContext context = new LexicalContext (interpreter);
@@ -178,6 +171,8 @@ public class Repl extends LispThread
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
+	buffer.append (" ");
+	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
     }

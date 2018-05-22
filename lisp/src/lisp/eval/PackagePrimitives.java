@@ -12,7 +12,8 @@ public class PackagePrimitives extends Definer
     public Object inPackage (final Object pkg)
     {
 	final Package p = coercePackage (pkg, true);
-	PackageFactory.setDefaultPackage (p);
+	final LispReader lispReader = LispReader.getLispThreadReader ();
+	lispReader.setCurrentPackage (p);
 	return pkg;
     }
 
@@ -24,7 +25,8 @@ public class PackagePrimitives extends Definer
     @DefineLisp
     public Object getDefaultPackage ()
     {
-	return PackageFactory.getDefaultPackage ();
+	final LispReader lispReader = LispReader.getLispThreadReader ();
+	return lispReader.getCurrentPackage ();
     }
 
     /**
@@ -38,23 +40,23 @@ public class PackagePrimitives extends Definer
 	return PackageFactory.getSystemPackage ();
     }
 
-    @DefineLisp
-    public Object getParentPackages (final Object pkg)
-    {
-	final Package p = coercePackage (pkg, true);
-	final LispList result = new LispList ();
-	result.addAll (p.getParents ());
-	return result;
-    }
+    // @DefineLisp
+    // public Object getParentPackages (final Object pkg)
+    // {
+    // final Package p = coercePackage (pkg, true);
+    // final LispList result = new LispList ();
+    // result.addAll (p.getParents ());
+    // return result;
+    // }
 
-    @DefineLisp
-    public Object getChildPackages (final Object pkg)
-    {
-	final Package p = coercePackage (pkg, true);
-	final LispList result = new LispList ();
-	result.addAll (p.getChildren ());
-	return result;
-    }
+    // @DefineLisp
+    // public Object getChildPackages (final Object pkg)
+    // {
+    // final Package p = coercePackage (pkg, true);
+    // final LispList result = new LispList ();
+    // result.addAll (p.getChildren ());
+    // return result;
+    // }
 
     // Symbols
 
@@ -115,14 +117,14 @@ public class PackagePrimitives extends Definer
 	final LispList result = new LispList ();
 	for (final Package pkg : PackageFactory.getPackageMap ().values ())
 	{
-	    for (final Symbol symbol : pkg.getPublicSymbols ())
+	    for (final Symbol symbol : pkg.getPackageSymbols ())
 	    {
 		result.add (symbol);
 	    }
-	    for (final Symbol symbol : pkg.getPrivateSymbols ())
-	    {
-		result.add (symbol);
-	    }
+	    // for (final Symbol symbol : pkg.getPrivateSymbols ())
+	    // {
+	    // result.add (symbol);
+	    // }
 	}
 	return result;
     }
@@ -131,14 +133,14 @@ public class PackagePrimitives extends Definer
     public Object getAllSymbols (final Package pkg)
     {
 	final LispList result = new LispList ();
-	for (final Symbol symbol : pkg.getPublicSymbols ())
+	for (final Symbol symbol : pkg.getPackageSymbols ())
 	{
 	    result.add (symbol);
 	}
-	for (final Symbol symbol : pkg.getPrivateSymbols ())
-	{
-	    result.add (symbol);
-	}
+	// for (final Symbol symbol : pkg.getPrivateSymbols ())
+	// {
+	// result.add (symbol);
+	// }
 	return result;
     }
 
@@ -148,20 +150,20 @@ public class PackagePrimitives extends Definer
 	final LispList result = new LispList ();
 	for (final Package pkg : PackageFactory.getPackageMap ().values ())
 	{
-	    for (final Symbol symbol : pkg.getPublicSymbols ())
+	    for (final Symbol symbol : pkg.getPackageSymbols ())
 	    {
 		if (symbol.getFunction () != null)
 		{
 		    result.add (symbol);
 		}
 	    }
-	    for (final Symbol symbol : pkg.getPrivateSymbols ())
-	    {
-		if (symbol.getFunction () != null)
-		{
-		    result.add (symbol);
-		}
-	    }
+	    // for (final Symbol symbol : pkg.getPrivateSymbols ())
+	    // {
+	    // if (symbol.getFunction () != null)
+	    // {
+	    // result.add (symbol);
+	    // }
+	    // }
 	}
 	return result;
     }
@@ -172,7 +174,7 @@ public class PackagePrimitives extends Definer
 	final LispList result = new LispList ();
 	for (final Package pkg : PackageFactory.getPackageMap ().values ())
 	{
-	    for (final Symbol symbol : pkg.getPublicSymbols ())
+	    for (final Symbol symbol : pkg.getPackageSymbols ())
 	    {
 		final FunctionCell fc = symbol.getFunction ();
 		if (fc != null && fc instanceof SpecialFunctionCell)
@@ -180,14 +182,14 @@ public class PackagePrimitives extends Definer
 		    result.add (symbol);
 		}
 	    }
-	    for (final Symbol symbol : pkg.getPrivateSymbols ())
-	    {
-		final FunctionCell fc = symbol.getFunction ();
-		if (fc != null && fc instanceof SpecialFunctionCell)
-		{
-		    result.add (symbol);
-		}
-	    }
+	    // for (final Symbol symbol : pkg.getPrivateSymbols ())
+	    // {
+	    // final FunctionCell fc = symbol.getFunction ();
+	    // if (fc != null && fc instanceof SpecialFunctionCell)
+	    // {
+	    // result.add (symbol);
+	    // }
+	    // }
 	}
 	return result;
     }
@@ -195,7 +197,7 @@ public class PackagePrimitives extends Definer
     @DefineLisp
     public LispReader getLispReader ()
     {
-	return LispThread.getLispThreadReader ();
+	return LispReader.getLispThreadReader ();
     }
 
     @Override
@@ -204,6 +206,8 @@ public class PackagePrimitives extends Definer
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
+	buffer.append (" ");
+	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
     }

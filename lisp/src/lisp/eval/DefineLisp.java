@@ -12,7 +12,7 @@ public @interface DefineLisp
 
     String name () default "";
 
-    boolean external () default true;
+    // boolean external () default true;
 
     boolean special () default false;
 

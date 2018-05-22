@@ -72,7 +72,7 @@ public class Definer
 	final DefineLisp a = method.getAnnotation (DefineLisp.class);
 	final String packageName = a.packageName ();
 	final Package p = PackageFactory.getPackage (packageName);
-	final boolean external = a.external ();
+	// final boolean external = a.external ();
 	final boolean special = a.special ();
 	final boolean macro = a.macro ();
 	String symbolName = a.name ();
@@ -82,7 +82,9 @@ public class Definer
 	    symbolName = method.getName ();
 	}
 	System.out.printf ("define %s as %s %n", symbolName, method);
-	final Symbol symbol = external ? p.internPublic (symbolName) : p.internPrivate (symbolName);
+	// final Symbol symbol = external ? p.internPublic (symbolName) : p.internPublic
+	// (symbolName);
+	final Symbol symbol = p.internSymbol (symbolName);
 	FunctionCell function = symbol.getFunction ();
 	// Overloading requires adding the method to an existing function cell
 	if (function != null)

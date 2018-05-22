@@ -3,6 +3,7 @@ package lisp.cc;
 
 import java.io.IOException;
 import java.lang.reflect.*;
+import java.util.logging.Logger;
 
 import lisp.*;
 import lisp.eval.*;
@@ -10,6 +11,8 @@ import lisp.symbol.*;
 
 public class CompilerPrimitives extends Definer
 {
+    private static final Logger LOGGER = Logger.getLogger (CompilerPrimitives.class.getName ());
+
     // (define foo (x) alpha)
     // (define foo (a b) (+ 3 4))
     @DefineLisp (special = true, name = "define")
@@ -33,15 +36,15 @@ public class CompilerPrimitives extends Definer
 	    {
 		body.add (f);
 	    }
-	    System.out.printf ("Compiling %s as %s %n", functionName, body);
+	    LOGGER.info (String.format ("Compiling %s as %s", functionName, body));
 	    final Class<?> c = createCompiledFunction (functionName, args, body);
-	    System.out.printf ("Compiled %s %n", functionName);
-	    System.out.printf ("List of Declared Methods%n");
+	    LOGGER.info (String.format ("Compiled %s", functionName));
+	    LOGGER.info (String.format ("List of Declared Methods"));
 	    for (final Method method : c.getDeclaredMethods ())
 	    {
-		System.out.printf ("* Method: %s %n", method);
+		LOGGER.info (String.format ("* Method: %s", method));
 	    }
-	    System.out.printf ("%n");
+	    LOGGER.info ("");
 	}
 	catch (final Exception e)
 	{
@@ -75,7 +78,7 @@ public class CompilerPrimitives extends Definer
 	final Class<?>[] types =
 	    {int.class};
 	final Constructor<?> con = cls.getConstructor (types);
-	System.out.printf ("Calling newInstance(1)%n");
+	// System.out.printf ("Calling newInstance(1)%n");
 	final Object instance = con.newInstance (1);
 
 	final Method method = cls.getDeclaredMethod (methodName, parameterTypes);
@@ -224,6 +227,8 @@ public class CompilerPrimitives extends Definer
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
+	buffer.append (" ");
+	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
     }

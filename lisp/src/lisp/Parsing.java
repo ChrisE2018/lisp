@@ -35,8 +35,8 @@ public class Parsing
 
     private static final Object[][] WRAPPER_SYMBOLS =
 	{
-	 {SINGLE_QUOTE, SYSTEM_PACKAGE.internPublic ("quote")},
-	 {EXCLAMATION, SYSTEM_PACKAGE.internPublic ("not")}};
+	 {SINGLE_QUOTE, SYSTEM_PACKAGE.internSymbol ("quote")},
+	 {EXCLAMATION, SYSTEM_PACKAGE.internSymbol ("not")}};
 
     private static Parsing DEFAULT_PARSING = null;
 

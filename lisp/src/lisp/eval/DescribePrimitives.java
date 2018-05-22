@@ -54,7 +54,7 @@ public class DescribePrimitives extends Definer
 	    final String key = entry.getKey ();
 	    final Object value = entry.getValue ();
 	    final String doc = d.getDescriberDocumentation (arg, key);
-	    final Symbol symbol = pkg.internPrivate (String.format ("d%d", index));
+	    final Symbol symbol = pkg.internSymbol (String.format ("d%d", index));
 	    symbol.setValue (value);
 	    if (doc != null)
 	    {
@@ -74,6 +74,8 @@ public class DescribePrimitives extends Definer
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
+	buffer.append (" ");
+	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
     }

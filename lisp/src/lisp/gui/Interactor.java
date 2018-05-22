@@ -16,7 +16,6 @@ import javax.swing.text.*;
 import lisp.*;
 import lisp.Package;
 import lisp.eval.*;
-import lisp.symbol.LispThread;
 
 /**
  * Swing window for lisp interactions.
@@ -96,7 +95,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
     private final LispReader reader;
 
     private final Interpreter interpreter;
-    private final Thread thread = new LispThread (this);
+    private final Thread thread = new Thread (this);
     private final Queue<Object> queue = new ConcurrentLinkedDeque<Object> ();
 
     private final PrintStream out = System.out;
@@ -189,7 +188,8 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
     private void addMenubar (final JFrame frame)
     {
 	final JMenuBar menubar = new JMenuBar ();
-	final List<Object> menus = (List<Object>)Symbol.value ("user:::*menus*", new LispList ());
+	final Symbol menuSymbol = PackageFactory.getSystemPackage ().internSymbol ("*menus*");
+	final List<Object> menus = (List<Object>)menuSymbol.getValue (new LispList ());
 	for (final Object ms : menus)
 	{
 	    final List<Object> menuSpec = (List<Object>)ms;
@@ -290,7 +290,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	    try
 	    {
 		final Package pkg = PackageFactory.getDefaultPackage ();
-		final Symbol exprSymbol = pkg.internPrivate ("e").gensym ();
+		final Symbol exprSymbol = pkg.internSymbol ("e").gensym ();
 		final int startPos = doc.getLength ();
 		log (promptStyle, "[%s]", exprSymbol);
 		final int endPos = doc.getLength ();
@@ -326,7 +326,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 		    }
 		    else
 		    {
-			final Symbol valueSymbol = pkg.internPrivate ("v").gensym ();
+			final Symbol valueSymbol = pkg.internSymbol ("v").gensym ();
 			final String valueText = value.toString ();
 			// [TODO] Scan the valueText for format markup and hyperlinks.
 			final int p1 = doc.getLength ();
@@ -442,6 +442,8 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
+	buffer.append (" ");
+	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
     }

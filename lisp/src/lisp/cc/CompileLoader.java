@@ -171,10 +171,10 @@ public class CompileLoader extends ClassLoader
 	try
 	{
 	    final lisp.Package pkg = PackageFactory.getDefaultPackage ();
-	    final Symbol aSymbol = pkg.internPublic ("a");
-	    final Symbol bSymbol = pkg.internPublic ("b");
-	    final Symbol cSymbol = pkg.internPublic ("c");
-	    final Symbol s = pkg.internPublic ("lispfoo");
+	    final Symbol aSymbol = pkg.internSymbol ("a");
+	    final Symbol bSymbol = pkg.internSymbol ("b");
+	    final Symbol cSymbol = pkg.internSymbol ("c");
+	    final Symbol s = pkg.internSymbol ("lispfoo");
 	    s.setValue ("my symbol value");
 	    // s.setValue (new Integer (1234));
 	    final CompileLoader cl = new CompileLoader ();

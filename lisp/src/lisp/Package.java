@@ -3,6 +3,7 @@ package lisp;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 /**
  * Packages contain symbols and help the reader function. Symbols can be internal (private) or
@@ -13,48 +14,19 @@ import java.util.Map.Entry;
  */
 public class Package implements Describer
 {
+    private static final Logger LOGGER = Logger.getLogger (Package.class.getName ());
     private static final String PARSING_VARIABLE = "*parser*";
-
-    private static int PACKAGE_ID = 0;
-
-    private final int packageId = ++PACKAGE_ID;
-
-    /** External symbols in parent packages are inherited. */
-    private final Set<Package> parentPackages = new LinkedHashSet<Package> ();
-
-    /** External symbols will be inherited by children. */
-    private final Set<Package> childPackages = new LinkedHashSet<Package> ();
 
     /** Name of this package. */
     private final String packageName;
 
-    /** Private symbols interned into this package locally. */
-    private final Map<String, Symbol> privateSymbols = new HashMap<String, Symbol> ();
-
-    /** Public symbols interned into this package locally. */
-    private final Map<String, Symbol> publicSymbols = new HashMap<String, Symbol> ();
+    /** Public symbols interned into this package. */
+    private final Map<String, Symbol> packageSymbols = new HashMap<String, Symbol> ();
 
     public Package (final String name)
     {
 	packageName = name;
-	// [TODO] Use a logger
-	System.out.printf ("Creating Package %s\n", this);
-    }
-
-    public void usePackage (final Package parentPackage)
-    {
-	parentPackages.add (parentPackage);
-	parentPackage.childPackages.add (this);
-    }
-
-    public Set<Package> getParents ()
-    {
-	return parentPackages;
-    }
-
-    public Set<Package> getChildren ()
-    {
-	return childPackages;
+	LOGGER.info ("Creating Package " + name);
     }
 
     /** Name of this package. */
@@ -64,108 +36,37 @@ public class Package implements Describer
     }
 
     /**
-     * Lookup a public symbol locally or by inheritance but do not create the symbol if it is not
-     * already present.
+     * Lookup a package symbol but do not create the symbol if it is not already present.
      */
-    public Symbol findPublic (final String name)
+    public Symbol findSymbol (final String name)
     {
-	Symbol result = publicSymbols.get (name);
-	if (result == null)
-	{
-	    for (final Package parent : parentPackages)
-	    {
-		result = parent.findPublic (name);
-		if (result != null)
-		{
-		    return result;
-		}
-	    }
-	}
+	final Symbol result = packageSymbols.get (name);
 	return result;
     }
 
     /**
-     * Lookup a public or private symbol locally. Do not create the symbol if it is not already
-     * present.
+     * Lookup a symbol from this package. If not found, create it.
      */
-    public Symbol findPrivate (final String name)
+    public Symbol internSymbol (final String name)
     {
-	Symbol result = publicSymbols.get (name);
-	if (result == null)
-	{
-	    result = privateSymbols.get (name);
-	    if (result == null)
-	    {
-		for (final Package parent : parentPackages)
-		{
-		    result = parent.findPublic (name);
-		    if (result != null)
-		    {
-			return result;
-		    }
-		}
-	    }
-	}
-	return result;
-    }
-
-    /**
-     * Lookup a symbol from this package or parent packages (by inheritance). If not found, create
-     * it locally.
-     */
-    public Symbol internPrivate (final String name)
-    {
-	Symbol result = findPrivate (name);
+	Symbol result = findSymbol (name);
 	if (result == null)
 	{
 	    result = new Symbol (this, name);
-	    privateSymbols.put (name, result);
+	    packageSymbols.put (name, result);
 	}
 	return result;
     }
 
-    /**
-     * Lookup a public symbol from this package or parent packages (by inheritance). If not found,
-     * create it locally and make it public.
-     */
-    public Symbol internPublic (final String name)
+    public Collection<Symbol> getPackageSymbols ()
     {
-	Symbol result = findPublic (name);
-	if (result == null)
-	{
-	    result = privateSymbols.get (name);
-	    if (result != null)
-	    {
-		privateSymbols.remove (name);
-	    }
-	    else
-	    {
-		result = new Symbol (this, name);
-	    }
-	    publicSymbols.put (name, result);
-	}
-	return result;
-    }
-
-    public Object isPublic (final Symbol symbol)
-    {
-	return publicSymbols.values ().contains (symbol);
-    }
-
-    public Collection<Symbol> getPublicSymbols ()
-    {
-	return publicSymbols.values ();
-    }
-
-    public Collection<Symbol> getPrivateSymbols ()
-    {
-	return privateSymbols.values ();
+	return packageSymbols.values ();
     }
 
     /** Control over parsing syntax is collected into a Parsing object. */
     public Parsing getParsing ()
     {
-	final Symbol symbol = findPublic (PARSING_VARIABLE);
+	final Symbol symbol = findSymbol (PARSING_VARIABLE);
 	if (symbol != null)
 	{
 	    final Object value = symbol.getValue ();
@@ -192,17 +93,7 @@ public class Package implements Describer
 	buffer.append (" ");
 	buffer.append (packageName);
 	buffer.append (" ");
-	buffer.append (packageId);
-	// for (final Package parent : parentPackages)
-	// {
-	// buffer.append (" parent: ");
-	// buffer.append (parent.packageName);
-	// }
-	// for (final Package child : childPackages)
-	// {
-	// buffer.append (" child: ");
-	// buffer.append (child.packageName);
-	// }
+	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
     }
@@ -211,23 +102,7 @@ public class Package implements Describer
     public Map<String, Object> getDescriberValues (final Object target)
     {
 	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
-	result.put ("Id", packageId);
-	int parentCount = 0;
-	for (final Package parent : parentPackages)
-	{
-	    result.put ("Parent" + parentCount, parent);
-	    parentCount++;
-	}
-	int childCount = 0;
-	for (final Package child : childPackages)
-	{
-	    result.put ("Child" + childCount, child);
-	    childCount++;
-	}
-	// result.put ("Public", publicSymbols.size ());
-	getSymbolDescriptions (result, publicSymbols, "Public", 5);
-	// result.put ("Private", privateSymbols.size ());
-	getSymbolDescriptions (result, privateSymbols, "Private", 5);
+	getSymbolDescriptions (result, packageSymbols, "Public", 5);
 	return result;
     }
 

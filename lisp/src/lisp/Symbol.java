@@ -1,7 +1,6 @@
 
 package lisp;
 
-import java.io.IOException;
 import java.util.*;
 
 import javax.lang.model.type.NullType;
@@ -15,7 +14,7 @@ public class Symbol implements Describer
     private static final char QUESTION_MARK = '?';
 
     /** Character to separate a package prefix from a symbol name. */
-    public static final char PACKAGE_SEPARATOR = ':';
+    public static final char PACKAGE_SEPARATOR = '.';
 
     /** The package containing this symbol. It may be public (external) or private (internal). */
     private final Package symbolPackage;
@@ -294,10 +293,10 @@ public class Symbol implements Describer
 	{
 	    buffer.append (i);
 	    final String name = buffer.toString ();
-	    final Symbol oldSymbol = symbolPackage.findPrivate (name);
+	    final Symbol oldSymbol = symbolPackage.findSymbol (name);
 	    if (oldSymbol == null)
 	    {
-		return symbolPackage.internPrivate (name);
+		return symbolPackage.internSymbol (name);
 	    }
 	    buffer.setLength (length);
 	}
@@ -339,7 +338,8 @@ public class Symbol implements Describer
     {
 	if (symbolPackage != null && symbolPackage != PackageFactory.getDefaultPackage ())
 	{
-	    if (symbolPackage.findPublic (symbolName) != this)
+	    final LispReader lispReader = LispReader.getLispThreadReader ();
+	    if (lispReader == null || lispReader.findImportedSymbol (symbolName) != this)
 	    {
 		buffer.append (symbolPackage.getName ());
 		buffer.append (PACKAGE_SEPARATOR);
@@ -361,7 +361,7 @@ public class Symbol implements Describer
     {
 	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
 	result.put ("Package", symbolPackage);
-	result.put ("Public", symbolPackage.isPublic (this));
+	// result.put ("Public", symbolPackage.isPublic (this));
 	if (symbolValue != null)
 	{
 	    result.put ("Value", symbolValue);
@@ -385,17 +385,10 @@ public class Symbol implements Describer
      */
     public static Object value (final String name)
     {
-	try
-	{
-	    final LispReader lispReader = new LispReader ();
-	    final Package p = PackageFactory.getDefaultPackage ();
-	    final Symbol symbol = lispReader.readSymbol (p, name);
-	    return symbol.getValue ();
-	}
-	catch (final IOException e)
-	{
-	    return null;
-	}
+	final LispReader lispReader = new LispReader ();
+	final Package p = PackageFactory.getDefaultPackage ();
+	final Symbol symbol = lispReader.readSymbol (p, name);
+	return symbol.getValue ();
     }
 
     /**
@@ -404,16 +397,9 @@ public class Symbol implements Describer
      */
     public static Object value (final String name, final Object defaultValue)
     {
-	try
-	{
-	    final LispReader lispReader = new LispReader ();
-	    final Package p = PackageFactory.getDefaultPackage ();
-	    final Symbol symbol = lispReader.readSymbol (p, name);
-	    return symbol.getValue (defaultValue);
-	}
-	catch (final IOException e)
-	{
-	    return defaultValue;
-	}
+	final LispReader lispReader = new LispReader ();
+	final Package p = PackageFactory.getDefaultPackage ();
+	final Symbol symbol = lispReader.readSymbol (p, name);
+	return symbol.getValue (defaultValue);
     }
 }

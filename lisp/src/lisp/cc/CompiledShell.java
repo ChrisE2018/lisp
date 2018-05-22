@@ -19,7 +19,7 @@ public class CompiledShell
     @SuppressWarnings ("unused")
     private Symbol getPublicSymbol (final String packageName, final String symbolName)
     {
-	return PackageFactory.getPackage (packageName).findPrivate (symbolName);
+	return PackageFactory.getPackage (packageName).findSymbol (symbolName);
     }
 
     @SuppressWarnings ("unused")

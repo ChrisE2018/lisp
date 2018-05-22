@@ -2,6 +2,7 @@
 package lisp;
 
 import java.io.IOException;
+import java.util.*;
 
 /**
  * Read list structure from source text.
@@ -10,6 +11,86 @@ import java.io.IOException;
  */
 public class LispReader
 {
+    private static Map<Thread, LispReader> threadReaders = new HashMap<Thread, LispReader> ();
+    private static final LispReader defaultLispReader = new LispReader ();
+
+    public static LispReader getLispThreadReader ()
+    {
+	final Thread thread = Thread.currentThread ();
+	LispReader result = threadReaders.get (thread);
+	if (result == null)
+	{
+	    result = defaultLispReader;
+	}
+	return result;
+    }
+
+    public static Object withLispThreadReader (final LispReader lispReader, final ThrowingSupplier<Object> supplier)
+            throws Exception
+    {
+	Object result = null;
+	final Thread thread = Thread.currentThread ();
+	final LispReader oldReader = threadReaders.get (thread);
+	try
+	{
+	    threadReaders.put (thread, lispReader);
+	    result = supplier.get ();
+	}
+	finally
+	{
+	    threadReaders.put (thread, oldReader);
+	}
+	return result;
+    }
+
+    private final List<Symbol> importedSymbols = new ArrayList<Symbol> ();
+    private final List<Package> importedPackages = new ArrayList<Package> ();
+    private Package currentPackage;
+
+    public LispReader ()
+    {
+	importPackage (PackageFactory.getSystemPackage ());
+	currentPackage = PackageFactory.getDefaultPackage ();
+    }
+
+    public void importSymbol (final Symbol symbol)
+    {
+	if (!importedSymbols.contains (symbol))
+	{
+	    importedSymbols.add (symbol);
+	}
+    }
+
+    public void importPackage (final Package pkg)
+    {
+	if (!importedPackages.contains (pkg))
+	{
+	    importedPackages.add (pkg);
+	}
+    }
+
+    public Package getCurrentPackage ()
+    {
+	return currentPackage;
+    }
+
+    public void setCurrentPackage (final Package currentPackage)
+    {
+	this.currentPackage = currentPackage;
+    }
+
+    /**
+     * Read a single form from the input stream using the current package.
+     *
+     * @param in The input stream.
+     * @return The form read.
+     * @throws IOException
+     */
+    public Object read (final LispStream in) throws IOException
+    {
+	return read (in, currentPackage);
+    }
+
     /**
      * Read a single form from the input stream.
      *
@@ -17,7 +98,6 @@ public class LispReader
      * @param pkg The default package for symbols.
      * @return The form read.
      * @throws IOException
-     * @throws Exception
      */
     public Object read (final LispStream in, final Package pkg) throws IOException
     {
@@ -175,40 +255,46 @@ public class LispReader
 	return readSymbol (pkg, s);
     }
 
-    public Symbol readSymbol (final Package pkg, final String s) throws IOException
+    public Symbol readSymbol (final Package pkg, final String name)
     {
-	final int pos = s.indexOf (Symbol.PACKAGE_SEPARATOR);
+	final int pos = name.indexOf (Symbol.PACKAGE_SEPARATOR);
 	if (pos >= 0)
 	{
 	    // Process package prefix
-	    final String packageName = s.substring (0, pos);
+	    final String packageName = name.substring (0, pos);
 	    final Package p = PackageFactory.getPackage (packageName);
-	    if (s.charAt (pos + 1) == Symbol.PACKAGE_SEPARATOR)
+
+	    final String symbolName = name.substring (pos + 1);
+	    final Symbol result = p.internSymbol (symbolName);
+	    return result;
+	}
+	final Symbol result = findImportedSymbol (name);
+	if (result != null)
+	{
+	    return result;
+	}
+	return pkg.internSymbol (name);
+    }
+
+    /** Lookup a name to determine if it represents an imported symbol. */
+    public Symbol findImportedSymbol (final String name)
+    {
+	for (final Symbol symbol : importedSymbols)
+	{
+	    if (symbol.is (name))
 	    {
-		if (s.charAt (pos + 2) == Symbol.PACKAGE_SEPARATOR)
-		{
-		    // Lookup public external symbol, creating it if needed.
-		    final String symbolName = s.substring (pos + 3);
-		    return p.internPublic (symbolName);
-		}
-		// Lookup private internal symbol, creating it if needed.
-		final String symbolName = s.substring (pos + 2);
-		return p.internPrivate (symbolName);
+		return symbol;
 	    }
-	    else
+	}
+	for (final Package p : importedPackages)
+	{
+	    final Symbol result = p.findSymbol (name);
+	    if (result != null)
 	    {
-		// Lookup public external symbol. Don't create the symbol if it does not already
-		// exist.
-		final String symbolName = s.substring (pos + 1);
-		final Symbol result = p.findPublic (symbolName);
-		if (result == null)
-		{
-		    throw new IOException ("Package " + packageName + " has no public symbol " + symbolName);
-		}
 		return result;
 	    }
 	}
-	return pkg.internPrivate (s);
+	return null;
     }
 
     @Override
@@ -217,6 +303,13 @@ public class LispReader
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
+
+	buffer.append (" ");
+	buffer.append (System.identityHashCode (this));
+
+	buffer.append (" ");
+	buffer.append (currentPackage);
+
 	buffer.append (">");
 	return buffer.toString ();
     }

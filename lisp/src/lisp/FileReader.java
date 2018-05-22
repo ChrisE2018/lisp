@@ -3,18 +3,14 @@ package lisp;
 
 import java.io.*;
 import java.net.URL;
+import java.util.logging.Logger;
 
-import lisp.eval.*;
+import lisp.eval.LexicalContext;
 
 /** Class to read a lisp file and evaluate the forms in the file. */
 public class FileReader
 {
-    private boolean trace = false;
-
-    public void setTrace (final boolean trace)
-    {
-	this.trace = trace;
-    }
+    private static final Logger LOGGER = Logger.getLogger (FileReader.class.getName ());
 
     // [TODO] All of these should return boolean true if the file is loaded, false if not found or
     // otherwise not loaded.
@@ -23,15 +19,15 @@ public class FileReader
 	return read (context, pkg, new File (pathname));
     }
 
-    public Object read (final LexicalContext context, final String pathname) throws Exception
-    {
-	return read (context, new File (pathname));
-    }
+    // public Object read (final LexicalContext context, final String pathname) throws Exception
+    // {
+    // return read (context, new File (pathname));
+    // }
 
-    public Object read (final LexicalContext context, final File file) throws Exception
-    {
-	return read (context, PackageFactory.getDefaultPackage (), file);
-    }
+    // public Object read (final LexicalContext context, final File file) throws Exception
+    // {
+    // return read (context, PackageFactory.getDefaultPackage (), file);
+    // }
 
     public Object read (final LexicalContext context, final URL url) throws Exception
     {
@@ -71,27 +67,35 @@ public class FileReader
 
     public Object read (final LexicalContext context, final Package pkg, final LispStream stream) throws Exception
     {
-	Object result = null;
-	try
+	final Object result = null;
+	// [TODO] This LispReader must be stored in the LispThread
+	final LispReader reader = new LispReader ();
+	reader.setCurrentPackage (pkg);
+	LispReader.withLispThreadReader (reader, new ThrowingSupplier<Object> ()
 	{
-	    final LispReader reader = new LispReader ();
-	    while (!stream.eof ())
+	    @Override
+	    public Object get () throws Exception
 	    {
-		final Object form = reader.read (stream, pkg);
-		if (form != null)
+		Object supplierResult = null;
+		try
 		{
-		    result = context.eval (form);
-		    if (trace)
+		    while (!stream.eof ())
 		    {
-			System.out.printf ("%s => %s %n", form, result);
+			final Object form = reader.read (stream);
+			if (form != null)
+			{
+			    supplierResult = context.eval (form);
+			    LOGGER.info (String.format ("%s => %s", form, supplierResult));
+			}
 		    }
 		}
+		finally
+		{
+		    stream.close ();
+		}
+		return supplierResult;
 	    }
-	}
-	finally
-	{
-	    stream.close ();
-	}
+	});
 	return result;
     }
 
@@ -105,16 +109,16 @@ public class FileReader
 	return buffer.toString ();
     }
 
-    public static void main (final String[] args) throws Exception
-    {
-	// Primitives.initialize ();
-	final Interpreter interpreter = new Interpreter ();
-	final LexicalContext context = new LexicalContext (interpreter);
-	final FileReader fr = new FileReader ();
-	final File file = new File ("sample.lisp");
-	System.out.printf ("File: %s %n", file);
-	System.out.printf ("Package: %s %n", PackageFactory.getDefaultPackage ());
-	final Object result = fr.read (context, file);
-	System.out.printf ("Result: %s %n", result);
-    }
+    // public static void main (final String[] args) throws Exception
+    // {
+    // // Primitives.initialize ();
+    // final Interpreter interpreter = new Interpreter ();
+    // final LexicalContext context = new LexicalContext (interpreter);
+    // final FileReader fr = new FileReader ();
+    // final File file = new File ("sample.lisp");
+    // System.out.printf ("File: %s %n", file);
+    // System.out.printf ("Package: %s %n", PackageFactory.getDefaultPackage ());
+    // final Object result = fr.read (context, file);
+    // System.out.printf ("Result: %s %n", result);
+    // }
 }

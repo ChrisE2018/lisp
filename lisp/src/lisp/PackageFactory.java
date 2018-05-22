@@ -2,10 +2,11 @@
 package lisp;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 public class PackageFactory
 {
-    private static final String GLOBAL_PACKAGE_NAME = "global";
+    private static final Logger LOGGER = Logger.getLogger (PackageFactory.class.getName ());
     private static final String DEFAULT_PACKAGE_NAME = "user";
     private static final String SYSTEM_PACKAGE_NAME = "system";
 
@@ -13,22 +14,14 @@ public class PackageFactory
 
     /** Names of packages to create initially. */
     private static final String[] INITIAL_PACKAGES =
-	{GLOBAL_PACKAGE_NAME, SYSTEM_PACKAGE_NAME, DEFAULT_PACKAGE_NAME};
-
-    /**
-     * Package use linking. Each entry is the packageName followed by the names of packages it uses.
-     */
-    private static final String[][] PACKAGE_USES =
-	{
-	 {SYSTEM_PACKAGE_NAME, GLOBAL_PACKAGE_NAME},
-	 {DEFAULT_PACKAGE_NAME, GLOBAL_PACKAGE_NAME, SYSTEM_PACKAGE_NAME}};
+	{SYSTEM_PACKAGE_NAME, DEFAULT_PACKAGE_NAME};
 
     /**
      * Predefined constant values. Each entry is packageName, (symbolName, symbolValue)*
      */
     private static final Object[][] CONSTANT_SYMBOLS =
 	{
-	 {GLOBAL_PACKAGE_NAME, "true", Boolean.TRUE, "false", Boolean.FALSE, "null", null}};
+	 {SYSTEM_PACKAGE_NAME, "true", Boolean.TRUE, "false", Boolean.FALSE, "null", null}};
 
     /** Map from package name to package object for all packages that exist. */
     private static final Map<String, Package> packages = new HashMap<String, Package> ();
@@ -50,24 +43,12 @@ public class PackageFactory
     {
 	if (!initializedp)
 	{
-	    // [TODO] Use a logger
-	    System.out.printf ("Initializing PackageFactory\n");
+	    LOGGER.info ("Initializing PackageFactory");
 	    initializedp = true;
 	    for (final String packageName : INITIAL_PACKAGES)
 	    {
 		final Package pkg = new Package (packageName);
 		packages.put (packageName, pkg);
-	    }
-	    for (final String[] p : PACKAGE_USES)
-	    {
-		final String packageName = p[0];
-		final Package pkg = getPackage (packageName);
-		for (int i = 1; i < p.length; i++)
-		{
-		    final String usedPackageName = p[i];
-		    final Package usedPackage = getPackage (usedPackageName);
-		    pkg.usePackage (usedPackage);
-		}
 	    }
 	    defaultPackage = getPackage (DEFAULT_PACKAGE_NAME);
 	    for (final Object[] constantDefinition : CONSTANT_SYMBOLS)
@@ -78,7 +59,7 @@ public class PackageFactory
 		{
 		    final String symbolName = (String)constantDefinition[i];
 		    final Object value = constantDefinition[i + 1];
-		    final Symbol symbol = pkg.internPublic (symbolName);
+		    final Symbol symbol = pkg.internSymbol (symbolName);
 		    symbol.setValue (value);
 		    symbol.setConstantValue (true);
 		}

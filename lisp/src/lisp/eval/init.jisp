@@ -1,5 +1,6 @@
 ;; Default initialization file
 
+
 (new "lisp.eval.ArithmeticPrimitives")
 (new "lisp.eval.ControlPrimitives")
 (new "lisp.eval.DescribePrimitives")
@@ -10,6 +11,8 @@
 (new "lisp.eval.PackagePrimitives")
 
 (new "lisp.cc.CompilerPrimitives")
+
+(inPackage "system")
 
 (def d (x)
 	(describe x))

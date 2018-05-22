@@ -928,7 +928,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     {
 	// (define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma) (true 'delta)))
 	final Package system = PackageFactory.getSystemPackage ();
-	final Symbol var = system.internPrivate ("result").gensym ();
+	final Symbol var = system.internSymbol ("result").gensym ();
 	final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
 	final int resultRef = lvs.newLocal (Type.getType (Object.class));
 	localVariableMap.put (var, resultRef);
