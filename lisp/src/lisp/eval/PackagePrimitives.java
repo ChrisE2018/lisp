@@ -40,24 +40,6 @@ public class PackagePrimitives extends Definer
 	return PackageFactory.getSystemPackage ();
     }
 
-    // @DefineLisp
-    // public Object getParentPackages (final Object pkg)
-    // {
-    // final Package p = coercePackage (pkg, true);
-    // final LispList result = new LispList ();
-    // result.addAll (p.getParents ());
-    // return result;
-    // }
-
-    // @DefineLisp
-    // public Object getChildPackages (final Object pkg)
-    // {
-    // final Package p = coercePackage (pkg, true);
-    // final LispList result = new LispList ();
-    // result.addAll (p.getChildren ());
-    // return result;
-    // }
-
     // Symbols
 
     /**
@@ -71,6 +53,13 @@ public class PackagePrimitives extends Definer
     public Object setq (final LexicalContext context, final Symbol symbol, final Object form) throws Exception
     {
 	final Object value = context.eval (form);
+	symbol.setValue (value);
+	return value;
+    }
+
+    @DefineLisp (name = "set")
+    public Object setSymbolValue (final Symbol symbol, final Object value)
+    {
 	symbol.setValue (value);
 	return value;
     }
@@ -121,10 +110,6 @@ public class PackagePrimitives extends Definer
 	    {
 		result.add (symbol);
 	    }
-	    // for (final Symbol symbol : pkg.getPrivateSymbols ())
-	    // {
-	    // result.add (symbol);
-	    // }
 	}
 	return result;
     }
@@ -137,10 +122,6 @@ public class PackagePrimitives extends Definer
 	{
 	    result.add (symbol);
 	}
-	// for (final Symbol symbol : pkg.getPrivateSymbols ())
-	// {
-	// result.add (symbol);
-	// }
 	return result;
     }
 
@@ -157,13 +138,6 @@ public class PackagePrimitives extends Definer
 		    result.add (symbol);
 		}
 	    }
-	    // for (final Symbol symbol : pkg.getPrivateSymbols ())
-	    // {
-	    // if (symbol.getFunction () != null)
-	    // {
-	    // result.add (symbol);
-	    // }
-	    // }
 	}
 	return result;
     }
@@ -182,14 +156,6 @@ public class PackagePrimitives extends Definer
 		    result.add (symbol);
 		}
 	    }
-	    // for (final Symbol symbol : pkg.getPrivateSymbols ())
-	    // {
-	    // final FunctionCell fc = symbol.getFunction ();
-	    // if (fc != null && fc instanceof SpecialFunctionCell)
-	    // {
-	    // result.add (symbol);
-	    // }
-	    // }
 	}
 	return result;
     }
