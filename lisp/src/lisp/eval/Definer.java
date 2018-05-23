@@ -79,6 +79,7 @@ public class Definer
 	final boolean special = a.special ();
 	final boolean macro = a.macro ();
 	String symbolName = a.name ();
+	final String documentation = a.documentation ();
 	if (symbolName.isEmpty ())
 	{
 	    // Default if the annotation does not specify the name is to use the name of the method
@@ -92,21 +93,21 @@ public class Definer
 	// Overloading requires adding the method to an existing function cell
 	if (function != null)
 	{
-	    function.overload (object, method);
+	    function.overload (object, method, documentation);
 	}
 	else if (special)
 	{
-	    function = new SpecialFunctionCell (symbol, object, method);
+	    function = new SpecialFunctionCell (symbol, object, method, documentation);
 	    symbol.setFunction (function);
 	}
 	else if (macro)
 	{
-	    function = new MacroFunctionCell (symbol, object, method);
+	    function = new MacroFunctionCell (symbol, object, method, documentation);
 	    symbol.setFunction (function);
 	}
 	else
 	{
-	    function = new StandardFunctionCell (symbol, object, method);
+	    function = new StandardFunctionCell (symbol, object, method, documentation);
 	    symbol.setFunction (function);
 	}
     }

@@ -15,16 +15,18 @@ public class MacroFunctionCell extends FunctionCell
 {
     private final Object object;
     private final Method method;
+    private final String documentation;
 
-    public MacroFunctionCell (final Symbol symbol, final Object obj, final Method method)
+    public MacroFunctionCell (final Symbol symbol, final Object obj, final Method method, final String documentation)
     {
 	super (symbol, false);
 	object = obj;
 	this.method = method;
+	this.documentation = documentation;
     }
 
     @Override
-    public void overload (final Object obj, final Method m)
+    public void overload (final Object obj, final Method m, final String doc)
     {
 	throw new UnsupportedOperationException ("Can't overload macro functions");
     }
@@ -55,6 +57,7 @@ public class MacroFunctionCell extends FunctionCell
 	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
 	result.put ("Object", object);
 	result.put ("Method", method);
+	result.put ("Documentation", documentation);
 	return result;
     }
 

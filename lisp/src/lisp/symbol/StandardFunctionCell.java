@@ -11,16 +11,16 @@ public class StandardFunctionCell extends FunctionCell
 {
     private ObjectMethod[] methods;
 
-    public StandardFunctionCell (final Symbol symbol, final Object obj, final Method method)
+    public StandardFunctionCell (final Symbol symbol, final Object obj, final Method method, final String documentation)
     {
 	super (symbol, false);
 	methods = new ObjectMethod[]
-	    {new ObjectMethod (obj, method)};
+	    {new ObjectMethod (obj, method, documentation)};
 	makeOverloadMap (methods);
     }
 
     @Override
-    public void overload (final Object obj, final Method method)
+    public void overload (final Object obj, final Method method, final String documentation)
     {
 	final int c = getMethodSelectorCount (method);
 	final ObjectMethod previousDefinition = getOverload (c);
@@ -32,14 +32,14 @@ public class StandardFunctionCell extends FunctionCell
 		final ObjectMethod m = methods[i];
 		if (m.method == previousDefinition.method)
 		{
-		    methods[i] = new ObjectMethod (obj, method);
+		    methods[i] = new ObjectMethod (obj, method, documentation);
 		}
 	    }
 	    makeOverloadMap (methods);
 	    return;
 	}
 	final ObjectMethod[] newMethods = Arrays.copyOf (methods, methods.length + 1, ObjectMethod[].class);
-	newMethods[methods.length] = new ObjectMethod (obj, method);
+	newMethods[methods.length] = new ObjectMethod (obj, method, documentation);
 	// Scan methods and determine if there are possible ambiguous ones
 	makeOverloadMap (newMethods);
 	methods = newMethods;
@@ -94,6 +94,7 @@ public class StandardFunctionCell extends FunctionCell
 	return method.method.invoke (method.object, arguments);
     }
 
+    @Override
     public Object apply (final Object... arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {

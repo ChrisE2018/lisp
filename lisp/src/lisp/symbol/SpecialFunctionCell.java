@@ -11,19 +11,19 @@ public class SpecialFunctionCell extends FunctionCell
 {
     private ObjectMethod[] methods;
 
-    public SpecialFunctionCell (final Symbol symbol, final Object obj, final Method method)
+    public SpecialFunctionCell (final Symbol symbol, final Object obj, final Method method, final String documentation)
     {
 	super (symbol, false);
 	methods = new ObjectMethod[]
-	    {new ObjectMethod (obj, method)};
+	    {new ObjectMethod (obj, method, documentation)};
 	makeOverloadMap (methods);
     }
 
     @Override
-    public void overload (final Object obj, final Method method)
+    public void overload (final Object obj, final Method method, final String documentation)
     {
 	final ObjectMethod[] newMethods = Arrays.copyOf (methods, methods.length + 1, ObjectMethod[].class);
-	newMethods[methods.length] = new ObjectMethod (obj, method);
+	newMethods[methods.length] = new ObjectMethod (obj, method, documentation);
 	// Scan methods and determine if there are possible ambiguous ones
 	makeOverloadMap (newMethods);
 	methods = newMethods;

@@ -13,16 +13,18 @@ public abstract class FunctionCell implements Describer
 {
     class ObjectMethod implements Describer
     {
-	Object object;
-	Method method;
+	final Object object;
+	final Method method;
+	final String documentation;
 
-	ObjectMethod (final Object object, final Method method)
+	ObjectMethod (final Object object, final Method method, final String documentation)
 	{
 	    this.object = object;
 	    this.method = method;
+	    this.documentation = documentation;
 	}
 
-	String getName ()
+	private String getName ()
 	{
 	    return method.getName ();
 	}
@@ -70,7 +72,7 @@ public abstract class FunctionCell implements Describer
 
     abstract public Object eval (final LexicalContext context, final List<?> form) throws Exception;
 
-    abstract public void overload (Object obj, Method method);
+    abstract public void overload (Object obj, Method method, String documentation);
 
     FunctionCell (final Symbol symbol, final boolean allowRedefinition)
     {

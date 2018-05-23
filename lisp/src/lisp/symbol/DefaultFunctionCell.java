@@ -67,6 +67,11 @@ public class DefaultFunctionCell extends FunctionCell
     }
 
     @Override
+    public void overload (final Object obj, final Method method, final String documentation)
+    {
+    }
+
+    @Override
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
@@ -76,10 +81,5 @@ public class DefaultFunctionCell extends FunctionCell
 	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
-    }
-
-    @Override
-    public void overload (final Object obj, final Method method)
-    {
     }
 }

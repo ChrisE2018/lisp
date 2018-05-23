@@ -24,7 +24,7 @@ public class DefFunctionCell extends FunctionCell
     }
 
     @Override
-    public void overload (final Object obj, final Method method)
+    public void overload (final Object obj, final Method method, final String documentation)
     {
 	throw new UnsupportedOperationException ("Can't overload interpreted function definitions");
     }

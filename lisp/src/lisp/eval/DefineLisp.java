@@ -12,6 +12,8 @@ public @interface DefineLisp
 
     String name () default "";
 
+    String documentation () default "";
+
     boolean special () default false;
 
     boolean macro () default false;

@@ -66,6 +66,8 @@ public class CompilerPrimitives extends Definer
 	final CompileLoader cl = new CompileLoader ();
 
 	final String methodName = symbol.gensym ().getName ();
+	final String documentation = (body.get (0) instanceof String) ? (String)(body.get (0)) : "";
+
 	final Class<?> cls = cl.compile (methodName, args, body);
 	final Class<?>[] parameterTypes = new Class<?>[args.size ()];
 	for (int i = 0; i < parameterTypes.length; i++)
@@ -84,11 +86,11 @@ public class CompilerPrimitives extends Definer
 	// Overloading requires adding the method to an existing function cell
 	if (function != null && !(function instanceof DefFunctionCell))
 	{
-	    function.overload (instance, method);
+	    function.overload (instance, method, documentation);
 	}
 	else
 	{
-	    function = new StandardFunctionCell (symbol, instance, method);
+	    function = new StandardFunctionCell (symbol, instance, method, documentation);
 	    symbol.setFunction (function);
 	}
 	return cls;
