@@ -4,15 +4,26 @@ package plan;
 import lisp.*;
 import lisp.Package;
 import lisp.demo.Repl;
-import lisp.eval.Interpreter;
+import lisp.eval.*;
 
 public class Demo
 {
     public static void main (final String[] args)
     {
-	final Demo d = new Demo ();
-	d.processArguments (args);
-	d.execute ();
+	try
+	{
+	    final Demo d = new Demo ();
+	    d.processArguments (args);
+	    d.execute ();
+	}
+	catch (Throwable e)
+	{
+	    while (e instanceof java.lang.reflect.InvocationTargetException)
+	    {
+		e = e.getCause ();
+	    }
+	    e.printStackTrace ();
+	}
     }
 
     private final Interpreter interpreter = new Interpreter ();
@@ -22,27 +33,40 @@ public class Demo
 
     private Demo ()
     {
-	PlanFunctions.initialize ();
+	try
+	{
+	    final LexicalContext context = new LexicalContext (interpreter);
+	    fileReader.read (context, pkg, "../../../lisp/src/lisp/eval/init.jisp");
+	    PlanFunctions.initialize ();
+	}
+	catch (Throwable e)
+	{
+	    while (e instanceof java.lang.reflect.InvocationTargetException)
+	    {
+		e = e.getCause ();
+	    }
+	    e.printStackTrace ();
+	}
     }
 
-    private void processArguments (final String[] args)
+    private void processArguments (final String[] args) throws Exception
     {
 	for (int i = 1; i < args.length; i += 2)
 	{
 	    final String key = args[i - 1];
 	    final String value = args[i];
-	    try
-	    {
-		processArgument (key, value);
-	    }
-	    catch (final java.lang.reflect.InvocationTargetException e)
-	    {
-		e.getCause ().printStackTrace ();
-	    }
-	    catch (final Exception e)
-	    {
-		e.printStackTrace ();
-	    }
+	    // try
+	    // {
+	    processArgument (key, value);
+	    // }
+	    // catch (final java.lang.reflect.InvocationTargetException e)
+	    // {
+	    // e.getCause ().printStackTrace ();
+	    // }
+	    // catch (final Exception e)
+	    // {
+	    // e.printStackTrace ();
+	    // }
 	}
     }
 
@@ -52,14 +76,15 @@ public class Demo
 	{
 	    pkg = PackageFactory.getPackage (value);
 	}
-	if (key.equals ("-t"))
-	{
-	    fileReader.setTrace (Boolean.parseBoolean (value));
-	}
+	// if (key.equals ("-t"))
+	// {
+	// fileReader.setTrace (Boolean.parseBoolean (value));
+	// }
 	if (key.equals ("-f"))
 	{
 	    System.out.printf ("Loading %s %n", value);
-	    fileReader.read (interpreter, pkg, value);
+	    final LexicalContext context = new LexicalContext (interpreter);
+	    fileReader.read (context, pkg, value);
 	}
 	if (key.equals ("-r"))
 	{
@@ -78,8 +103,12 @@ public class Demo
 		repl.toplevel (stream);
 	    }
 	}
-	catch (final Exception e)
+	catch (Throwable e)
 	{
+	    while (e instanceof java.lang.reflect.InvocationTargetException)
+	    {
+		e = e.getCause ();
+	    }
 	    e.printStackTrace ();
 	}
     }

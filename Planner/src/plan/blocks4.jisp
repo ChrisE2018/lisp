@@ -1,0 +1,45 @@
+/* Sample blocks problems. */
+
+(def d (x)
+	(describe x))
+
+(plan p1
+ ; Demonstrate use of stack action
+ ; and conflict resolution
+	(node initial
+		(add
+			(ontable block1) (color block1 red)
+			(ontable block2) (color block2 blue)
+			(ontable block3) (color block3 green)
+			(ontable block4) (color block4 yellow)
+			(ontable block5) (color block5 yellow)
+			(ontable block6) (color block6 yellow)
+			(clear block1)
+			(clear block2)
+			(clear block3)
+			(clear block4)
+			(clear block5)
+			(clear block6)
+			))
+	(node goal
+		(goal
+			(on ?x block2)
+			(color ?x red)
+			(on block2 block3)
+			(on ?y ?z)
+			(color ?z yellow)
+			))
+	(before initial goal)
+	)
+ 
+(setq PlanView false)
+
+(setq s (bfs p1))
+(setSearchLimit s 30)
+(printf "Call (solve s) now %n")
+(setq solutionState (solve s))
+(planTree p1)
+(when (not (null solutionState))
+	(setq solution (getProblemState solutionState))
+	(execute solution))
+'done

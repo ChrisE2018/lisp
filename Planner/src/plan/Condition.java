@@ -27,14 +27,20 @@ public class Condition implements Describer
 
     public Condition (final List<Object> expression)
     {
-	List<Object> expr = expression;
+	List<?> expr = expression;
 	final Symbol start = (Symbol)expression.get (0);
 	negated = start.is ("not");
 	if (negated)
 	{
-	    @SuppressWarnings ("unchecked")
-	    final List<Object> e = (List<Object>)expression.get (1);
-	    expr = e;
+	    final Object e = expression.get (1);
+	    if (e instanceof List<?>)
+	    {
+		expr = (List<?>)e;
+	    }
+	    else
+	    {
+		throw new Error ("Invalid term in negated condition " + e);
+	    }
 	}
 	predicate = (Symbol)expr.get (0);
 	terms = new ArrayList<Symbol> ();
@@ -267,21 +273,28 @@ public class Condition implements Describer
 
     public void print (final StringBuilder buffer)
     {
-	if (negated)
+	try
 	{
-	    buffer.append ("(not ");
-	}
-	buffer.append ('(');
-	buffer.append (predicate.getName ());
-	for (final Symbol term : terms)
-	{
-	    buffer.append (' ');
-	    buffer.append (term.getName ());
-	}
-	buffer.append (')');
-	if (negated)
-	{
+	    if (negated)
+	    {
+		buffer.append ("(not ");
+	    }
+	    buffer.append ('(');
+	    buffer.append (predicate.getName ());
+	    for (final Symbol term : terms)
+	    {
+		buffer.append (' ');
+		buffer.append (term.getName ());
+	    }
 	    buffer.append (')');
+	    if (negated)
+	    {
+		buffer.append (')');
+	    }
+	}
+	catch (final Throwable e)
+	{
+	    buffer.append ("!ERROR!");
 	}
     }
 

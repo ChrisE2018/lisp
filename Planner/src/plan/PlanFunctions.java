@@ -27,15 +27,15 @@ public class PlanFunctions extends Definer
     {
     }
 
-    private final Symbol NOT_SYMBOL = pkg.internPublic ("not");
-    private final Symbol PRECONDITION_SYMBOL = pkg.internPublic ("precondition");
-    private final Symbol POSTCONDITION_SYMBOL = pkg.internPublic ("postcondition");
+    // private final Symbol NOT_SYMBOL = pkg.internSymbol ("not");
+    private final Symbol PRECONDITION_SYMBOL = pkg.internSymbol ("precondition");
+    private final Symbol POSTCONDITION_SYMBOL = pkg.internSymbol ("postcondition");
 
     /**
      * @param interpreter
      */
     @DefineLisp (special = true)
-    public Object defaction (final Interpreter interpreter, final Symbol name, final Object... body)
+    public Object defaction (final LexicalContext context, final Symbol name, final Object... body)
     {
 	final List<Condition> preconditions = new ArrayList<Condition> ();
 	final List<Condition> postconditions = new ArrayList<Condition> ();
@@ -68,14 +68,15 @@ public class PlanFunctions extends Definer
 
     private Condition getCondition (final boolean negated, final List<?> condition)
     {
-	if (condition.get (0) == NOT_SYMBOL)
+	final Symbol predicate = (Symbol)condition.get (0);
+	if (predicate.is ("not"))
 	{
 	    final List<?> subcondition = (List<?>)condition.get (1);
 	    return getCondition (!negated, subcondition);
 	}
 	else
 	{
-	    final Symbol predicate = (Symbol)condition.get (0);
+
 	    @SuppressWarnings ("unchecked")
 	    final List<Symbol> terms = (List<Symbol>)condition.subList (1, condition.size ());
 	    return new Condition (negated, predicate, terms);
@@ -88,7 +89,7 @@ public class PlanFunctions extends Definer
      * @param interpreter
      */
     @DefineLisp (special = true, name = "plan")
-    public Object createPlan (final Interpreter interpreter, final Symbol name, final Object... body)
+    public Object createPlan (final LexicalContext context, final Symbol name, final Object... body)
     {
 	final Plan plan = new Plan (name);
 	name.setValue (plan);
