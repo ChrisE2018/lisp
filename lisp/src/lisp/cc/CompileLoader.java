@@ -29,7 +29,7 @@ public class CompileLoader extends ClassLoader
      * Flag to control display of bytecode after compile. <br/>
      * [TODO] Should use logger configuration instead of hard-coded flags.
      */
-    private static final boolean SHOW_BYTECODE = true;
+    private static final boolean SHOW_BYTECODE = false;
 
     /**
      * Trick to compile references to quoted data. This map is obtained by the method compiler and

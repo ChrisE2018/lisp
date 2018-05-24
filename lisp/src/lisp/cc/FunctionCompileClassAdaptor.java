@@ -426,6 +426,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	{
 	    compileRepeat (mv, e);
 	}
+	else if (symbol.is ("dotimes"))
+	{
+	    compileDotimes (mv, e);
+	}
 	else if (symbol.is ("while"))
 	{
 	    compileWhile (mv, e);
@@ -651,14 +655,11 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitJumpInsn (GOTO, l2);
 
 	mv.visitLabel (l1);
-	// mv.visitFrame (Opcodes.F_SAME, 0, null, 0, null);
 	mv.visitInsn (ACONST_NULL);
 
 	// Jump here after true case or fall through after else.
 	// Return final value.
 	mv.visitLabel (l2);
-	// mv.visitFrame (Opcodes.F_SAME1, 0, null, 1, new Object[]
-	// {"java/lang/Object"});
     }
 
     private void compileUnless (final MethodVisitor mv, final LispList e)
@@ -765,11 +766,19 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// (define foo (x) (repeat (+ x 5) (setq a (+ a 1))))
 	// (define foo (x y) (repeat (+ x 5) (setq a (+ a y))))
 
+	// Make a local variable for repeat count
+	final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
+	final int countRef = lvs.newLocal (Type.getType (int.class));
+
 	// Compute repeat count
 	compileExpression (mv, e.get (1));
 	mv.visitTypeInsn (CHECKCAST, "java/lang/Integer");
 	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
-	// Leave repeat count on the stack
+	// Put repeat count number into local variable
+	mv.visitVarInsn (ISTORE, countRef);
+
+	// Push default return value onto the stack
+	mv.visitInsn (ACONST_NULL);
 
 	// Push iteration number onto the stack
 	mv.visitInsn (ICONST_0);
@@ -778,30 +787,106 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	final Label l1 = new Label ();
 	mv.visitJumpInsn (GOTO, l1);
 
-	// Start of iteration body
+	// // Start of iteration body
 	final Label l2 = new Label ();
 	mv.visitLabel (l2);
+	// Stack: iteration, value
+
 	// <body code goes here>
+	mv.visitInsn (SWAP);
+	// Stack: value, iteration
 	for (int i = 2; i < e.size (); i++)
 	{
-	    compileExpression (mv, e.get (i));
 	    mv.visitInsn (POP);
+	    compileExpression (mv, e.get (i));
 	}
+	mv.visitInsn (SWAP);
 
 	// Loop increment
+	// Stack: iteration, value
 	mv.visitInsn (ICONST_1);
 	mv.visitInsn (IADD);
 
 	// Termination test
+	// Stack: iteration, value
 	mv.visitLabel (l1);
 
-	mv.visitInsn (DUP2);
-	mv.visitInsn (SWAP);
+	mv.visitInsn (DUP);
+	mv.visitVarInsn (ILOAD, countRef);
+	// Stack: count, iteration, iteration, value
 	mv.visitJumpInsn (IF_ICMPLT, l2);
-
+	// Stack: iteration, value
 	// Remove iteration count
 	mv.visitInsn (POP);
+	// Return last body value
+    }
+
+    private void compileDotimes (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo () (repeat 3 0))
+	// (define foo () (dotimes (i 3) 0))
+	// (define foo (n) (dotimes (i n) 0))
+	// (define foo () (dotimes (i 3) (printf "i = %s %n" i)))
+	// (define foo (n) (dotimes (i n) (printf "i = %s %n" i)))
+
+	// Compute repeat count
+	final List<?> control = (List<?>)e.get (1);
+	final Object count = control.get (1);
+	compileExpression (mv, count);
+	mv.visitTypeInsn (CHECKCAST, "java/lang/Integer");
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+	// Leave repeat count on the stack
+
+	// Push default return value onto the stack
+	mv.visitInsn (ACONST_NULL);
+
+	// Put iteration number into local variable
+	final Map<Symbol, Integer> savedLocalVariableMap = localVariableMap;
+	localVariableMap = new LinkedHashMap<Symbol, Integer> (localVariableMap);
+	final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
+	final int iterationRef = lvs.newLocal (Type.getType (Integer.class));
+	final Symbol var = (Symbol)control.get (0);
+	localVariableMap.put (var, iterationRef);
+	mv.visitInsn (ICONST_0);
 	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+	mv.visitVarInsn (ASTORE, iterationRef);
+
+	// Jump to termination test
+	final Label l1 = new Label ();
+	mv.visitJumpInsn (GOTO, l1);
+
+	// Start of iteration body
+	final Label l2 = new Label ();
+	mv.visitLabel (l2);
+	mv.visitInsn (SWAP); // Save repeat count
+	// <body code goes here>
+	for (int i = 2; i < e.size (); i++)
+	{
+	    mv.visitInsn (POP);
+	    compileExpression (mv, e.get (i));
+	}
+
+	// Loop increment
+	mv.visitVarInsn (ALOAD, iterationRef);
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+	mv.visitInsn (ICONST_1);
+	mv.visitInsn (IADD);
+	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+	mv.visitVarInsn (ASTORE, iterationRef);
+
+	// // Termination test
+	mv.visitLabel (l1);
+
+	mv.visitInsn (SWAP);
+	mv.visitInsn (DUP); // Dup count
+	mv.visitVarInsn (ALOAD, iterationRef);
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+	mv.visitJumpInsn (IF_ICMPGT, l2);
+
+	mv.visitInsn (POP); // Remove repeat count
+	// Return iteration count
+	// [TODO] Should return last body value
+	localVariableMap = savedLocalVariableMap;
     }
 
     private void compileWhile (final MethodVisitor mv, final LispList e)
