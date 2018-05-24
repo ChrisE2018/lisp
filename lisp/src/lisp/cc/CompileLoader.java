@@ -29,7 +29,7 @@ public class CompileLoader extends ClassLoader
      * Flag to control display of bytecode after compile. <br/>
      * [TODO] Should use logger configuration instead of hard-coded flags.
      */
-    private static final boolean SHOW_BYTECODE = false;
+    private static final boolean SHOW_BYTECODE = true;
 
     /**
      * Trick to compile references to quoted data. This map is obtained by the method compiler and
@@ -66,6 +66,10 @@ public class CompileLoader extends ClassLoader
 	    new FunctionCompileClassAdaptor (cv2, resourceName, methodName, methodArgs, methodBody, quotedReferences);
 
 	cr.accept (cv, 0);
+	if (SHOW_BYTECODE)
+	{
+	    System.out.println (sw.toString ());
+	}
 	final byte[] b = cw.toByteArray ();
 	final Class<?> c = defineClass (className, b, 0, b.length);
 	return c;

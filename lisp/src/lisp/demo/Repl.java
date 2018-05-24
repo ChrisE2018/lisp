@@ -83,12 +83,12 @@ public class Repl
 		    ee = ee.getCause ();
 		}
 		LOGGER.log (Level.SEVERE, "Unhandled REPL error", ee);
-		// ee.printStackTrace ();
+		ee.printStackTrace ();
 	    }
 	    catch (final Throwable e)
 	    {
 		LOGGER.log (Level.SEVERE, "Unhandled REPL error", e);
-		// e.printStackTrace ();
+		e.printStackTrace ();
 	    }
 	}
     }

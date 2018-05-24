@@ -27,7 +27,12 @@
       	  (setq result false)
       	  (setq b (1+ b))))
     result))
+ (define foo ()
+   (printf "a=%s b=%s c=%s d=%s %n" 1 2 3 4))
  
+(define foo ()
+   (printf "a=%s b=%s c=%s d=%s e=%s %n" 1 2 3 4 5))
+   
  (def f (n)
     (let ((i 2))
       (while (<= i n)
@@ -45,8 +50,8 @@
       ;(printf "rem=%s %n" (rem a b))
       ;(printf "zp=%s %n" (zerop (rem a b)))
       ;(printf "result=%s %n" result)
-      ;[TODO] The following printf call won't compile:
-      ;(printf "a=%s b=%s rem=%s zp=%s result=%s %n" a b (rem a b) (zerop (rem a b)) result)
+      ;[fixed] The following printf call won't compile:
+      (printf "a=%s b=%s rem=%s zp=%s result=%s %n" a b (rem a b) (zerop (rem a b)) result)
       (if (zerop (rem a b))
       	  (setq result false)
       	  (setq b (1+ b))))
