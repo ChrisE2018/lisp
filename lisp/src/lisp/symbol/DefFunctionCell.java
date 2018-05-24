@@ -3,7 +3,6 @@ package lisp.symbol;
 
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.Map.Entry;
 
 import lisp.Symbol;
 import lisp.eval.LexicalContext;
@@ -32,38 +31,40 @@ public class DefFunctionCell extends FunctionCell
     @Override
     public Object eval (final LexicalContext context, final List<?> form) throws Exception
     {
-	final List<Object> arguments = new ArrayList<Object> ();
+	if (form.size () != arglist.size () + 1)
+	{
+	    throw new Error ("Incorrect argument count for " + name + ". Actual arg count " + (form.size () - 1)
+	                     + " does not match " + arglist.size ());
+	}
+	final LexicalContext con = new LexicalContext (context);
 	for (int i = 1; i < form.size (); i++)
 	{
-	    final Object f = form.get (i);
-	    arguments.add (context.eval (f));
+	    final Symbol var = arglist.get (i - 1);
+	    con.bind (var, context.eval (form.get (i)));
 	}
 	Object result = null;
-	final Map<Symbol, ValueCell> savedValues = new HashMap<Symbol, ValueCell> ();
-	try
+	// Evaluate the method body
+	for (final Object f : body)
 	{
-	    // Bind arguments to arglist
-	    // Context is a binding environment to keep global symbol value clean.
-	    // That requires changing the interpreter eval function to accept and use a binding
-	    // environment.
-	    for (int i = 0; i < arglist.size (); i++)
-	    {
-		final Symbol arg = arglist.get (i);
-		savedValues.put (arg, arg.getValueCell ());
-		arg.setValue (arguments.get (i));
-	    }
-	    // Evaluate the method body
-	    for (final Object f : body)
-	    {
-		result = context.eval (f);
-	    }
+	    result = con.eval (f);
 	}
-	finally
+	return result;
+    }
+
+    @Override
+    public Object apply (final Object... arguments) throws Exception
+    {
+	final LexicalContext context = new LexicalContext (LexicalContext.getCurrentThreadLexicalContext ());
+	for (int i = 0; i < arguments.length; i++)
 	{
-	    for (final Entry<Symbol, ValueCell> entry : savedValues.entrySet ())
-	    {
-		entry.getKey ().setValueCell (entry.getValue ());
-	    }
+	    final Symbol var = arglist.get (i);
+	    context.bind (var, arguments[i]);
+	}
+	Object result = null;
+	// Evaluate the method body
+	for (final Object f : body)
+	{
+	    result = context.eval (f);
 	}
 	return result;
     }

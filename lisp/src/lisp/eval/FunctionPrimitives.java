@@ -55,7 +55,7 @@ public class FunctionPrimitives extends Definer
 	    final Symbol var = (Symbol)clause.get (0);
 	    final Object expr = clause.get (1);
 	    // Evaluate expressions in the original context and bind in the newContext
-	    newContext.set (var, context.eval (expr));
+	    newContext.bind (var, context.eval (expr));
 	}
 	// Evaluate body expressions in the newContext
 	Object result = newContext.eval (body1);
@@ -77,7 +77,7 @@ public class FunctionPrimitives extends Definer
 	    final Symbol var = (Symbol)clause.get (0);
 	    final Object expr = clause.get (1);
 	    // Evaluate expressions in the newContext and bind in the newContext
-	    newContext.set (var, newContext.eval (expr));
+	    newContext.bind (var, newContext.eval (expr));
 	}
 	// Evaluate body expressions in the newContext
 	Object result = newContext.eval (body1);

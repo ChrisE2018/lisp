@@ -226,10 +226,11 @@ public abstract class FunctionCell implements Describer
      * @throws InvocationTargetException
      * @throws IllegalArgumentException
      * @throws IllegalAccessException
+     * @throws Exception
      */
     @SuppressWarnings ("unused")
     public Object apply (final Object... arguments)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, Exception
     {
 	throw new UnsupportedOperationException ();
     }

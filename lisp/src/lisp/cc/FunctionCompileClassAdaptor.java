@@ -697,6 +697,14 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    mv.visitInsn (DUP);
 	    mv.visitVarInsn (ASTORE, p);
 	}
+	else if (localVariableMap.containsKey (symbol))
+	{
+	    final int localRef = localVariableMap.get (symbol);
+	    System.out.printf ("Setq local %s (%d) %n", symbol, localRef);
+	    compileExpression (mv, e.get (2));
+	    mv.visitInsn (DUP);
+	    mv.visitVarInsn (ASTORE, localRef);
+	}
 	else
 	{
 	    if (useFieldForSymbolReferences)

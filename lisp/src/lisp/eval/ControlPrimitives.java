@@ -1,7 +1,9 @@
 
 package lisp.eval;
 
-import lisp.LispList;
+import java.util.List;
+
+import lisp.*;
 
 public class ControlPrimitives extends Definer
 {
@@ -59,16 +61,16 @@ public class ControlPrimitives extends Definer
 
     @DefineLisp (special = true, name = "if")
     public Object ifEvaluator (final LexicalContext context, final Object test, final Object trueClause,
-            final Object... arguments) throws Exception
+            final Object... elseExprs) throws Exception
     {
 	if (isTrue (context.eval (test)))
 	{
 	    return context.eval (trueClause);
 	}
 	Object result = Boolean.TRUE;
-	for (int i = 0; i < arguments.length; i++)
+	for (int i = 0; i < elseExprs.length; i++)
 	{
-	    final Object arg = arguments[i];
+	    final Object arg = elseExprs[i];
 	    final Object value = context.eval (arg);
 	    result = value;
 	}
@@ -148,6 +150,26 @@ public class ControlPrimitives extends Definer
 	    {
 		final Object arg = arguments[i];
 		result = context.eval (arg);
+	    }
+	}
+	return result;
+    }
+
+    @DefineLisp (special = true, name = "dotimes")
+    public Object dotimes (final LexicalContext context, final List<?> control, final Object... arguments) throws Exception
+    {
+	Object result = true;
+	final Symbol var = (Symbol)control.get (0);
+	final int n = (Integer)context.eval (control.get (1));
+	final LexicalContext subcontext = new LexicalContext (context);
+	subcontext.bind (var, 0);
+	for (int j = 0; j < n; j++)
+	{
+	    subcontext.set (var, j);
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		final Object arg = arguments[i];
+		result = subcontext.eval (arg);
 	    }
 	}
 	return result;

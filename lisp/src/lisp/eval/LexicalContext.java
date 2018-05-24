@@ -12,6 +12,13 @@ import lisp.Symbol;
  */
 public class LexicalContext
 {
+    private static Map<Thread, LexicalContext> threadContextMap = new HashMap<Thread, LexicalContext> ();
+
+    public static LexicalContext getCurrentThreadLexicalContext ()
+    {
+	return threadContextMap.get (Thread.currentThread ());
+    }
+
     // All special functions should use this to implement bindings.
     private final Interpreter interpreter;
 
@@ -21,28 +28,36 @@ public class LexicalContext
     {
 	this.interpreter = interpreter;
 	bindings = new HashMap<Symbol, Object> ();
+	threadContextMap.put (Thread.currentThread (), this);
     }
 
     public LexicalContext (final LexicalContext context)
     {
 	interpreter = context.interpreter;
 	bindings = new HashMap<Symbol, Object> (context.bindings);
+	threadContextMap.put (Thread.currentThread (), this);
     }
-
-    // public LexicalContext (final Interpreter interpreter, final Map<Symbol, Object> bindings)
-    // {
-    // this.interpreter = interpreter;
-    // this.bindings = new HashMap<Symbol, Object> (bindings);
-    // }
 
     public Interpreter getInterpreter ()
     {
 	return interpreter;
     }
 
-    public void set (final Symbol symbol, final Object value)
+    public void bind (final Symbol symbol, final Object value)
     {
 	bindings.put (symbol, value);
+    }
+
+    public void set (final Symbol symbol, final Object value)
+    {
+	if (bindings.containsKey (symbol))
+	{
+	    bindings.put (symbol, value);
+	}
+	else
+	{
+	    symbol.setValue (value);
+	}
     }
 
     public Object get (final Symbol symbol)

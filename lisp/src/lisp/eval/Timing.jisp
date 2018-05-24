@@ -1,0 +1,63 @@
+
+(def fact (n)
+	"Interpreted version"
+	(if (<= n 0)
+		1
+		(* n (fact (1- n)))))
+
+(define factorial (n)
+	"Compiled version"
+	(if (<= n 0)
+		1
+		(* n (fact (1- n)))))
+
+(verify (fact 5) 120)
+(verify (factorial 5) 120)
+(dotimes (i 10)
+	(verify (fact i) (factorial i)))
+
+(timing 10000 (fact 30))
+
+(def isprime (a)
+  (let ((b 2)
+  		(result true))
+    (while (and (<= (* b b) a) result)
+      ;(printf "a=%s b=%s rem=%s zp=%s result=%s %n" a b (rem a b) (zerop (rem a b)) result)
+      (if (zerop (rem a b))
+      	  (setq result false)
+      	  (setq b (1+ b))))
+    result))
+ 
+ (def f (n)
+    (let ((i 2))
+      (while (<= i n)
+        (isprime i)
+        (setq i (1+ i)))))
+ 
+ (timing 10 (f 99999))
+        
+(define isprimeC (a)
+  (let ((b 2)
+  		(result true))
+    (while (and (<= (* b b) a) result)
+      ;(printf "a=%s %n" a)
+      ;(printf "b=%s %n" b)
+      ;(printf "rem=%s %n" (rem a b))
+      ;(printf "zp=%s %n" (zerop (rem a b)))
+      ;(printf "result=%s %n" result)
+      ;[TODO] The following printf call won't compile:
+      ;(printf "a=%s b=%s rem=%s zp=%s result=%s %n" a b (rem a b) (zerop (rem a b)) result)
+      (if (zerop (rem a b))
+      	  (setq result false)
+      	  (setq b (1+ b))))
+    result))
+ 
+ (define g (n)
+    (let ((i 2))
+      (while (<= i n)
+        (isprimeC i)
+        (setq i (1+ i)))))
+ 
+ (timing 10 (g 99999))
+  
+  

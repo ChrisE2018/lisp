@@ -222,19 +222,19 @@ public class CompilerPrimitives extends Definer
     }
 
     @DefineLisp (special = true)
-    public Object timing (final LexicalContext context, final Object expr, final Object n) throws Exception
+    public Object timing (final LexicalContext context, final Object n, final Object expr) throws Exception
     {
 	// (define f (n) (if (<= n 1) 1 (* n (f (1- n)))))
 	// (def g (n) (if (<= n 1) 1 (* n (g (1- n)))))
-	// (timing (f 10) (* 1000 1000))
+	// (timing (* 1000 1000) (f 10))
 	// ==> Completed 1000000 iterations in 2.185586 seconds = 0.000002 seconds / iteration
-	// (timing (g 10) (* 1000 1000))
+	// (timing (* 1000 1000) (g 10))
 	// ==> Completed 1000000 iterations in 4.815515 seconds = 0.000005 seconds / iteration
 	// (define ff () (repeat 1000 (f 10)))
 	// (def gg () (repeat 1000 (g 10)))
-	// (timing (ff) 1000)
+	// (timing 1000 (ff))
 	// ==> Completed 1000 iterations in 1.816591 seconds = 0.001817 seconds / iteration
-	// (timing (gg) 1000)
+	// (timing 1000 (gg))
 	// ==> Completed 1000 iterations in 4.962463 seconds = 0.004962 seconds / iteration
 	final int count = (Integer)context.eval (n);
 	final long start = System.nanoTime ();

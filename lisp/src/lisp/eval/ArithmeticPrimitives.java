@@ -33,6 +33,18 @@ public class ArithmeticPrimitives extends Definer
 	return arg == null;
     }
 
+    @DefineLisp
+    public Object zerop (final Integer a)
+    {
+	return a == 0;
+    }
+
+    @DefineLisp
+    public Object rem (final Integer a, final Integer b)
+    {
+	return a % b;
+    }
+
     @DefineLisp (name = "1+")
     public Object plusOne (final Object x)
     {

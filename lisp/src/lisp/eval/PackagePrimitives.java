@@ -53,7 +53,7 @@ public class PackagePrimitives extends Definer
     public Object setq (final LexicalContext context, final Symbol symbol, final Object form) throws Exception
     {
 	final Object value = context.eval (form);
-	symbol.setValue (value);
+	context.set (symbol, value);
 	return value;
     }
 

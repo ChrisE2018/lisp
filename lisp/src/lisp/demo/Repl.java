@@ -1,6 +1,7 @@
 
 package lisp.demo;
 
+import java.io.IOException;
 import java.util.logging.*;
 
 import lisp.*;
@@ -70,6 +71,13 @@ public class Repl
 		LOGGER.info ("Starting Repl");
 	    }
 	}
+    }
+
+    public Repl (final Interpreter interpreter) throws SecurityException, IOException
+    {
+	logManager.readConfiguration (Interactor.class.getResource ("loggingBootstrap.properties").openStream ());
+	// [TODO] Move argument processing into Interpreter class
+	this.interpreter = interpreter;
     }
 
     public void toplevel (final LispStream stream)
