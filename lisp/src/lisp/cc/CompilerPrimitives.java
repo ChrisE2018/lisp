@@ -16,14 +16,14 @@ public class CompilerPrimitives extends Definer
     // (define foo (x) alpha)
     // (define foo (a b) (+ 3 4))
     @DefineLisp (special = true, name = "define")
-    public Symbol define (@SuppressWarnings ("unused") final LexicalContext context, final Symbol functionName,
-            final LispList args, final Object... forms)
+    public Object define (@SuppressWarnings ("unused") final LexicalContext context, final Object nameSpec, final LispList args,
+            final Object... forms)
     {
 	try
 	{
-	    // [TODO] If first form is a string it should be saved as documentation. The
+	    // If first form is a string it should be saved as documentation. The
 	    // FunctionCell should have a field to store documentation.
-	    // [TODO] Before the functionName we should require a return type. The package system
+	    // Before the functionName we should require a return type. The package system
 	    // should mirror the java package system, so java.lang.Object would be an allowed type,
 	    // with abbreviation of Object allowed. The Symbol class should have a getClass method
 	    // that returns the corresponding Java type. Declarations associated with the function
@@ -36,9 +36,11 @@ public class CompilerPrimitives extends Definer
 	    {
 		body.add (f);
 	    }
-	    // [TODO] If functionName looks like (the <type> <name>) then declare a return type.
-	    LOGGER.info (String.format ("Compiling %s as %s", functionName, body));
-	    final Class<?> c = createCompiledFunction (functionName, args, body);
+	    // If functionName looks like (the <type> <name>) then declare a return type.
+	    final Symbol functionName = CompileSupport.getFunctionName (nameSpec);
+	    final Class<?> returnType = CompileSupport.getNameType (nameSpec);
+	    LOGGER.info (String.format ("Compiling %s %s: %s", returnType, functionName, body));
+	    final Class<?> c = createCompiledFunction (returnType, functionName, args, body);
 	    LOGGER.info (String.format ("Compiled %s", functionName));
 	    LOGGER.info (String.format ("List of Declared Methods"));
 	    for (final Method method : c.getDeclaredMethods ())
@@ -46,12 +48,13 @@ public class CompilerPrimitives extends Definer
 		LOGGER.info (String.format ("* Method: %s", method));
 	    }
 	    LOGGER.info ("");
+	    return functionName;
 	}
 	catch (final Exception e)
 	{
 	    e.printStackTrace ();
 	}
-	return functionName;
+	return false;
     }
 
     /**
@@ -59,8 +62,8 @@ public class CompilerPrimitives extends Definer
      *
      * @throws IOException
      */
-    private Class<?> createCompiledFunction (final Symbol symbol, final LispList args, final LispList body)
-            throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
+    private Class<?> createCompiledFunction (final Class<?> returnType, final Symbol symbol, final LispList args,
+            final LispList body) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException, IOException
     {
 	final CompileLoader cl = new CompileLoader ();
@@ -68,7 +71,7 @@ public class CompilerPrimitives extends Definer
 	final String methodName = symbol.gensym ().getName ();
 	final String documentation = (body.get (0) instanceof String) ? (String)(body.get (0)) : "";
 
-	final Class<?> cls = cl.compile (methodName, args, body);
+	final Class<?> cls = cl.compile (returnType, methodName, args, body);
 	final Class<?>[] parameterTypes = new Class<?>[args.size ()];
 	for (int i = 0; i < parameterTypes.length; i++)
 	{

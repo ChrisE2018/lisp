@@ -44,9 +44,11 @@ public class CompileLoader extends ClassLoader
     /**
      * Load the shell class resource and run the ClassVisitor on it to add our new method.
      */
-    public Class<?> compile (final String methodName, final LispList methodArgs, final LispList methodBody) throws IOException
+    public Class<?> compile (final Class<?> returnType, final String methodName, final LispList methodArgs,
+            final LispList methodBody) throws IOException
     {
-	LOGGER.info (String.format ("Creating compiled class: %s for function %s %s", SHELL_CLASS, methodName, methodArgs));
+	LOGGER.info (String.format ("Creating compiled class: %s for function %s %s %s", SHELL_CLASS, returnType, methodName,
+	        methodArgs));
 	final String className = SHELL_CLASS;
 	LOGGER.info (String.format ("Adding method %s %s to class: %s", methodName, methodArgs, className));
 	final String resourceName = className.replace ('.', '/');
@@ -63,7 +65,7 @@ public class CompileLoader extends ClassLoader
 	    cv2 = new TraceClassVisitor (cw, printer, new PrintWriter (sw));
 	}
 	final ClassVisitor cv =
-	    new FunctionCompileClassAdaptor (cv2, resourceName, methodName, methodArgs, methodBody, quotedReferences);
+	    new FunctionCompileClassAdaptor (cv2, resourceName, returnType, methodName, methodArgs, methodBody, quotedReferences);
 
 	cr.accept (cv, 0);
 	if (SHOW_BYTECODE)
@@ -201,7 +203,7 @@ public class CompileLoader extends ClassLoader
 	    methodBody.add (new Float (4.2f));
 	    methodBody.add (s);
 	    System.out.printf ("Expression to compile: %s %n", methodBody);
-	    final Class<?> c = cl.compile (methodName, methodArgs, methodBody);
+	    final Class<?> c = cl.compile (Object.class, methodName, methodArgs, methodBody);
 	    cl.checkCreatedClass (c);
 	}
 	catch (final Throwable e)

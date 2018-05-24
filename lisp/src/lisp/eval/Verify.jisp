@@ -17,7 +17,14 @@
 (verify (alpha 3) 12)
 
 (setq a 6) 
-(verify (alpha 3) 13)  
+(verify (alpha 3) 13) 
+
+(define foo (x)
+	(setq a x))
+(foo 3)
+(verify a 3)
+(foo 5)
+(verify a 5) 
 
 (verify (if true 1 2) 1)
 (verify (if false 1 2) 2)
