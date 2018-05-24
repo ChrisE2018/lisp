@@ -116,7 +116,6 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     {
 	// Define method header
 	final String returnTypeDescriptor = Type.getType (returnType).getDescriptor ();
-	// final String returnType = "Ljava/lang/Object;";
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("(");
 	for (int i = 0; i < methodArgs.size (); i++)
@@ -156,14 +155,6 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitEnd ();
     }
 
-    private void compileNullValue (final MethodVisitor mv, final Class<?> valueType)
-    {
-	if (valueType != null)
-	{
-	    mv.visitInsn (ACONST_NULL);
-	}
-    }
-
     /** Compile a single expression and leave the value on top of the stack. */
     private void compileExpression (final MethodVisitor mv, final Object e, final Class<?> valueType)
     {
@@ -171,23 +162,25 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	if (e == null)
 	{
 	    LOGGER.info (String.format ("Ignoring nested null %s", e));
-	    compileNullValue (mv, valueType);
+	    if (valueType != null)
+	    {
+		mv.visitInsn (ACONST_NULL);
+	    }
 	}
 	else if (e instanceof LispList)
 	{
 	    final LispList ee = (LispList)e;
 	    if (ee.size () == 0)
 	    {
-		// Return e unchanged
-		compileNullValue (mv, valueType);
+		if (valueType != null)
+		{
+		    // Return e unchanged
+		    mv.visitInsn (ACONST_NULL);
+		}
 	    }
 	    else
 	    {
 		compileFunctionCall (mv, ee, valueType);
-		// if (valueType == null)
-		// {
-		// mv.visitInsn (POP);
-		// }
 	    }
 	}
 	else if (e instanceof Symbol)
@@ -364,6 +357,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
 	// Call invoke on the method.
 	// Assume the function will still be defined when we execute this code.
+	// [TODO] Could define an applyVoid method to return no value.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
 	if (valueType == null)
 	{
@@ -535,7 +529,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitJumpInsn (IFEQ, l1);
 
 	// True case
-	compileExpression (mv, e.get (2), Object.class /* TODO */);
+	compileExpression (mv, e.get (2), valueType);
 	final Label l2 = new Label ();
 	mv.visitJumpInsn (GOTO, l2);
 
