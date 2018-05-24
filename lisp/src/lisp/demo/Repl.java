@@ -7,7 +7,7 @@ import java.util.logging.*;
 import lisp.*;
 import lisp.Package;
 import lisp.eval.*;
-import lisp.gui.Interactor;
+import lisp.gui.*;
 
 /** Simple toplevel loop that reads a lisp form, evaluates it and prints the result. */
 public class Repl
@@ -32,13 +32,15 @@ public class Repl
 	    {
 		ee = ee.getCause ();
 	    }
-	    System.out.printf ("Initialization error %s %n", ee);
-	    ee.printStackTrace ();
+	    LOGGER.log (Level.SEVERE, "Initialization error", ee);
+	    // System.out.printf ("Initialization error %s %n", ee);
+	    // ee.printStackTrace ();
 	}
 	catch (final Throwable e)
 	{
-	    System.out.printf ("Initialization error %s %n", e);
-	    e.printStackTrace ();
+	    LOGGER.log (Level.SEVERE, "Initialization error", e);
+	    // System.out.printf ("Initialization error %s %n", e);
+	    // e.printStackTrace ();
 	}
     }
 
@@ -50,27 +52,9 @@ public class Repl
     private Repl (final String[] args) throws Exception
     {
 	logManager.readConfiguration (Interactor.class.getResource ("loggingBootstrap.properties").openStream ());
-	// [TODO] Move argument processing into Interpreter class
+	final Application application = new Application ();
+	application.initialize (args);
 	interpreter = new Interpreter ();
-	for (int i = 1; i < args.length; i += 2)
-	{
-	    final String key = args[i - 1];
-	    final String value = args[i];
-	    // [TODO] --setq "var=form"
-	    // [TODO] --package pkg
-	    if (key.equals ("-l") || key.equals ("--load"))
-	    {
-		if (!interpreter.loadResource (value))
-		{
-		    interpreter.loadFile (value);
-		}
-	    }
-	    if (key.equals ("-g") || key.equals ("--log"))
-	    {
-		logManager.readConfiguration (Interactor.class.getResource (value).openStream ());
-		LOGGER.info ("Starting Repl");
-	    }
-	}
     }
 
     public Repl (final Interpreter interpreter) throws SecurityException, IOException
@@ -82,6 +66,7 @@ public class Repl
 
     public void toplevel (final LispStream stream)
     {
+	LOGGER.info ("Starting REPL toplevel");
 	int index = 0;
 	while (true)
 	{
@@ -97,11 +82,13 @@ public class Repl
 		{
 		    ee = ee.getCause ();
 		}
-		ee.printStackTrace ();
+		LOGGER.log (Level.SEVERE, "Unhandled REPL error", ee);
+		// ee.printStackTrace ();
 	    }
 	    catch (final Throwable e)
 	    {
-		e.printStackTrace ();
+		LOGGER.log (Level.SEVERE, "Unhandled REPL error", e);
+		// e.printStackTrace ();
 	    }
 	}
     }

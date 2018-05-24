@@ -692,7 +692,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    // Parameter reference
 	    // [TODO] If we can determine the type, use that information.
 	    final int p = methodArgs.indexOf (symbol) + 1;
-	    System.out.printf ("Setq parameter %s (%d) %n", symbol, p);
+	    LOGGER.finer (String.format ("Setq parameter %s (%d)", symbol, p));
 	    compileExpression (mv, e.get (2));
 	    mv.visitInsn (DUP);
 	    mv.visitVarInsn (ASTORE, p);
@@ -700,7 +700,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	else if (localVariableMap.containsKey (symbol))
 	{
 	    final int localRef = localVariableMap.get (symbol);
-	    System.out.printf ("Setq local %s (%d) %n", symbol, localRef);
+	    LOGGER.finer (String.format ("Setq local %s (%d)", symbol, localRef));
 	    compileExpression (mv, e.get (2));
 	    mv.visitInsn (DUP);
 	    mv.visitVarInsn (ASTORE, localRef);

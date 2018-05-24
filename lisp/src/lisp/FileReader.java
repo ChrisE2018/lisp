@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.logging.Logger;
 
 import lisp.eval.LexicalContext;
+import lisp.util.ThrowingSupplier;
 
 /** Class to read a lisp file and evaluate the forms in the file. */
 public class FileReader

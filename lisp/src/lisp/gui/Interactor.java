@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.logging.*;
+import java.util.logging.LogManager;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -56,8 +56,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 
     // @see https://docs.oracle.com/javase/8/javafx/user-interface-tutorial/editor.htm
 
-    private static final Logger LOGGER = Logger.getLogger (Interactor.class.getName ());
-    private static final LogManager logManager = LogManager.getLogManager ();
+    // private static final Logger LOGGER = Logger.getLogger (Interactor.class.getName ());
 
     // private static final MutableAttributeSet UNBOLD = new SimpleAttributeSet ();
     private static final MutableAttributeSet BOLD = new SimpleAttributeSet ();
@@ -109,6 +108,10 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 
     public Interactor (final String[] args) throws Exception
     {
+	LogManager.getLogManager ()
+	        .readConfiguration (Interactor.class.getResource ("loggingBootstrap.properties").openStream ());
+	final Application application = new Application ();
+	application.initialize (args);
 	setBackground (Color.lightGray);
 	doc = getStyledDocument ();
 	rootStyle = doc.addStyle ("root", null);
@@ -137,36 +140,12 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	addMouseMotionListener (this);
 	interpreter = new Interpreter ();
 	reader = new LispReader ();
-	initArgs (args);
 	// Bind stdout and stderr after constructing the Interpreter so reads from loading the init
 	// file are not echoed to the interactor.
 	System.setOut (new PrintStream (new InteractorOutputStream (normalStyle)));
 	System.setErr (new PrintStream (new InteractorOutputStream (errorStyle)));
 
 	thread.start ();
-    }
-
-    private void initArgs (final String[] args) throws Exception
-    {
-	logManager.readConfiguration (getClass ().getResource ("loggingBootstrap.properties").openStream ());
-	for (int i = 1; i < args.length; i += 2)
-	{
-	    final String key = args[i - 1];
-	    final String value = args[i];
-
-	    if (key.equals ("-g") || key.equals ("--log"))
-	    {
-		logManager.readConfiguration (getClass ().getResource (value).openStream ());
-		LOGGER.info ("Starting Interactor");
-	    }
-	    if (key.equals ("-l") || key.equals ("--load"))
-	    {
-		if (!interpreter.loadResource (value))
-		{
-		    interpreter.loadFile (value);
-		}
-	    }
-	}
     }
 
     public JFrame open (final String title)

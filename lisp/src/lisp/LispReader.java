@@ -4,6 +4,8 @@ package lisp;
 import java.io.IOException;
 import java.util.*;
 
+import lisp.util.ThrowingSupplier;
+
 /**
  * Read list structure from source text.
  *
