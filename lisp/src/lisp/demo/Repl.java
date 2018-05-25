@@ -6,6 +6,7 @@ import java.util.logging.*;
 
 import lisp.*;
 import lisp.Package;
+import lisp.cc.CompilerPrimitives;
 import lisp.eval.*;
 import lisp.gui.*;
 
@@ -27,20 +28,18 @@ public class Repl
 	}
 	catch (final java.lang.reflect.InvocationTargetException e)
 	{
+	    CompilerPrimitives.incrementReplErrorCount ();
 	    Throwable ee = e;
 	    for (int i = 0; i < 10 && ee instanceof java.lang.reflect.InvocationTargetException; i++)
 	    {
 		ee = ee.getCause ();
 	    }
-	    LOGGER.log (Level.SEVERE, "Initialization error", ee);
-	    // System.out.printf ("Initialization error %s %n", ee);
-	    // ee.printStackTrace ();
+	    LOGGER.log (Level.SEVERE, "Initialization evaluation error", ee);
 	}
 	catch (final Throwable e)
 	{
-	    LOGGER.log (Level.SEVERE, "Initialization error", e);
-	    // System.out.printf ("Initialization error %s %n", e);
-	    // e.printStackTrace ();
+	    CompilerPrimitives.incrementReplErrorCount ();
+	    LOGGER.log (Level.SEVERE, "Miscellaneous initialization error", e);
 	}
     }
 
@@ -60,7 +59,6 @@ public class Repl
     public Repl (final Interpreter interpreter) throws SecurityException, IOException
     {
 	logManager.readConfiguration (Interactor.class.getResource ("loggingBootstrap.properties").openStream ());
-	// [TODO] Move argument processing into Interpreter class
 	this.interpreter = interpreter;
     }
 
@@ -77,18 +75,18 @@ public class Repl
 	    }
 	    catch (final java.lang.reflect.InvocationTargetException e)
 	    {
+		CompilerPrimitives.incrementReplErrorCount ();
 		Throwable ee = e;
 		for (int i = 0; i < 10 && ee instanceof java.lang.reflect.InvocationTargetException; i++)
 		{
 		    ee = ee.getCause ();
 		}
-		LOGGER.log (Level.SEVERE, "Unhandled REPL error", ee);
-		ee.printStackTrace ();
+		LOGGER.log (Level.SEVERE, "REPL evaluation error", ee);
 	    }
 	    catch (final Throwable e)
 	    {
-		LOGGER.log (Level.SEVERE, "Unhandled REPL error", e);
-		e.printStackTrace ();
+		CompilerPrimitives.incrementReplErrorCount ();
+		LOGGER.log (Level.SEVERE, "Miscellaneous REPL error", e);
 	    }
 	}
     }
@@ -106,6 +104,7 @@ public class Repl
 	}
 	catch (final Throwable ex)
 	{
+	    CompilerPrimitives.incrementReplErrorCount ();
 	    try
 	    {
 		System.out.printf ("Error reading expression: %s\n", ex);
@@ -117,6 +116,7 @@ public class Repl
 	    }
 	    catch (final Throwable exx)
 	    {
+		CompilerPrimitives.incrementReplErrorCount ();
 		System.out.printf ("[Error recovering from error: %s]\n", exx);
 	    }
 	    return;

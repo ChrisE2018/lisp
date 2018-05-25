@@ -187,17 +187,17 @@
       )
     result))
     
-(define isprime (a) ; bad
+(define isprime (a) ; ok
   (let ((b 2)
   		(result true))
     (while (and (<= (* b b) a) result)
       (if (zerop (rem a b)) 
-      	(setq result false))
+      	  (setq result false))
       (setq b (1+ b))
       )
     result))
-    
-(define isprime (a)
+ 
+(define isprime (a) ; bad
   (let ((b 2)
   		(result true))
     (while (and (<= (* b b) a) result)

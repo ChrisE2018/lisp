@@ -13,6 +13,37 @@ public class CompilerPrimitives extends Definer
 {
     private static final Logger LOGGER = Logger.getLogger (CompilerPrimitives.class.getName ());
 
+    private static int replErrorCount = 0;
+
+    public static void incrementReplErrorCount ()
+    {
+	replErrorCount++;
+    }
+
+    public static int getReplErrorCount ()
+    {
+	return replErrorCount;
+    }
+
+    public static void resetReplErrorCount ()
+    {
+	replErrorCount = 0;
+    }
+
+    @DefineLisp
+    public int getErrorCount ()
+    {
+	return replErrorCount;
+    }
+
+    @DefineLisp
+    public int resetErrorCount ()
+    {
+	final int value = replErrorCount;
+	replErrorCount = 0;
+	return value;
+    }
+
     // (define foo (x) alpha)
     // (define foo (a b) (+ 3 4))
     @DefineLisp (special = true, name = "define")
@@ -130,7 +161,11 @@ public class CompilerPrimitives extends Definer
 		System.out.printf ("%6s %4d of %4d %4.1f%%%n", "Error", errorCount, testCount, (errorCount * 100.0 / testCount));
 	    }
 	    System.out.printf ("%6s %4d of %4d %4.1f%%%n", "Total", testCount, testCount, (testCount * 100.0 / testCount));
-	    if (passCount == testCount && failCount == 0 && errorCount == 0)
+	    if (replErrorCount > 0)
+	    {
+		System.out.printf ("%nThere were exceptions during testing%n");
+	    }
+	    else if (passCount == testCount && failCount == 0 && errorCount == 0)
 	    {
 		System.out.printf ("%nAll tests passed!%n");
 	    }

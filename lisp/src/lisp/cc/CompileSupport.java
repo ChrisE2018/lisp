@@ -48,6 +48,34 @@ public class CompileSupport
     {
 	try
 	{
+	    if (type.equals ("boolean"))
+	    {
+		return boolean.class;
+	    }
+	    if (type.equals ("short"))
+	    {
+		return short.class;
+	    }
+	    if (type.equals ("int"))
+	    {
+		return int.class;
+	    }
+	    if (type.equals ("long"))
+	    {
+		return long.class;
+	    }
+	    if (type.equals ("double"))
+	    {
+		return double.class;
+	    }
+	    if (type.equals ("byte"))
+	    {
+		return byte.class;
+	    }
+	    if (type.equals ("char"))
+	    {
+		return char.class;
+	    }
 	    return Class.forName (type);
 	}
 	catch (final ClassNotFoundException e)
