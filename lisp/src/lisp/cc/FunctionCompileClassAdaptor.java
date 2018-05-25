@@ -657,12 +657,12 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     {
 	// (define foo (x) (when x 1 2))
 	// (define foo (x) (when x 1 (printf "a%n") (printf "b%n") 3))
-	compileExpression (mv, e.get (1), Object.class /* TODO */);
 
 	final Label l1 = new Label ();
 	final Label l2 = new Label ();
 	final Label l3 = new Label ();
 	final Label l4 = new Label ();
+	compileExpression (mv, e.get (1), Object.class /* TODO */);
 	mv.visitInsn (DUP);
 	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	mv.visitJumpInsn (IFEQ, l3);
@@ -953,14 +953,24 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitInsn (ACONST_NULL);
 
 	// Perform iteration test
-	final Label l0 = new Label ();
-	mv.visitLabel (l0);
-	mv.visitVarInsn (ALOAD, 0);
-	compileExpression (mv, e.get (1), Object.class /* TODO */);
-	mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
 	final Label l1 = new Label ();
-	mv.visitJumpInsn (IFEQ, l1);
+	mv.visitLabel (l1);
+	compileExpression (mv, e.get (1), Object.class /* TODO */);
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
+	final Label l2 = new Label ();
+	mv.visitJumpInsn (IFNE, l2); // Check for boolean
+	mv.visitInsn (POP); // Not a boolean
+	final Label l3 = new Label ();
+	mv.visitJumpInsn (GOTO, l3);
 
+	mv.visitLabel (l2);
+	mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+	final Label l4 = new Label ();
+	mv.visitJumpInsn (IFEQ, l4);
+
+	mv.visitLabel (l3);
 	// Get rid of previous value
 	mv.visitInsn (POP);
 
@@ -972,9 +982,9 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
 	// Don't pop the last value
 	compileExpression (mv, e.last (), Object.class /* TODO */);
-	mv.visitJumpInsn (GOTO, l0);
+	mv.visitJumpInsn (GOTO, l1);
 
-	mv.visitLabel (l1);
+	mv.visitLabel (l4);
 	if (valueType == null)
 	{
 	    mv.visitInsn (POP);
@@ -989,13 +999,23 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitInsn (ACONST_NULL);
 
 	// Perform iteration test
-	final Label l0 = new Label ();
-	mv.visitLabel (l0);
-	mv.visitVarInsn (ALOAD, 0);
-	compileExpression (mv, e.get (1), Object.class /* TODO */);
-	mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
 	final Label l1 = new Label ();
-	mv.visitJumpInsn (IFNE, l1);
+	mv.visitLabel (l1);
+	// mv.visitVarInsn (ALOAD, 0);
+	compileExpression (mv, e.get (1), Object.class /* TODO */);
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
+	final Label l2 = new Label ();
+	final Label l3 = new Label ();
+	mv.visitJumpInsn (IFNE, l3);
+	mv.visitInsn (POP);
+	mv.visitJumpInsn (GOTO, l2);
+
+	mv.visitLabel (l3);
+	// mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+	mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+	mv.visitJumpInsn (IFNE, l2);
 
 	// Get rid of previous value
 	mv.visitInsn (POP);
@@ -1008,9 +1028,9 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
 	// Don't pop the last value
 	compileExpression (mv, e.last (), Object.class /* TODO */);
-	mv.visitJumpInsn (GOTO, l0);
+	mv.visitJumpInsn (GOTO, l1);
 
-	mv.visitLabel (l1);
+	mv.visitLabel (l2);
 	if (valueType == null)
 	{
 	    mv.visitInsn (POP);
@@ -1121,6 +1141,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    final LispList clause = (LispList)e.get (i);
 	    final Object key = clause.get (0);
 	    compileExpression (mv, key, Object.class /* TODO */);
+	    // [TODO] Inline code the boolean test here
 	    mv.visitInsn (DUP);
 	    mv.visitVarInsn (ALOAD, 0);
 	    mv.visitInsn (SWAP);
