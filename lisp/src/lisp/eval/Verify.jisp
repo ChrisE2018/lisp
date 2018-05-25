@@ -170,6 +170,9 @@
 (verify (foo true) null)
 (verify (foo false) 2)
 
+(define foo () (if 'foo 1  2))
+(verify (foo) 1)
+
 (sleep 0.2)
 (printTestStatistics)
 

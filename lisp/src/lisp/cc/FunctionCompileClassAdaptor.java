@@ -222,10 +222,6 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	else if (e instanceof LispList)
 	{
 	    compileFunctionCall (mv, (LispList)e, valueType);
-	    if (boolean.class.equals (valueType))
-	    {
-		coerceBoolean (mv);
-	    }
 	}
 	else if (e instanceof Symbol)
 	{
@@ -401,6 +397,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	else
 	{
 	    compileStandardFunctionCall (mv, f, e, valueType);
+	    if (boolean.class.equals (valueType))
+	    {
+		coerceBoolean (mv);
+	    }
 	}
     }
 
@@ -544,7 +544,18 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
 	else if (symbol.is ("cond"))
 	{
-	    compileCond (mv, e, valueType);
+	    if (valueType == null)
+	    {
+		compileVoidCond (mv, e);
+	    }
+	    else if (valueType.equals (boolean.class))
+	    {
+		compileBooleanCond (mv, e);
+	    }
+	    else
+	    {
+		compileCond (mv, e, valueType);
+	    }
 	}
 	else
 	{
@@ -555,7 +566,11 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     private void compileQuote (final MethodVisitor mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo () (quote bar))
-	if (valueType != null)
+	if (boolean.class.equals (valueType))
+	{
+	    mv.visitLdcInsn (true);
+	}
+	else if (valueType != null)
 	{
 	    final Symbol quote = (Symbol)e.get (0);
 	    final Symbol reference = quote.gensym ();
@@ -570,6 +585,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    // LOGGER.finer (String.format ("Quoted reference to %s (%s)", typeDescriptor, quoted));
 	    mv.visitVarInsn (ALOAD, 0);
 	    mv.visitFieldInsn (GETFIELD, className, reference.getName (), typeDescriptor);
+
 	}
     }
 
@@ -578,7 +594,11 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// (define foo () (progn (printf "a%n") (printf "b%n") 3))
 	if (e.size () == 0)
 	{
-	    if (valueType != null)
+	    if (boolean.class.equals (valueType))
+	    {
+		mv.visitLdcInsn (true);
+	    }
+	    else if (valueType != null)
 	    {
 		mv.visitInsn (ACONST_NULL);
 	    }
@@ -670,6 +690,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	{
 	    mv.visitInsn (POP);
 	}
+	if (boolean.class.equals (valueType))
+	{
+	    coerceBoolean (mv);
+	}
     }
 
     private void compileOr (final MethodVisitor mv, final LispList e, final Class<?> valueType)
@@ -704,6 +728,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	{
 	    mv.visitInsn (POP);
 	}
+	if (boolean.class.equals (valueType))
+	{
+	    coerceBoolean (mv);
+	}
     }
 
     private void compileWhen (final MethodVisitor mv, final LispList e, final Class<?> valueType)
@@ -728,7 +756,11 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// False case.
 	mv.visitLabel (l2);
 
-	if (valueType != null)
+	if (boolean.class.equals (valueType))
+	{
+	    mv.visitLdcInsn (true);
+	}
+	else if (valueType != null)
 	{
 	    // False case where value is required
 	    mv.visitInsn (ACONST_NULL);
@@ -759,7 +791,12 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 
 	// False case where we must pop a value
 	mv.visitLabel (l1);
-	if (valueType != null)
+
+	if (boolean.class.equals (valueType))
+	{
+	    mv.visitLdcInsn (true);
+	}
+	else if (valueType != null)
 	{
 	    mv.visitInsn (ACONST_NULL);
 	}
@@ -788,6 +825,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 		mv.visitInsn (DUP);
 	    }
 	    mv.visitVarInsn (ASTORE, p);
+	    if (boolean.class.equals (valueType))
+	    {
+		coerceBoolean (mv);
+	    }
 	}
 	else if (localVariableMap.containsKey (symbol))
 	{
@@ -799,6 +840,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 		mv.visitInsn (DUP);
 	    }
 	    mv.visitVarInsn (ASTORE, localRef);
+	    if (boolean.class.equals (valueType))
+	    {
+		coerceBoolean (mv);
+	    }
 	}
 	else
 	{
@@ -824,6 +869,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    {
 		globalReferences.add (symbol);
 		LOGGER.finer (String.format ("Compiled global assignment to %s", symbol));
+	    }
+	    if (boolean.class.equals (valueType))
+	    {
+		coerceBoolean (mv);
 	    }
 	}
     }
@@ -853,7 +902,14 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitVarInsn (ISTORE, countRef);
 
 	// Push default return value onto the stack
-	mv.visitInsn (ACONST_NULL);
+	if (boolean.class.equals (valueType))
+	{
+	    mv.visitLdcInsn (true);
+	}
+	else if (valueType != null)
+	{
+	    mv.visitInsn (ACONST_NULL);
+	}
 
 	// Push iteration number onto the stack
 	mv.visitInsn (ICONST_0);
@@ -872,8 +928,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Stack: value, iteration
 	for (int i = 2; i < e.size (); i++)
 	{
-	    mv.visitInsn (POP);
-	    compileExpression (mv, e.get (i), Object.class /* TODO */);
+	    // mv.visitInsn (POP);
+	    compileExpression (mv, e.get (i), valueType);
 	}
 	mv.visitInsn (SWAP);
 
@@ -893,11 +949,6 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Stack: iteration, value
 	// Remove iteration count
 	mv.visitInsn (POP);
-	// Return last body value
-	if (valueType == null)
-	{
-	    mv.visitInsn (POP);
-	}
     }
 
     private void compileDotimes (final MethodVisitor mv, final LispList e, final Class<?> valueType)
@@ -917,7 +968,14 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Leave repeat count on the stack
 
 	// Push default return value onto the stack
-	mv.visitInsn (ACONST_NULL);
+	if (boolean.class.equals (valueType))
+	{
+	    mv.visitLdcInsn (true);
+	}
+	else if (valueType != null)
+	{
+	    mv.visitInsn (ACONST_NULL);
+	}
 
 	// Put iteration number into local variable
 	final Map<Symbol, Integer> savedLocalVariableMap = localVariableMap;
@@ -941,8 +999,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// <body code goes here>
 	for (int i = 2; i < e.size (); i++)
 	{
-	    mv.visitInsn (POP);
-	    compileExpression (mv, e.get (i), Object.class /* TODO */);
+	    // mv.visitInsn (POP);
+	    compileExpression (mv, e.get (i), valueType);
 	}
 
 	// Loop increment
@@ -964,10 +1022,14 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 
 	mv.visitInsn (POP); // Remove repeat count
 	// Return last body value
-	if (valueType == null)
-	{
-	    mv.visitInsn (POP);
-	}
+	// if (valueType == null)
+	// {
+	// mv.visitInsn (POP);
+	// }
+	// if (boolean.class.equals (valueType))
+	// {
+	// coerceBoolean (mv);
+	// }
 	localVariableMap = savedLocalVariableMap;
     }
 
@@ -976,7 +1038,11 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// (define foo (x) (setq a 0) (while (< a x) (printf "A: %s%n" a) (setq a (+ a 1))))
 
 	// Load default value
-	if (valueType != null)
+	if (boolean.class.equals (valueType))
+	{
+	    mv.visitLdcInsn (true);
+	}
+	else if (valueType != null)
 	{
 	    mv.visitInsn (ACONST_NULL);
 	}
@@ -989,7 +1055,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitJumpInsn (IFEQ, l2);
 
 	// Loop body
-	mv.visitInsn (POP);
+	if (valueType != null)
+	{
+	    mv.visitInsn (POP);
+	}
 	for (int i = 2; i < e.size () - 1; i++)
 	{
 	    compileExpression (mv, e.get (i), null);
@@ -999,6 +1068,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitJumpInsn (GOTO, l1);
 
 	mv.visitLabel (l2);
+	// if (boolean.class.equals (valueType))
+	// {
+	// coerceBoolean (mv);
+	// }
     }
 
     private void compileUntil (final MethodVisitor mv, final LispList e, final Class<?> valueType)
@@ -1006,7 +1079,11 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// (define foo (x) (setq a 0) (until (> a x) (printf "A: %s%n" a) (setq a (+ a 1))))
 
 	// Load default value
-	if (valueType != null)
+	if (boolean.class.equals (valueType))
+	{
+	    mv.visitLdcInsn (true);
+	}
+	else if (valueType != null)
 	{
 	    mv.visitInsn (ACONST_NULL);
 	}
@@ -1019,7 +1096,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitJumpInsn (IFNE, l2);
 
 	// Loop body
-	mv.visitInsn (POP);
+	if (valueType != null)
+	{
+	    mv.visitInsn (POP);
+	}
 	for (int i = 2; i < e.size () - 1; i++)
 	{
 	    compileExpression (mv, e.get (i), null);
@@ -1029,6 +1109,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitJumpInsn (GOTO, l1);
 
 	mv.visitLabel (l2);
+	// if (boolean.class.equals (valueType))
+	// {
+	// coerceBoolean (mv);
+	// }
     }
 
     private void compileLet (final MethodVisitor mv, final LispList e, final Class<?> valueType)
@@ -1075,6 +1159,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	{
 	    mv.visitInsn (POP);
 	}
+	if (boolean.class.equals (valueType))
+	{
+	    coerceBoolean (mv);
+	}
     }
 
     private void compileLetStar (final MethodVisitor mv, final LispList e, final Class<?> valueType)
@@ -1116,6 +1204,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	{
 	    mv.visitInsn (POP);
 	}
+	if (boolean.class.equals (valueType))
+	{
+	    coerceBoolean (mv);
+	}
     }
 
     private void compileCond (final MethodVisitor mv, final LispList e, final Class<?> valueType)
@@ -1123,37 +1215,59 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// (define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma) (true 'delta)))
 	final Package system = PackageFactory.getSystemPackage ();
 	final Symbol var = system.internSymbol ("result").gensym ();
+
 	final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
-	final int resultRef = lvs.newLocal (Type.getType (Object.class));
-	localVariableMap.put (var, resultRef);
-	mv.visitInsn (ACONST_NULL);
-	mv.visitVarInsn (ASTORE, resultRef);
+	int resultRef = 0;
+	if (valueType != null)
+	{
+	    resultRef = lvs.newLocal (Type.getType (Object.class));
+	    localVariableMap.put (var, resultRef);
+	    mv.visitInsn (ACONST_NULL);
+	    mv.visitVarInsn (ASTORE, resultRef);
+	}
 	// Label to goto and return result
 	final Label l1 = new Label ();
 	for (int i = 1; i < e.size (); i++)
 	{
 	    final LispList clause = (LispList)e.get (i);
 	    final Object key = clause.get (0);
-	    compileExpression (mv, key, Object.class /* TODO */);
-	    mv.visitInsn (DUP);
-	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	    final Label l2 = new Label ();
-	    mv.visitJumpInsn (IFEQ, l2); // Check for boolean
-
-	    mv.visitInsn (DUP);
-	    mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
-	    mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
-
 	    final Label l3 = new Label ();
-	    mv.visitJumpInsn (IFEQ, l3);
+	    if (valueType == null)
+	    {
+		compileExpression (mv, key, boolean.class);
+		mv.visitJumpInsn (IFEQ, l3);
+	    }
+	    else
+	    {
+		compileExpression (mv, key, valueType);
+		mv.visitInsn (DUP);
+		mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
+		mv.visitJumpInsn (IFEQ, l2); // Check for boolean
+
+		mv.visitInsn (DUP);
+		mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
+		mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+		mv.visitJumpInsn (IFEQ, l3);
+	    }
+
+	    // Clause selected
 	    mv.visitLabel (l2);
-	    mv.visitVarInsn (ASTORE, resultRef);
+	    if (valueType != null)
+	    {
+		mv.visitVarInsn (ASTORE, resultRef);
+	    }
 	    for (int j = 1; j < clause.size (); j++)
 	    {
-		compileExpression (mv, clause.get (j), Object.class /* TODO */);
+		compileExpression (mv, clause.get (j), valueType);
+	    }
+	    if (valueType != null)
+	    {
 		mv.visitVarInsn (ASTORE, resultRef);
 	    }
 	    mv.visitJumpInsn (GOTO, l1);
+
+	    // Clause not selected
 	    mv.visitLabel (l3);
 	    mv.visitInsn (POP);
 	}
@@ -1163,6 +1277,77 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	{
 	    mv.visitVarInsn (ALOAD, resultRef);
 	}
+    }
+
+    /** Case where no return value is required. */
+    private void compileVoidCond (final MethodVisitor mv, final LispList e)
+    {
+	// (define foo (x) (cond ((= x 1) (printf "one%n")) ((= x 2)(printf "two%n"))) 'done)
+
+	// Label to goto and return result
+	final Label l1 = new Label ();
+	for (int i = 1; i < e.size (); i++)
+	{
+	    final LispList clause = (LispList)e.get (i);
+	    final int size = clause.size ();
+	    final Object key = clause.get (0);
+	    final Label l2 = new Label ();
+
+	    compileExpression (mv, key, boolean.class);
+	    mv.visitJumpInsn (IFEQ, l2);
+
+	    // Clause selected
+	    for (int j = 1; j < size; j++)
+	    {
+		compileExpression (mv, clause.get (j), null);
+	    }
+	    mv.visitJumpInsn (GOTO, l1);
+
+	    // Clause not selected
+	    mv.visitLabel (l2);
+	}
+	// Return result
+	mv.visitLabel (l1);
+    }
+
+    /** Case where only a boolean value is required. */
+    // (define foo (x) (when (cond ((= x 1)) ((= x 2) false) ((= x 3) true)) (printf "when%n")))
+    // (define foo (x) (when (cond ((= x 1)) ((= x 2) false) ((= x 3))) (printf "when%n")))
+    private void compileBooleanCond (final MethodVisitor mv, final LispList e)
+    {
+	// Label to goto and return result
+	final Label l1 = new Label ();
+	for (int i = 1; i < e.size (); i++)
+	{
+	    final LispList clause = (LispList)e.get (i);
+	    final int size = clause.size ();
+	    final Object key = clause.get (0);
+	    final Label l2 = new Label ();
+
+	    compileExpression (mv, key, boolean.class);
+	    mv.visitJumpInsn (IFEQ, l2);
+
+	    // Clause selected
+	    if (size > 1)
+	    {
+		for (int j = 1; j < size - 1; j++)
+		{
+		    compileExpression (mv, clause.get (j), null);
+		}
+		compileExpression (mv, clause.get (size - 1), boolean.class);
+	    }
+	    else
+	    {
+		mv.visitLdcInsn (true);
+	    }
+	    mv.visitJumpInsn (GOTO, l1);
+
+	    // Clause not selected
+	    mv.visitLabel (l2);
+	}
+	// Return result
+	mv.visitLdcInsn (false);
+	mv.visitLabel (l1);
     }
 
     /**
