@@ -117,6 +117,43 @@
 	(+ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))
 (verify (foo) 210)
 
+(def isprime (a)
+  (let ((b 2)
+  		(result true))
+    (while (and (<= (* b b) a) result)
+      (if (zerop (rem a b))
+      	  (setq result false)
+      	  (setq b (1+ b))))
+    result))
+
+(def collectPrimes (n)
+    (let ((i 2) (result (list)))
+      (while (<= (size result) n)
+        (when (isprime i) (add result i))
+        (setq i (1+ i)))
+      result))
+
+(verify (collectPrimes 10) '(2 3 5 7 11 13 17 19 23 29 31))
+
+; Now do it compiled
+(define isprime (a)
+  (let ((b 2)
+  		(result true))
+    (while (and (<= (* b b) a) result)
+      (if (zerop (rem a b))
+      	  (setq result false)
+      	  (setq b (1+ b))))
+    result))
+
+(define collectPrimes (n)
+    (let ((i 2) (result (list)))
+      (while (<= (size result) n)
+        (when (isprime i) (add result i))
+        (setq i (1+ i)))
+      result))
+
+(verify (collectPrimes 10) '(2 3 5 7 11 13 17 19 23 29 31))
+        
 (sleep 0.2)
 (printTestStatistics)
 

@@ -25,16 +25,27 @@ public class CompiledShell
     @SuppressWarnings ("unused")
     private boolean isTrue (final Object value)
     {
+	// Test for value equal to Boolean true
 	if (value != null)
 	{
 	    if (value instanceof Boolean)
 	    {
-		if (false == (Boolean)value)
-		{
-		    return false;
-		}
+		return (Boolean)value;
 	    }
-	    return true;
+	}
+	return false;
+    }
+
+    @SuppressWarnings ("unused")
+    private boolean isFalse (final Object value)
+    {
+	// Test for value equal to Boolean false
+	if (value != null)
+	{
+	    if (value instanceof Boolean)
+	    {
+		return !(Boolean)value;
+	    }
 	}
 	return false;
     }

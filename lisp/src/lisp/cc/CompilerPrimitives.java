@@ -247,9 +247,10 @@ public class CompilerPrimitives extends Definer
 	}
 	final long duration = System.nanoTime () - start;
 	final double seconds = duration / (1000.0 * 1000.0 * 1000.0);
-	System.out.printf ("Completed %s iterations in %f seconds = %f seconds / iteration %n", count, seconds, seconds / count);
+	final double average = seconds / count;
+	System.out.printf ("Completed %s iterations in %f seconds = %f seconds / iteration %n", count, seconds, average);
 	System.out.printf ("   Each iteration evaluated: %s %n", expr);
-	return null;
+	return average;
     }
 
     @Override
