@@ -135,6 +135,8 @@
 
 (verify (collectPrimes 10) '(2 3 5 7 11 13 17 19 23 29 31))
 
+(printf "Testing compiled prime number test %n")
+
 ; Now do it compiled
 (define isprime (a)
   (let ((b 2)
@@ -159,3 +161,34 @@
 
 ; And quit
 (exit)
+
+
+(define isprime (a) ;ok
+  (let ((b 2)
+  		(result true))
+    (while (and (<= (* b b) a) result)
+      (when (zerop (rem a b)) 
+      	(setq result false))
+      (setq b (1+ b))
+      )
+    result))
+    
+(define isprime (a) ; bad
+  (let ((b 2)
+  		(result true))
+    (while (and (<= (* b b) a) result)
+      (if (zerop (rem a b)) 
+      	(setq result false))
+      (setq b (1+ b))
+      )
+    result))
+    
+(define isprime (a)
+  (let ((b 2)
+  		(result true))
+    (while (and (<= (* b b) a) result)
+      (if (zerop (rem a b)) 
+      	  (setq result false)
+          (setq b (1+ b)))
+      )
+    result))
