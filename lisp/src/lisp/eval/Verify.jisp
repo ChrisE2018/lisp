@@ -156,6 +156,20 @@
 
 (verify (collectPrimes 10) '(2 3 5 7 11 13 17 19 23 29 31))
         
+(define foo (x) (when x 1 2))
+(verify (foo 1) 2)
+(verify (foo 'bar) 2)
+(verify (foo null) 2)
+(verify (foo true) 2)
+(verify (foo false) null)
+
+(define foo (x) (unless x 1 2))
+(verify (foo 1) null)
+(verify (foo 'bar) null)
+(verify (foo null) null)
+(verify (foo true) null)
+(verify (foo false) 2)
+
 (sleep 0.2)
 (printTestStatistics)
 

@@ -540,8 +540,6 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	compileExpression (mv, e.get (1), Object.class /* TODO */);
 	mv.visitInsn (DUP);
 	final Label l1 = new Label ();
-	mv.visitJumpInsn (IFNULL, l1);
-	mv.visitInsn (DUP);
 	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	mv.visitJumpInsn (IFEQ, l1);
 	mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
@@ -558,8 +556,10 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Leave the last value
 	if (e.size () <= 3)
 	{
-	    mv.visitInsn (ICONST_0);
-	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+	    if (valueType != null)
+	    {
+		mv.visitInsn (ACONST_NULL);
+	    }
 	}
 	else
 	{
@@ -593,8 +593,6 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), Object.class /* TODO */);
 	    mv.visitInsn (DUP);
 	    final Label l3 = new Label ();
-	    mv.visitJumpInsn (IFNULL, l3);
-	    mv.visitInsn (DUP);
 	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	    mv.visitJumpInsn (IFEQ, l3);
 	    mv.visitInsn (DUP);
@@ -634,9 +632,6 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    mv.visitInsn (POP);
 	    compileExpression (mv, e.get (i), Object.class /* TODO */);
 	    mv.visitInsn (DUP);
-	    mv.visitJumpInsn (IFNULL, l1);
-	    mv.visitInsn (DUP);
-
 	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	    mv.visitJumpInsn (IFEQ, l1);
 	    mv.visitInsn (DUP);
@@ -662,24 +657,28 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
     {
 	// (define foo (x) (when x 1 2))
 	// (define foo (x) (when x 1 (printf "a%n") (printf "b%n") 3))
-	mv.visitVarInsn (ALOAD, 0);
 	compileExpression (mv, e.get (1), Object.class /* TODO */);
-	mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+
 	final Label l1 = new Label ();
 	final Label l2 = new Label ();
+	final Label l3 = new Label ();
+	final Label l4 = new Label ();
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
+	mv.visitJumpInsn (IFEQ, l3);
+	mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+
 	if (valueType == null)
 	{
 	    // Optimize handling of case where the return value is not used
-	    mv.visitJumpInsn (IFEQ, l2);
+	    mv.visitJumpInsn (IFEQ, l1);
 	}
 	else
 	{
-	    mv.visitJumpInsn (IFNE, l1);
-	    mv.visitInsn (ICONST_0);
-	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
-	    mv.visitJumpInsn (GOTO, l2);
-	    mv.visitLabel (l1);
+	    mv.visitJumpInsn (IFEQ, l4);
 	}
+	mv.visitLabel (l2);
 
 	// True case
 	for (int i = 2; i < e.size () - 1; i++)
@@ -688,21 +687,38 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
 	// Don't pop the last value
 	compileExpression (mv, e.last (), valueType);
+	mv.visitJumpInsn (GOTO, l1);
+
+	// Not a boolean. Discard extra copy and execute the true case.
+	mv.visitLabel (l3);
+	mv.visitInsn (POP);
+	mv.visitJumpInsn (GOTO, l2);
+
+	if (valueType != null)
+	{
+	    // False case where value is required
+	    mv.visitLabel (l4);
+	    mv.visitInsn (ACONST_NULL);
+	}
 
 	// Jump here after true case or fall through after else.
 	// Return final value.
-	mv.visitLabel (l2);
+	mv.visitLabel (l1);
     }
 
     private void compileUnless (final MethodVisitor mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (x) (unless x 1 2))
 	// (define foo (x) (unless x 1 (printf "a%n") (printf "b%n") 3))
-	mv.visitVarInsn (ALOAD, 0);
 	compileExpression (mv, e.get (1), Object.class /* TODO */);
-	mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	final Label l1 = new Label ();
-	mv.visitJumpInsn (IFNE, l1);
+	mv.visitJumpInsn (IFEQ, l1);
+	mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+	final Label l2 = new Label ();
+	mv.visitJumpInsn (IFNE, l2);
 
 	// True case
 	for (int i = 2; i < e.size () - 1; i++)
@@ -711,19 +727,21 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	}
 	// Don't pop the last value
 	compileExpression (mv, e.last (), valueType);
-	final Label l2 = new Label ();
-	mv.visitJumpInsn (GOTO, l2);
+	final Label l3 = new Label ();
+	mv.visitJumpInsn (GOTO, l3);
 
+	// False case where we must pop a value
 	mv.visitLabel (l1);
+	mv.visitInsn (POP);
+	mv.visitLabel (l2);
 	if (valueType != null)
 	{
-	    mv.visitInsn (ICONST_0);
-	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+	    mv.visitInsn (ACONST_NULL);
 	}
 
 	// Jump here after true case or fall through after else.
 	// Return final value.
-	mv.visitLabel (l2);
+	mv.visitLabel (l3);
     }
 
     private void compileSetq (final MethodVisitor mv, final LispList e, final Class<?> valueType)
@@ -808,11 +826,8 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	// Put repeat count number into local variable
 	mv.visitVarInsn (ISTORE, countRef);
 
-	// if (valueType != null)
-	{
-	    // Push default return value onto the stack
-	    mv.visitInsn (ACONST_NULL);
-	}
+	// Push default return value onto the stack
+	mv.visitInsn (ACONST_NULL);
 
 	// Push iteration number onto the stack
 	mv.visitInsn (ICONST_0);
