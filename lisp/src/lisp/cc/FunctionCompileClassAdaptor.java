@@ -1135,31 +1135,36 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	mv.visitInsn (ACONST_NULL);
 	mv.visitVarInsn (ASTORE, resultRef);
 	// Label to goto and return result
-	final Label l0 = new Label ();
+	final Label l1 = new Label ();
 	for (int i = 1; i < e.size (); i++)
 	{
 	    final LispList clause = (LispList)e.get (i);
 	    final Object key = clause.get (0);
 	    compileExpression (mv, key, Object.class /* TODO */);
-	    // [TODO] Inline code the boolean test here
 	    mv.visitInsn (DUP);
-	    mv.visitVarInsn (ALOAD, 0);
-	    mv.visitInsn (SWAP);
-	    mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
-	    final Label l1 = new Label ();
-	    mv.visitJumpInsn (IFEQ, l1);
+	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
+	    final Label l2 = new Label ();
+	    mv.visitJumpInsn (IFEQ, l2); // Check for boolean
+
+	    mv.visitInsn (DUP);
+	    mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
+	    mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+
+	    final Label l3 = new Label ();
+	    mv.visitJumpInsn (IFEQ, l3);
+	    mv.visitLabel (l2);
 	    mv.visitVarInsn (ASTORE, resultRef);
 	    for (int j = 1; j < clause.size (); j++)
 	    {
 		compileExpression (mv, clause.get (j), Object.class /* TODO */);
 		mv.visitVarInsn (ASTORE, resultRef);
 	    }
-	    mv.visitJumpInsn (GOTO, l0);
-	    mv.visitLabel (l1);
+	    mv.visitJumpInsn (GOTO, l1);
+	    mv.visitLabel (l3);
 	    mv.visitInsn (POP);
 	}
 	// Return result
-	mv.visitLabel (l0);
+	mv.visitLabel (l1);
 	if (valueType != null)
 	{
 	    mv.visitVarInsn (ALOAD, resultRef);

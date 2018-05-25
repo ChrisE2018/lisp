@@ -51,7 +51,7 @@
       ;(printf "zp=%s %n" (zerop (rem a b)))
       ;(printf "result=%s %n" result)
       ;[fixed] The following printf call won't compile:
-      (printf "a=%s b=%s rem=%s zp=%s result=%s %n" a b (rem a b) (zerop (rem a b)) result)
+      ;(printf "a=%s b=%s rem=%s zp=%s result=%s %n" a b (rem a b) (zerop (rem a b)) result)
       (if (zerop (rem a b))
       	  (setq result false)
       	  (setq b (1+ b))))
@@ -65,4 +65,5 @@
  
  (timing 10 (g 99999))
   
-  
+ (exit)
+ 
