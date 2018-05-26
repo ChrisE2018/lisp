@@ -30,6 +30,12 @@ public class SimpleValueCell implements ValueCell
 	this.value = value;
     }
 
+    /** Allowed value types. */
+    public Class<?> getValueType ()
+    {
+	return Object.class;
+    }
+
     @Override
     public String toString ()
     {

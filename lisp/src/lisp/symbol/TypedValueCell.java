@@ -22,11 +22,6 @@ public class TypedValueCell implements ValueCell
 	this.value = value;
     }
 
-    public Class<?> getType ()
-    {
-	return type;
-    }
-
     /** Get the current stored value. */
     @Override
     public Object getValue ()
@@ -44,6 +39,12 @@ public class TypedValueCell implements ValueCell
 	    throw new IllegalArgumentException ("Object " + value + " cannot be assigned to " + type);
 	}
 	this.value = value;
+    }
+
+    /** Allowed value types. */
+    public Class<?> getValueType ()
+    {
+	return type;
     }
 
     @Override
