@@ -98,6 +98,12 @@ public class Symbol implements Describer
 	return defaultValue;
     }
 
+    /** Determine if the value has been set. */
+    public boolean hasValue ()
+    {
+	return symbolValue != null;
+    }
+
     /** The global value of the symbol. */
     public void setValue (final Object value)
     {
@@ -182,7 +188,7 @@ public class Symbol implements Describer
 		{
 		    final ConstantValueCell cvc = (ConstantValueCell)symbolValue;
 		    final Object value = cvc.getValue ();
-		    symbolValue = new TypedValueCell (cvc.getType (), value);
+		    symbolValue = new TypedValueCell (cvc.getValueType (), value);
 		}
 	    }
 	    else if (constantValue)
