@@ -3,6 +3,7 @@ package lisp.cc;
 
 import java.io.IOException;
 import java.lang.reflect.*;
+import java.util.*;
 import java.util.logging.Logger;
 
 import lisp.*;
@@ -42,6 +43,36 @@ public class CompilerPrimitives extends Definer
 	final int value = replErrorCount;
 	replErrorCount = 0;
 	return value;
+    }
+
+    @DefineLisp (special = true)
+    public Object analyze (@SuppressWarnings ("unused") final LexicalContext context, final Object nameSpec,
+            final LispList methodArgs, final Object... bodyForms)
+    {
+	final Class<?> returnType = CompileSupport.getNameType (nameSpec);
+	final Symbol methodName = CompileSupport.getFunctionName (nameSpec);
+	final LispList body = new LispList (bodyForms);
+	final Analyzer analyzer = new Analyzer ("foo", returnType, methodName, methodArgs, body);
+	analyzer.analyze ();
+	return analyzer;
+    }
+
+    @DefineLisp (special = true)
+    public Object defproto (@SuppressWarnings ("unused") final LexicalContext context, final Object nameSpec,
+            final LispList methodArgs)
+    {
+	final Symbol protos = PackageFactory.getSystemPackage ().internSymbol ("*protos*");
+	final Class<?> returnType = CompileSupport.getNameType (nameSpec);
+	final Symbol methodName = CompileSupport.getFunctionName (nameSpec);
+	final Prototype spec = new Prototype (methodName, methodArgs, returnType);
+	if (!protos.hasValue ())
+	{
+	    protos.setValue (new ArrayList<Prototype> ());
+	}
+	@SuppressWarnings ("unchecked")
+	final List<Prototype> list = (List<Prototype>)protos.getValue ();
+	list.add (spec);
+	return spec;
     }
 
     // (define foo (x) alpha)
