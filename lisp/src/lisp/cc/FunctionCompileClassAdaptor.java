@@ -297,7 +297,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 		}
 		else
 		{
-		    mv.visitLdcInsn (false);
+		    mv.visitLdcInsn (true);
 		}
 	    }
 	    // Compile constant expressions
@@ -817,33 +817,15 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	{
 	    // Parameter reference
 	    // [TODO] If we can determine the type, use that information.
-	    final int p = methodArgs.indexOf (symbol) + 1;
-	    LOGGER.finer (String.format ("Setq parameter %s (%d)", symbol, p));
-	    compileExpression (mv, e.get (2), Object.class /* TODO */);
-	    if (valueType != null)
-	    {
-		mv.visitInsn (DUP);
-	    }
-	    mv.visitVarInsn (ASTORE, p);
-	    if (boolean.class.equals (valueType))
-	    {
-		coerceBoolean (mv);
-	    }
+	    final int argRef = methodArgs.indexOf (symbol) + 1;
+	    LOGGER.finer (String.format ("Setq parameter %s (%d)", symbol, argRef));
+	    compileLocalSetq (mv, argRef, (LispList)e.get (2), valueType);
 	}
 	else if (localVariableMap.containsKey (symbol))
 	{
 	    final int localRef = localVariableMap.get (symbol);
 	    LOGGER.finer (String.format ("Setq local %s (%d)", symbol, localRef));
-	    compileExpression (mv, e.get (2), Object.class /* TODO */);
-	    if (valueType != null)
-	    {
-		mv.visitInsn (DUP);
-	    }
-	    mv.visitVarInsn (ASTORE, localRef);
-	    if (boolean.class.equals (valueType))
-	    {
-		coerceBoolean (mv);
-	    }
+	    compileLocalSetq (mv, localRef, (LispList)e.get (2), valueType);
 	}
 	else
 	{
@@ -874,6 +856,28 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 	    {
 		coerceBoolean (mv);
 	    }
+	}
+    }
+
+    private void compileLocalSetq (final MethodVisitor mv, final int localRef, final LispList expr, final Class<?> valueType)
+    {
+	if (valueType == null)
+	{
+	    compileExpression (mv, expr, Object.class /* TODO */);
+	    mv.visitVarInsn (ASTORE, localRef);
+	}
+	else if (boolean.class.equals (valueType))
+	{
+	    compileExpression (mv, expr, Object.class /* TODO */);
+	    mv.visitInsn (DUP);
+	    mv.visitVarInsn (ASTORE, localRef);
+	    coerceBoolean (mv);
+	}
+	else
+	{
+	    compileExpression (mv, expr, Object.class /* TODO */);
+	    mv.visitInsn (DUP);
+	    mv.visitVarInsn (ASTORE, localRef);
 	}
     }
 
