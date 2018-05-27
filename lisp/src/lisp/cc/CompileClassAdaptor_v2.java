@@ -198,6 +198,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
     private void compileExpression (final MethodVisitor mv, final Object e, final Class<?> valueType)
     {
 	// [TOOD] valueType is ignored for now except when it is null or boolean.class
+	// [TODO] valueType should be supported for all primitive types
 	if (e == null)
 	{
 	    throw new Error ("Null is an illegal expression");
