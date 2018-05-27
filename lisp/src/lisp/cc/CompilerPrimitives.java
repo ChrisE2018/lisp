@@ -128,12 +128,13 @@ public class CompilerPrimitives extends Definer
             final LispList body) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException, IOException
     {
-	final CompileLoader cl = new CompileLoader ();
 
 	final String methodName = symbol.gensym ().getName ();
 	final String documentation = (body.get (0) instanceof String) ? (String)(body.get (0)) : "";
 
-	final Class<?> cls = cl.compile (returnType, methodName, args, body);
+	final CompilerFactory compilerFactory = new CompilerFactory ();
+	final Compiler cl = compilerFactory.getCompiler (returnType, methodName, args, body);
+	final Class<?> cls = cl.compile ();
 	final Class<?>[] parameterTypes = new Class<?>[args.size ()];
 	for (int i = 0; i < parameterTypes.length; i++)
 	{

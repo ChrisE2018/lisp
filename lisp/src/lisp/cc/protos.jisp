@@ -1,3 +1,8 @@
+; Declaration of options for compiling functions.
+; This should be associated with code to do the compilation and with examples of each choice.
+; The system should be able to compile and execute a sample function for each choice, and measure the
+; memory size and execution speed produced. These results should factor into the prototype selection process.
+
 (defproto int:+ (int:a int:b))
 (defproto double:+ (double:a int:b))
 (defproto double:+ (int:a double:b))

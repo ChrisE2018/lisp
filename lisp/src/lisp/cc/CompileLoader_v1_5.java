@@ -13,9 +13,9 @@ import org.objectweb.asm.util.*;
 import lisp.*;
 import lisp.Symbol;
 
-public class CompileLoader extends ClassLoader
+public class CompileLoader_v1_5 extends ClassLoader implements Compiler
 {
-    private static final Logger LOGGER = Logger.getLogger (CompileLoader.class.getName ());
+    private static final Logger LOGGER = Logger.getLogger (CompileLoader_v1_5.class.getName ());
 
     /**
      * Predefined shell class structure with support methods. To create a compiled function we load
@@ -41,11 +41,27 @@ public class CompileLoader extends ClassLoader
      */
     private final Map<String, Object> quotedReferences = new HashMap<String, Object> ();
 
+    private final Class<?> returnType;
+
+    private final String methodName;
+
+    private final LispList methodArgs;
+
+    private final LispList methodBody;
+
+    public CompileLoader_v1_5 (final Class<?> returnType, final String methodName, final LispList methodArgs,
+            final LispList methodBody)
+    {
+	this.returnType = returnType;
+	this.methodName = methodName;
+	this.methodArgs = methodArgs;
+	this.methodBody = methodBody;
+    }
+
     /**
      * Load the shell class resource and run the ClassVisitor on it to add our new method.
      */
-    public Class<?> compile (final Class<?> returnType, final String methodName, final LispList methodArgs,
-            final LispList methodBody) throws IOException
+    public Class<?> compile () throws IOException
     {
 	LOGGER.info (String.format ("Creating compiled class: %s for function %s %s %s", SHELL_CLASS, returnType, methodName,
 	        methodArgs));
@@ -56,18 +72,16 @@ public class CompileLoader extends ClassLoader
 	final InputStream is = getResourceAsStream (resource);
 	final ClassReader cr = new ClassReader (is);
 	final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
-	ClassVisitor cv2 = cw;
-
+	ClassVisitor cv = cw;
 	final StringWriter sw = new StringWriter ();
 	final Symbol showBytecodeSymbol = PackageFactory.getSystemPackage ().internSymbol (SHOW_BYTECODE);
 	final boolean showBytecode = showBytecodeSymbol.getValue (false) != Boolean.FALSE;
 	if (showBytecode)
 	{
 	    final Printer printer = new Textifier ();
-	    cv2 = new TraceClassVisitor (cw, printer, new PrintWriter (sw));
+	    cv = new TraceClassVisitor (cw, printer, new PrintWriter (sw));
 	}
-	final ClassVisitor cv =
-	    new FunctionCompileClassAdaptor (cv2, resourceName, returnType, methodName, methodArgs, methodBody, quotedReferences);
+	cv = new CompileClassAdaptor_v2 (cv, resourceName, returnType, methodName, methodArgs, methodBody, quotedReferences);
 
 	cr.accept (cv, 0);
 	if (showBytecode)
@@ -176,41 +190,45 @@ public class CompileLoader extends ClassLoader
 	return buffer.toString ();
     }
 
-    public static void main (final String[] args)
-    {
-	try
-	{
-	    final lisp.Package pkg = PackageFactory.getDefaultPackage ();
-	    final Symbol aSymbol = pkg.internSymbol ("a");
-	    final Symbol bSymbol = pkg.internSymbol ("b");
-	    final Symbol cSymbol = pkg.internSymbol ("c");
-	    final Symbol s = pkg.internSymbol ("lispfoo");
-	    s.setValue ("my symbol value");
-	    // s.setValue (new Integer (1234));
-	    final CompileLoader cl = new CompileLoader ();
-	    final String methodName = "userMethodName";
-	    final LispList methodArgs = new LispList ();
-	    methodArgs.add (aSymbol);
-	    methodArgs.add (bSymbol);
-	    methodArgs.add (cSymbol);
-	    final LispList methodBody = new LispList ();
-	    methodBody.add ("this is from the main method");
-	    methodBody.add (new Integer (123));
-	    methodBody.add ("str two");
-	    methodBody.add (s);
-	    methodBody.add (new Integer (4123));
-	    methodBody.add (new Byte ((byte)4));
-	    methodBody.add (new Long (42));
-	    methodBody.add (new Double (4.2));
-	    methodBody.add (new Float (4.2f));
-	    methodBody.add (s);
-	    System.out.printf ("Expression to compile: %s %n", methodBody);
-	    final Class<?> c = cl.compile (Object.class, methodName, methodArgs, methodBody);
-	    cl.checkCreatedClass (c);
-	}
-	catch (final Throwable e)
-	{
-	    e.printStackTrace ();
-	}
-    }
+    // public static void main (final String[] args)
+    // {
+    // try
+    // {
+    // final lisp.Package pkg = PackageFactory.getDefaultPackage ();
+    // final Symbol aSymbol = pkg.internSymbol ("a");
+    // final Symbol bSymbol = pkg.internSymbol ("b");
+    // final Symbol cSymbol = pkg.internSymbol ("c");
+    // final Symbol s = pkg.internSymbol ("lispfoo");
+    // s.setValue ("my symbol value");
+    // // s.setValue (new Integer (1234));
+    // final CompileLoader_v2 cl = new CompileLoader_v2 ();
+    // final String methodName = "userMethodName";
+    // final LispList methodArgs = new LispList ();
+    // methodArgs.add (aSymbol);
+    // methodArgs.add (bSymbol);
+    // methodArgs.add (cSymbol);
+    // final LispList methodBody = new LispList ();
+    // methodBody.add ("this is from the main method");
+    // methodBody.add (new Integer (123));
+    // methodBody.add ("str two");
+    // methodBody.add (s);
+    // methodBody.add (new Integer (4123));
+    // methodBody.add (new Byte ((byte)4));
+    // methodBody.add (new Long (42));
+    // methodBody.add (new Double (4.2));
+    // methodBody.add (new Float (4.2f));
+    // methodBody.add (s);
+    // System.out.printf ("Expression to compile: %s %n", methodBody);
+    // cl.setReturnType (Object.class);
+    // cl.setMethodName (methodName);
+    // cl.setMethodArgs (methodArgs);
+    // cl.setMethodBody (methodBody);
+    // final Class<?> c = cl.compile ();
+    // cl.checkCreatedClass (c);
+    // }
+    // catch (final Throwable e)
+    // {
+    // e.printStackTrace ();
+    // }
+    // }
 }

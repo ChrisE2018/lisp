@@ -14,9 +14,9 @@ import lisp.Package;
 import lisp.Symbol;
 import lisp.symbol.*;
 
-public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
+public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 {
-    private static final Logger LOGGER = Logger.getLogger (CompileLoader.class.getName ());
+    private static final Logger LOGGER = Logger.getLogger (CompileLoader_v1.class.getName ());
 
     private final String className;
     private final Class<?> returnType;
@@ -35,7 +35,7 @@ public class FunctionCompileClassAdaptor extends ClassVisitor implements Opcodes
 
     private Map<Symbol, Integer> localVariableMap = new LinkedHashMap<Symbol, Integer> ();
 
-    public FunctionCompileClassAdaptor (final ClassVisitor cv, final String className, final Class<?> returnType,
+    public CompileClassAdaptor_v2 (final ClassVisitor cv, final String className, final Class<?> returnType,
             final String methodName, final LispList methodArgs, final LispList methodBody,
             final Map<String, Object> quotedReferencesMap)
     {
