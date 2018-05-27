@@ -13,12 +13,13 @@ import lisp.*;
 import lisp.Package;
 import lisp.Symbol;
 import lisp.symbol.*;
+import lisp.util.LogString;
 
 public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (CompileLoader_v1.class.getName ());
 
-    private final String className;
+    private final Type classType;
     private final Class<?> returnType;
     private final String methodName;
     private final LispList methodArgs;
@@ -35,12 +36,12 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 
     private Map<Symbol, Integer> localVariableMap = new LinkedHashMap<Symbol, Integer> ();
 
-    public CompileClassAdaptor_v2 (final ClassVisitor cv, final String className, final Class<?> returnType,
+    public CompileClassAdaptor_v2 (final ClassVisitor cv, final Type classType, final Class<?> returnType,
             final String methodName, final LispList methodArgs, final LispList methodBody,
             final Map<String, Object> quotedReferencesMap)
     {
 	super (Opcodes.ASM5, cv);
-	this.className = className;
+	this.classType = classType;
 	this.returnType = returnType;
 	this.methodName = methodName;
 	this.methodArgs = methodArgs;
@@ -56,7 +57,13 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
      */
     private void createInitI ()
     {
-	LOGGER.finer (String.format ("Creating <init>(int) method for %s", className));
+	final String classInternalName = classType.getInternalName ();
+	final Type classLoaderType = Type.getType (CompileLoader_v2.class);
+	final String classLoaderInternalName = classLoaderType.getInternalName ();
+	final Type symbolType = Type.getType (Symbol.class);
+	final String symbolTypeDescriptor = symbolType.getDescriptor ();
+	System.out.printf ("classLoaderInternalName %s %n", classLoaderInternalName);
+	LOGGER.finer (new LogString ("Creating <init>(int) method for %s", classInternalName));
 	final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, "<init>", "(I)V", null, null);
 	mv.visitCode ();
 
@@ -67,7 +74,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	// Store the methodName in a field
 	mv.visitVarInsn (ALOAD, 0);
 	mv.visitLdcInsn (methodName);
-	mv.visitFieldInsn (PUTFIELD, className, "methodName", "Ljava/lang/String;");
+	mv.visitFieldInsn (PUTFIELD, classInternalName, "methodName", "Ljava/lang/String;");
 
 	// Create initialization code for all entries in symbolReferences.
 	for (final Symbol symbol : symbolReferences)
@@ -77,11 +84,11 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    mv.visitVarInsn (ALOAD, 0);
 	    mv.visitLdcInsn (symbol.getPackage ().getName ());
 	    mv.visitLdcInsn (symbol.getName ());
-	    mv.visitMethodInsn (INVOKESPECIAL, className, "getSymbol", "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;",
-	            false);
-	    mv.visitFieldInsn (PUTFIELD, className, javaName, "Llisp/Symbol;");
+	    mv.visitMethodInsn (INVOKESPECIAL, classInternalName, "getSymbol",
+	            "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;", false);
+	    mv.visitFieldInsn (PUTFIELD, classInternalName, javaName, "Llisp/Symbol;");
 
-	    LOGGER.finer (String.format ("Init: private Symbol %s %s;", javaName, symbol));
+	    LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaName, symbol));
 	}
 	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
 	{
@@ -92,15 +99,15 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    mv.visitInsn (DUP);
 	    mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
 	    mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
-	    mv.visitTypeInsn (CHECKCAST, "lisp/cc/CompileLoader");
-	    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/cc/CompileLoader", "getQuotedReferences", "()Ljava/util/Map;", false);
+	    mv.visitTypeInsn (CHECKCAST, classLoaderInternalName);
+	    mv.visitMethodInsn (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;", false);
 
 	    mv.visitLdcInsn (reference.getName ());
 	    mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
 	    final Type quotedType = Type.getType (quoted.getClass ());
 	    final String typeDescriptor = quotedType.getDescriptor ();
 	    mv.visitTypeInsn (CHECKCAST, quotedType.getInternalName ());
-	    mv.visitFieldInsn (PUTFIELD, className, reference.getName (), typeDescriptor);
+	    mv.visitFieldInsn (PUTFIELD, classInternalName, reference.getName (), typeDescriptor);
 	}
 	mv.visitInsn (RETURN);
 	mv.visitMaxs (0, 0);
@@ -203,7 +210,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	// {
 	// // [TODO] compileExpression should always do the right thing and this check should be
 	// // eliminated
-	// mv.visitTypeInsn (CHECKCAST, Type.getType (returnType).getInternalName ());
+	// mv.visitTypeInsn (CHECKCAST, Type.getType (returnType).getClassName ());
 	// }
 
 	mv.visitInsn (Type.getType (returnType).getOpcode (IRETURN));
@@ -268,12 +275,13 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 		    {
 			symbolReferences.add (symbol);
 		    }
-		    LOGGER.finer (String.format ("Symbol reference to %s", symbol));
+		    LOGGER.finer (new LogString ("Symbol reference to %s", symbol));
 		    // [TODO] If the symbol valueCell is constant, use the current value.
 		    // [TODO] If the valueCell is a TypedValueCell, use the type information.
 
 		    mv.visitVarInsn (ALOAD, 0);
-		    mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
+		    final String classInternalName = classType.getInternalName ();
+		    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 		    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
 		    if (valueType.equals (boolean.class))
 		    {
@@ -282,7 +290,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 		    if (!globalReferences.contains (symbol))
 		    {
 			globalReferences.add (symbol);
-			LOGGER.finer (String.format ("Compiled global reference to %s", symbol));
+			LOGGER.finer (new LogString ("Compiled global reference to %s", symbol));
 		    }
 		}
 	    }
@@ -344,7 +352,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    }
 	    else
 	    {
-		LOGGER.info (String.format ("Ignoring '%s' %s", e, e.getClass ()));
+		LOGGER.info (new LogString ("Ignoring '%s' %s", e, e.getClass ()));
 		mv.visitInsn (ACONST_NULL);
 	    }
 	}
@@ -353,7 +361,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
     private void compileFunctionCall (final MethodVisitor mv, final LispList e, final Class<?> valueType)
     {
 	// Need to be able to compile a call to an undefined function (i.e. recursive call)
-	LOGGER.finer (String.format ("Compile nested form %s", e));
+	LOGGER.finer (new LogString ("Compile nested form %s", e));
 	if (e.size () == 0)
 	{
 	    throw new Error ("No function in function call");
@@ -416,10 +424,11 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	{
 	    symbolReferences.add (symbol);
 	}
-	LOGGER.finer (String.format ("Function symbol reference to %s", symbol));
+	LOGGER.finer (new LogString ("Function symbol reference to %s", symbol));
 
 	mv.visitVarInsn (ALOAD, 0);
-	mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
+	final String classInternalName = classType.getInternalName ();
+	mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 
 	// The call to getDefaultHandlerFunction will return a DefaultHandler that tries to invoke
 	// the java method on arg 1 if the function has not been given any other definition.
@@ -582,10 +591,10 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 		quotedReferencesMap.put (reference.getName (), quoted);
 	    }
 	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
-	    // LOGGER.finer (String.format ("Quoted reference to %s (%s)", typeDescriptor, quoted));
+	    // LOGGER.finer (new LogString ("Quoted reference to %s (%s)", typeDescriptor, quoted));
 	    mv.visitVarInsn (ALOAD, 0);
-	    mv.visitFieldInsn (GETFIELD, className, reference.getName (), typeDescriptor);
-
+	    final String classInternalName = classType.getInternalName ();
+	    mv.visitFieldInsn (GETFIELD, classInternalName, reference.getName (), typeDescriptor);
 	}
     }
 
@@ -818,13 +827,13 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    // Parameter reference
 	    // [TODO] If we can determine the type, use that information.
 	    final int argRef = methodArgs.indexOf (symbol) + 1;
-	    LOGGER.finer (String.format ("Setq parameter %s (%d)", symbol, argRef));
+	    LOGGER.finer (new LogString ("Setq parameter %s (%d)", symbol, argRef));
 	    compileLocalSetq (mv, argRef, (LispList)e.get (2), valueType);
 	}
 	else if (localVariableMap.containsKey (symbol))
 	{
 	    final int localRef = localVariableMap.get (symbol);
-	    LOGGER.finer (String.format ("Setq local %s (%d)", symbol, localRef));
+	    LOGGER.finer (new LogString ("Setq local %s (%d)", symbol, localRef));
 	    compileLocalSetq (mv, localRef, (LispList)e.get (2), valueType);
 	}
 	else
@@ -833,11 +842,12 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    {
 		symbolReferences.add (symbol);
 	    }
-	    LOGGER.finer (String.format ("Symbol assignment to %s", symbol));
+	    LOGGER.finer (new LogString ("Symbol assignment to %s", symbol));
 	    // [TODO] If the symbol valueCell is constant, use the current value.
 	    // [TODO] If the valueCell is a TypedValueCell, use the type information.
 	    mv.visitVarInsn (ALOAD, 0);
-	    mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
+	    final String classInternalName = classType.getInternalName ();
+	    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 	    compileExpression (mv, e.get (2), Object.class /* TODO */);
 	    if (valueType != null)
 	    {
@@ -850,7 +860,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    if (!globalReferences.contains (symbol))
 	    {
 		globalReferences.add (symbol);
-		LOGGER.finer (String.format ("Compiled global assignment to %s", symbol));
+		LOGGER.finer (new LogString ("Compiled global assignment to %s", symbol));
 	    }
 	    if (boolean.class.equals (valueType))
 	    {
@@ -1369,14 +1379,14 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    final String name = createJavaSymbolName (symbol);
 	    final String typeDescriptor = Type.getType (symbol.getClass ()).getDescriptor ();
 	    createField (ACC_PRIVATE, name, typeDescriptor);
-	    // LOGGER.finer (String.format ("Field: private Symbol %s; [%s]", name, symbol));
+	    // LOGGER.finer (new LogString ("Field: private Symbol %s; [%s]", name, symbol));
 	}
 	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
 	{
 	    final Object quoted = entry.getKey ();
 	    final Symbol reference = entry.getValue ();
 	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
-	    // LOGGER.finer (String.format ("Field: private Quoted %s; [%s]", reference, quoted));
+	    // LOGGER.finer (new LogString ("Field: private Quoted %s; [%s]", reference, quoted));
 	    createField (ACC_PRIVATE, reference.getName (), typeDescriptor);
 	}
 	createInitI ();

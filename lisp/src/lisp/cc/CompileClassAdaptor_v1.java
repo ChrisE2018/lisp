@@ -60,6 +60,8 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, "<init>", "(I)V", null, null);
 	mv.visitCode ();
 
+	final Type classLoaderType = Type.getType (CompileLoader_v1.class);
+	final String classLoaderInternalName = classLoaderType.getInternalName ();
 	// Call super constructor.
 	mv.visitVarInsn (ALOAD, 0);
 	mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
@@ -92,8 +94,8 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	    mv.visitInsn (DUP);
 	    mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
 	    mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
-	    mv.visitTypeInsn (CHECKCAST, "lisp/cc/CompileLoader");
-	    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/cc/CompileLoader", "getQuotedReferences", "()Ljava/util/Map;", false);
+	    mv.visitTypeInsn (CHECKCAST, classLoaderInternalName);
+	    mv.visitMethodInsn (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;", false);
 
 	    mv.visitLdcInsn (reference.getName ());
 	    mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", true);

@@ -2,19 +2,18 @@
 package lisp.cc;
 
 import java.io.*;
+import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
 
 import lisp.*;
+import lisp.Package;
 import lisp.Symbol;
+import lisp.util.LogString;
 
 public class CompilerFactory
 {
-    /**
-     * Flag to control display of bytecode after compile. <br/>
-     * [TODO] Should use logger configuration instead of hard-coded flags.
-     */
-    private static final String SHOW_BYTECODE = "showBytecode";
+    private static final Logger LOGGER = Logger.getLogger (CompilerFactory.class.getName ());
 
     enum Version
     {
@@ -23,21 +22,20 @@ public class CompilerFactory
 
     private static Version DEFAULT_VERSION = Version.V2;
 
-    private Version version = Version.V1;
-
-    public CompilerFactory ()
-    {
-	version = DEFAULT_VERSION;
-    }
-
-    public CompilerFactory (final Version version)
-    {
-	this.version = version;
-    }
+    private final Package systemPackage = PackageFactory.getSystemPackage ();
+    /**
+     * Flag to control display of bytecode after compile. <br/>
+     * [TODO] Should use logger configuration instead of hard-coded flags.
+     */
+    private final Symbol showBytecodeSymbol = systemPackage.internSymbol ("showBytecode");
+    private final Symbol compilerVersionSymbol = systemPackage.internSymbol ("compilerVersion");
 
     public Compiler getCompiler (final Class<?> returnType, final String methodName, final LispList methodArgs,
             final LispList methodBody) throws IOException
     {
+	final String versionName = compilerVersionSymbol.getStringValue (DEFAULT_VERSION.toString ());
+	final Version version = Version.valueOf (versionName);
+	LOGGER.info (new LogString ("Using compiler version %s", version));
 	switch (version)
 	{
 	    case V1:
@@ -46,7 +44,6 @@ public class CompilerFactory
 	    }
 	    case V2:
 	    {
-		final Symbol showBytecodeSymbol = PackageFactory.getSystemPackage ().internSymbol (SHOW_BYTECODE);
 		final boolean showBytecode = showBytecodeSymbol.getValue (false) != Boolean.FALSE;
 		final CompileLoader_v2 result = new CompileLoader_v2 (returnType, methodName, methodArgs, methodBody);
 		if (showBytecode)

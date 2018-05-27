@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 
 import lisp.LispList;
+import lisp.util.LogString;
 
 public class CompileLoader_v2 extends ClassLoader implements Compiler
 {
@@ -19,7 +20,8 @@ public class CompileLoader_v2 extends ClassLoader implements Compiler
      * ClassLoaded so we get a distinct class as a result. <br/>
      * [TODO] Maybe use a gensym in the defineClass call to allow ClassLoader re-use?
      */
-    private static final String SHELL_CLASS = "lisp.cc.CompiledShell";
+    private static final String SHELL_CLASS_DESCRIPTOR = "Llisp/cc/CompiledShell;";
+    private final Type classType = Type.getType (SHELL_CLASS_DESCRIPTOR);
 
     /**
      * Trick to compile references to quoted data. This map is obtained by the method compiler and
@@ -30,25 +32,25 @@ public class CompileLoader_v2 extends ClassLoader implements Compiler
      * time.
      */
     private final Map<String, Object> quotedReferences = new HashMap<String, Object> ();
-
+    private final ClassReader cr;
     private ClassVisitor cv;
 
-    private final ClassReader cr;
     private final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
 
     public CompileLoader_v2 (final Class<?> returnType, final String methodName, final LispList methodArgs,
             final LispList methodBody) throws IOException
     {
 
-	LOGGER.info (String.format ("Creating compiled class: %s for function %s %s %s", SHELL_CLASS, returnType, methodName,
+	final String className = classType.getClassName ();
+	final String classInternalName = classType.getInternalName ();
+
+	LOGGER.info (new LogString ("Creating compiled class: %s for function %s %s %s", className, returnType, methodName,
 	        methodArgs));
-	final String className = SHELL_CLASS;
-	LOGGER.info (String.format ("Adding method %s %s to class: %s", methodName, methodArgs, className));
-	final String resourceName = className.replace ('.', '/');
-	final String resource = resourceName + ".class";
+	LOGGER.info (new LogString ("Adding method %s %s to class: %s", methodName, methodArgs, className));
+	final String resource = classInternalName + ".class";
 	final InputStream is = getResourceAsStream (resource);
 	cr = new ClassReader (is);
-	cv = new CompileClassAdaptor_v2 (cw, resourceName, returnType, methodName, methodArgs, methodBody, quotedReferences);
+	cv = new CompileClassAdaptor_v2 (cw, classType, returnType, methodName, methodArgs, methodBody, quotedReferences);
     }
 
     public ClassVisitor getClassVisitor ()
@@ -69,7 +71,7 @@ public class CompileLoader_v2 extends ClassLoader implements Compiler
 	cr.accept (cv, 0);
 
 	final byte[] b = cw.toByteArray ();
-	final String className = SHELL_CLASS;
+	final String className = classType.getClassName ();
 	final Class<?> c = defineClass (className, b, 0, b.length);
 	return c;
     }
