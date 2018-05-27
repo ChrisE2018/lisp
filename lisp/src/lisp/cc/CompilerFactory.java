@@ -18,7 +18,7 @@ public class CompilerFactory
 
     enum Version
     {
-	V1, V1_5, V2;
+	V1, V2;
     }
 
     private static Version DEFAULT_VERSION = Version.V2;
@@ -43,11 +43,6 @@ public class CompilerFactory
 	    case V1:
 	    {
 		return new CompileLoader_v1 (returnType, methodName, methodArgs, methodBody);
-	    }
-	    case V1_5:
-	    {
-		final CompileLoader_v1_5 result = new CompileLoader_v1_5 (returnType, methodName, methodArgs, methodBody);
-		return result;
 	    }
 	    case V2:
 	    {

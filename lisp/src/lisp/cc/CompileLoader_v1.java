@@ -191,42 +191,4 @@ public class CompileLoader_v1 extends ClassLoader implements Compiler
 	buffer.append (">");
 	return buffer.toString ();
     }
-
-    public static void main (final String[] args)
-    {
-	try
-	{
-	    final lisp.Package pkg = PackageFactory.getDefaultPackage ();
-	    final Symbol aSymbol = pkg.internSymbol ("a");
-	    final Symbol bSymbol = pkg.internSymbol ("b");
-	    final Symbol cSymbol = pkg.internSymbol ("c");
-	    final Symbol s = pkg.internSymbol ("lispfoo");
-	    s.setValue ("my symbol value");
-	    // s.setValue (new Integer (1234));
-	    final String methodName = "userMethodName";
-	    final LispList methodArgs = new LispList ();
-	    methodArgs.add (aSymbol);
-	    methodArgs.add (bSymbol);
-	    methodArgs.add (cSymbol);
-	    final LispList methodBody = new LispList ();
-	    methodBody.add ("this is from the main method");
-	    methodBody.add (new Integer (123));
-	    methodBody.add ("str two");
-	    methodBody.add (s);
-	    methodBody.add (new Integer (4123));
-	    methodBody.add (new Byte ((byte)4));
-	    methodBody.add (new Long (42));
-	    methodBody.add (new Double (4.2));
-	    methodBody.add (new Float (4.2f));
-	    methodBody.add (s);
-	    System.out.printf ("Expression to compile: %s %n", methodBody);
-	    final CompileLoader_v1 cl = new CompileLoader_v1 (Object.class, methodName, methodArgs, methodBody);
-	    final Class<?> c = cl.compile ();
-	    cl.checkCreatedClass (c);
-	}
-	catch (final Throwable e)
-	{
-	    e.printStackTrace ();
-	}
-    }
 }
