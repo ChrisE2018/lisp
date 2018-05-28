@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
-import org.objectweb.asm.commons.LocalVariablesSorter;
+import org.objectweb.asm.commons.*;
 
 import lisp.*;
 import lisp.Package;
@@ -15,7 +15,7 @@ import lisp.Symbol;
 import lisp.symbol.*;
 import lisp.util.LogString;
 
-public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
+public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (CompileLoader_v1.class.getName ());
 
@@ -90,11 +90,11 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	// int time = newLocal(Type.LONG_TYPE);
 	// creates a variable entry for a long that can be used like this:
 	// mv.visitVarInsn(LSTORE, time);
-	final LocalVariablesSorter mv =
-	    new LocalVariablesSorter (ACC_PUBLIC, signature, cv.visitMethod (ACC_PUBLIC, methodName, signature, null, null));
-	// final GeneratorAdapter mv = new GeneratorAdapter (cv.visitMethod (ACC_PUBLIC, methodName,
-	// signature, null, null),
-	// ACC_PUBLIC, methodName, signature);
+	// final LocalVariablesSorter mv =
+	// new LocalVariablesSorter (ACC_PUBLIC, signature, cv.visitMethod (ACC_PUBLIC, methodName,
+	// signature, null, null));
+	final GeneratorAdapter mv = new GeneratorAdapter (cv.visitMethod (ACC_PUBLIC, methodName, signature, null, null),
+	        ACC_PUBLIC, methodName, signature);
 	// Compile method body
 	final int bodyLimit = methodBody.size () - 1;
 	for (int i = 0; i < bodyLimit; i++)
@@ -208,12 +208,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
 	else if (e instanceof LispList)
 	{
-	    compileFunctionCall ((LocalVariablesSorter)mv, (LispList)e, valueType);
+	    compileFunctionCall ((GeneratorAdapter)mv, (LispList)e, valueType);
 	}
 	else if (e instanceof Symbol)
 	{
 	    final Symbol symbol = (Symbol)e;
-	    compileSymbolReference (mv, symbol, valueType);
+	    compileSymbolReference ((GeneratorAdapter)mv, symbol, valueType);
 	}
 	else if (valueType != null)
 	{
@@ -221,7 +221,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
     }
 
-    private void compileSymbolReference (final MethodVisitor mv, final Symbol symbol, final Class<?> valueType)
+    private void compileSymbolReference (final GeneratorAdapter mv, final Symbol symbol, final Class<?> valueType)
     {
 	if (methodArgs.contains (symbol))
 	{
@@ -348,7 +348,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
     }
 
-    private void compileFunctionCall (final LocalVariablesSorter mv, final LispList e, final Class<?> valueType)
+    private void compileFunctionCall (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// Need to be able to compile a call to an undefined function (i.e. recursive call)
 	LOGGER.finer (new LogString ("Compile nested form %s", e));
@@ -447,7 +447,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
     }
 
-    private void compileSpecialFunctionCall (final LocalVariablesSorter mv, final Symbol symbol, final LispList e,
+    private void compileSpecialFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
             final Class<?> valueType)
     {
 	// (getAllSpecialFunctionSymbols)
@@ -652,7 +652,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	mv.visitLabel (l1);
     }
 
-    private void compileAnd (final MethodVisitor mv, final LispList e, final Class<?> valueType)
+    private void compileAnd (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (a b) (and))
 	// (define foo (a b) (and a b))
@@ -696,7 +696,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
     }
 
-    private void compileOr (final MethodVisitor mv, final LispList e, final Class<?> valueType)
+    private void compileOr (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (a b) (or))
 	// (foo 1 2)
@@ -728,7 +728,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	{
 	    mv.visitInsn (POP);
 	}
-	if (boolean.class.equals (valueType))
+	else if (boolean.class.equals (valueType))
 	{
 	    coerceBoolean (mv);
 	}
@@ -806,7 +806,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	mv.visitLabel (l3);
     }
 
-    private void compileSetq (final MethodVisitor mv, final LispList e, final Class<?> valueType)
+    private void compileSetq (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (x) (setq x 3))
 	// (define foo (x) (setq x 3) x)
@@ -860,7 +860,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
     }
 
-    private void compileLocalSetq (final MethodVisitor mv, final int localRef, final Object expr, final Class<?> valueType)
+    private void compileLocalSetq (final GeneratorAdapter mv, final int localRef, final Object expr, final Class<?> valueType)
     {
 	if (valueType == null)
 	{
@@ -997,7 +997,9 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	// Put iteration number into local variable
 	final Map<Symbol, Integer> savedLocalVariableMap = localVariableMap;
 	localVariableMap = new LinkedHashMap<Symbol, Integer> (localVariableMap);
-	// final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
+	// Create a local variable to hold the iteration number.
+	// This is always stored in boxed format so body code can reference it.
+	// Should be able to store this as an int if the body code can use it that way.
 	final int iterationRef = mv.newLocal (Type.getType (Integer.class));
 	final Symbol var = (Symbol)control.get (0);
 	localVariableMap.put (var, iterationRef);
@@ -1092,10 +1094,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	mv.visitJumpInsn (GOTO, l1);
 
 	mv.visitLabel (l2);
-	// if (boolean.class.equals (valueType))
-	// {
-	// coerceBoolean (mv);
-	// }
     }
 
     private void compileUntil (final MethodVisitor mv, final LispList e, final Class<?> valueType)
@@ -1133,13 +1131,9 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	mv.visitJumpInsn (GOTO, l1);
 
 	mv.visitLabel (l2);
-	// if (boolean.class.equals (valueType))
-	// {
-	// coerceBoolean (mv);
-	// }
     }
 
-    private void compileLet (final LocalVariablesSorter mv, final LispList e, final Class<?> valueType)
+    private void compileLet (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (x) (let ((a 1) (b 2)) (+ a b x)))
 	// (define foo () (let ((a 1) (b 2)) a))
@@ -1183,13 +1177,13 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	{
 	    mv.visitInsn (POP);
 	}
-	if (boolean.class.equals (valueType))
+	else if (boolean.class.equals (valueType))
 	{
 	    coerceBoolean (mv);
 	}
     }
 
-    private void compileLetStar (final LocalVariablesSorter mv, final LispList e, final Class<?> valueType)
+    private void compileLetStar (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (x) (let* ((a 1) (b 2)) (+ a b x)))
 	// (define foo () (let* ((a 1) (b 2)) a))
@@ -1228,7 +1222,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	{
 	    mv.visitInsn (POP);
 	}
-	if (boolean.class.equals (valueType))
+	else if (boolean.class.equals (valueType))
 	{
 	    coerceBoolean (mv);
 	}
@@ -1399,14 +1393,16 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 
     /**
      * Convert value on top of the stack from a Boolean to a boolean. This is used as a last resort
-     * when the return type must be boolean and there is no better way to get there.
+     * when the return type must be boolean and there is no better way to get there. If the top of
+     * the stack is not a Boolean, the result left on the stack is always true.
      */
-    private void coerceBoolean (final MethodVisitor mv)
+    private void coerceBoolean (final GeneratorAdapter mv)
     {
 	// (define boolean:foo () true)
 	// (define boolean:foo (x) x)
 	mv.visitInsn (DUP);
 	final Label l1 = new Label ();
+	// [TODO] There is a private method in GeneratorAdaptor that we need to steal: getBoxedType
 	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	mv.visitJumpInsn (IFNE, l1);
 	mv.visitInsn (POP);
@@ -1414,35 +1410,29 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	final Label l2 = new Label ();
 	mv.visitJumpInsn (GOTO, l2);
 	mv.visitLabel (l1);
-	mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
-	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+	mv.unbox (Type.BOOLEAN_TYPE);
+	// mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
+	// mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
 	mv.visitLabel (l2);
     }
 
-    // private void unbox (final MethodVisitor mv, final Type resultType)
-    // {
-    // // Requires GeneratorAdaptor
-    // ByteCodeUtils.unbox (mv, resultType);
-    // }
-
-    private void coercePrimitive (final MethodVisitor mv, final Type resultType)
+    /**
+     * Convert an instance of a boxed wrapper class into the corresponding primitive type. Note:
+     * short and byte are converted to int. See ByteCodeUtils if this is a problem. The stack must
+     * contain an instance of the wrapperType. This will work for Boolean since it won't convert
+     * other instances to true.
+     */
+    private void unbox (final GeneratorAdapter mv, final Type wrapperType)
     {
-	// (define boolean:foo () true)
-	// (define boolean:foo (x) x)
-	final String iName = resultType.getInternalName ();
-	mv.visitInsn (DUP);
-	final Label l1 = new Label ();
-	mv.visitTypeInsn (INSTANCEOF, iName);
-	mv.visitJumpInsn (IFNE, l1);
-	mv.visitInsn (POP);
-	mv.visitLdcInsn (true);
-	final Label l2 = new Label ();
-	mv.visitJumpInsn (GOTO, l2);
-	mv.visitLabel (l1);
-	mv.visitTypeInsn (CHECKCAST, iName);
-	mv.visitMethodInsn (INVOKEVIRTUAL, iName, resultType.getClassName () + "Value", Type.getMethodDescriptor (resultType) // "()Z"
-	        , false);
-	mv.visitLabel (l2);
+	// Requires GeneratorAdaptor
+	mv.unbox (wrapperType);
+    }
+
+    /** Convert an instance of a primitive type into the corresponding boxed wrapper class. */
+    private void box (final GeneratorAdapter mv, final Type resultType)
+    {
+	// Requires GeneratorAdaptor
+	mv.valueOf (resultType);
     }
 
     /**
