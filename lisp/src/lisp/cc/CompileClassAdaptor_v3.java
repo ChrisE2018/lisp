@@ -1422,6 +1422,36 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
      * contain an instance of the wrapperType. This will work for Boolean since it won't convert
      * other instances to true.
      */
+    private void coerceRequired (final GeneratorAdapter mv, final Type valueType)
+    {
+	final int sort = valueType.getSort ();
+	if (sort == Type.VOID)
+	{
+	    mv.visitInsn (POP);
+	}
+	else if (valueType.equals (Type.BOOLEAN_TYPE))
+	{
+	    // Treat anything except Boolean as true.
+	    // unbox booleans
+	    coerceBoolean (mv);
+	}
+	else if (sort > Type.VOID && sort < Type.METHOD)
+	{
+	    final Type wrapperType = getBoxedType (valueType);
+	    mv.unbox (wrapperType);
+	}
+	else
+	{
+	    // Leave object types alone
+	}
+    }
+
+    /**
+     * Convert an instance of a boxed wrapper class into the corresponding primitive type. Note:
+     * short and byte are converted to int. See ByteCodeUtils if this is a problem. The stack must
+     * contain an instance of the wrapperType. This will work for Boolean since it won't convert
+     * other instances to true.
+     */
     private void unbox (final GeneratorAdapter mv, final Type wrapperType)
     {
 	// Requires GeneratorAdaptor

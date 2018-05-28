@@ -2,7 +2,6 @@
 package lisp.cc;
 
 import org.objectweb.asm.*;
-import org.objectweb.asm.commons.Method;
 
 public class ClassVisitorAdaptor extends ClassVisitor
 {
@@ -28,17 +27,17 @@ public class ClassVisitorAdaptor extends ClassVisitor
 
     protected static final Type OBJECT_TYPE = Type.getObjectType ("java/lang/Object");
 
-    protected static final Method BOOLEAN_VALUE = Method.getMethod ("boolean booleanValue()");
-
-    protected static final Method CHAR_VALUE = Method.getMethod ("char charValue()");
-
-    protected static final Method INT_VALUE = Method.getMethod ("int intValue()");
-
-    protected static final Method FLOAT_VALUE = Method.getMethod ("float floatValue()");
-
-    protected static final Method LONG_VALUE = Method.getMethod ("long longValue()");
-
-    protected static final Method DOUBLE_VALUE = Method.getMethod ("double doubleValue()");
+    // protected static final Method BOOLEAN_VALUE = Method.getMethod ("boolean booleanValue()");
+    //
+    // protected static final Method CHAR_VALUE = Method.getMethod ("char charValue()");
+    //
+    // protected static final Method INT_VALUE = Method.getMethod ("int intValue()");
+    //
+    // protected static final Method FLOAT_VALUE = Method.getMethod ("float floatValue()");
+    //
+    // protected static final Method LONG_VALUE = Method.getMethod ("long longValue()");
+    //
+    // protected static final Method DOUBLE_VALUE = Method.getMethod ("double doubleValue()");
 
     protected static Type[][] BOXED_PRIMITIVES =
 	{
