@@ -136,18 +136,20 @@ public class CompilerPrimitives extends Definer
 	final CompilerFactory compilerFactory = new CompilerFactory ();
 	final Compiler cl = compilerFactory.getCompiler (returnType, methodName, args, body);
 	final Class<?> cls = cl.compile ();
-	final Class<?>[] parameterTypes = new Class<?>[args.size ()];
-	for (int i = 0; i < parameterTypes.length; i++)
-	{
-	    parameterTypes[i] = java.lang.Object.class;
-	}
 
+	// Call int constructor to make an instance
 	final Class<?>[] types =
 	    {int.class};
 	final Constructor<?> con = cls.getConstructor (types);
 	// System.out.printf ("Calling newInstance(1)%n");
 	final Object instance = con.newInstance (1);
 
+	// Locate method matching the compiled function
+	final Class<?>[] parameterTypes = new Class<?>[args.size ()];
+	for (int i = 0; i < parameterTypes.length; i++)
+	{
+	    parameterTypes[i] = java.lang.Object.class;
+	}
 	final Method method = cls.getDeclaredMethod (methodName, parameterTypes);
 	FunctionCell function = symbol.getFunction ();
 	// Overloading requires adding the method to an existing function cell

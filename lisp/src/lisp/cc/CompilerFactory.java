@@ -56,17 +56,17 @@ public class CompilerFactory
 	    }
 	    case V3:
 	    {
-		final boolean showBytecode = showBytecodeSymbol.getValue (false) != Boolean.FALSE;
 		final CompileLoader result = new CompileLoader ();
-		final ClassWriter cw = result.getClassWriter ();
-		final Map<String, Object> quotedReferences = result.getQuotedReferences ();
-		result.setClassVisitor (new CompileClassAdaptor_v3 (cw, result.getClassType (), returnType, methodName,
-		        methodArgs, methodBody, quotedReferences));
+		ClassVisitor cv = result.getClassVisitor ();
+		final boolean showBytecode = showBytecodeSymbol.getValue (false) != Boolean.FALSE;
 		if (showBytecode)
 		{
-		    result.setClassVisitor (
-		            new PrintBytecodeClassAdaptor (Opcodes.ASM5, result.getClassVisitor (), new StringWriter ()));
+		    cv = new PrintBytecodeClassAdaptor (Opcodes.ASM5, cv, new StringWriter ());
 		}
+		final Map<String, Object> quotedReferences = result.getQuotedReferences ();
+		cv = new CompileClassAdaptor_v3 (cv, result.getClassType (), returnType, methodName, methodArgs, methodBody,
+		        quotedReferences);
+		result.setClassVisitor (cv);
 		return result;
 	    }
 	    default:

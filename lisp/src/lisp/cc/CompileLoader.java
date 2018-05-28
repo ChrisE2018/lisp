@@ -32,9 +32,8 @@ public class CompileLoader extends ClassLoader implements Compiler
      */
     private final Map<String, Object> quotedReferences = new HashMap<String, Object> ();
     private final ClassReader cr;
-    private ClassVisitor cv;
-
     private final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
+    private ClassVisitor cv = cw;
 
     public CompileLoader () throws IOException
     {
