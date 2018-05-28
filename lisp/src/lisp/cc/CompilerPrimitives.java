@@ -114,6 +114,7 @@ public class CompilerPrimitives extends Definer
 	}
 	catch (final Exception e)
 	{
+	    replErrorCount++;
 	    e.printStackTrace ();
 	}
 	return false;
@@ -195,7 +196,7 @@ public class CompilerPrimitives extends Definer
 	    System.out.printf ("%6s %4d of %4d %4.1f%%%n", "Total", testCount, testCount, (testCount * 100.0 / testCount));
 	    if (replErrorCount > 0)
 	    {
-		System.out.printf ("%nThere were exceptions during testing%n");
+		System.out.printf ("%nThere were %d exceptions during testing%n", replErrorCount);
 	    }
 	    else if (passCount == testCount && failCount == 0 && errorCount == 0)
 	    {
@@ -210,6 +211,7 @@ public class CompilerPrimitives extends Definer
 	{
 	    System.out.printf ("No tests have been run. Call verify to submit test data.%n");
 	}
+	// System.out.printf ("%nRepl Errors: %s%n", replErrorCount);
 	return null;
     }
 

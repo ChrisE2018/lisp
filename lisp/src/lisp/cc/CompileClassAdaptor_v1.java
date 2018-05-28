@@ -821,13 +821,13 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	    // [TODO] If we can determine the type, use that information.
 	    final int argRef = methodArgs.indexOf (symbol) + 1;
 	    LOGGER.finer (String.format ("Setq parameter %s (%d)", symbol, argRef));
-	    compileLocalSetq (mv, argRef, (LispList)e.get (2), valueType);
+	    compileLocalSetq (mv, argRef, e.get (2), valueType);
 	}
 	else if (localVariableMap.containsKey (symbol))
 	{
 	    final int localRef = localVariableMap.get (symbol);
 	    LOGGER.finer (String.format ("Setq local %s (%d)", symbol, localRef));
-	    compileLocalSetq (mv, localRef, (LispList)e.get (2), valueType);
+	    compileLocalSetq (mv, localRef, e.get (2), valueType);
 	}
 	else
 	{
@@ -861,7 +861,7 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	}
     }
 
-    private void compileLocalSetq (final MethodVisitor mv, final int localRef, final LispList expr, final Class<?> valueType)
+    private void compileLocalSetq (final MethodVisitor mv, final int localRef, final Object expr, final Class<?> valueType)
     {
 	if (valueType == null)
 	{
@@ -930,14 +930,23 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	// Stack: iteration, value
 
 	// <body code goes here>
-	mv.visitInsn (SWAP);
+	if (valueType != null)
+	{
+	    mv.visitInsn (SWAP);
+	}
 	// Stack: value, iteration
 	for (int i = 2; i < e.size (); i++)
 	{
-	    // mv.visitInsn (POP);
+	    if (valueType != null)
+	    {
+		mv.visitInsn (POP);
+	    }
 	    compileExpression (mv, e.get (i), valueType);
 	}
-	mv.visitInsn (SWAP);
+	if (valueType != null)
+	{
+	    mv.visitInsn (SWAP);
+	}
 
 	// Loop increment
 	// Stack: iteration, value
@@ -1001,11 +1010,17 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	// Start of iteration body
 	final Label l2 = new Label ();
 	mv.visitLabel (l2);
-	mv.visitInsn (SWAP); // Save repeat count
+	if (valueType != null)
+	{
+	    mv.visitInsn (SWAP); // Save repeat count
+	}
 	// <body code goes here>
 	for (int i = 2; i < e.size (); i++)
 	{
-	    // mv.visitInsn (POP);
+	    if (valueType != null)
+	    {
+		mv.visitInsn (POP);
+	    }
 	    compileExpression (mv, e.get (i), valueType);
 	}
 
@@ -1019,8 +1034,10 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 
 	// // Termination test
 	mv.visitLabel (l1);
-
-	mv.visitInsn (SWAP);
+	if (valueType != null)
+	{
+	    mv.visitInsn (SWAP);
+	}
 	mv.visitInsn (DUP); // Dup count
 	mv.visitVarInsn (ALOAD, iterationRef);
 	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
