@@ -262,8 +262,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 		// [TODO] If we can determine the type, use that information.
 		final LocalBinding lb = localVariableMap.get (symbol);
 		final int localRef = lb.getLocalRef ();
-		// mv.loadLocal (localRef);
-		mv.visitVarInsn (ALOAD, localRef);
+		mv.loadLocal (localRef);
+		// mv.visitVarInsn (ALOAD, localRef);
 		coerceRequired (mv, valueType);
 	    }
 	}
@@ -837,16 +837,16 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	{
 	    // Parameter reference
 	    // [TODO] If we can determine the type, use that information.
-	    final int argRef = methodArgs.indexOf (symbol) + 1;
-	    LOGGER.finer (new LogString ("Setq parameter %s (%d)", symbol, argRef));
-	    compileLocalSetq (mv, argRef, e.get (2), valueType);
+	    final int argIndex = methodArgs.indexOf (symbol);
+	    final Class<?> argClass = methodArgClasses.get (argIndex);
+	    LOGGER.finer (new LogString ("Setq parameter %s (%d)", symbol, argIndex));
+	    compileArgSetq (mv, argClass, argIndex, e.get (2), valueType);
 	}
 	else if (localVariableMap.containsKey (symbol))
 	{
 	    final LocalBinding lb = localVariableMap.get (symbol);
-	    final int localRef = lb.getLocalRef ();
-	    LOGGER.finer (new LogString ("Setq local %s (%d)", symbol, localRef));
-	    compileLocalSetq (mv, localRef, e.get (2), valueType);
+	    LOGGER.finer (new LogString ("Setq local %s (%d)", symbol, lb));
+	    compileLocalSetq (mv, lb.getClass (), lb.getLocalRef (), e.get (2), valueType);
 	}
 	else
 	{
@@ -881,18 +881,38 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	}
     }
 
-    private void compileLocalSetq (final GeneratorAdapter mv, final int localRef, final Object expr, final Class<?> valueType)
+    private void compileArgSetq (final GeneratorAdapter mv, final Class<?> varClass, final int localRef, final Object expr,
+            final Class<?> valueType)
     {
 	if (valueType == null)
 	{
-	    compileExpression (mv, expr, Object.class /* TODO */);
-	    mv.visitVarInsn (ASTORE, localRef);
+	    compileExpression (mv, expr, varClass);
+	    mv.storeArg (localRef);
 	}
 	else
 	{
-	    compileExpression (mv, expr, Object.class /* TODO */);
+	    compileExpression (mv, expr, varClass);
 	    mv.visitInsn (DUP);
-	    mv.visitVarInsn (ASTORE, localRef);
+	    mv.storeArg (localRef);
+	    coerceRequired (mv, valueType);
+	}
+    }
+
+    private void compileLocalSetq (final GeneratorAdapter mv, final Class<?> varClass, final int localRef, final Object expr,
+            final Class<?> valueType)
+    {
+	if (valueType == null)
+	{
+	    compileExpression (mv, expr, varClass);
+	    mv.storeLocal (localRef);
+	    // mv.visitVarInsn (ASTORE, localRef);
+	}
+	else
+	{
+	    compileExpression (mv, expr, varClass);
+	    mv.visitInsn (DUP);
+	    mv.storeLocal (localRef);
+	    // mv.visitVarInsn (ASTORE, localRef);
 	    coerceRequired (mv, valueType);
 	}
     }
@@ -1130,26 +1150,23 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 
 	// Compile expression values onto the stack in order
 	final LispList args = (LispList)e.get (1);
-	for (final Object clause : args)
-	{
-	    final LispList c = (LispList)clause;
-	    compileExpression (mv, c.get (1), Object.class /* TODO */);
-	}
-
-	// Now bind the variables in reverse order
+	final Map<Symbol, LocalBinding> newLocalVariableMap = new LinkedHashMap<Symbol, LocalBinding> (localVariableMap);
 	final Map<Symbol, LocalBinding> savedLocalVariableMap = localVariableMap;
-	localVariableMap = new LinkedHashMap<Symbol, LocalBinding> (localVariableMap);
-	for (int i = args.size () - 1; i >= 0; i--)
+	for (int i = 0; i < args.size (); i++)
 	{
 	    final Object clause = args.get (i);
 	    final LispList c = (LispList)clause;
-	    final Symbol var = (Symbol)c.get (0);
-	    final int localRef = mv.newLocal (OBJECT_TYPE);
-	    mv.visitVarInsn (ASTORE, localRef); // Reverse order
-	    final LocalBinding lb = new LocalBinding (var, OBJECT_TYPE, localRef);
-	    localVariableMap.put (var, lb);
+	    final Object varSpec = c.get (0);
+	    final Symbol var = CompileSupport.getNameVariable (varSpec);
+	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
+	    final Type varType = Type.getType (varClass);
+	    final int localRef = mv.newLocal (varType);
+	    compileExpression (mv, c.get (1), varClass);
+	    mv.storeLocal (localRef);
+	    final LocalBinding lb = new LocalBinding (var, varType, localRef);
+	    newLocalVariableMap.put (var, lb);
 	}
-
+	localVariableMap = newLocalVariableMap;
 	// Evaluate optional body forms
 	for (int i = 2; i < e.size () - 1; i++)
 	{
@@ -1179,12 +1196,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	for (final Object clause : args)
 	{
 	    final LispList c = (LispList)clause;
-	    final Symbol var = (Symbol)c.get (0);
-	    compileExpression (mv, c.get (1), Object.class /* TODO */);
-	    final int localRef = mv.newLocal (Type.getType (Object.class));
-	    mv.visitVarInsn (ASTORE, localRef);
-
-	    final LocalBinding lb = new LocalBinding (var, OBJECT_TYPE, localRef);
+	    final Object varSpec = c.get (0);
+	    final Symbol var = CompileSupport.getNameVariable (varSpec);
+	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
+	    final Type varType = Type.getType (varClass);
+	    compileExpression (mv, c.get (1), varClass);
+	    final int localRef = mv.newLocal (varType);
+	    mv.storeLocal (localRef);
+	    final LocalBinding lb = new LocalBinding (var, varType, localRef);
 	    localVariableMap.put (var, lb);
 	}
 
