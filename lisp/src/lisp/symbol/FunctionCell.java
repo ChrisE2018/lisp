@@ -70,6 +70,8 @@ public abstract class FunctionCell implements Describer
 
     private ObjectMethod[] overloads = new ObjectMethod[0];
 
+    private ObjectMethod compiler;
+
     abstract public Object eval (final LexicalContext context, final List<?> form) throws Exception;
 
     abstract public void overload (Object obj, Method method, String documentation);
@@ -88,6 +90,16 @@ public abstract class FunctionCell implements Describer
     public boolean isAllowRedefinition ()
     {
 	return allowRedefinition;
+    }
+
+    public ObjectMethod getCompiler ()
+    {
+	return compiler;
+    }
+
+    public void setCompiler (final Object obj, final Method method, final String documentation)
+    {
+	compiler = new ObjectMethod (obj, method, documentation);
     }
 
     /**

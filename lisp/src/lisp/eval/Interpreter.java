@@ -5,6 +5,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.util.List;
+import java.util.logging.Logger;
 
 import lisp.*;
 import lisp.FileReader;
@@ -18,6 +19,8 @@ import lisp.symbol.FunctionCell;
  */
 public class Interpreter extends Definer
 {
+    private static final Logger LOGGER = Logger.getLogger (Interpreter.class.getName ());
+
     public Interpreter ()
     {
     }
@@ -225,7 +228,6 @@ public class Interpreter extends Definer
 		catch (final InstantiationException | IllegalArgumentException | InvocationTargetException
 		        | IllegalAccessException x)
 		{
-
 		}
 	    }
 	}

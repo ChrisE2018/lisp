@@ -86,30 +86,52 @@ public class Definer
 	    symbolName = method.getName ();
 	}
 	LOGGER.info (String.format ("define %s as %s", symbolName, method));
-	// final Symbol symbol = external ? p.internPublic (symbolName) : p.internPublic
-	// (symbolName);
 	final Symbol symbol = p.internSymbol (symbolName);
-	FunctionCell function = symbol.getFunction ();
-	// Overloading requires adding the method to an existing function cell
-	if (function != null)
+
+	if (macro)
 	{
-	    function.overload (object, method, documentation);
-	}
-	else if (special)
-	{
-	    function = new SpecialFunctionCell (symbol, object, method, documentation);
-	    symbol.setFunction (function);
-	}
-	else if (macro)
-	{
-	    function = new MacroFunctionCell (symbol, object, method, documentation);
+	    final FunctionCell function = new MacroFunctionCell (symbol, object, method, documentation);
 	    symbol.setFunction (function);
 	}
 	else
 	{
-	    function = new StandardFunctionCell (symbol, object, method, documentation);
-	    symbol.setFunction (function);
+	    // Overloading requires adding the method to an existing function cell
+	    FunctionCell function = symbol.getFunction ();
+	    if (function == null)
+	    {
+		if (special)
+		{
+		    function = new SpecialFunctionCell (symbol);
+		    symbol.setFunction (function);
+		}
+		else if (!macro)
+		{
+		    function = new StandardFunctionCell (symbol);
+		    symbol.setFunction (function);
+		}
+	    }
+	    if (function != null)
+	    {
+		if (a.compiler ())
+		{
+		    function.setCompiler (object, method, documentation);
+		}
+		else
+		{
+		    function.overload (object, method, documentation);
+		}
+	    }
 	}
+	// else if (special)
+	// {
+	// function = new SpecialFunctionCell (symbol, object, method, documentation);
+	// symbol.setFunction (function);
+	// }
+	// else
+	// {
+	// function = new StandardFunctionCell (symbol, object, method, documentation);
+	// symbol.setFunction (function);
+	// }
     }
 
     /** Make an Object into a String. Convenience method to simplify function definition. */

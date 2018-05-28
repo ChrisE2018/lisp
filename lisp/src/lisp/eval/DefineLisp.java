@@ -17,4 +17,6 @@ public @interface DefineLisp
     boolean special () default false;
 
     boolean macro () default false;
+
+    boolean compiler () default false;
 }

@@ -246,8 +246,11 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 		if (!argClass.equals (valueType))
 		{
 		    final Type argType = methodArgTypes.get (argIndex);
-		    final Type wraperType = getBoxedType (argType);
-		    box (mv, wraperType);
+		    if (argType.getSort () != Type.OBJECT)
+		    {
+			final Type wraperType = getBoxedType (argType);
+			box (mv, wraperType);
+		    }
 		    coerceRequired (mv, valueType);
 		}
 	    }
@@ -258,8 +261,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	    {
 		// [TODO] If we can determine the type, use that information.
 		final int localRef = localVariableMap.get (symbol);
-		mv.loadLocal (localRef);
-		// mv.visitVarInsn (ALOAD, localRef);
+		// mv.loadLocal (localRef);
+		mv.visitVarInsn (ALOAD, localRef);
 		coerceRequired (mv, valueType);
 	    }
 	}

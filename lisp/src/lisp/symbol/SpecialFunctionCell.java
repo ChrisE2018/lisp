@@ -11,6 +11,13 @@ public class SpecialFunctionCell extends FunctionCell
 {
     private ObjectMethod[] methods;
 
+    public SpecialFunctionCell (final Symbol symbol)
+    {
+	super (symbol, false);
+	methods = new ObjectMethod[] {};
+	makeOverloadMap (methods);
+    }
+
     public SpecialFunctionCell (final Symbol symbol, final Object obj, final Method method, final String documentation)
     {
 	super (symbol, false);
