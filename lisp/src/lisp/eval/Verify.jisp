@@ -188,6 +188,14 @@
 (define foo () (if 'foo 1  2))
 (verify (foo) 1)
 
+(define int:foo () 5)
+(verify (foo) 5)
+
+;(setq system.showBytecode true)
+(define int:foo (int:n) n)
+(verify (foo 3) 3)
+(verify (foo 5) 5)
+
 (sleep 0.2)
 (printTestStatistics)
 

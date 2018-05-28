@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
-import org.objectweb.asm.commons.*;
+import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.*;
 import lisp.Package;
@@ -23,7 +23,10 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
     private final Class<?> returnClass;
     private final Type returnType;
     private final String methodName;
-    private final LispList methodArgs;
+    // private final LispList methodArgs;
+    private final List<Symbol> methodArgs = new ArrayList<Symbol> ();
+    private final List<Class<?>> methodArgClasses = new ArrayList<Class<?>> ();
+    private final List<Type> methodArgTypes = new ArrayList<Type> ();
     private final List<Object> methodBody;
     private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
     private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
@@ -46,7 +49,15 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	this.returnClass = returnClass;
 	returnType = Type.getType (returnClass);
 	this.methodName = methodName;
-	this.methodArgs = methodArgs;
+	for (final Object arg : methodArgs)
+	{
+	    final Symbol variable = CompileSupport.getNameVariable (arg);
+	    final Class<?> varClass = CompileSupport.getNameType (arg);
+	    final Type varType = Type.getType (varClass);
+	    this.methodArgs.add (variable);
+	    methodArgClasses.add (varClass);
+	    methodArgTypes.add (varType);
+	}
 	this.methodBody = methodBody;
 	this.quotedReferencesMap = quotedReferencesMap;
     }
@@ -117,7 +128,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	buffer.append ("(");
 	for (int i = 0; i < methodArgs.size (); i++)
 	{
-	    buffer.append (CompileSupport.getNameTypeDescriptor (methodArgs.get (i)));
+	    // buffer.append (CompileSupport.getNameTypeDescriptor (methodArgTypes.get (i)));
+	    buffer.append (Type.getType (methodArgClasses.get (i)).getDescriptor ());
 	}
 	buffer.append (")");
 	buffer.append (returnTypeDescriptor);
@@ -198,7 +210,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
      * Compile a single expression and leave the value on top of the stack. This is the primary
      * compilation operation and is used recursively to compile all expressions.
      */
-    private void compileExpression (final MethodVisitor mv, final Object e, final Class<?> valueType)
+    private void compileExpression (final GeneratorAdapter mv, final Object e, final Class<?> valueType)
     {
 	// [TOOD] valueType is ignored for now except when it is null or boolean.class
 	// [TODO] valueType should be supported for all primitive types
@@ -208,12 +220,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	}
 	else if (e instanceof LispList)
 	{
-	    compileFunctionCall ((GeneratorAdapter)mv, (LispList)e, valueType);
+	    compileFunctionCall (mv, (LispList)e, valueType);
 	}
 	else if (e instanceof Symbol)
 	{
 	    final Symbol symbol = (Symbol)e;
-	    compileSymbolReference ((GeneratorAdapter)mv, symbol, valueType);
+	    compileSymbolReference (mv, symbol, valueType);
 	}
 	else if (valueType != null)
 	{
@@ -226,28 +238,28 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	if (methodArgs.contains (symbol))
 	{
 	    // Parameter reference
-	    // [TODO] If we can determine the type, use that information.
 	    if (valueType != null)
 	    {
-		final int argRef = methodArgs.indexOf (symbol) + 1;
-		mv.visitVarInsn (ALOAD, argRef);
-		// if (valueType.equals (boolean.class))
-		// {
-		// coerceBoolean (mv);
-		// }
-		coerceRequired (mv, valueType);
+		final int argIndex = methodArgs.indexOf (symbol);
+		final Class<?> argClass = methodArgClasses.get (argIndex);
+		mv.loadArg (argIndex);
+		if (!argClass.equals (valueType))
+		{
+		    final Type argType = methodArgTypes.get (argIndex);
+		    final Type wraperType = getBoxedType (argType);
+		    box (mv, wraperType);
+		    coerceRequired (mv, valueType);
+		}
 	    }
 	}
 	else if (localVariableMap.containsKey (symbol))
 	{
 	    if (valueType != null)
 	    {
+		// [TODO] If we can determine the type, use that information.
 		final int localRef = localVariableMap.get (symbol);
-		mv.visitVarInsn (ALOAD, localRef);
-		// if (valueType.equals (boolean.class))
-		// {
-		// coerceBoolean (mv);
-		// }
+		mv.loadLocal (localRef);
+		// mv.visitVarInsn (ALOAD, localRef);
 		coerceRequired (mv, valueType);
 	    }
 	}
@@ -277,10 +289,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 		final String classInternalName = shellClassType.getInternalName ();
 		mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
-		// if (valueType.equals (boolean.class))
-		// {
-		// coerceBoolean (mv);
-		// }
 		coerceRequired (mv, valueType);
 		if (!globalReferences.contains (symbol))
 		{
@@ -297,10 +305,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	{
 	    if (e instanceof Boolean && !((Boolean)e).booleanValue ())
 	    {
-		{
-		    mv.visitInsn (ICONST_0);
-		    return;
-		}
+		mv.visitInsn (ICONST_0);
+		return;
 	    }
 	    mv.visitInsn (ICONST_1);
 	    return;
@@ -457,7 +463,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
     }
 
     // (define foo () (not true))
-    private void compileStandardFunctionCall (final MethodVisitor mv, final Symbol symbol, final LispList e,
+    private void compileStandardFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
             final Class<?> valueType)
     {
 	// Save the symbol in a class field.
@@ -494,10 +500,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	// Assume the function will still be defined when we execute this code.
 	// [TODO] Could define an applyVoid method to return no value.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
-	// if (valueType == null)
-	// {
-	// mv.visitInsn (POP);
-	// }
     }
 
     private void compileSpecialFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
@@ -643,19 +645,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	}
     }
 
-    private void compileProgn (final MethodVisitor mv, final LispList e, final Class<?> valueType)
+    private void compileProgn (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo () (progn (printf "a%n") (printf "b%n") 3))
 	if (e.size () == 0)
 	{
-	    if (boolean.class.equals (valueType))
-	    {
-		mv.visitLdcInsn (true);
-	    }
-	    else if (valueType != null)
-	    {
-		mv.visitInsn (ACONST_NULL);
-	    }
+	    pushDefaultValue (mv, valueType);
 	}
 	else
 	{
@@ -667,7 +662,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	}
     }
 
-    private void compileIf (final MethodVisitor mv, final LispList e, final Class<?> valueType)
+    private void compileIf (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (x) (if x 1 2))
 	// (define foo (x) (if x 1 (printf "a%n") (printf "b%n") 3))
@@ -688,16 +683,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	    // valueType null means nothing is left on the stack
 	    compileExpression (mv, e.get (i), null);
 	}
-	// Leave the last value
 	if (e.size () <= 3)
 	{
-	    if (valueType != null)
-	    {
-		mv.visitInsn (ACONST_NULL);
-	    }
+	    // No false case so return default
+	    pushDefaultValue (mv, valueType);
 	}
 	else
 	{
+	    // Return the last value
 	    compileExpression (mv, e.last (), valueType);
 	}
 
@@ -712,7 +705,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	// (define foo (a b) (and a b))
 	final Label l1 = new Label ();
 	final Label l2 = new Label ();
-	mv.visitInsn (ICONST_1);
+	// mv.visitInsn (ICONST_1);
+	pushDefaultValue (mv, valueType, true);
 	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
 	for (int i = 1; i < e.size (); i++)
 	{
@@ -740,14 +734,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	// Jump here after true case or fall through after false.
 	// Return final value.
 	mv.visitLabel (l2);
-	// if (valueType == null)
-	// {
-	// mv.visitInsn (POP);
-	// }
-	// if (boolean.class.equals (valueType))
-	// {
-	// coerceBoolean (mv);
-	// }
 	coerceRequired (mv, valueType);
     }
 
@@ -757,7 +743,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	// (foo 1 2)
 	// (define foo (a b) (or a b))
 	final Label l1 = new Label ();
-	mv.visitInsn (ICONST_0);
+	pushDefaultValue (mv, valueType, false);
 	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
 	for (int i = 1; i < e.size (); i++)
 	{
@@ -778,19 +764,10 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 
 	// Jump here for true case or fall through in false case
 	mv.visitLabel (l1);
-
-	// if (valueType == null)
-	// {
-	// mv.visitInsn (POP);
-	// }
-	// else if (boolean.class.equals (valueType))
-	// {
-	// coerceBoolean (mv);
-	// }
 	coerceRequired (mv, valueType);
     }
 
-    private void compileWhen (final MethodVisitor mv, final LispList e, final Class<?> valueType)
+    private void compileWhen (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (x) (when x 1 2))
 	// (define foo (x) (when x 1 (printf "a%n") (printf "b%n") 3))
@@ -811,23 +788,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 
 	// False case.
 	mv.visitLabel (l2);
-
-	if (boolean.class.equals (valueType))
-	{
-	    mv.visitLdcInsn (true);
-	}
-	else if (valueType != null)
-	{
-	    // False case where value is required
-	    mv.visitInsn (ACONST_NULL);
-	}
+	pushDefaultValue (mv, valueType, false);
 
 	// Jump here after true case or fall through after else.
 	// Return final value.
 	mv.visitLabel (l1);
     }
 
-    private void compileUnless (final MethodVisitor mv, final LispList e, final Class<?> valueType)
+    private void compileUnless (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (x) (unless x 1 2))
 	// (define foo (x) (unless x 1 (printf "a%n") (printf "b%n") 3))
@@ -847,15 +815,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 
 	// False case where we must pop a value
 	mv.visitLabel (l1);
-
-	if (boolean.class.equals (valueType))
-	{
-	    mv.visitLdcInsn (true);
-	}
-	else if (valueType != null)
-	{
-	    mv.visitInsn (ACONST_NULL);
-	}
+	pushDefaultValue (mv, valueType, true);
 
 	// Jump here after true case or fall through after else.
 	// Return final value.
@@ -909,10 +869,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 		globalReferences.add (symbol);
 		LOGGER.finer (new LogString ("Compiled global assignment to %s", symbol));
 	    }
-	    // if (boolean.class.equals (valueType))
-	    // {
-	    // coerceBoolean (mv);
-	    // }
 	    if (valueType != null)
 	    {
 		coerceRequired (mv, valueType);
@@ -927,13 +883,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	    compileExpression (mv, expr, Object.class /* TODO */);
 	    mv.visitVarInsn (ASTORE, localRef);
 	}
-	// else if (boolean.class.equals (valueType))
-	// {
-	// compileExpression (mv, expr, Object.class /* TODO */);
-	// mv.visitInsn (DUP);
-	// mv.visitVarInsn (ASTORE, localRef);
-	// coerceBoolean (mv);
-	// }
 	else
 	{
 	    compileExpression (mv, expr, Object.class /* TODO */);
@@ -1020,7 +969,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	mv.visitInsn (POP);
     }
 
-    private void compileDotimes (final LocalVariablesSorter mv, final LispList e, final Class<?> valueType)
+    private void compileDotimes (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo () (dotimes (i 3) 0))
 	// (define foo () (dotimes (i 3) 0) 5)
@@ -1037,16 +986,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	// Leave repeat count on the stack
 
 	// Push default return value onto the stack
-	if (boolean.class.equals (valueType))
-	{
-	    // [TODO] Need a function to push a general default value for any type
-	    mv.visitLdcInsn (true);
-	}
-	else if (valueType != null)
-	{
-	    // [TODO] Need a function to push a general default value for any type
-	    mv.visitInsn (ACONST_NULL);
-	}
+	pushDefaultValue (mv, valueType);
 	// Stack [returnValue], repeatCount
 
 	// Put iteration number into local variable
@@ -1114,19 +1054,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	localVariableMap = savedLocalVariableMap;
     }
 
-    private void compileWhile (final MethodVisitor mv, final LispList e, final Class<?> valueType)
+    private void compileWhile (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (x) (setq a 0) (while (< a x) (printf "A: %s%n" a) (setq a (+ a 1))))
 
 	// Load default value
-	if (boolean.class.equals (valueType))
-	{// [TODO] Need a function to push a general default value for any type
-	    mv.visitLdcInsn (true);
-	}
-	else if (valueType != null)
-	{// [TODO] Need a function to push a general default value for any type
-	    mv.visitInsn (ACONST_NULL);
-	}
+	pushDefaultValue (mv, valueType);
 
 	// Perform iteration test
 	final Label l1 = new Label ();
@@ -1151,19 +1084,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	mv.visitLabel (l2);
     }
 
-    private void compileUntil (final MethodVisitor mv, final LispList e, final Class<?> valueType)
+    private void compileUntil (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (x) (setq a 0) (until (> a x) (printf "A: %s%n" a) (setq a (+ a 1))))
 
 	// Load default value
-	if (boolean.class.equals (valueType))
-	{// [TODO] Need a function to push a general default value for any type
-	    mv.visitLdcInsn (true);
-	}
-	else if (valueType != null)
-	{// [TODO] Need a function to push a general default value for any type
-	    mv.visitInsn (ACONST_NULL);
-	}
+	pushDefaultValue (mv, valueType);
 
 	// Perform iteration test
 	final Label l1 = new Label ();
@@ -1217,25 +1143,15 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	    localVariableMap.put (var, localRef);
 	}
 
-	// Evaluate first (required) body form
-	compileExpression (mv, e.get (2), Object.class /* TODO */);
-	// Evaluate remaining (optional) body forms
-	for (int i = 3; i < e.size (); i++)
+	// Evaluate optional body forms
+	for (int i = 2; i < e.size () - 1; i++)
 	{
-	    // Get rid of previous value
-	    mv.visitInsn (POP);
-	    compileExpression (mv, e.get (i), Object.class /* TODO */);
+	    compileExpression (mv, e.get (i), null);
 	}
+	// Evaluate last (required) body form
+	compileExpression (mv, e.last (), valueType);
 	// Restore original local variables map
 	localVariableMap = savedLocalVariableMap;
-	// if (valueType == null)
-	// {
-	// mv.visitInsn (POP);
-	// }
-	// else if (boolean.class.equals (valueType))
-	// {
-	// coerceBoolean (mv);
-	// }
 	coerceRequired (mv, valueType);
     }
 
@@ -1263,39 +1179,30 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	    localVariableMap.put (var, localRef);
 	}
 
-	// Evaluate first (required) body form
-	compileExpression (mv, e.get (2), Object.class /* TODO */);
-	// Evaluate remaining (optional) body forms
-	for (int i = 3; i < e.size (); i++)
+	// Evaluate optional body forms
+	for (int i = 2; i < e.size () - 1; i++)
 	{
-	    // Get rid of previous value
-	    mv.visitInsn (POP);
-	    compileExpression (mv, e.get (i), Object.class /* TODO */);
+	    compileExpression (mv, e.get (i), null);
 	}
+	// Evaluate last (required) body form
+	compileExpression (mv, e.last (), valueType);
+
 	// Restore original local variables map
 	localVariableMap = savedLocalVariableMap;
-	// if (valueType == null)
-	// {
-	// mv.visitInsn (POP);
-	// }
-	// else if (boolean.class.equals (valueType))
-	// {
-	// coerceBoolean (mv);
-	// }
 	coerceRequired (mv, valueType);
     }
 
-    private void compileCond (final MethodVisitor mv, final LispList e, final Class<?> valueType)
+    private void compileCond (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma) (true 'delta)))
 	final Package system = PackageFactory.getSystemPackage ();
 	final Symbol var = system.internSymbol ("result").gensym ();
 
-	final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
 	int resultRef = 0;
 	if (valueType != null)
 	{
-	    resultRef = lvs.newLocal (Type.getType (Object.class));
+	    // [TODO] This should use the valueType, not Object.class
+	    resultRef = mv.newLocal (Type.getType (Object.class));
 	    localVariableMap.put (var, resultRef);
 	    mv.visitInsn (ACONST_NULL);
 	    mv.visitVarInsn (ASTORE, resultRef);
@@ -1355,7 +1262,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
     }
 
     /** Case where no return value is required. */
-    private void compileVoidCond (final MethodVisitor mv, final LispList e)
+    private void compileVoidCond (final GeneratorAdapter mv, final LispList e)
     {
 	// (define foo (x) (cond ((= x 1) (printf "one%n")) ((= x 2)(printf "two%n"))) 'done)
 
@@ -1388,7 +1295,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
     /** Case where only a boolean value is required. */
     // (define foo (x) (when (cond ((= x 1)) ((= x 2) false) ((= x 3) true)) (printf "when%n")))
     // (define foo (x) (when (cond ((= x 1)) ((= x 2) false) ((= x 3))) (printf "when%n")))
-    private void compileBooleanCond (final MethodVisitor mv, final LispList e)
+    private void compileBooleanCond (final GeneratorAdapter mv, final LispList e)
     {
 	// Label to goto and return result
 	final Label l1 = new Label ();
@@ -1535,13 +1442,33 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	mv.valueOf (resultType);
     }
 
+    /**
+     * Push a default value onto the stack. If the value will be a primitive boolean, use false as
+     * the default value.
+     *
+     * @param mv GeneratorAdapter to produce code.
+     * @param valueClass The value type to return.
+     */
     private void pushDefaultValue (final GeneratorAdapter mv, final Class<?> valueClass)
+    {
+	pushDefaultValue (mv, valueClass, false);
+    }
+
+    /**
+     * Push a default value onto the stack.
+     *
+     * @param mv GeneratorAdapter to produce code.
+     * @param valueClass The value type to return.
+     * @param booleanDefault If the value will be a primitive boolean, use this as the default
+     *            value.
+     */
+    private void pushDefaultValue (final GeneratorAdapter mv, final Class<?> valueClass, final boolean booleanDefault)
     {
 	if (valueClass != null)
 	{
 	    if (boolean.class.equals (valueClass))
 	    {
-		mv.visitLdcInsn (false);
+		mv.visitLdcInsn (booleanDefault);
 	    }
 	    else if (byte.class.equals (valueClass))
 	    {

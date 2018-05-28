@@ -42,7 +42,7 @@ public class Analyzer
 	methodArgMap = new HashMap<Symbol, Class<?>> ();
 	for (final Object nameSpec : methodArgs)
 	{
-	    final Symbol argName = CompileSupport.getFunctionName (nameSpec);
+	    final Symbol argName = CompileSupport.getNameVariable (nameSpec);
 	    final Class<?> argType = CompileSupport.getNameType (nameSpec);
 	    methodArgNames.add (argName);
 	    methodArgMap.put (argName, argType);
@@ -607,7 +607,7 @@ public class Analyzer
 	    {
 		final LispList clause = (LispList)bindings.get (i);
 		final Object nameSpec = clause.get (0);
-		final Symbol varName = CompileSupport.getFunctionName (nameSpec);
+		final Symbol varName = CompileSupport.getNameVariable (nameSpec);
 		final Class<?> varType = CompileSupport.getNameType (nameSpec);
 		analyzeValueExpression (level + 1, clause.get (1), localVariables, varType);
 		final Local varSpec = new Local (varName, varType);
@@ -627,7 +627,7 @@ public class Analyzer
 	    {
 		final LispList clause = (LispList)bindings.get (i);
 		final Object nameSpec = clause.get (0);
-		final Symbol varName = CompileSupport.getFunctionName (nameSpec);
+		final Symbol varName = CompileSupport.getNameVariable (nameSpec);
 		final Class<?> varType = CompileSupport.getNameType (nameSpec);
 		analyzeValueExpression (level + 1, clause.get (1), boundVariables, varType);
 		final Local varSpec = new Local (varName, varType);
@@ -774,7 +774,7 @@ public class Analyzer
 	    {
 		final LispList clause = (LispList)bindings.get (i);
 		final Object nameSpec = clause.get (0);
-		final Symbol varName = CompileSupport.getFunctionName (nameSpec);
+		final Symbol varName = CompileSupport.getNameVariable (nameSpec);
 		final Class<?> varType = CompileSupport.getNameType (nameSpec);
 		analyzeValueExpression (level + 1, clause.get (1), localVariables, varType);
 		final Local varSpec = new Local (varName, varType);
@@ -795,7 +795,7 @@ public class Analyzer
 	    {
 		final LispList clause = (LispList)bindings.get (i);
 		final Object nameSpec = clause.get (0);
-		final Symbol varName = CompileSupport.getFunctionName (nameSpec);
+		final Symbol varName = CompileSupport.getNameVariable (nameSpec);
 		final Class<?> varType = CompileSupport.getNameType (nameSpec);
 		analyzeValueExpression (level + 1, clause.get (1), boundVariables, varType);
 		final Local varSpec = new Local (varName, varType);

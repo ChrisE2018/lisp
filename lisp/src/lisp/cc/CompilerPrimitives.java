@@ -50,7 +50,7 @@ public class CompilerPrimitives extends Definer
             final LispList methodArgs, final Object... bodyForms)
     {
 	final Class<?> returnType = CompileSupport.getNameType (nameSpec);
-	final Symbol methodName = CompileSupport.getFunctionName (nameSpec);
+	final Symbol methodName = CompileSupport.getNameVariable (nameSpec);
 	final LispList body = new LispList (bodyForms);
 	final Analyzer analyzer = new Analyzer ("foo", returnType, methodName, methodArgs, body);
 	analyzer.analyze ();
@@ -63,7 +63,7 @@ public class CompilerPrimitives extends Definer
     {
 	final Symbol protos = PackageFactory.getSystemPackage ().internSymbol ("*protos*");
 	final Class<?> returnType = CompileSupport.getNameType (nameSpec);
-	final Symbol methodName = CompileSupport.getFunctionName (nameSpec);
+	final Symbol methodName = CompileSupport.getNameVariable (nameSpec);
 	final Prototype spec = new Prototype (methodName, methodArgs, returnType);
 	if (!protos.hasValue ())
 	{
@@ -99,7 +99,7 @@ public class CompilerPrimitives extends Definer
 		body.add (f);
 	    }
 	    // If functionName looks like (the <type> <name>) then declare a return type.
-	    final Symbol functionName = CompileSupport.getFunctionName (nameSpec);
+	    final Symbol functionName = CompileSupport.getNameVariable (nameSpec);
 	    final Class<?> returnType = CompileSupport.getNameType (nameSpec);
 	    LOGGER.info (String.format ("Compiling %s %s: %s", returnType, functionName, body));
 	    final Class<?> c = createCompiledFunction (returnType, functionName, args, body);
@@ -148,7 +148,8 @@ public class CompilerPrimitives extends Definer
 	final Class<?>[] parameterTypes = new Class<?>[args.size ()];
 	for (int i = 0; i < parameterTypes.length; i++)
 	{
-	    parameterTypes[i] = java.lang.Object.class;
+	    // parameterTypes[i] = java.lang.Object.class;
+	    parameterTypes[i] = CompileSupport.getNameType (args.get (i));
 	}
 	final Method method = cls.getDeclaredMethod (methodName, parameterTypes);
 	FunctionCell function = symbol.getFunction ();

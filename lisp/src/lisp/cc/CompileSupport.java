@@ -9,7 +9,13 @@ import lisp.Symbol;
 
 public class CompileSupport
 {
-    public static Symbol getFunctionName (final Object nameSpec)
+    /**
+     * Return the variable from a nameSpec.
+     *
+     * @param nameSpec Either a <variable> or form (the <type> <variable>)
+     * @return The <variable>.
+     */
+    public static Symbol getNameVariable (final Object nameSpec)
     {
 	if (nameSpec instanceof Symbol)
 	{
@@ -19,11 +25,28 @@ public class CompileSupport
 	return (Symbol)spec.get (2);
     }
 
+    /**
+     * Return the <type> from a nameSpec.
+     *
+     * @param nameSpec Either a <variable> or form (the <type> <variable>)
+     * @return The <type> which is Object.class if unspecified.
+     */
     public static Class<?> getNameType (final Object nameSpec)
+    {
+	return getNameType (nameSpec, Object.class);
+    }
+
+    /**
+     * Return the <type> from a nameSpec.
+     *
+     * @param nameSpec Either a <variable> or form (the <type> <variable>)
+     * @return The <type> which is Object.class if unspecified.
+     */
+    public static Class<?> getNameType (final Object nameSpec, final Class<?> defaultType)
     {
 	if (nameSpec instanceof Symbol)
 	{
-	    return Object.class;
+	    return defaultType;
 	}
 
 	final List<?> spec = (List<?>)nameSpec;
@@ -41,7 +64,7 @@ public class CompileSupport
 	    // Try with the qualified name of the symbol
 	    return getNameType (((Symbol)type).getName ());
 	}
-	return Object.class;
+	return defaultType;
     }
 
     public static Class<?> getNameType (final String type)
