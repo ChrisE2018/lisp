@@ -2,6 +2,7 @@
 package lisp.cc;
 
 import java.io.*;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
@@ -17,10 +18,10 @@ public class CompilerFactory
 
     enum Version
     {
-	V1, V2;
+	V1, V2, V3;
     }
 
-    private static Version DEFAULT_VERSION = Version.V2;
+    private static Version DEFAULT_VERSION = Version.V3;
 
     private final Package systemPackage = PackageFactory.getSystemPackage ();
     /**
@@ -50,6 +51,21 @@ public class CompilerFactory
 		{
 		    final ClassVisitor cv = result.getClassVisitor ();
 		    result.setClassVisitor (new PrintBytecodeClassAdaptor (Opcodes.ASM5, cv, new StringWriter ()));
+		}
+		return result;
+	    }
+	    case V3:
+	    {
+		final boolean showBytecode = showBytecodeSymbol.getValue (false) != Boolean.FALSE;
+		final CompileLoader result = new CompileLoader ();
+		final ClassWriter cw = result.getClassWriter ();
+		final Map<String, Object> quotedReferences = result.getQuotedReferences ();
+		result.setClassVisitor (new CompileClassAdaptor_v3 (cw, result.getClassType (), returnType, methodName,
+		        methodArgs, methodBody, quotedReferences));
+		if (showBytecode)
+		{
+		    result.setClassVisitor (
+		            new PrintBytecodeClassAdaptor (Opcodes.ASM5, result.getClassVisitor (), new StringWriter ()));
 		}
 		return result;
 	    }
