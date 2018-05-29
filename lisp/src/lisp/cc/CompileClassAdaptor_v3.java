@@ -23,7 +23,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
     private final Class<?> returnClass;
     private final Type returnType;
     private final String methodName;
-    // private final LispList methodArgs;
     private final List<Symbol> methodArgs = new ArrayList<Symbol> ();
     private final List<Class<?>> methodArgClasses = new ArrayList<Class<?>> ();
     private final List<Type> methodArgTypes = new ArrayList<Type> ();
@@ -542,11 +541,33 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	}
 	else if (symbol.is ("and"))
 	{
-	    compileAnd (mv, e, valueType);
+	    if (valueType == null)
+	    {
+		compileVoidAnd (mv, e);
+	    }
+	    else if (valueType.equals (boolean.class))
+	    {
+		compileBooleanAnd (mv, e);
+	    }
+	    else
+	    {
+		compileAnd (mv, e, valueType);
+	    }
 	}
 	else if (symbol.is ("or"))
 	{
-	    compileOr (mv, e, valueType);
+	    if (valueType == null)
+	    {
+		compileVoidOr (mv, e);
+	    }
+	    else if (valueType.equals (boolean.class))
+	    {
+		compileBooleanOr (mv, e);
+	    }
+	    else
+	    {
+		compileOr (mv, e, valueType);
+	    }
 	}
 	else if (symbol.is ("when"))
 	{
@@ -703,14 +724,54 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	mv.visitLabel (l1);
     }
 
+    /** Compile an 'and' expression whose value will be ignored. */
+    private void compileVoidAnd (final GeneratorAdapter mv, final LispList e)
+    {
+	// (define foo (a b) (and) 1)
+	// (define foo (a b) (and a b) 2)
+	if (e.size () > 0)
+	{
+	    final Label l1 = new Label ();
+	    for (int i = 1; i < e.size (); i++)
+	    {
+		compileExpression (mv, e.get (i), boolean.class);
+		mv.visitJumpInsn (IFEQ, l1);
+	    }
+	    mv.visitLabel (l1);
+	}
+    }
+
+    /** Compile an 'and' expression whose value is only used as a boolean */
+    private void compileBooleanAnd (final GeneratorAdapter mv, final LispList e)
+    {
+	// (define foo (a b) (if (and a b) 1 2))
+	final Label l1 = new Label ();
+	for (int i = 1; i < e.size (); i++)
+	{
+	    compileExpression (mv, e.get (i), boolean.class);
+	    mv.visitJumpInsn (IFEQ, l1);
+	}
+	// True case
+	final Label l2 = new Label ();
+	mv.visitInsn (ICONST_1);
+	mv.visitJumpInsn (GOTO, l2);
+
+	// False case
+	mv.visitLabel (l1);
+	mv.visitInsn (ICONST_0);
+
+	// Jump here after true case or fall through after false.
+	// Return final value.
+	mv.visitLabel (l2);
+    }
+
     private void compileAnd (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (a b) (and))
 	// (define foo (a b) (and a b))
 	final Label l1 = new Label ();
 	final Label l2 = new Label ();
-	// mv.visitInsn (ICONST_1);
-	pushDefaultValue (mv, valueType, true);
+	mv.visitInsn (ICONST_1);
 	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
 	for (int i = 1; i < e.size (); i++)
 	{
@@ -741,13 +802,54 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	coerceRequired (mv, valueType);
     }
 
+    /** Compile an 'or' expression whose value will be ignored. */
+    private void compileVoidOr (final GeneratorAdapter mv, final LispList e)
+    {
+	// (define foo (a b) (or) 2)
+	// (define foo (a b) (or a b) 3)
+	if (e.size () > 0)
+	{
+	    final Label l1 = new Label ();
+	    for (int i = 1; i < e.size (); i++)
+	    {
+		compileExpression (mv, e.get (i), boolean.class);
+		mv.visitJumpInsn (IFNE, l1);
+	    }
+	    mv.visitLabel (l1);
+	}
+    }
+
+    /** Compile an 'or' expression whose value is only used as a boolean */
+    private void compileBooleanOr (final GeneratorAdapter mv, final LispList e)
+    {
+	// (define foo (a b) (if (or a b) 1 2))
+	final Label l1 = new Label ();
+	for (int i = 1; i < e.size (); i++)
+	{
+	    compileExpression (mv, e.get (i), boolean.class);
+	    mv.visitJumpInsn (IFNE, l1);
+	}
+	// False case
+	final Label l2 = new Label ();
+	mv.visitInsn (ICONST_0);
+	mv.visitJumpInsn (GOTO, l2);
+
+	// True case
+	mv.visitLabel (l1);
+	mv.visitInsn (ICONST_1);
+
+	// Jump here after false case or fall through after true.
+	// Return final value.
+	mv.visitLabel (l2);
+    }
+
     private void compileOr (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
     {
 	// (define foo (a b) (or))
 	// (foo 1 2)
 	// (define foo (a b) (or a b))
 	final Label l1 = new Label ();
-	pushDefaultValue (mv, valueType, false);
+	mv.visitInsn (ICONST_0);
 	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
 	for (int i = 1; i < e.size (); i++)
 	{
