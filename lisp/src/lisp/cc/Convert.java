@@ -76,7 +76,7 @@ public class Convert implements Opcodes
 
 	    case Type.CHAR:
 	    {
-		convert2char (mv, fromClass, toClass);
+		convert2char (mv, fromClass, toClass, allowNarrowing);
 		return;
 	    }
 	    case Type.BYTE:
@@ -87,22 +87,22 @@ public class Convert implements Opcodes
 	    }
 	    case Type.SHORT:
 	    {
-		convert2short (mv, fromClass, toClass);
+		convert2short (mv, fromClass, toClass, allowNarrowing);
 		return;
 	    }
 	    case Type.INT:
 	    {
-		convert2int (mv, fromClass, toClass);
+		convert2int (mv, fromClass, toClass, allowNarrowing);
 		return;
 	    }
 	    case Type.LONG:
 	    {
-		convert2long (mv, fromClass, toClass);
+		convert2long (mv, fromClass, toClass, allowNarrowing);
 		return;
 	    }
 	    case Type.FLOAT:
 	    {
-		convert2float (mv, fromClass, toClass);
+		convert2float (mv, fromClass, toClass, allowNarrowing);
 		return;
 	    }
 	    case Type.DOUBLE:
@@ -124,13 +124,13 @@ public class Convert implements Opcodes
 	cantConvert (fromClass, toClass);
     }
 
-    private void throwException (final GeneratorAdapter mv, final String internalName)
-    {
-	mv.visitTypeInsn (NEW, internalName);
-	mv.visitInsn (DUP);
-	mv.visitMethodInsn (INVOKESPECIAL, internalName, "<init>", "()V", false);
-	mv.visitInsn (ATHROW);
-    }
+    // private void throwException (final GeneratorAdapter mv, final String internalName)
+    // {
+    // mv.visitTypeInsn (NEW, internalName);
+    // mv.visitInsn (DUP);
+    // mv.visitMethodInsn (INVOKESPECIAL, internalName, "<init>", "()V", false);
+    // mv.visitInsn (ATHROW);
+    // }
 
     private void throwException (final GeneratorAdapter mv, final String internalName, final String format, final Object... args)
     {
@@ -153,14 +153,17 @@ public class Convert implements Opcodes
      * Convert value on top of the stack from a Boolean to a boolean. This is used as a last resort
      * when the return type must be boolean and there is no better way to get there. If the top of
      * the stack is not a Boolean, the result left on the stack is always true.
+     *
+     * @Deprecated This needs to be checked to verify that liberalTruth and allowNarrowing are
+     *             handled correctly.
      */
+    @Deprecated
     public void coerceBoolean (final GeneratorAdapter mv)
     {
 	// (define boolean:foo () true)
 	// (define boolean:foo (x) x)
 	mv.visitInsn (DUP);
 	final Label l1 = new Label ();
-	// [TODO] There is a private method in GeneratorAdaptor that we need to steal: getBoxedType
 	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	mv.visitJumpInsn (IFNE, l1);
 	mv.visitInsn (POP);
@@ -169,11 +172,16 @@ public class Convert implements Opcodes
 	mv.visitJumpInsn (GOTO, l2);
 	mv.visitLabel (l1);
 	mv.unbox (Type.BOOLEAN_TYPE);
-	// mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
-	// mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
 	mv.visitLabel (l2);
     }
 
+    /**
+     * If there is a Byte on the stack, convert it to an int. Otherwise, leave the top value on the
+     * stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Byte.
+     */
     private void convertByte2int (final GeneratorAdapter mv, final Label otherwise)
     {
 	mv.visitInsn (DUP);
@@ -182,6 +190,13 @@ public class Convert implements Opcodes
 	mv.unbox (Type.BYTE_TYPE);
     }
 
+    /**
+     * If there is a Character on the stack, convert it to an int. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Character.
+     */
     private void convertChar2int (final GeneratorAdapter mv, final Label otherwise)
     {
 	mv.visitInsn (DUP);
@@ -190,6 +205,13 @@ public class Convert implements Opcodes
 	mv.unbox (Type.CHAR_TYPE);
     }
 
+    /**
+     * If there is a Short on the stack, convert it to an int. Otherwise, leave the top value on the
+     * stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Short.
+     */
     private void convertShort2int (final GeneratorAdapter mv, final Label otherwise)
     {
 	mv.visitInsn (DUP);
@@ -198,6 +220,13 @@ public class Convert implements Opcodes
 	mv.unbox (Type.SHORT_TYPE);
     }
 
+    /**
+     * If there is a Integer on the stack, convert it to an int. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Integer.
+     */
     private void convertInt2int (final GeneratorAdapter mv, final Label otherwise)
     {
 	mv.visitInsn (DUP);
@@ -206,6 +235,13 @@ public class Convert implements Opcodes
 	mv.unbox (Type.INT_TYPE);
     }
 
+    /**
+     * If there is a Long on the stack, convert it to an long. Otherwise, leave the top value on the
+     * stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Long.
+     */
     private void convertLong2long (final GeneratorAdapter mv, final Label otherwise)
     {
 	mv.visitInsn (DUP);
@@ -214,6 +250,13 @@ public class Convert implements Opcodes
 	mv.unbox (Type.LONG_TYPE);
     }
 
+    /**
+     * If there is a Float on the stack, convert it to an float. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Float.
+     */
     private void convertFloat2float (final GeneratorAdapter mv, final Label otherwise)
     {
 	mv.visitInsn (DUP);
@@ -222,15 +265,29 @@ public class Convert implements Opcodes
 	mv.unbox (Type.FLOAT_TYPE);
     }
 
-    private void convertFloat2double (final GeneratorAdapter mv, final Label otherwise)
-    {
-	mv.visitInsn (DUP);
-	mv.visitTypeInsn (INSTANCEOF, "java/lang/Float");
-	mv.visitJumpInsn (IFEQ, otherwise);
-	mv.unbox (Type.FLOAT_TYPE);
-	mv.visitInsn (F2D);
-    }
+    // /**
+    // * If there is a Float on the stack, convert it to a double. Otherwise, leave the top value on
+    // * the stack alone and jump to the label otherwise.
+    // *
+    // * @param mv Bytecode generator.
+    // * @param otherwise Label to jump to if the stack does not have a Float.
+    // */
+    // private void convertFloat2double (final GeneratorAdapter mv, final Label otherwise)
+    // {
+    // mv.visitInsn (DUP);
+    // mv.visitTypeInsn (INSTANCEOF, "java/lang/Float");
+    // mv.visitJumpInsn (IFEQ, otherwise);
+    // mv.unbox (Type.FLOAT_TYPE);
+    // mv.visitInsn (F2D);
+    // }
 
+    /**
+     * If there is a Double on the stack, convert it to an double. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Double.
+     */
     private void convertDouble2double (final GeneratorAdapter mv, final Label otherwise)
     {
 	mv.visitInsn (DUP);
@@ -239,6 +296,12 @@ public class Convert implements Opcodes
 	mv.unbox (Type.DOUBLE_TYPE);
     }
 
+    /**
+     * Remove the top stack entry.
+     *
+     * @param mv Bytecode generator.
+     * @param fromClass The class of the top stack entry.
+     */
     private void convert2void (final GeneratorAdapter mv, final Class<?> fromClass)
     {
 	final Type fromType = Type.getType (fromClass);
@@ -259,9 +322,8 @@ public class Convert implements Opcodes
 	}
     }
 
-    // Char
-    // Byte
-    private void convert2char (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass)
+    private void convert2char (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
+            final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	final Type toType = Type.getType (toClass);
@@ -276,16 +338,26 @@ public class Convert implements Opcodes
 	    mv.unbox (toType);
 	    return;
 	}
-	if (fromClass.equals (int.class) || fromClass.equals (short.class) || fromClass.equals (byte.class))
+	if (allowNarrowing)
 	{
-	    mv.visitInsn (I2C);
-	    return;
+	    if (fromClass.equals (int.class) || fromClass.equals (short.class))
+	    {
+		mv.visitInsn (I2C);
+		return;
+	    }
+	    if (fromClass.equals (Integer.class) || fromClass.equals (Short.class))
+	    {
+		mv.unbox (boxer.getUnboxedType (fromType));
+		mv.visitInsn (I2C);
+		return;
+	    }
 	}
-	if (fromClass.equals (Integer.class) || fromClass.equals (Short.class) || fromClass.equals (Byte.class))
+	if (fromClass.equals (short.class) || fromClass.equals (int.class) || fromClass.equals (long.class)
+	    || fromClass.equals (float.class) || fromClass.equals (double.class) || fromClass.equals (Short.class)
+	    || fromClass.equals (Integer.class) || fromClass.equals (Long.class) || fromClass.equals (Float.class)
+	    || fromClass.equals (Double.class))
 	{
-	    mv.unbox (boxer.getUnboxedType (fromType));
-	    mv.visitInsn (I2C);
-	    return;
+	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to char");
 	}
 	final Label l0 = new Label (); // Good
 	final Label l1 = new Label ();
@@ -344,7 +416,9 @@ public class Convert implements Opcodes
 	    }
 	}
 	if (fromClass.equals (int.class) || fromClass.equals (short.class) || fromClass.equals (long.class)
-	    || fromClass.equals (float.class) || fromClass.equals (double.class))
+	    || fromClass.equals (float.class) || fromClass.equals (double.class) || fromClass.equals (Integer.class)
+	    || fromClass.equals (Short.class) || fromClass.equals (Long.class) || fromClass.equals (Float.class)
+	    || fromClass.equals (Double.class))
 	{
 	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to byte");
 	}
@@ -362,7 +436,8 @@ public class Convert implements Opcodes
 	// Succeed
     }
 
-    private void convert2short (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass)
+    private void convert2short (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
+            final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	final int fromSort = fromType.getSort ();
@@ -377,8 +452,62 @@ public class Convert implements Opcodes
 	    mv.unbox (boxer.getUnboxedType (fromType));
 	    return;
 	}
+	if (allowNarrowing)
+	{
+	    if (fromClass.equals (Integer.class))
+	    {
+		mv.unbox (boxer.getUnboxedType (fromType));
+		mv.visitInsn (I2S);
+		return;
+	    }
+	    if (fromClass.equals (int.class))
+	    {
+		mv.visitInsn (I2S);
+		return;
+	    }
+	    if (fromClass.equals (Long.class))
+	    {
+		mv.unbox (boxer.getUnboxedType (fromType));
+		mv.visitInsn (L2I);
+		mv.visitInsn (I2S);
+		return;
+	    }
+	    if (fromClass.equals (long.class))
+	    {
+		mv.visitInsn (L2I);
+		mv.visitInsn (I2S);
+		return;
+	    }
+	    if (fromClass.equals (Float.class))
+	    {
+		mv.unbox (boxer.getUnboxedType (fromType));
+		mv.visitInsn (F2I);
+		mv.visitInsn (I2S);
+		return;
+	    }
+	    if (fromClass.equals (float.class))
+	    {
+		mv.visitInsn (F2I);
+		mv.visitInsn (I2S);
+		return;
+	    }
+	    if (fromClass.equals (Double.class))
+	    {
+		mv.unbox (boxer.getUnboxedType (fromType));
+		mv.visitInsn (D2I);
+		mv.visitInsn (I2S);
+		return;
+	    }
+	    if (fromClass.equals (double.class))
+	    {
+		mv.visitInsn (D2I);
+		mv.visitInsn (I2S);
+		return;
+	    }
+	}
 	if (fromClass.equals (int.class) || fromClass.equals (long.class) || fromClass.equals (float.class)
-	    || fromClass.equals (double.class))
+	    || fromClass.equals (double.class) || fromClass.equals (Integer.class) || fromClass.equals (Long.class)
+	    || fromClass.equals (Float.class) || fromClass.equals (Double.class))
 	{
 	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to short");
 	}
@@ -399,14 +528,14 @@ public class Convert implements Opcodes
 	mv.visitLabel (l0);
     }
 
-    private void convert2int (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass)
+    private void convert2int (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
+            final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	final int fromSort = fromType.getSort ();
 	if (fromSort == Type.CHAR || fromSort == Type.BYTE || fromSort == Type.SHORT || fromSort == Type.INT)
 	{
-	    // OK already
-	    return;
+	    return; // OK already
 	}
 
 	if (fromClass.equals (Byte.class) || fromClass.equals (Character.class) || fromClass.equals (Short.class)
@@ -415,7 +544,38 @@ public class Convert implements Opcodes
 	    mv.unbox (boxer.getUnboxedType (fromType));
 	    return;
 	}
-	if (fromClass.equals (long.class) || fromClass.equals (float.class) || fromClass.equals (double.class))
+	if (allowNarrowing)
+	{
+	    if (fromClass.equals (Long.class))
+	    {
+		mv.unbox (boxer.getUnboxedType (fromType));
+		mv.visitInsn (L2I);
+	    }
+	    if (fromClass.equals (long.class))
+	    {
+		mv.visitInsn (L2I);
+	    }
+	    if (fromClass.equals (Float.class))
+	    {
+		mv.unbox (boxer.getUnboxedType (fromType));
+		mv.visitInsn (F2I);
+	    }
+	    if (fromClass.equals (float.class))
+	    {
+		mv.visitInsn (F2I);
+	    }
+	    if (fromClass.equals (Double.class))
+	    {
+		mv.unbox (boxer.getUnboxedType (fromType));
+		mv.visitInsn (D2I);
+	    }
+	    if (fromClass.equals (double.class))
+	    {
+		mv.visitInsn (D2I);
+	    }
+	}
+	if (fromClass.equals (long.class) || fromClass.equals (float.class) || fromClass.equals (double.class)
+	    || fromClass.equals (Long.class) || fromClass.equals (Float.class) || fromClass.equals (Double.class))
 	{
 	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to int");
 	}
@@ -441,27 +601,26 @@ public class Convert implements Opcodes
 	mv.visitLabel (l0);
     }
 
-    private void convert2long (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass)
+    private void convert2long (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
+            final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	final Type toType = Type.getType (toClass);
 	final int fromSort = fromType.getSort ();
 	if (fromSort == Type.LONG)
 	{
-	    // OK already
-	    return;
+	    return; // OK already
 	}
 	if (fromSort == Type.CHAR || fromSort == Type.BYTE || fromSort == Type.SHORT || fromSort == Type.INT)
 	{
-	    // Extend
-	    mv.visitInsn (I2L);
+	    mv.visitInsn (I2L); // Extend
 	    return;
 	}
-	if (fromClass.equals (Byte.class) || fromClass.equals (Character.class) || fromClass.equals (Short.class)
+	if (fromClass.equals (Character.class) || fromClass.equals (Byte.class) || fromClass.equals (Short.class)
 	    || fromClass.equals (Integer.class))
 	{
 	    mv.unbox (toType);
-	    mv.visitInsn (I2L);
+	    mv.visitInsn (I2L); // Extend
 	    return;
 	}
 	if (fromClass.equals (Long.class))
@@ -469,7 +628,30 @@ public class Convert implements Opcodes
 	    mv.unbox (toType);
 	    return;
 	}
-	if (fromClass.equals (float.class) || fromClass.equals (double.class))
+	if (fromClass.equals (Float.class) && allowNarrowing)
+	{
+	    mv.unbox (Type.FLOAT_TYPE);
+	    mv.visitInsn (F2L); // Narrow
+	    return;
+	}
+	if (fromClass.equals (float.class) && allowNarrowing)
+	{
+	    mv.visitInsn (F2L); // Narrow
+	    return;
+	}
+	if (fromClass.equals (Double.class) && allowNarrowing)
+	{
+	    mv.unbox (Type.DOUBLE_TYPE);
+	    mv.visitInsn (D2L); // Narrow
+	    return;
+	}
+	if (fromClass.equals (double.class) && allowNarrowing)
+	{
+	    mv.visitInsn (D2L); // Narrow
+	    return;
+	}
+	if (fromClass.equals (float.class) || fromClass.equals (double.class) || fromClass.equals (Float.class)
+	    || fromClass.equals (Double.class))
 	{
 	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to long");
 	}
@@ -502,7 +684,8 @@ public class Convert implements Opcodes
 	mv.visitLabel (l00);
     }
 
-    private void convert2float (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass)
+    private void convert2float (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
+            final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	// final Type toType = Type.getType (toClass);
@@ -523,19 +706,33 @@ public class Convert implements Opcodes
 	    mv.visitInsn (I2F);
 	    return;
 	}
-	if (fromClass.equals (long.class))
+	if (allowNarrowing)
 	{
-	    // [QUESTION] This might be a narrowing conversion. Implement or throw error?
-	    mv.visitInsn (L2F);
-	    return;
+	    if (fromClass.equals (Long.class))
+	    {
+		mv.unbox (boxer.getUnboxedType (fromType));
+		mv.visitInsn (L2F);
+		return;
+	    }
+	    if (fromClass.equals (long.class))
+	    {
+		mv.visitInsn (L2F);
+		return;
+	    }
+	    if (fromClass.equals (Double.class))
+	    {
+		mv.unbox (boxer.getUnboxedType (fromType));
+		mv.visitInsn (D2F);
+		return;
+	    }
+	    if (fromClass.equals (double.class))
+	    {
+		mv.visitInsn (D2F);
+		return;
+	    }
 	}
-	// if (fromClass.equals (double.class))
-	// {
-	// // [QUESTION] This is a narrowing conversion. Implement or throw error?
-	// mv.visitInsn (D2F);
-	// return;
-	// }
-	if (fromClass.equals (double.class))
+	if (fromClass.equals (long.class) || fromClass.equals (Long.class) || fromClass.equals (double.class)
+	    || fromClass.equals (Double.class))
 	{
 	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to float");
 	}
@@ -575,13 +772,11 @@ public class Convert implements Opcodes
 	final int fromSort = fromType.getSort ();
 	if (fromSort == Type.DOUBLE)
 	{
-	    // OK already
-	    return;
+	    return; // OK already
 	}
 	if (fromSort == Type.FLOAT)
 	{
-	    // Extend
-	    mv.visitInsn (F2D);
+	    mv.visitInsn (F2D); // Extend
 	    return;
 	}
 	if (fromClass.equals (byte.class) || fromClass.equals (char.class) || fromClass.equals (short.class)

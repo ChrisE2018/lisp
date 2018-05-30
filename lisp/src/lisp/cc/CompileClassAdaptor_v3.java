@@ -1644,37 +1644,36 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 		// (define byte:foo () byte:int:3)
 		// (d (foo))
 		compileExpression (mv, arg, byte.class, true, false);
-		// mv.visitInsn (I2B); // Narrow
-		convert.convert (mv, byte.class, valueClass, false, false);
+		convert.convert (mv, byte.class, valueClass, true, false);
 		return;
 	    }
 	    if (t.is ("char"))
 	    {
 		compileExpression (mv, arg, int.class, true, false);
-		mv.visitInsn (I2C); // Narrow
-		convert.convert (mv, char.class, valueClass, false, false);
+		// mv.visitInsn (I2C); // Narrow
+		convert.convert (mv, char.class, valueClass, true, false);
 		return;
 	    }
 	    if (t.is ("short"))
 	    {
 		// (define short:foo () (the short int:3))
 		compileExpression (mv, arg, int.class, true, false);
-		mv.visitInsn (I2S); // Narrow
-		convert.convert (mv, short.class, valueClass, false, false);
+		convert.convert (mv, short.class, valueClass, true, false);
 		return;
 	    }
 	    if (t.is ("int"))
 	    {
-		// [TODO] Need to allow narrowing conversions here
 		compileExpression (mv, arg, int.class, true, false);
-		convert.convert (mv, int.class, valueClass, false, false);
+		convert.convert (mv, int.class, valueClass, true, false);
 		return;
 	    }
 	    if (t.is ("long"))
 	    {
-		// [TODO] Need to allow narrowing conversions here
+		// (define long:foo () int:3) ; Widening
+		// (define long:foo () float:3.3) ; Error needs cast
+		// (define long:foo () long:float:3.3) ; Explicit cast
 		compileExpression (mv, arg, long.class, true, false);
-		convert.convert (mv, long.class, valueClass, false, false);
+		convert.convert (mv, long.class, valueClass, true, false);
 		return;
 	    }
 	    if (t.is ("float"))
@@ -1682,13 +1681,13 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 		// NOT WORKING
 		// mv.visitLdcInsn ((float)6.9);
 		compileExpression (mv, arg, float.class, true, false);
-		convert.convert (mv, float.class, valueClass, false, false);
+		convert.convert (mv, float.class, valueClass, true, false);
 		return;
 	    }
 	    if (t.is ("double"))
 	    {
 		compileExpression (mv, arg, double.class, true, false);
-		convert.convert (mv, double.class, valueClass, false, false);
+		convert.convert (mv, double.class, valueClass, true, false);
 		return;
 	    }
 	    compileThe (mv, t.getName (), arg, valueClass, allowNarrowing, liberalTruth);

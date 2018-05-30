@@ -137,6 +137,9 @@
 (define double:foo () long:7)
 (verify (foo) 7)
 
+; Narrowing conversions
+(define byte:foo () (the byte int:3))
+(verify (foo) 3)
 
 (sleep 0.2)
 (printTestStatistics)
