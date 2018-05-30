@@ -271,6 +271,17 @@ public class Convert implements Opcodes
 	    mv.unbox (toType);
 	    return;
 	}
+	if (fromClass.equals (int.class) || fromClass.equals (short.class) || fromClass.equals (byte.class))
+	{
+	    mv.visitInsn (I2C);
+	    return;
+	}
+	if (fromClass.equals (Integer.class) || fromClass.equals (Short.class) || fromClass.equals (Byte.class))
+	{
+	    mv.unbox (boxer.getUnboxedType (fromType));
+	    mv.visitInsn (I2C);
+	    return;
+	}
 	final Label l0 = new Label (); // Good
 	final Label l1 = new Label ();
 	final Label l2 = new Label ();
@@ -299,6 +310,11 @@ public class Convert implements Opcodes
 	{
 	    mv.unbox (toType);
 	    return;
+	}
+	if (fromClass.equals (int.class) || fromClass.equals (short.class) || fromClass.equals (long.class)
+	    || fromClass.equals (float.class) || fromClass.equals (double.class))
+	{
+	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to byte");
 	}
 	final Label l0 = new Label (); // Good
 	final Label l1 = new Label ();
@@ -329,7 +345,11 @@ public class Convert implements Opcodes
 	    mv.unbox (boxer.getUnboxedType (fromType));
 	    return;
 	}
-
+	if (fromClass.equals (int.class) || fromClass.equals (long.class) || fromClass.equals (float.class)
+	    || fromClass.equals (double.class))
+	{
+	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to short");
+	}
 	final Label l0 = new Label (); // Good
 	final Label l1 = new Label ();
 	final Label l2 = new Label ();
@@ -362,6 +382,10 @@ public class Convert implements Opcodes
 	{
 	    mv.unbox (boxer.getUnboxedType (fromType));
 	    return;
+	}
+	if (fromClass.equals (long.class) || fromClass.equals (float.class) || fromClass.equals (double.class))
+	{
+	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to int");
 	}
 
 	final Label l0 = new Label (); // Good
@@ -413,6 +437,10 @@ public class Convert implements Opcodes
 	    mv.unbox (toType);
 	    return;
 	}
+	if (fromClass.equals (float.class) || fromClass.equals (double.class))
+	{
+	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to long");
+	}
 	// Last choice: convert and check dynamically
 	final Label l0 = new Label (); // got to int
 	final Label l00 = new Label (); // got to long
@@ -445,7 +473,7 @@ public class Convert implements Opcodes
     private void convert2float (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass)
     {
 	final Type fromType = Type.getType (fromClass);
-	final Type toType = Type.getType (toClass);
+	// final Type toType = Type.getType (toClass);
 	final int fromSort = fromType.getSort ();
 
 	if (fromSort == Type.FLOAT)
@@ -457,6 +485,27 @@ public class Convert implements Opcodes
 	{
 	    mv.unbox (boxer.getUnboxedType (fromType));
 	    return;
+	}
+	if (fromClass.equals (int.class) || fromClass.equals (short.class) || fromClass.equals (byte.class))
+	{
+	    mv.visitInsn (I2F);
+	    return;
+	}
+	if (fromClass.equals (long.class))
+	{
+	    // [QUESTION] This might be a narrowing conversion. Implement or throw error?
+	    mv.visitInsn (L2F);
+	    return;
+	}
+	// if (fromClass.equals (double.class))
+	// {
+	// // [QUESTION] This is a narrowing conversion. Implement or throw error?
+	// mv.visitInsn (D2F);
+	// return;
+	// }
+	if (fromClass.equals (double.class))
+	{
+	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to float");
 	}
 
 	final Label l0 = new Label (); // got to int
@@ -503,16 +552,27 @@ public class Convert implements Opcodes
 	    mv.visitInsn (F2D);
 	    return;
 	}
+	if (fromClass.equals (byte.class) || fromClass.equals (char.class) || fromClass.equals (short.class)
+	    || fromClass.equals (int.class))
+	{
+	    mv.visitInsn (I2D);
+	    return;
+	}
 	if (fromClass.equals (Byte.class) || fromClass.equals (Character.class) || fromClass.equals (Short.class)
 	    || fromClass.equals (Integer.class))
 	{
-	    mv.unbox (toType);
+	    mv.unbox (boxer.getUnboxedType (fromType));
 	    mv.visitInsn (I2D);
 	    return;
 	}
 	if (fromClass.equals (Long.class))
 	{
 	    mv.unbox (toType);
+	    mv.visitInsn (L2D);
+	    return;
+	}
+	if (fromClass.equals (long.class))
+	{
 	    mv.visitInsn (L2D);
 	    return;
 	}

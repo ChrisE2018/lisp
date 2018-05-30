@@ -221,6 +221,12 @@ public class CompilerPrimitives extends Definer
     }
 
     @DefineLisp (special = true)
+    public Object verify (final LexicalContext context, final Object expr)
+    {
+	return verify (context, expr, true);
+    }
+
+    @DefineLisp (special = true)
     public Object verify (final LexicalContext context, final Object expr, final Object expect)
     {
 	try

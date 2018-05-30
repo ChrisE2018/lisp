@@ -11,11 +11,12 @@ public class The extends Definer
      * @param type A Symbol, String or Class to specify the desired type.
      * @param arg The object to be converted.
      * @return The converted object or null if it cannot be converted.
+     * @throws Exception
      */
     @DefineLisp (special = true)
-    public Object the (final LexicalContext context, final Object type, final Object arg)
+    public Object the (final LexicalContext context, final Object type, final Object arg) throws Exception
     {
-	return coerce (type, arg);
+	return coerce (type, context.eval (arg));
     }
 
     @DefineLisp
@@ -26,10 +27,11 @@ public class The extends Definer
 	    final Symbol t = (Symbol)type;
 	    if (t.is ("byte"))
 	    {
-		return (byte)((Number)arg).intValue ();
+		return (byte)((Number)arg).byteValue ();
 	    }
 	    if (t.is ("char"))
 	    {
+		// [TODO] Is this right?
 		return (char)((Number)arg).intValue ();
 	    }
 	    if (t.is ("short"))
@@ -52,6 +54,7 @@ public class The extends Definer
 	    {
 		return ((Number)arg).doubleValue ();
 	    }
+
 	    return coerce (t.getName (), arg);
 	}
 	else if (type instanceof Class)

@@ -323,76 +323,148 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
 	else if (e instanceof Byte)
 	{
-	    if (valueType.equals (long.class))
+	    final Byte b = (Byte)e;
+	    if (valueType.equals (byte.class))
 	    {
-		mv.visitLdcInsn (Long.valueOf (((Byte)e).longValue ()));
+		mv.visitLdcInsn (b.byteValue ());
+	    }
+	    else if (valueType.equals (short.class))
+	    {
+		mv.visitLdcInsn (b.shortValue ());
+	    }
+	    else if (valueType.equals (int.class))
+	    {
+		mv.visitLdcInsn (b.intValue ());
+	    }
+	    else if (valueType.equals (long.class))
+	    {
+		mv.visitLdcInsn (b.longValue ());
+	    }
+	    else if (valueType.equals (float.class))
+	    {
+		// Does this make sense?
+		mv.visitLdcInsn (b.floatValue ());
+	    }
+	    else if (valueType.equals (double.class))
+	    {
+		// Does this make sense?
+		mv.visitLdcInsn (b.doubleValue ());
 	    }
 	    else
 	    {
-		mv.visitLdcInsn (e);
-		if (!valueType.equals (byte.class) && !valueType.equals (short.class) && !valueType.equals (int.class))
-		{
-		    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
-		}
+		mv.visitLdcInsn (b);
+		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
 	    }
 	}
 	else if (e instanceof Short)
 	{
-	    if (valueType.equals (long.class))
+	    final Short s = (Short)e;
+	    if (valueType.equals (short.class))
 	    {
-		mv.visitLdcInsn (Long.valueOf (((Short)e).longValue ()));
+		mv.visitLdcInsn (s.shortValue ());
+	    }
+	    else if (valueType.equals (int.class))
+	    {
+		mv.visitLdcInsn (s.intValue ());
+	    }
+	    else if (valueType.equals (long.class))
+	    {
+		mv.visitLdcInsn (s.longValue ());
+	    }
+	    else if (valueType.equals (float.class))
+	    {
+		// Does this make sense?
+		mv.visitLdcInsn (s.floatValue ());
+	    }
+	    else if (valueType.equals (double.class))
+	    {
+		// Does this make sense?
+		mv.visitLdcInsn (s.doubleValue ());
 	    }
 	    else
 	    {
-		mv.visitLdcInsn (e);
-		if (!valueType.equals (short.class) && !valueType.equals (int.class) && !valueType.equals (byte.class))
-		{
-		    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
-		}
+		mv.visitLdcInsn (s);
+		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
 	    }
 	}
 	else if (e instanceof Integer)
 	{
+	    final Integer i = (Integer)e;
 	    if (valueType.equals (int.class))
 	    {
-		mv.visitLdcInsn (((Integer)e).intValue ());
+		mv.visitLdcInsn (i.intValue ());
 	    }
 	    else if (valueType.equals (byte.class))
 	    {
-		mv.visitLdcInsn (((Integer)e).byteValue ());
+		mv.visitLdcInsn (i.byteValue ());
 	    }
 	    else if (valueType.equals (short.class))
 	    {
-		mv.visitLdcInsn (((Integer)e).shortValue ());
+		mv.visitLdcInsn (i.shortValue ());
 	    }
 	    else if (valueType.equals (long.class))
 	    {
-		final long v = (Integer)e;
-		mv.visitLdcInsn (v);
+		mv.visitLdcInsn (i.longValue ());
 	    }
-	    else if (!valueType.equals (int.class) && !valueType.equals (byte.class) && !valueType.equals (short.class))
+	    else if (valueType.equals (float.class))
 	    {
-		mv.visitLdcInsn (e);
+		mv.visitLdcInsn (i.floatValue ());
+	    }
+	    else if (valueType.equals (double.class))
+	    {
+		mv.visitLdcInsn (i.doubleValue ());
+	    }
+	    else
+	    {
+		// This can produce bad results if valueType is not Object.
+		mv.visitLdcInsn (i);
 		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
 	    }
 	}
 	else if (e instanceof Long)
 	{
-	    mv.visitLdcInsn (e);
-	    if (!valueType.equals (long.class))
+	    final Long l = (Long)e;
+	    if (valueType.equals (int.class))
 	    {
-		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
+		mv.visitLdcInsn (l.intValue ());
 	    }
-	}
-	else if (e instanceof Float)
-	{
-	    if (valueType.equals (float.class))
+	    else if (valueType.equals (byte.class))
 	    {
-		mv.visitLdcInsn (((Float)e).doubleValue ());
+		mv.visitLdcInsn (l.byteValue ());
+	    }
+	    else if (valueType.equals (short.class))
+	    {
+		mv.visitLdcInsn (l.shortValue ());
+	    }
+	    else if (valueType.equals (long.class))
+	    {
+		mv.visitLdcInsn (l.longValue ());
+	    }
+	    else if (valueType.equals (float.class))
+	    {
+		mv.visitLdcInsn (l.floatValue ());
 	    }
 	    else if (valueType.equals (double.class))
 	    {
-		mv.visitLdcInsn (Double.valueOf (((Float)e).doubleValue ()));
+		mv.visitLdcInsn (l.doubleValue ());
+	    }
+	    else
+	    {
+		mv.visitLdcInsn (l);
+		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
+	    }
+	}
+	// [TODO] Continue the same code pattern...
+	else if (e instanceof Float)
+	{
+	    final Float f = (Float)e;
+	    if (valueType.equals (float.class))
+	    {
+		mv.visitLdcInsn (f.floatValue ());
+	    }
+	    else if (valueType.equals (double.class))
+	    {
+		mv.visitLdcInsn (f.doubleValue ());
 	    }
 	    else
 	    {
@@ -402,13 +474,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
 	else if (e instanceof Double)
 	{
+	    final Double d = (Double)e;
 	    if (valueType.equals (float.class))
 	    {
-		mv.visitLdcInsn (((Double)e).floatValue ());
+		mv.visitLdcInsn (d.floatValue ());
 	    }
 	    else if (valueType.equals (double.class))
 	    {
-		mv.visitLdcInsn (e);
+		mv.visitLdcInsn (d.doubleValue ());
 	    }
 	    else
 	    {
@@ -1500,35 +1573,43 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
     {
 	// (setq system.showBytecode t)
 	// (define foo () byte:3)
+	// [TODO] Need to allow narrowing conversions here
 	if (type instanceof Symbol)
 	{
 	    final Symbol t = (Symbol)type;
 	    if (t.is ("byte"))
 	    {
-		compileExpression (mv, arg, byte.class);
+		// (define byte:foo () (the byte int:3))
+		compileExpression (mv, arg, int.class);
+		mv.visitInsn (I2B); // Narrow
 		convert.convert (mv, byte.class, valueClass);
 		return;
 	    }
 	    if (t.is ("char"))
 	    {
-		compileExpression (mv, arg, char.class);
+		compileExpression (mv, arg, int.class);
+		mv.visitInsn (I2C); // Narrow
 		convert.convert (mv, char.class, valueClass);
 		return;
 	    }
 	    if (t.is ("short"))
 	    {
-		compileExpression (mv, arg, short.class);
+		// (define short:foo () (the short int:3))
+		compileExpression (mv, arg, int.class);
+		mv.visitInsn (I2S); // Narrow
 		convert.convert (mv, short.class, valueClass);
 		return;
 	    }
 	    if (t.is ("int"))
 	    {
+		// [TODO] Need to allow narrowing conversions here
 		compileExpression (mv, arg, int.class);
 		convert.convert (mv, int.class, valueClass);
 		return;
 	    }
 	    if (t.is ("long"))
 	    {
+		// [TODO] Need to allow narrowing conversions here
 		compileExpression (mv, arg, long.class);
 		convert.convert (mv, long.class, valueClass);
 		return;

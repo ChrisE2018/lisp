@@ -99,6 +99,10 @@ public class CompileSupport
 	    {
 		return char.class;
 	    }
+	    if (type.equals ("float"))
+	    {
+		return float.class;
+	    }
 	    return Class.forName (type);
 	}
 	catch (final ClassNotFoundException e)
