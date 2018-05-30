@@ -14,6 +14,8 @@ public class CompilerPrimitives extends Definer
 {
     private static final Logger LOGGER = Logger.getLogger (CompilerPrimitives.class.getName ());
 
+    private static The the = new The ();
+
     private static int replErrorCount = 0;
 
     public static void incrementReplErrorCount ()
@@ -293,7 +295,7 @@ public class CompilerPrimitives extends Definer
 	{
 	    return false;
 	}
-	return a.equals (b);
+	return the.isequalp (a, b);
     }
 
     @DefineLisp (special = true)

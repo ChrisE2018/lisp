@@ -1,0 +1,64 @@
+;; Self test script
+;; (loadFile "src/lisp/eval/VerifyConvert.jisp")
+
+(resetTestStatistics)
+
+(verify 1 1)
+(verify 2 2)
+
+(setq system.showBytecode t)
+
+(define foo (int:a) a)
+
+(verify (foo 1) 1)
+(verify (foo -2) -2)
+(verify (foo 3) 3)
+
+(define foo (double:a) a)
+(verify (foo 1) 1.0)
+(verify (foo -2) -2.0)
+(verify (foo 3) 3.0)
+(verify (foo 3.5) 3.5)
+
+(define int:foo (int:a) a)
+
+(verify (foo 1) 1)
+(verify (foo -2) -2)
+(verify (foo 3) 3)
+
+(define long:foo (int:a) a)
+
+(verify (foo 1) 1)
+(verify (foo -2) -2)
+(verify (foo 3) 3)
+
+(sleep 0.2)
+(printTestStatistics)
+
+; And quit
+(exit)
+
+(define foo (a b)
+	(setq b a)
+	(list a b))
+	
+(define foo (a int:b)
+	(setq b a)
+	(list a b))
+	
+(define foo (int:a int:b)
+	(setq b a)
+	(list a b))
+	
+(define foo (int:a b)
+	(setq b a)
+	(list a b))
+	
+(define foo (short:a int:b)
+	(setq b a))
+
+(sleep 0.2)
+(printTestStatistics)
+
+; And quit
+(exit)

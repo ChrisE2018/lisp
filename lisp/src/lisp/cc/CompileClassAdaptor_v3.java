@@ -15,9 +15,13 @@ import lisp.Symbol;
 import lisp.symbol.*;
 import lisp.util.LogString;
 
-public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcodes
+public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (CompileLoader_v1.class.getName ());
+
+    private static Boxer boxer = new Boxer ();
+
+    private static Convert convert = new Convert ();
 
     private final Type shellClassType;
     private final Class<?> returnClass;
@@ -221,14 +225,17 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	{
 	    compileFunctionCall (mv, (LispList)e, valueType);
 	}
-	else if (e instanceof Symbol)
-	{
-	    final Symbol symbol = (Symbol)e;
-	    compileSymbolReference (mv, symbol, valueType);
-	}
 	else if (valueType != null)
 	{
-	    compileConstantExpression (mv, e, valueType);
+	    if (e instanceof Symbol)
+	    {
+		final Symbol symbol = (Symbol)e;
+		compileSymbolReference (mv, symbol, valueType);
+	    }
+	    else
+	    {
+		compileConstantExpression (mv, e, valueType);
+	    }
 	}
     }
 
@@ -240,18 +247,10 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	    if (valueType != null)
 	    {
 		final int argIndex = methodArgs.indexOf (symbol);
-		final Class<?> argClass = methodArgClasses.get (argIndex);
 		mv.loadArg (argIndex);
-		if (!argClass.equals (valueType))
-		{
-		    final Type argType = methodArgTypes.get (argIndex);
-		    if (argType.getSort () != Type.OBJECT)
-		    {
-			final Type wraperType = getBoxedType (argType);
-			box (mv, wraperType);
-		    }
-		    coerceRequired (mv, valueType);
-		}
+		final Class<?> fromClass = methodArgClasses.get (argIndex);
+		final Class<?> toClass = valueType;
+		convert.convert (mv, fromClass, toClass);
 	    }
 	}
 	else if (localVariableMap.containsKey (symbol))
@@ -262,8 +261,9 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 		final LocalBinding lb = localVariableMap.get (symbol);
 		final int localRef = lb.getLocalRef ();
 		mv.loadLocal (localRef);
-		// mv.visitVarInsn (ALOAD, localRef);
-		coerceRequired (mv, valueType);
+		final Class<?> fromClass = lb.getClass ();
+		final Class<?> toClass = valueType;
+		convert.convert (mv, fromClass, toClass);
 	    }
 	}
 	else if (symbol.is ("true") && valueType.equals (boolean.class))
@@ -280,24 +280,23 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	{
 	    if (valueType != null)
 	    {
-		if (!symbolReferences.contains (symbol))
-		{
-		    symbolReferences.add (symbol);
-		}
-		LOGGER.finer (new LogString ("Symbol reference to %s", symbol));
-		// [TODO] If the symbol valueCell is constant, use the current value.
-		// [TODO] If the valueCell is a TypedValueCell, use the type information.
-
-		mv.visitVarInsn (ALOAD, 0);
-		final String classInternalName = shellClassType.getInternalName ();
-		mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
-		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
-		coerceRequired (mv, valueType);
 		if (!globalReferences.contains (symbol))
 		{
 		    globalReferences.add (symbol);
 		    LOGGER.finer (new LogString ("Compiled global reference to %s", symbol));
 		}
+		if (!symbolReferences.contains (symbol))
+		{
+		    symbolReferences.add (symbol);
+		    LOGGER.finer (new LogString ("Symbol reference to %s", symbol));
+		}
+		mv.visitVarInsn (ALOAD, 0);
+		final String classInternalName = shellClassType.getInternalName ();
+		// [TODO] If the symbol valueCell is constant, use the current value.
+		// [TODO] If the valueCell is a TypedValueCell, use the type information.
+		mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
+		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
+		coerceRequired (mv, valueType);
 	    }
 	}
     }
@@ -346,7 +345,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	    else
 	    {
 		mv.visitLdcInsn (e);
-		if (!valueType.equals (short.class) && !valueType.equals (int.class))
+		if (!valueType.equals (short.class) && !valueType.equals (int.class) && !valueType.equals (byte.class))
 		{
 		    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
 		}
@@ -354,17 +353,27 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	}
 	else if (e instanceof Integer)
 	{
-	    if (valueType.equals (long.class))
+	    if (valueType.equals (int.class))
 	    {
-		mv.visitLdcInsn (Long.valueOf (((Integer)e).longValue ()));
+		mv.visitLdcInsn (((Integer)e).intValue ());
 	    }
-	    else
+	    else if (valueType.equals (byte.class))
+	    {
+		mv.visitLdcInsn (((Integer)e).byteValue ());
+	    }
+	    else if (valueType.equals (short.class))
+	    {
+		mv.visitLdcInsn (((Integer)e).shortValue ());
+	    }
+	    else if (valueType.equals (long.class))
+	    {
+		final long v = (Integer)e;
+		mv.visitLdcInsn (v);
+	    }
+	    else if (!valueType.equals (int.class) && !valueType.equals (byte.class) && !valueType.equals (short.class))
 	    {
 		mv.visitLdcInsn (e);
-		if (!valueType.equals (int.class))
-		{
-		    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-		}
+		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
 	    }
 	}
 	else if (e instanceof Long)
@@ -377,24 +386,33 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	}
 	else if (e instanceof Float)
 	{
-	    if (valueType.equals (double.class))
+	    if (valueType.equals (float.class))
+	    {
+		mv.visitLdcInsn (((Float)e).doubleValue ());
+	    }
+	    else if (valueType.equals (double.class))
 	    {
 		mv.visitLdcInsn (Double.valueOf (((Float)e).doubleValue ()));
 	    }
 	    else
 	    {
 		mv.visitLdcInsn (e);
-	    }
-	    if (!valueType.equals (float.class) && !valueType.equals (double.class))
-	    {
 		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
 	    }
 	}
 	else if (e instanceof Double)
 	{
-	    mv.visitLdcInsn (e);
-	    if (!valueType.equals (double.class))
+	    if (valueType.equals (float.class))
 	    {
+		mv.visitLdcInsn (((Double)e).floatValue ());
+	    }
+	    else if (valueType.equals (double.class))
+	    {
+		mv.visitLdcInsn (e);
+	    }
+	    else
+	    {
+		mv.visitLdcInsn (e);
 		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
 	    }
 	}
@@ -636,6 +654,10 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	    {
 		compileCond (mv, e, valueType);
 	    }
+	}
+	else if (symbol.is ("the"))
+	{
+	    compileThe (mv, e, valueType);
 	}
 	else
 	{
@@ -1122,7 +1144,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	// Create a local variable to hold the iteration number.
 	// This is always stored in boxed format so body code can reference it.
 	// Should be able to store this as an int if the body code can use it that way.
-	final Type type = INTEGER_TYPE;
+	final Type type = boxer.INTEGER_TYPE;
 	final int iterationRef = mv.newLocal (type);
 	final Symbol var = (Symbol)control.get (0);
 	final LocalBinding lb = new LocalBinding (var, type, iterationRef);
@@ -1333,7 +1355,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	{
 	    // [TODO] This should use the valueType, not Object.class
 	    resultRef = mv.newLocal (Type.getType (valueType));
-	    final LocalBinding lb = new LocalBinding (var, OBJECT_TYPE, resultRef);
+	    final LocalBinding lb = new LocalBinding (var, boxer.OBJECT_TYPE, resultRef);
 	    localVariableMap.put (var, lb);
 	    // mv.visitInsn (ACONST_NULL);
 	    // mv.visitVarInsn (ASTORE, resultRef);
@@ -1466,6 +1488,102 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	mv.visitLabel (l1);
     }
 
+    private void compileThe (final GeneratorAdapter mv, final LispList e, final Class<?> valueClass)
+    {
+	final Object type = e.get (1);
+	final Object arg = e.get (2);
+
+	compileThe (mv, type, arg, valueClass);
+    }
+
+    private void compileThe (final GeneratorAdapter mv, final Object type, final Object arg, final Class<?> valueClass)
+    {
+	// (setq system.showBytecode t)
+	// (define foo () byte:3)
+	if (type instanceof Symbol)
+	{
+	    final Symbol t = (Symbol)type;
+	    if (t.is ("byte"))
+	    {
+		compileExpression (mv, arg, byte.class);
+		convert.convert (mv, byte.class, valueClass);
+		return;
+	    }
+	    if (t.is ("char"))
+	    {
+		compileExpression (mv, arg, char.class);
+		convert.convert (mv, char.class, valueClass);
+		return;
+	    }
+	    if (t.is ("short"))
+	    {
+		compileExpression (mv, arg, short.class);
+		convert.convert (mv, short.class, valueClass);
+		return;
+	    }
+	    if (t.is ("int"))
+	    {
+		compileExpression (mv, arg, int.class);
+		convert.convert (mv, int.class, valueClass);
+		return;
+	    }
+	    if (t.is ("long"))
+	    {
+		compileExpression (mv, arg, long.class);
+		convert.convert (mv, long.class, valueClass);
+		return;
+	    }
+	    if (t.is ("float"))
+	    {
+		// NOT WORKING
+		// mv.visitLdcInsn ((float)6.9);
+		compileExpression (mv, arg, float.class);
+		convert.convert (mv, float.class, valueClass);
+		return;
+	    }
+	    if (t.is ("double"))
+	    {
+		compileExpression (mv, arg, double.class);
+		convert.convert (mv, double.class, valueClass);
+		return;
+	    }
+	    compileThe (mv, t.getName (), arg, valueClass);
+	    return;
+	}
+	else if (type instanceof Class)
+	{
+	    final Class<?> c = (Class<?>)type;
+	    convert.convert (mv, Object.class, c);
+	    convert.convert (mv, c, valueClass);
+	    return;
+	}
+	if (type instanceof String)
+	{
+	    final String t = (String)type;
+	    try
+	    {
+		final Class<?> c = Class.forName (t);
+		convert.convert (mv, c, valueClass);
+		return;
+	    }
+	    catch (final ClassNotFoundException e)
+	    {
+	    }
+	    if (t.indexOf (".") < 0)
+	    {
+		try
+		{
+		    final Class<?> c = Class.forName ("java.lang." + t);
+		    convert.convert (mv, c, valueClass);
+		    return;
+		}
+		catch (final ClassNotFoundException e)
+		{
+		}
+	    }
+	}
+    }
+
     private void createField (final int fieldAccess, final String fieldName, final String fieldDescriptor)
     {
 	// Field initial value only applies to static fields
@@ -1487,31 +1605,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	{
 	    mv.visitLdcInsn (i);
 	}
-    }
-
-    /**
-     * Convert value on top of the stack from a Boolean to a boolean. This is used as a last resort
-     * when the return type must be boolean and there is no better way to get there. If the top of
-     * the stack is not a Boolean, the result left on the stack is always true.
-     */
-    private void coerceBoolean (final GeneratorAdapter mv)
-    {
-	// (define boolean:foo () true)
-	// (define boolean:foo (x) x)
-	mv.visitInsn (DUP);
-	final Label l1 = new Label ();
-	// [TODO] There is a private method in GeneratorAdaptor that we need to steal: getBoxedType
-	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
-	mv.visitJumpInsn (IFNE, l1);
-	mv.visitInsn (POP);
-	mv.visitLdcInsn (true);
-	final Label l2 = new Label ();
-	mv.visitJumpInsn (GOTO, l2);
-	mv.visitLabel (l1);
-	mv.unbox (Type.BOOLEAN_TYPE);
-	// mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
-	// mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
-	mv.visitLabel (l2);
     }
 
     /** Convert class to type and coerce the value. */
@@ -1544,7 +1637,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
 	{
 	    // Treat anything except Boolean as true.
 	    // unbox booleans
-	    coerceBoolean (mv);
+	    convert.coerceBoolean (mv);
 	}
 	else if (sort > Type.VOID && sort < Type.ARRAY)
 	{
@@ -1570,11 +1663,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitorAdaptor implements Opcod
     // }
 
     /** Convert an instance of a primitive type into the corresponding boxed wrapper class. */
-    private void box (final GeneratorAdapter mv, final Type resultType)
-    {
-	// Requires GeneratorAdaptor
-	mv.valueOf (resultType);
-    }
+    // private void box (final GeneratorAdapter mv, final Type resultType)
+    // {
+    // // Requires GeneratorAdaptor
+    // // mv.valueOf (resultType);
+    // mv.box (resultType);
+    // }
 
     /**
      * Push a default value onto the stack. If the value will be a primitive boolean, use false as

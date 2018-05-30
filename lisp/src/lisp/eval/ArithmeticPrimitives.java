@@ -538,6 +538,8 @@ public class ArithmeticPrimitives extends Definer
     }
 
     // Generic comparison
+
+    /** Compare all arguments with the Java equals method. */
     @DefineLisp
     public boolean equals (final Object a, final Object... arguments)
     {
@@ -565,111 +567,6 @@ public class ArithmeticPrimitives extends Definer
     }
 
     // Arithmetic comparison
-    @DefineLisp (name = "=")
-    public boolean eql (final Object a, final Object... arguments)
-    {
-	for (int i = 0; i < arguments.length; i++)
-	{
-	    if (!eql (a, arguments[i]))
-	    {
-		return false;
-	    }
-	}
-	return true;
-    }
-
-    @DefineLisp (name = "<>")
-    public boolean neql (final Object a, final Object b)
-    {
-	return !eql (a, b);
-    }
-
-    private boolean eql (final Object a, final Object b)
-    {
-	if (a instanceof Integer)
-	{
-	    return eql ((int)a, b);
-	}
-	else if (a instanceof Double)
-	{
-	    return eql ((double)a, b);
-	}
-	else if (a instanceof Short)
-	{
-	    final int aa = (Short)a;
-	    return eql (aa, b);
-	}
-	else if (a instanceof Byte)
-	{
-	    final int aa = (Byte)a;
-	    return eql (aa, b);
-	}
-	else if (a instanceof Float)
-	{
-	    final double aa = (Float)a;
-	    return eql (aa, b);
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + a);
-	}
-    }
-
-    private boolean eql (final int a, final Object b)
-    {
-	if (b instanceof Integer)
-	{
-	    return a == (int)b;
-	}
-	else if (b instanceof Double)
-	{
-	    return (double)a == (Double)b;
-	}
-	else if (b instanceof Short)
-	{
-	    return a == (int)(Short)b;
-	}
-	else if (b instanceof Byte)
-	{
-	    return a == (int)(Byte)b;
-	}
-	else if (b instanceof Float)
-	{
-	    return (float)a == (Float)b;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + b);
-	}
-    }
-
-    private boolean eql (final double a, final Object b)
-    {
-	if (b instanceof Integer)
-	{
-	    return a == (double)(Integer)b;
-	}
-	else if (b instanceof Double)
-	{
-	    return a == (double)b;
-	}
-	else if (b instanceof Short)
-	{
-	    return a == (int)(Short)b;
-	}
-	else if (b instanceof Byte)
-	{
-	    return a == (int)(Byte)b;
-	}
-	else if (b instanceof Float)
-	{
-	    return a == (double)(Float)b;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + b);
-	}
-    }
 
     @DefineLisp (name = "<")
     public boolean lessp (final Object a, final Object... arguments)
