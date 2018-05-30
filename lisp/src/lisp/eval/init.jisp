@@ -1,8 +1,10 @@
 ;; Default initialization file
 
 (new "lisp.special.And")
+(new "lisp.special.Cond")
 (new "lisp.special.Dotimes")
 (new "lisp.special.If")
+(new "lisp.special.Let")
 (new "lisp.special.Or")
 (new "lisp.special.Progn")
 (new "lisp.special.Quote")

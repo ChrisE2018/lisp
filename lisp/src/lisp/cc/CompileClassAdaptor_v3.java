@@ -10,8 +10,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-import lisp.*;
-import lisp.Package;
+import lisp.LispList;
 import lisp.Symbol;
 import lisp.symbol.*;
 import lisp.util.LogString;
@@ -798,46 +797,29 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// {
 	// compileUntil (mv, expression, valueType, allowNarrowing, liberalTruth);
 	// }
-	else if (symbol.is ("let"))
-	{
-	    compileLet (mv, expression, valueType, allowNarrowing, liberalTruth);
-	}
-	else if (symbol.is ("let*"))
-	{
-	    // [CONSIDER] Change reader so that a:b reads as (the a b) and define:
-	    // (the <type> <reference>)
-	    // to be a type declaration. Then:
-	    // (define int:foo (int : a int : b) (+ a b))
-	    // becomes integer addition. (Problem, colon is already used as a package separator.
-	    // Maybe change that to dot to be be Java.)
-
-	    // [IDEA] Eliminate package public/private distinction. Make import affect a reader
-	    // (like Java). If you write a fully qualified name, you get it (always). Define default
-	    // imports for a reader. Import functions should allow for import of all functions, or
-	    // symbols with specified attributes. (selective-import <attributes> "org.foo.*")
-
-	    // [IDEA] Implement a defpackage function or package manipulation functions. Define
-	    // default imports for any reader that is in a package.
-
-	    // [IDEA] Symbols could have attributes (like, public, protected, private) that affect
-	    // things.
-	    compileLetStar (mv, expression, valueType, allowNarrowing, liberalTruth);
-	}
-	else if (symbol.is ("cond"))
-	{
-	    if (valueType == null)
-	    {
-		compileVoidCond (mv, expression);
-	    }
-	    else if (valueType.equals (boolean.class))
-	    {
-		compileBooleanCond (mv, expression);
-	    }
-	    else
-	    {
-		compileCond (mv, expression, valueType, allowNarrowing, liberalTruth);
-	    }
-	}
+	// else if (symbol.is ("let"))
+	// {
+	// compileLet (mv, expression, valueType, allowNarrowing, liberalTruth);
+	// }
+	// else if (symbol.is ("let*"))
+	// {
+	// compileLetStar (mv, expression, valueType, allowNarrowing, liberalTruth);
+	// }
+	// else if (symbol.is ("cond"))
+	// {
+	// if (valueType == null)
+	// {
+	// compileVoidCond (mv, expression);
+	// }
+	// else if (valueType.equals (boolean.class))
+	// {
+	// compileBooleanCond (mv, expression);
+	// }
+	// else
+	// {
+	// compileCond (mv, expression, valueType, allowNarrowing, liberalTruth);
+	// }
+	// }
 	else if (symbol.is ("the"))
 	{
 	    compileThe (mv, expression, valueType, allowNarrowing, liberalTruth);
@@ -1497,245 +1479,249 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     // mv.visitLabel (l2);
     // }
 
-    private void compileLet (final GeneratorAdapter mv, final LispList e, final Class<?> valueType, final boolean allowNarrowing,
-            final boolean liberalTruth)
-    {
-	// (define foo (x) (let ((a 1) (b 2)) (+ a b x)))
-	// (define foo () (let ((a 1) (b 2)) a))
-	// (define foo () (let ((a b) (b a)) a))
-	// (define foo (x) (let ((a b) (b a)) (if x a b)))
+    // private void compileLet (final GeneratorAdapter mv, final LispList e, final Class<?>
+    // valueType, final boolean allowNarrowing,
+    // final boolean liberalTruth)
+    // {
+    // // (define foo (x) (let ((a 1) (b 2)) (+ a b x)))
+    // // (define foo () (let ((a 1) (b 2)) a))
+    // // (define foo () (let ((a b) (b a)) a))
+    // // (define foo (x) (let ((a b) (b a)) (if x a b)))
+    //
+    // // Compile expression values onto the stack in order
+    // final LispList args = (LispList)e.get (1);
+    // final Map<Symbol, LocalBinding> newLocalVariableMap = new LinkedHashMap<Symbol, LocalBinding>
+    // (localVariableMap);
+    // final Map<Symbol, LocalBinding> savedLocalVariableMap = localVariableMap;
+    // for (int i = 0; i < args.size (); i++)
+    // {
+    // final Object clause = args.get (i);
+    // final LispList c = (LispList)clause;
+    // final Object varSpec = c.get (0);
+    // final Symbol var = CompileSupport.getNameVariable (varSpec);
+    // final Class<?> varClass = CompileSupport.getNameType (varSpec);
+    // final Type varType = Type.getType (varClass);
+    // final int localRef = mv.newLocal (varType);
+    // compileExpression (mv, c.get (1), varClass);
+    // mv.storeLocal (localRef);
+    // final LocalBinding lb = new LocalBinding (var, varType, localRef);
+    // newLocalVariableMap.put (var, lb);
+    // }
+    // localVariableMap = newLocalVariableMap;
+    // // Evaluate optional body forms
+    // for (int i = 2; i < e.size () - 1; i++)
+    // {
+    // compileExpression (mv, e.get (i), null);
+    // }
+    // // Evaluate last (required) body form
+    // compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
+    // // Restore original local variables map
+    // localVariableMap = savedLocalVariableMap;
+    // // coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+    // }
+    //
+    // private void compileLetStar (final GeneratorAdapter mv, final LispList e, final Class<?>
+    // valueType,
+    // final boolean allowNarrowing, final boolean liberalTruth)
+    // {
+    // // (define foo (x) (let* ((a 1) (b 2)) (+ a b x)))
+    // // (define foo () (let* ((a 1) (b 2)) a))
+    // // (define foo () (let* ((a b) (b a)) b))
+    // // (define bar () (let ((a b) (b a)) b))
+    // // (define foo (x) (let* ((a b) (b a)) (if x a b)))
+    // // final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
+    //
+    // // Compile expression values onto the stack in order
+    // // Bind the variables as each value is computed
+    // final Map<Symbol, LocalBinding> savedLocalVariableMap = localVariableMap;
+    // localVariableMap = new LinkedHashMap<Symbol, LocalBinding> (localVariableMap);
+    // final LispList args = (LispList)e.get (1);
+    // for (final Object clause : args)
+    // {
+    // final LispList c = (LispList)clause;
+    // final Object varSpec = c.get (0);
+    // final Symbol var = CompileSupport.getNameVariable (varSpec);
+    // final Class<?> varClass = CompileSupport.getNameType (varSpec);
+    // final Type varType = Type.getType (varClass);
+    // compileExpression (mv, c.get (1), varClass);
+    // final int localRef = mv.newLocal (varType);
+    // mv.storeLocal (localRef);
+    // final LocalBinding lb = new LocalBinding (var, varType, localRef);
+    // localVariableMap.put (var, lb);
+    // }
+    //
+    // // Evaluate optional body forms
+    // for (int i = 2; i < e.size () - 1; i++)
+    // {
+    // compileExpression (mv, e.get (i), null);
+    // }
+    // // Evaluate last (required) body form
+    // compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
+    //
+    // // Restore original local variables map
+    // localVariableMap = savedLocalVariableMap;
+    // // coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+    // }
 
-	// Compile expression values onto the stack in order
-	final LispList args = (LispList)e.get (1);
-	final Map<Symbol, LocalBinding> newLocalVariableMap = new LinkedHashMap<Symbol, LocalBinding> (localVariableMap);
-	final Map<Symbol, LocalBinding> savedLocalVariableMap = localVariableMap;
-	for (int i = 0; i < args.size (); i++)
-	{
-	    final Object clause = args.get (i);
-	    final LispList c = (LispList)clause;
-	    final Object varSpec = c.get (0);
-	    final Symbol var = CompileSupport.getNameVariable (varSpec);
-	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
-	    final Type varType = Type.getType (varClass);
-	    final int localRef = mv.newLocal (varType);
-	    compileExpression (mv, c.get (1), varClass);
-	    mv.storeLocal (localRef);
-	    final LocalBinding lb = new LocalBinding (var, varType, localRef);
-	    newLocalVariableMap.put (var, lb);
-	}
-	localVariableMap = newLocalVariableMap;
-	// Evaluate optional body forms
-	for (int i = 2; i < e.size () - 1; i++)
-	{
-	    compileExpression (mv, e.get (i), null);
-	}
-	// Evaluate last (required) body form
-	compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
-	// Restore original local variables map
-	localVariableMap = savedLocalVariableMap;
-	// coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
-    }
-
-    private void compileLetStar (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
-            final boolean allowNarrowing, final boolean liberalTruth)
-    {
-	// (define foo (x) (let* ((a 1) (b 2)) (+ a b x)))
-	// (define foo () (let* ((a 1) (b 2)) a))
-	// (define foo () (let* ((a b) (b a)) b))
-	// (define bar () (let ((a b) (b a)) b))
-	// (define foo (x) (let* ((a b) (b a)) (if x a b)))
-	// final LocalVariablesSorter lvs = (LocalVariablesSorter)mv;
-
-	// Compile expression values onto the stack in order
-	// Bind the variables as each value is computed
-	final Map<Symbol, LocalBinding> savedLocalVariableMap = localVariableMap;
-	localVariableMap = new LinkedHashMap<Symbol, LocalBinding> (localVariableMap);
-	final LispList args = (LispList)e.get (1);
-	for (final Object clause : args)
-	{
-	    final LispList c = (LispList)clause;
-	    final Object varSpec = c.get (0);
-	    final Symbol var = CompileSupport.getNameVariable (varSpec);
-	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
-	    final Type varType = Type.getType (varClass);
-	    compileExpression (mv, c.get (1), varClass);
-	    final int localRef = mv.newLocal (varType);
-	    mv.storeLocal (localRef);
-	    final LocalBinding lb = new LocalBinding (var, varType, localRef);
-	    localVariableMap.put (var, lb);
-	}
-
-	// Evaluate optional body forms
-	for (int i = 2; i < e.size () - 1; i++)
-	{
-	    compileExpression (mv, e.get (i), null);
-	}
-	// Evaluate last (required) body form
-	compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
-
-	// Restore original local variables map
-	localVariableMap = savedLocalVariableMap;
-	// coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
-    }
-
-    /** Compile a cond expression where the value will be used. */
-    private void compileCond (final GeneratorAdapter mv, final LispList e, final Class<?> valueClass,
-            final boolean allowNarrowing, final boolean liberalTruth)
-    {
-	// (setq showBytecode t)
-	// (define foo (x) (cond (x 1)))
-	// (define foo (x) (cond ((= x 1) 'alpha)))
-	// (define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma) (true 'delta)))
-	if (valueClass == null)
-	{
-	    throw new Error ("Use compileVoidCond when valueType is null");
-	}
-	final Package system = PackageFactory.getSystemPackage ();
-	final Symbol var = system.internSymbol ("result").gensym ();
-
-	// Setup return value in a local variable
-
-	// Store as an object until return time
-	final int resultRef = mv.newLocal (Boxer.OBJECT_TYPE);
-	final LocalBinding lb = new LocalBinding (var, Boxer.OBJECT_TYPE, resultRef);
-	final Map<Symbol, LocalBinding> savedBindings = localVariableMap;
-	localVariableMap = new HashMap<Symbol, LocalBinding> (localVariableMap);
-	localVariableMap.put (var, lb);
-	pushDefaultValue (mv, Object.class);
-	mv.storeLocal (resultRef);
-
-	// Label to goto and return result
-	final Label l1 = new Label ();
-	for (int i = 1; i < e.size (); i++)
-	{
-	    // Stack is empty
-	    final LispList clause = (LispList)e.get (i);
-	    final Object key = clause.get (0);
-	    final Label l2 = new Label ();
-	    final Label l3 = new Label ();
-	    final Label l4 = new Label ();
-	    if (clause.size () == 1)
-	    {
-		compileExpression (mv, key, Object.class, false, true);
-		mv.visitInsn (DUP);
-		mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
-		mv.visitJumpInsn (IFEQ, l2); // Check for boolean
-
-		mv.visitInsn (DUP);
-		mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
-		mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
-		mv.visitJumpInsn (IFEQ, l3); // Proceed to next clause
-
-		// Clause selected and value of key expression is return value
-		mv.visitLabel (l2);
-	    }
-	    else
-	    {
-		// No need to save value of key expression
-		compileExpression (mv, key, boolean.class, false, true);
-		mv.visitJumpInsn (IFEQ, l4); // Proceed to next clause
-
-		// Clause selected
-		mv.visitLabel (l2);
-
-		// One entry on stack
-		if (clause.size () > 1)
-		{
-		    for (int j = 1; j < clause.size () - 1; j++)
-		    {
-			compileExpression (mv, clause.get (j), null, false, false);
-		    }
-		    compileExpression (mv, clause.last (), valueClass, allowNarrowing, liberalTruth);
-		}
-	    }
-
-	    mv.storeLocal (resultRef);
-	    // Stack is empty
-	    mv.visitJumpInsn (GOTO, l1);
-
-	    // Clause not selected
-	    mv.visitLabel (l3);
-	    mv.visitInsn (POP);
-	    mv.visitLabel (l4);
-	    // Stack is empty
-	}
-	// Return result
-	mv.visitLabel (l1);
-	mv.loadLocal (resultRef);
-	coerceRequired (mv, valueClass, allowNarrowing, liberalTruth);
-	localVariableMap = savedBindings;
-    }
-
-    /** Case where no return value is required. */
-    private void compileVoidCond (final GeneratorAdapter mv, final LispList e)
-    {
-	// (define foo (x) (cond ((= x 1) (printf "one%n")) ((= x 2)(printf "two%n"))) 'done)
-
-	// Label to goto and return result
-	final Label l1 = new Label ();
-	for (int i = 1; i < e.size (); i++)
-	{
-	    final LispList clause = (LispList)e.get (i);
-	    final int size = clause.size ();
-	    final Object key = clause.get (0);
-	    final Label l2 = new Label ();
-
-	    compileExpression (mv, key, boolean.class);
-	    mv.visitJumpInsn (IFEQ, l2);
-
-	    // Clause selected
-	    for (int j = 1; j < size; j++)
-	    {
-		compileExpression (mv, clause.get (j), null);
-	    }
-	    mv.visitJumpInsn (GOTO, l1);
-
-	    // Clause not selected
-	    mv.visitLabel (l2);
-	}
-	// Return result
-	mv.visitLabel (l1);
-    }
-
-    /** Case where only a boolean value is required. */
-    // (define foo (x) (when (cond ((= x 1)) ((= x 2) false) ((= x 3) true)) (printf "when%n")))
-    // (define foo (x) (when (cond ((= x 1)) ((= x 2) false) ((= x 3))) (printf "when%n")))
-    private void compileBooleanCond (final GeneratorAdapter mv, final LispList e)
-    {
-	// Label to goto and return result
-	final Label l1 = new Label ();
-	for (int i = 1; i < e.size (); i++)
-	{
-	    final LispList clause = (LispList)e.get (i);
-	    final int size = clause.size ();
-	    final Object key = clause.get (0);
-	    final Label l2 = new Label ();
-
-	    compileExpression (mv, key, boolean.class);
-	    mv.visitJumpInsn (IFEQ, l2);
-
-	    // Clause selected
-	    if (size > 1)
-	    {
-		for (int j = 1; j < size - 1; j++)
-		{
-		    compileExpression (mv, clause.get (j), null);
-		}
-		compileExpression (mv, clause.get (size - 1), boolean.class);
-	    }
-	    else
-	    {
-		mv.visitLdcInsn (true);
-	    }
-	    mv.visitJumpInsn (GOTO, l1);
-
-	    // Clause not selected
-	    mv.visitLabel (l2);
-	}
-	// Return result
-	mv.visitLdcInsn (false);
-	mv.visitLabel (l1);
-    }
+    // /** Compile a cond expression where the value will be used. */
+    // private void compileCond (final GeneratorAdapter mv, final LispList e, final Class<?>
+    // valueClass,
+    // final boolean allowNarrowing, final boolean liberalTruth)
+    // {
+    // // (setq showBytecode t)
+    // // (define foo (x) (cond (x 1)))
+    // // (define foo (x) (cond ((= x 1) 'alpha)))
+    // // (define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma) (true 'delta)))
+    // if (valueClass == null)
+    // {
+    // throw new Error ("Use compileVoidCond when valueType is null");
+    // }
+    // final Package system = PackageFactory.getSystemPackage ();
+    // final Symbol var = system.internSymbol ("result").gensym ();
+    //
+    // // Setup return value in a local variable
+    //
+    // // Store as an object until return time
+    // final int resultRef = mv.newLocal (Boxer.OBJECT_TYPE);
+    // final LocalBinding lb = new LocalBinding (var, Boxer.OBJECT_TYPE, resultRef);
+    // final Map<Symbol, LocalBinding> savedBindings = localVariableMap;
+    // localVariableMap = new HashMap<Symbol, LocalBinding> (localVariableMap);
+    // localVariableMap.put (var, lb);
+    // pushDefaultValue (mv, Object.class);
+    // mv.storeLocal (resultRef);
+    //
+    // // Label to goto and return result
+    // final Label l1 = new Label ();
+    // for (int i = 1; i < e.size (); i++)
+    // {
+    // // Stack is empty
+    // final LispList clause = (LispList)e.get (i);
+    // final Object key = clause.get (0);
+    // final Label l2 = new Label ();
+    // final Label l3 = new Label ();
+    // final Label l4 = new Label ();
+    // if (clause.size () == 1)
+    // {
+    // compileExpression (mv, key, Object.class, false, true);
+    // mv.visitInsn (DUP);
+    // mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
+    // mv.visitJumpInsn (IFEQ, l2); // Check for boolean
+    //
+    // mv.visitInsn (DUP);
+    // mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
+    // mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+    // mv.visitJumpInsn (IFEQ, l3); // Proceed to next clause
+    //
+    // // Clause selected and value of key expression is return value
+    // mv.visitLabel (l2);
+    // }
+    // else
+    // {
+    // // No need to save value of key expression
+    // compileExpression (mv, key, boolean.class, false, true);
+    // mv.visitJumpInsn (IFEQ, l4); // Proceed to next clause
+    //
+    // // Clause selected
+    // mv.visitLabel (l2);
+    //
+    // // One entry on stack
+    // if (clause.size () > 1)
+    // {
+    // for (int j = 1; j < clause.size () - 1; j++)
+    // {
+    // compileExpression (mv, clause.get (j), null, false, false);
+    // }
+    // compileExpression (mv, clause.last (), valueClass, allowNarrowing, liberalTruth);
+    // }
+    // }
+    //
+    // mv.storeLocal (resultRef);
+    // // Stack is empty
+    // mv.visitJumpInsn (GOTO, l1);
+    //
+    // // Clause not selected
+    // mv.visitLabel (l3);
+    // mv.visitInsn (POP);
+    // mv.visitLabel (l4);
+    // // Stack is empty
+    // }
+    // // Return result
+    // mv.visitLabel (l1);
+    // mv.loadLocal (resultRef);
+    // coerceRequired (mv, valueClass, allowNarrowing, liberalTruth);
+    // localVariableMap = savedBindings;
+    // }
+    //
+    // /** Case where no return value is required. */
+    // private void compileVoidCond (final GeneratorAdapter mv, final LispList e)
+    // {
+    // // (define foo (x) (cond ((= x 1) (printf "one%n")) ((= x 2)(printf "two%n"))) 'done)
+    //
+    // // Label to goto and return result
+    // final Label l1 = new Label ();
+    // for (int i = 1; i < e.size (); i++)
+    // {
+    // final LispList clause = (LispList)e.get (i);
+    // final int size = clause.size ();
+    // final Object key = clause.get (0);
+    // final Label l2 = new Label ();
+    //
+    // compileExpression (mv, key, boolean.class);
+    // mv.visitJumpInsn (IFEQ, l2);
+    //
+    // // Clause selected
+    // for (int j = 1; j < size; j++)
+    // {
+    // compileExpression (mv, clause.get (j), null);
+    // }
+    // mv.visitJumpInsn (GOTO, l1);
+    //
+    // // Clause not selected
+    // mv.visitLabel (l2);
+    // }
+    // // Return result
+    // mv.visitLabel (l1);
+    // }
+    //
+    // /** Case where only a boolean value is required. */
+    // // (define foo (x) (when (cond ((= x 1)) ((= x 2) false) ((= x 3) true)) (printf "when%n")))
+    // // (define foo (x) (when (cond ((= x 1)) ((= x 2) false) ((= x 3))) (printf "when%n")))
+    // private void compileBooleanCond (final GeneratorAdapter mv, final LispList e)
+    // {
+    // // Label to goto and return result
+    // final Label l1 = new Label ();
+    // for (int i = 1; i < e.size (); i++)
+    // {
+    // final LispList clause = (LispList)e.get (i);
+    // final int size = clause.size ();
+    // final Object key = clause.get (0);
+    // final Label l2 = new Label ();
+    //
+    // compileExpression (mv, key, boolean.class);
+    // mv.visitJumpInsn (IFEQ, l2);
+    //
+    // // Clause selected
+    // if (size > 1)
+    // {
+    // for (int j = 1; j < size - 1; j++)
+    // {
+    // compileExpression (mv, clause.get (j), null);
+    // }
+    // compileExpression (mv, clause.get (size - 1), boolean.class);
+    // }
+    // else
+    // {
+    // mv.visitLdcInsn (true);
+    // }
+    // mv.visitJumpInsn (GOTO, l1);
+    //
+    // // Clause not selected
+    // mv.visitLabel (l2);
+    // }
+    // // Return result
+    // mv.visitLdcInsn (false);
+    // mv.visitLabel (l1);
+    // }
 
     private void compileThe (final GeneratorAdapter mv, final LispList e, final Class<?> valueClass, final boolean allowNarrowing,
             final boolean liberalTruth)

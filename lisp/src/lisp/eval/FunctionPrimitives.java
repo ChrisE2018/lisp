@@ -44,49 +44,51 @@ public class FunctionPrimitives extends Definer
 	return name;
     }
 
-    @DefineLisp (special = true, name = "let")
-    public Object letEvaluator (final LexicalContext context, final LispList arglist, final Object body1, final Object... body)
-            throws Exception
-    {
-	final LexicalContext newContext = new LexicalContext (context);
-	for (final Object c : arglist)
-	{
-	    final LispList clause = (LispList)c;
-	    final Symbol var = (Symbol)clause.get (0);
-	    final Object expr = clause.get (1);
-	    // Evaluate expressions in the original context and bind in the newContext
-	    newContext.bind (var, context.eval (expr));
-	}
-	// Evaluate body expressions in the newContext
-	Object result = newContext.eval (body1);
-	for (final Object expr : body)
-	{
-	    result = newContext.eval (expr);
-	}
-	return result;
-    }
-
-    @DefineLisp (special = true, name = "let*")
-    public Object letStarEvaluator (final LexicalContext context, final LispList arglist, final Object body1,
-            final Object... body) throws Exception
-    {
-	final LexicalContext newContext = new LexicalContext (context);
-	for (final Object c : arglist)
-	{
-	    final LispList clause = (LispList)c;
-	    final Symbol var = (Symbol)clause.get (0);
-	    final Object expr = clause.get (1);
-	    // Evaluate expressions in the newContext and bind in the newContext
-	    newContext.bind (var, newContext.eval (expr));
-	}
-	// Evaluate body expressions in the newContext
-	Object result = newContext.eval (body1);
-	for (final Object expr : body)
-	{
-	    result = newContext.eval (expr);
-	}
-	return result;
-    }
+    // @DefineLisp (special = true, name = "let")
+    // public Object letEvaluator (final LexicalContext context, final LispList arglist, final
+    // Object body1, final Object... body)
+    // throws Exception
+    // {
+    // final LexicalContext newContext = new LexicalContext (context);
+    // for (final Object c : arglist)
+    // {
+    // final LispList clause = (LispList)c;
+    // final Symbol var = (Symbol)clause.get (0);
+    // final Object expr = clause.get (1);
+    // // Evaluate expressions in the original context and bind in the newContext
+    // newContext.bind (var, context.eval (expr));
+    // }
+    // // Evaluate body expressions in the newContext
+    // Object result = newContext.eval (body1);
+    // for (final Object expr : body)
+    // {
+    // result = newContext.eval (expr);
+    // }
+    // return result;
+    // }
+    //
+    // @DefineLisp (special = true, name = "let*")
+    // public Object letStarEvaluator (final LexicalContext context, final LispList arglist, final
+    // Object body1,
+    // final Object... body) throws Exception
+    // {
+    // final LexicalContext newContext = new LexicalContext (context);
+    // for (final Object c : arglist)
+    // {
+    // final LispList clause = (LispList)c;
+    // final Symbol var = (Symbol)clause.get (0);
+    // final Object expr = clause.get (1);
+    // // Evaluate expressions in the newContext and bind in the newContext
+    // newContext.bind (var, newContext.eval (expr));
+    // }
+    // // Evaluate body expressions in the newContext
+    // Object result = newContext.eval (body1);
+    // for (final Object expr : body)
+    // {
+    // result = newContext.eval (expr);
+    // }
+    // return result;
+    // }
 
     @Override
     public String toString ()
