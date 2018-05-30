@@ -11,7 +11,7 @@ public class LocalBinding
     private final Type type;
     private final int localRef;
 
-    LocalBinding (final Symbol variable, final Type type, final int localRef)
+    public LocalBinding (final Symbol variable, final Type type, final int localRef)
     {
 	this.variable = variable;
 	this.type = type;

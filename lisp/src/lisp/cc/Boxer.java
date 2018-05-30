@@ -5,27 +5,27 @@ import org.objectweb.asm.Type;
 
 public class Boxer
 {
-    protected static final String CLDESC = "Ljava/lang/Class;";
+    public static final String CLDESC = "Ljava/lang/Class;";
 
-    protected static final Type BYTE_TYPE = Type.getObjectType ("java/lang/Byte");
+    public static final Type BYTE_TYPE = Type.getObjectType ("java/lang/Byte");
 
-    protected static final Type BOOLEAN_TYPE = Type.getObjectType ("java/lang/Boolean");
+    public static final Type BOOLEAN_TYPE = Type.getObjectType ("java/lang/Boolean");
 
-    protected static final Type SHORT_TYPE = Type.getObjectType ("java/lang/Short");
+    public static final Type SHORT_TYPE = Type.getObjectType ("java/lang/Short");
 
-    protected static final Type CHARACTER_TYPE = Type.getObjectType ("java/lang/Character");
+    public static final Type CHARACTER_TYPE = Type.getObjectType ("java/lang/Character");
 
-    protected static final Type INTEGER_TYPE = Type.getObjectType ("java/lang/Integer");
+    public static final Type INTEGER_TYPE = Type.getObjectType ("java/lang/Integer");
 
-    protected static final Type FLOAT_TYPE = Type.getObjectType ("java/lang/Float");
+    public static final Type FLOAT_TYPE = Type.getObjectType ("java/lang/Float");
 
-    protected static final Type LONG_TYPE = Type.getObjectType ("java/lang/Long");
+    public static final Type LONG_TYPE = Type.getObjectType ("java/lang/Long");
 
-    protected static final Type DOUBLE_TYPE = Type.getObjectType ("java/lang/Double");
+    public static final Type DOUBLE_TYPE = Type.getObjectType ("java/lang/Double");
 
-    protected static final Type NUMBER_TYPE = Type.getObjectType ("java/lang/Number");
+    public static final Type NUMBER_TYPE = Type.getObjectType ("java/lang/Number");
 
-    protected static final Type OBJECT_TYPE = Type.getObjectType ("java/lang/Object");
+    public static final Type OBJECT_TYPE = Type.getObjectType ("java/lang/Object");
 
     // protected static final Method BOOLEAN_VALUE = Method.getMethod ("boolean booleanValue()");
     //
@@ -50,7 +50,7 @@ public class Boxer
 	 {LONG_TYPE, Type.LONG_TYPE},
 	 {DOUBLE_TYPE, Type.DOUBLE_TYPE}};
 
-    protected Type getBoxedType (final Type type)
+    public Type getBoxedType (final Type type)
     {
 	for (final Type[] clause : BOXED_PRIMITIVES)
 	{
@@ -62,7 +62,7 @@ public class Boxer
 	return null;
     }
 
-    protected Type getUnboxedType (final Type type)
+    public Type getUnboxedType (final Type type)
     {
 	for (final Type[] clause : BOXED_PRIMITIVES)
 	{

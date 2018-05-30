@@ -1,13 +1,17 @@
 ;; Default initialization file
 
 (new "lisp.special.And")
+(new "lisp.special.Dotimes")
 (new "lisp.special.If")
 (new "lisp.special.Or")
 (new "lisp.special.Progn")
 (new "lisp.special.Quote")
+(new "lisp.special.Repeat")
 (new "lisp.special.Setq")
 (new "lisp.special.When")
+(new "lisp.special.While")
 (new "lisp.special.Unless")
+(new "lisp.special.Until")
 (new "lisp.eval.ArithmeticPrimitives")
 (new "lisp.eval.ControlPrimitives")
 (new "lisp.eval.DescribePrimitives")

@@ -13,7 +13,6 @@
 (define alpha (x)
    (+ a x 4))
 
-
 (verify a 5)	;; Test 10
 (verify (alpha 3) 12)
 

@@ -100,6 +100,21 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	return localVariableMap.get (symbol);
     }
 
+    // private final Deque<Map<Symbol, LocalBinding>> localBindingStack = new LinkedList<Map<Symbol,
+    // LocalBinding>> ();
+
+    /** Get the current local binding context. */
+    public Map<Symbol, LocalBinding> getLocalBindingContext ()
+    {
+	return localVariableMap;
+    }
+
+    /** Set the current local binding context. */
+    public void setLocalBindingContext (final Map<Symbol, LocalBinding> variableMap)
+    {
+	localVariableMap = variableMap;
+    }
+
     /** Keep track of a symbol that needs to be available as a class field. */
     @Override
     public void addSymbolReference (final Symbol symbol)
@@ -767,22 +782,22 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// {
 	// compileSetq (mv, expression, valueType, allowNarrowing, liberalTruth);
 	// }
-	else if (symbol.is ("repeat"))
-	{
-	    compileRepeat (mv, expression, valueType, allowNarrowing, liberalTruth);
-	}
-	else if (symbol.is ("dotimes"))
-	{
-	    compileDotimes (mv, expression, valueType, allowNarrowing, liberalTruth);
-	}
-	else if (symbol.is ("while"))
-	{
-	    compileWhile (mv, expression, valueType, allowNarrowing, liberalTruth);
-	}
-	else if (symbol.is ("until"))
-	{
-	    compileUntil (mv, expression, valueType, allowNarrowing, liberalTruth);
-	}
+	// else if (symbol.is ("repeat"))
+	// {
+	// compileRepeat (mv, expression, valueType, allowNarrowing, liberalTruth);
+	// }
+	// else if (symbol.is ("dotimes"))
+	// {
+	// compileDotimes (mv, expression, valueType, allowNarrowing, liberalTruth);
+	// }
+	// else if (symbol.is ("while"))
+	// {
+	// compileWhile (mv, expression, valueType, allowNarrowing, liberalTruth);
+	// }
+	// else if (symbol.is ("until"))
+	// {
+	// compileUntil (mv, expression, valueType, allowNarrowing, liberalTruth);
+	// }
 	else if (symbol.is ("let"))
 	{
 	    compileLet (mv, expression, valueType, allowNarrowing, liberalTruth);
@@ -1240,241 +1255,247 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     // }
     // }
 
-    private void compileRepeat (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
-            final boolean allowNarrowing, final boolean liberalTruth)
-    {
-	// (define foo (x) (repeat x 3))
-	// (define foo (x) (repeat x 3) 5)
-	// (define foo (x) (printf "bar%n"))
-	// (define foo (x) (repeat x (printf "bar%n")))
-	// (define foo (x) (repeat x (printf "bar%n")) 5)
-	// (define foo (x) (repeat x (not true)))
-	// (define foo (x) (repeat x true))
-	// (define foo (x) (repeat x (abs 5)))
-	// (define foo (x) (repeat x (printf "bar %s%n" x)))
-	// (define foo (x) (repeat x (setq a (+ a 1))))
-	// (define foo (x) (repeat (+ x 5) (setq a (+ a 1))))
-	// (define foo (x y) (repeat (+ x 5) (setq a (+ a y))))
-	// (define foo (x) (repeat x (printf "foo")) 5)
-	// (define int:foo () (repeat 1000 3))
+    // private void compileRepeat (final GeneratorAdapter mv, final LispList e, final Class<?>
+    // valueType,
+    // final boolean allowNarrowing, final boolean liberalTruth)
+    // {
+    // // (define foo (x) (repeat x 3))
+    // // (define foo (x) (repeat x 3) 5)
+    // // (define foo (x) (printf "bar%n"))
+    // // (define foo (x) (repeat x (printf "bar%n")))
+    // // (define foo (x) (repeat x (printf "bar%n")) 5)
+    // // (define foo (x) (repeat x (not true)))
+    // // (define foo (x) (repeat x true))
+    // // (define foo (x) (repeat x (abs 5)))
+    // // (define foo (x) (repeat x (printf "bar %s%n" x)))
+    // // (define foo (x) (repeat x (setq a (+ a 1))))
+    // // (define foo (x) (repeat (+ x 5) (setq a (+ a 1))))
+    // // (define foo (x y) (repeat (+ x 5) (setq a (+ a y))))
+    // // (define foo (x) (repeat x (printf "foo")) 5)
+    // // (define int:foo () (repeat 1000 3))
+    //
+    // // Make a local variable for repeat count
+    // final int countRef = mv.newLocal (Type.getType (int.class));
+    //
+    // // Compute repeat count
+    // compileExpression (mv, e.get (1), int.class, false, false);
+    // // Put repeat count number into local variable
+    // mv.visitVarInsn (ISTORE, countRef);
+    //
+    // // Push default return value onto the stack
+    // pushDefaultValue (mv, valueType);
+    //
+    // // Push iteration number onto the stack
+    // mv.visitInsn (ICONST_0);
+    //
+    // // Jump to termination test
+    // final Label l1 = new Label ();
+    // mv.visitJumpInsn (GOTO, l1);
+    //
+    // // Start of iteration body
+    // final Label l2 = new Label ();
+    // mv.visitLabel (l2);
+    // // Stack: iteration, value
+    //
+    // // <body code goes here>
+    // if (valueType != null)
+    // {
+    // mv.visitInsn (SWAP);
+    // }
+    // // Stack: value, iteration
+    // if (e.size () > 2)
+    // {
+    // if (valueType != null)
+    // {
+    // mv.visitInsn (POP);
+    // }
+    // for (int i = 2; i < e.size () - 1; i++)
+    // {
+    // compileExpression (mv, e.get (i), null, false, false);
+    // }
+    // compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
+    // }
+    // if (valueType != null)
+    // {
+    // mv.visitInsn (SWAP);
+    // }
+    //
+    // // Loop increment
+    // // Stack: iteration, value
+    // mv.visitInsn (ICONST_1);
+    // mv.visitInsn (IADD);
+    //
+    // // Termination test
+    // // Stack: iteration, value
+    // mv.visitLabel (l1);
+    //
+    // mv.visitInsn (DUP);
+    // mv.visitVarInsn (ILOAD, countRef);
+    // // Stack: count, iteration, iteration, value
+    // mv.visitJumpInsn (IF_ICMPLT, l2);
+    // // Stack: iteration, value
+    // // Remove iteration count
+    // mv.visitInsn (POP);
+    // // coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+    // }
 
-	// Make a local variable for repeat count
-	final int countRef = mv.newLocal (Type.getType (int.class));
+    // private void compileDotimes (final GeneratorAdapter mv, final LispList e, final Class<?>
+    // valueType,
+    // final boolean allowNarrowing, final boolean liberalTruth)
+    // {
+    // // (define foo () (dotimes (i 3) 0))
+    // // (define foo () (dotimes (i 3) 0) 5)
+    // // (define foo (n) (dotimes (i n) 0))
+    // // (define foo () (dotimes (i 3) (printf "i = %s %n" i)))
+    // // (define foo (n) (dotimes (i n) (printf "i = %s %n" i)))
+    //
+    // // Compute repeat count
+    // final List<?> control = (List<?>)e.get (1);
+    // final Object count = control.get (1);
+    // // [TODO] Currently always compiles for Object result. Need to analyze the body and
+    // // determine if the value is actually referenced.
+    // compileExpression (mv, count, Object.class /* TODO */, false, false);
+    // mv.visitTypeInsn (CHECKCAST, "java/lang/Integer");
+    // mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+    // // Leave repeat count on the stack
+    //
+    // // Push default return value onto the stack
+    // pushDefaultValue (mv, valueType);
+    // // Stack [returnValue], repeatCount
+    //
+    // // Put iteration number into local variable
+    // final Map<Symbol, LocalBinding> savedLocalVariableMap = localVariableMap;
+    // localVariableMap = new LinkedHashMap<Symbol, LocalBinding> (localVariableMap);
+    // // Create a local variable to hold the iteration number.
+    // // This is always stored in boxed format so body code can reference it.
+    // // Should be able to store this as an int if the body code can use it that way.
+    // final Type type = Boxer.INTEGER_TYPE;
+    // final int iterationRef = mv.newLocal (type);
+    // final Symbol var = (Symbol)control.get (0);
+    // final LocalBinding lb = new LocalBinding (var, type, iterationRef);
+    // localVariableMap.put (var, lb);
+    // mv.visitInsn (ICONST_0);
+    // mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;",
+    // false);
+    // mv.visitVarInsn (ASTORE, iterationRef);
+    //
+    // // Jump to termination test
+    // final Label l1 = new Label ();
+    // mv.visitJumpInsn (GOTO, l1);
+    //
+    // // Start of iteration body
+    // final Label l2 = new Label ();
+    // mv.visitLabel (l2);
+    // // Stack repeatCount, [returnValue]
+    // if (valueType != null)
+    // {
+    // mv.visitInsn (SWAP); // Save repeat count
+    // }
+    // // <body code goes here>
+    // for (int i = 2; i < e.size (); i++)
+    // {
+    // if (valueType != null)
+    // {
+    // mv.visitInsn (POP);
+    // }
+    // compileExpression (mv, e.get (i), valueType);
+    // }
+    //
+    // // Loop increment
+    // mv.visitVarInsn (ALOAD, iterationRef);
+    // mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+    // mv.visitInsn (ICONST_1);
+    // mv.visitInsn (IADD);
+    // mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;",
+    // false);
+    // mv.visitVarInsn (ASTORE, iterationRef);
+    //
+    // // // Termination test
+    // mv.visitLabel (l1);
+    // // Stack [returnValue], repeatCount
+    //
+    // if (valueType != null) // ***ADDED
+    // {
+    // mv.visitInsn (SWAP);
+    // }
+    // // Stack repeatCount, [returnValue]
+    // mv.visitInsn (DUP); // Dup count
+    // // Stack repeatCount, repeatCount, [returnValue]
+    // mv.visitVarInsn (ALOAD, iterationRef);
+    // // Stack iteration, repeatCount, repeatCount, [returnValue]
+    // mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+    // mv.visitJumpInsn (IF_ICMPGT, l2);
+    // // Stack repeatCount, [returnValue]
+    //
+    // mv.visitInsn (POP); // Remove repeat count
+    // // coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+    // // Return last body value
+    // localVariableMap = savedLocalVariableMap;
+    // }
 
-	// Compute repeat count
-	compileExpression (mv, e.get (1), int.class, false, false);
-	// Put repeat count number into local variable
-	mv.visitVarInsn (ISTORE, countRef);
+    // private void compileWhile (final GeneratorAdapter mv, final LispList e, final Class<?>
+    // valueType,
+    // final boolean allowNarrowing, final boolean liberalTruth)
+    // {
+    // // (define foo (x) (setq a 0) (while (< a x) (printf "A: %s%n" a) (setq a (+ a 1))))
+    //
+    // // Load default value
+    // pushDefaultValue (mv, valueType);
+    //
+    // // Perform iteration test
+    // final Label l1 = new Label ();
+    // mv.visitLabel (l1);
+    // final Label l2 = new Label ();
+    // compileExpression (mv, e.get (1), boolean.class, false, true);
+    // mv.visitJumpInsn (IFEQ, l2);
+    //
+    // // Loop body
+    // if (valueType != null)
+    // {
+    // mv.visitInsn (POP);
+    // }
+    // for (int i = 2; i < e.size () - 1; i++)
+    // {
+    // compileExpression (mv, e.get (i), null);
+    // }
+    // // Don't pop the last value
+    // compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
+    // mv.visitJumpInsn (GOTO, l1);
+    //
+    // mv.visitLabel (l2);
+    // }
 
-	// Push default return value onto the stack
-	pushDefaultValue (mv, valueType);
-
-	// Push iteration number onto the stack
-	mv.visitInsn (ICONST_0);
-
-	// Jump to termination test
-	final Label l1 = new Label ();
-	mv.visitJumpInsn (GOTO, l1);
-
-	// Start of iteration body
-	final Label l2 = new Label ();
-	mv.visitLabel (l2);
-	// Stack: iteration, value
-
-	// <body code goes here>
-	if (valueType != null)
-	{
-	    mv.visitInsn (SWAP);
-	}
-	// Stack: value, iteration
-	if (e.size () > 2)
-	{
-	    if (valueType != null)
-	    {
-		mv.visitInsn (POP);
-	    }
-	    for (int i = 2; i < e.size () - 1; i++)
-	    {
-		compileExpression (mv, e.get (i), null, false, false);
-	    }
-	    compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
-	}
-	if (valueType != null)
-	{
-	    mv.visitInsn (SWAP);
-	}
-
-	// Loop increment
-	// Stack: iteration, value
-	mv.visitInsn (ICONST_1);
-	mv.visitInsn (IADD);
-
-	// Termination test
-	// Stack: iteration, value
-	mv.visitLabel (l1);
-
-	mv.visitInsn (DUP);
-	mv.visitVarInsn (ILOAD, countRef);
-	// Stack: count, iteration, iteration, value
-	mv.visitJumpInsn (IF_ICMPLT, l2);
-	// Stack: iteration, value
-	// Remove iteration count
-	mv.visitInsn (POP);
-	// coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
-    }
-
-    private void compileDotimes (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
-            final boolean allowNarrowing, final boolean liberalTruth)
-    {
-	// (define foo () (dotimes (i 3) 0))
-	// (define foo () (dotimes (i 3) 0) 5)
-	// (define foo (n) (dotimes (i n) 0))
-	// (define foo () (dotimes (i 3) (printf "i = %s %n" i)))
-	// (define foo (n) (dotimes (i n) (printf "i = %s %n" i)))
-
-	// Compute repeat count
-	final List<?> control = (List<?>)e.get (1);
-	final Object count = control.get (1);
-	// [TODO] Currently always compiles for Object result. Need to analyze the body and
-	// determine if the value is actually referenced.
-	compileExpression (mv, count, Object.class /* TODO */, false, false);
-	mv.visitTypeInsn (CHECKCAST, "java/lang/Integer");
-	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
-	// Leave repeat count on the stack
-
-	// Push default return value onto the stack
-	pushDefaultValue (mv, valueType);
-	// Stack [returnValue], repeatCount
-
-	// Put iteration number into local variable
-	final Map<Symbol, LocalBinding> savedLocalVariableMap = localVariableMap;
-	localVariableMap = new LinkedHashMap<Symbol, LocalBinding> (localVariableMap);
-	// Create a local variable to hold the iteration number.
-	// This is always stored in boxed format so body code can reference it.
-	// Should be able to store this as an int if the body code can use it that way.
-	final Type type = Boxer.INTEGER_TYPE;
-	final int iterationRef = mv.newLocal (type);
-	final Symbol var = (Symbol)control.get (0);
-	final LocalBinding lb = new LocalBinding (var, type, iterationRef);
-	localVariableMap.put (var, lb);
-	mv.visitInsn (ICONST_0);
-	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-	mv.visitVarInsn (ASTORE, iterationRef);
-
-	// Jump to termination test
-	final Label l1 = new Label ();
-	mv.visitJumpInsn (GOTO, l1);
-
-	// Start of iteration body
-	final Label l2 = new Label ();
-	mv.visitLabel (l2);
-	// Stack repeatCount, [returnValue]
-	if (valueType != null)
-	{
-	    mv.visitInsn (SWAP); // Save repeat count
-	}
-	// <body code goes here>
-	for (int i = 2; i < e.size (); i++)
-	{
-	    if (valueType != null)
-	    {
-		mv.visitInsn (POP);
-	    }
-	    compileExpression (mv, e.get (i), valueType);
-	}
-
-	// Loop increment
-	mv.visitVarInsn (ALOAD, iterationRef);
-	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
-	mv.visitInsn (ICONST_1);
-	mv.visitInsn (IADD);
-	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-	mv.visitVarInsn (ASTORE, iterationRef);
-
-	// // Termination test
-	mv.visitLabel (l1);
-	// Stack [returnValue], repeatCount
-
-	if (valueType != null) // ***ADDED
-	{
-	    mv.visitInsn (SWAP);
-	}
-	// Stack repeatCount, [returnValue]
-	mv.visitInsn (DUP); // Dup count
-	// Stack repeatCount, repeatCount, [returnValue]
-	mv.visitVarInsn (ALOAD, iterationRef);
-	// Stack iteration, repeatCount, repeatCount, [returnValue]
-	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
-	mv.visitJumpInsn (IF_ICMPGT, l2);
-	// Stack repeatCount, [returnValue]
-
-	mv.visitInsn (POP); // Remove repeat count
-	// coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
-	// Return last body value
-	localVariableMap = savedLocalVariableMap;
-    }
-
-    private void compileWhile (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
-            final boolean allowNarrowing, final boolean liberalTruth)
-    {
-	// (define foo (x) (setq a 0) (while (< a x) (printf "A: %s%n" a) (setq a (+ a 1))))
-
-	// Load default value
-	pushDefaultValue (mv, valueType);
-
-	// Perform iteration test
-	final Label l1 = new Label ();
-	mv.visitLabel (l1);
-	final Label l2 = new Label ();
-	compileExpression (mv, e.get (1), boolean.class, false, true);
-	mv.visitJumpInsn (IFEQ, l2);
-
-	// Loop body
-	if (valueType != null)
-	{
-	    mv.visitInsn (POP);
-	}
-	for (int i = 2; i < e.size () - 1; i++)
-	{
-	    compileExpression (mv, e.get (i), null);
-	}
-	// Don't pop the last value
-	compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
-	mv.visitJumpInsn (GOTO, l1);
-
-	mv.visitLabel (l2);
-    }
-
-    private void compileUntil (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
-            final boolean allowNarrowing, final boolean liberalTruth)
-    {
-	// (define foo (x) (setq a 0) (until (> a x) (printf "A: %s%n" a) (setq a (+ a 1))))
-
-	// Load default value
-	pushDefaultValue (mv, valueType);
-
-	// Perform iteration test
-	final Label l1 = new Label ();
-	mv.visitLabel (l1);
-	final Label l2 = new Label ();
-	compileExpression (mv, e.get (1), boolean.class, false, true);
-	mv.visitJumpInsn (IFNE, l2);
-
-	// Loop body
-	if (valueType != null)
-	{
-	    mv.visitInsn (POP);
-	}
-	for (int i = 2; i < e.size () - 1; i++)
-	{
-	    compileExpression (mv, e.get (i), null);
-	}
-	// Don't pop the last value
-	compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
-	mv.visitJumpInsn (GOTO, l1);
-
-	mv.visitLabel (l2);
-    }
+    // private void compileUntil (final GeneratorAdapter mv, final LispList e, final Class<?>
+    // valueType,
+    // final boolean allowNarrowing, final boolean liberalTruth)
+    // {
+    // // (define foo (x) (setq a 0) (until (> a x) (printf "A: %s%n" a) (setq a (+ a 1))))
+    //
+    // // Load default value
+    // pushDefaultValue (mv, valueType);
+    //
+    // // Perform iteration test
+    // final Label l1 = new Label ();
+    // mv.visitLabel (l1);
+    // final Label l2 = new Label ();
+    // compileExpression (mv, e.get (1), boolean.class, false, true);
+    // mv.visitJumpInsn (IFNE, l2);
+    //
+    // // Loop body
+    // if (valueType != null)
+    // {
+    // mv.visitInsn (POP);
+    // }
+    // for (int i = 2; i < e.size () - 1; i++)
+    // {
+    // compileExpression (mv, e.get (i), null);
+    // }
+    // // Don't pop the last value
+    // compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
+    // mv.visitJumpInsn (GOTO, l1);
+    //
+    // mv.visitLabel (l2);
+    // }
 
     private void compileLet (final GeneratorAdapter mv, final LispList e, final Class<?> valueType, final boolean allowNarrowing,
             final boolean liberalTruth)

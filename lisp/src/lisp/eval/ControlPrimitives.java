@@ -1,9 +1,7 @@
 
 package lisp.eval;
 
-import java.util.List;
-
-import lisp.*;
+import lisp.LispList;
 
 public class ControlPrimitives extends Definer
 {
@@ -95,71 +93,75 @@ public class ControlPrimitives extends Definer
     // return false;
     // }
 
-    @DefineLisp (special = true, name = "while")
-    public Object whileForm (final LexicalContext context, final Object test, final Object... arguments) throws Exception
-    {
-	Object result = true;
-	while (isTrue (context.eval (test)))
-	{
-	    for (int i = 0; i < arguments.length; i++)
-	    {
-		final Object arg = arguments[i];
-		result = context.eval (arg);
-	    }
-	}
-	return result;
-    }
+    // @DefineLisp (special = true, name = "while")
+    // public Object whileForm (final LexicalContext context, final Object test, final Object...
+    // arguments) throws Exception
+    // {
+    // Object result = true;
+    // while (isTrue (context.eval (test)))
+    // {
+    // for (int i = 0; i < arguments.length; i++)
+    // {
+    // final Object arg = arguments[i];
+    // result = context.eval (arg);
+    // }
+    // }
+    // return result;
+    // }
 
-    @DefineLisp (special = true, name = "until")
-    public Object untilForm (final LexicalContext context, final Object test, final Object... arguments) throws Exception
-    {
-	Object result = true;
-	while (!isTrue (context.eval (test)))
-	{
-	    for (int i = 0; i < arguments.length; i++)
-	    {
-		final Object arg = arguments[i];
-		result = context.eval (arg);
-	    }
-	}
-	return result;
-    }
+    // @DefineLisp (special = true, name = "until")
+    // public Object untilForm (final LexicalContext context, final Object test, final Object...
+    // arguments) throws Exception
+    // {
+    // Object result = true;
+    // while (!isTrue (context.eval (test)))
+    // {
+    // for (int i = 0; i < arguments.length; i++)
+    // {
+    // final Object arg = arguments[i];
+    // result = context.eval (arg);
+    // }
+    // }
+    // return result;
+    // }
 
-    @DefineLisp (special = true, name = "repeat")
-    public Object repeat (final LexicalContext context, final Object count, final Object... arguments) throws Exception
-    {
-	Object result = true;
-	final int n = (Integer)context.eval (count);
-	for (int j = 0; j < n; j++)
-	{
-	    for (int i = 0; i < arguments.length; i++)
-	    {
-		final Object arg = arguments[i];
-		result = context.eval (arg);
-	    }
-	}
-	return result;
-    }
+    // @DefineLisp (special = true, name = "repeat")
+    // public Object repeat (final LexicalContext context, final Object count, final Object...
+    // arguments) throws Exception
+    // {
+    // Object result = true;
+    // final int n = (Integer)context.eval (count);
+    // for (int j = 0; j < n; j++)
+    // {
+    // for (int i = 0; i < arguments.length; i++)
+    // {
+    // final Object arg = arguments[i];
+    // result = context.eval (arg);
+    // }
+    // }
+    // return result;
+    // }
 
-    @DefineLisp (special = true, name = "dotimes")
-    public Object dotimes (final LexicalContext context, final List<?> control, final Object... arguments) throws Exception
-    {
-	Object result = true;
-	final Symbol var = (Symbol)control.get (0);
-	final int n = (Integer)context.eval (control.get (1));
-	final LexicalContext subcontext = new LexicalContext (context);
-	subcontext.bind (var, 0);
-	for (int j = 0; j < n; j++)
-	{
-	    subcontext.set (var, j);
-	    for (int i = 0; i < arguments.length; i++)
-	    {
-		final Object arg = arguments[i];
-		result = subcontext.eval (arg);
-	    }
-	}
-	return result;
-    }
+    // @DefineLisp (special = true, name = "dotimes")
+    // public Object dotimes (final LexicalContext context, final List<?> control, final Object...
+    // arguments) throws Exception
+    // {
+    // Object result = true;
+    // final Symbol var = (Symbol)control.get (0);
+    // final int n = (Integer)context.eval (control.get (1));
+    // final LexicalContext subcontext = new LexicalContext (context);
+    // subcontext.bind (var, 0);
+    // for (int j = 0; j < n; j++)
+    // {
+    // subcontext.set (var, j);
+    // for (int i = 0; i < arguments.length; i++)
+    // {
+    // final Object arg = arguments[i];
+    // result = subcontext.eval (arg);
+    // }
+    // }
+    // return result;
+    // }
 
     @DefineLisp (special = true)
     public Object cond (final LexicalContext context, final Object... clauses) throws Exception

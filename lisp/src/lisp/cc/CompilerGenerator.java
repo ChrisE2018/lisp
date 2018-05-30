@@ -1,6 +1,8 @@
 
 package lisp.cc;
 
+import java.util.Map;
+
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
@@ -34,6 +36,12 @@ public interface CompilerGenerator
 
     /** Get binding information about a local variable. */
     public LocalBinding getLocalVariableBinding (Symbol symbol);
+
+    /** Get the current local binding context. */
+    public Map<Symbol, LocalBinding> getLocalBindingContext ();
+
+    /** Set the current local binding context. */
+    public void setLocalBindingContext (Map<Symbol, LocalBinding> variableMap);
 
     /**
      * Compile a single expression and leave the value on top of the stack. This is the primary
