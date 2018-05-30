@@ -27,87 +27,73 @@ public class ControlPrimitives extends Definer
 	return false;
     }
 
-    @DefineLisp (special = true)
-    public Object or (final LexicalContext context, final Object... arguments) throws Exception
-    {
-	for (int i = 0; i < arguments.length; i++)
-	{
-	    final Object arg = arguments[i];
-	    final Object value = context.eval (arg);
-	    if (isTrue (value))
-	    {
-		return value;
-	    }
-	}
-	return false;
-    }
+    // @DefineLisp (special = true)
+    // public Object or (final LexicalContext context, final Object... arguments) throws Exception
+    // {
+    // for (int i = 0; i < arguments.length; i++)
+    // {
+    // final Object arg = arguments[i];
+    // final Object value = context.eval (arg);
+    // if (isTrue (value))
+    // {
+    // return value;
+    // }
+    // }
+    // return false;
+    // }
 
-    @DefineLisp (special = true)
-    public Object and (final LexicalContext context, final Object... arguments) throws Exception
-    {
-	Object result = Boolean.TRUE;
-	for (int i = 0; i < arguments.length; i++)
-	{
-	    final Object arg = arguments[i];
-	    final Object value = context.eval (arg);
-	    if (!isTrue (value))
-	    {
-		return false;
-	    }
-	    result = value;
-	}
-	return result;
-    }
+    // @DefineLisp (special = true)
+    // public Object and (final LexicalContext context, final Object... arguments) throws Exception
+    // {
+    // Object result = Boolean.TRUE;
+    // for (int i = 0; i < arguments.length; i++)
+    // {
+    // final Object arg = arguments[i];
+    // final Object value = context.eval (arg);
+    // if (!isTrue (value))
+    // {
+    // return false;
+    // }
+    // result = value;
+    // }
+    // return result;
+    // }
 
-    @DefineLisp (special = true, name = "if")
-    public Object ifEvaluator (final LexicalContext context, final Object test, final Object trueClause,
-            final Object... elseExprs) throws Exception
-    {
-	if (isTrue (context.eval (test)))
-	{
-	    return context.eval (trueClause);
-	}
-	Object result = Boolean.TRUE;
-	for (int i = 0; i < elseExprs.length; i++)
-	{
-	    final Object arg = elseExprs[i];
-	    final Object value = context.eval (arg);
-	    result = value;
-	}
-	return result;
-    }
+    // @DefineLisp (special = true, name = "if")
+    // public Object ifEvaluator (final LexicalContext context, final Object test, final Object
+    // trueClause,
+    // final Object... elseExprs) throws Exception
+    // {
+    // if (isTrue (context.eval (test)))
+    // {
+    // return context.eval (trueClause);
+    // }
+    // Object result = Boolean.TRUE;
+    // for (int i = 0; i < elseExprs.length; i++)
+    // {
+    // final Object arg = elseExprs[i];
+    // final Object value = context.eval (arg);
+    // result = value;
+    // }
+    // return result;
+    // }
 
-    @DefineLisp (special = true, name = "when")
-    public Object whenForm (final LexicalContext context, final Object test, final Object... arguments) throws Exception
-    {
-	if (isTrue (context.eval (test)))
-	{
-	    Object result = true;
-	    for (int i = 0; i < arguments.length; i++)
-	    {
-		final Object arg = arguments[i];
-		result = context.eval (arg);
-	    }
-	    return result;
-	}
-	return false;
-    }
-
-    @DefineLisp (special = true, name = "unless")
-    public Object unlessForm (final LexicalContext context, final Object test, final Object... arguments) throws Exception
-    {
-	if (!isTrue (context.eval (test)))
-	{
-	    Object result = true;
-	    for (int i = 0; i < arguments.length; i++)
-	    {
-		final Object arg = arguments[i];
-		result = context.eval (arg);
-	    }
-	    return result;
-	}
-	return false;
-    }
+    // @DefineLisp (special = true, name = "unless")
+    // public Object unlessForm (final LexicalContext context, final Object test, final Object...
+    // arguments) throws Exception
+    // {
+    // if (!isTrue (context.eval (test)))
+    // {
+    // Object result = true;
+    // for (int i = 0; i < arguments.length; i++)
+    // {
+    // final Object arg = arguments[i];
+    // result = context.eval (arg);
+    // }
+    // return result;
+    // }
+    // return false;
+    // }
 
     @DefineLisp (special = true, name = "while")
     public Object whileForm (final LexicalContext context, final Object test, final Object... arguments) throws Exception
@@ -171,18 +157,6 @@ public class ControlPrimitives extends Definer
 		final Object arg = arguments[i];
 		result = subcontext.eval (arg);
 	    }
-	}
-	return result;
-    }
-
-    @DefineLisp (special = true)
-    public Object progn (final LexicalContext context, final Object... arguments) throws Exception
-    {
-	Object result = null;
-	for (int i = 0; i < arguments.length; i++)
-	{
-	    final Object arg = arguments[i];
-	    result = context.eval (arg);
 	}
 	return result;
     }

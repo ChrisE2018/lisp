@@ -11,58 +11,6 @@ import lisp.eval.LexicalContext;
 /** Base class of all function cells. */
 public abstract class FunctionCell implements Describer
 {
-    class ObjectMethod implements Describer
-    {
-	final Object object;
-	final Method method;
-	final String documentation;
-
-	ObjectMethod (final Object object, final Method method, final String documentation)
-	{
-	    this.object = object;
-	    this.method = method;
-	    this.documentation = documentation;
-	}
-
-	private String getName ()
-	{
-	    return method.getName ();
-	}
-
-	boolean isVarArgs ()
-	{
-	    return method.isVarArgs ();
-	}
-
-	Class<?>[] getParameterTypes ()
-	{
-	    return method.getParameterTypes ();
-	}
-
-	@Override
-	public Map<String, Object> getDescriberValues (final Object target)
-	{
-	    final Map<String, Object> result = new LinkedHashMap<String, Object> ();
-	    result.put ("Object", object);
-	    result.put ("Method", method);
-	    return result;
-	}
-
-	@Override
-	public String toString ()
-	{
-	    final StringBuilder buffer = new StringBuilder ();
-	    buffer.append ("#<");
-	    buffer.append (getClass ().getSimpleName ());
-	    buffer.append (" ");
-	    buffer.append (object);
-	    buffer.append (" ");
-	    buffer.append (method);
-	    buffer.append (">");
-	    return buffer.toString ();
-	}
-    }
-
     /** The symbol this function cell is attached to. */
     private final Symbol symbol;
 
@@ -152,7 +100,8 @@ public abstract class FunctionCell implements Describer
 		{
 		    if (key >= c)
 		    {
-			throw new IllegalArgumentException ("Overloaded method is ambiguous with " + c + " or more arguments");
+			throw new IllegalArgumentException (
+			        "Overloaded " + symbol + " method is ambiguous with " + c + " or more arguments");
 
 		    }
 		}
@@ -160,7 +109,7 @@ public abstract class FunctionCell implements Describer
 	    if (selector.containsKey (c))
 	    {
 		throw new IllegalArgumentException (
-		        "Overloaded method " + method.getName () + " is ambiguous with " + c + " arguments");
+		        "Overloaded method " + method.getMethodName () + " is ambiguous with " + c + " arguments");
 	    }
 	    selector.put (c, method);
 	}
@@ -248,20 +197,24 @@ public abstract class FunctionCell implements Describer
     }
 
     /**
-     * Get a map describing an object. The return value is intended to be used by a debugger to
-     * print an object decomposition.
+     * Append to a map describing an object. The return value is intended to be used by a debugger
+     * to print an object decomposition.
      *
-     * @param target
-     * @return
+     * @param result The map to add entries to.
+     * @param target The object to describe.
      */
-    public Map<String, Object> getDescriberValues (final Object target)
+    public void getDescriberValues (final Map<String, Object> result, final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	result.put ("Symbol", symbol);
+	result.put ("AllowRedefinition", allowRedefinition);
+	if (compiler != null)
+	{
+	    result.put ("Compiler", compiler);
+	}
 	for (final ObjectMethod method : overloads)
 	{
 	    result.put ("Overload", method);
 	}
-	return result;
     }
 
     @Override

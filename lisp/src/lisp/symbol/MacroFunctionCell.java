@@ -45,20 +45,19 @@ public class MacroFunctionCell extends FunctionCell
     }
 
     /**
-     * Get a map describing an object. The return value is intended to be used by a debugger to
-     * print an object decomposition.
+     * Append to a map describing an object. The return value is intended to be used by a debugger
+     * to print an object decomposition.
      *
-     * @param target
-     * @return
+     * @param result The map to add entries to.
+     * @param target The object to describe.
      */
     @Override
-    public Map<String, Object> getDescriberValues (final Object target)
+    public void getDescriberValues (final Map<String, Object> result, final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	super.getDescriberValues (result, target);
 	result.put ("Object", object);
 	result.put ("Method", method);
 	result.put ("Documentation", documentation);
-	return result;
     }
 
     @Override

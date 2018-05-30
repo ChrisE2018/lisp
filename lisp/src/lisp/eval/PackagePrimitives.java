@@ -42,34 +42,6 @@ public class PackagePrimitives extends Definer
 
     // Symbols
 
-    /**
-     * Interpreter for setq statements.
-     *
-     * @param interpreter The interpreter used to evaluate forms.
-     * @param arguments The symbol and value form.
-     * @return The new value.
-     */
-    @DefineLisp (special = true)
-    public Object setq (final LexicalContext context, final Symbol symbol, final Object form) throws Exception
-    {
-	final Object value = context.eval (form);
-	context.set (symbol, value);
-	return value;
-    }
-
-    @DefineLisp (name = "set")
-    public Object setSymbolValue (final Symbol symbol, final Object value)
-    {
-	symbol.setValue (value);
-	return value;
-    }
-
-    @DefineLisp
-    public Object symbolValue (final Symbol arg)
-    {
-	return arg.getValue ();
-    }
-
     @DefineLisp
     public Object symbolFunction (final Symbol arg)
     {

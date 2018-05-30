@@ -1,7 +1,7 @@
 
 package lisp;
 
-import java.util.Map;
+import java.util.*;
 
 public interface Describer
 {
@@ -9,10 +9,26 @@ public interface Describer
      * Get a map describing an object. The return value is intended to be used by a debugger to
      * print an object decomposition.
      *
-     * @param target
-     * @return
+     * @param target The object to describe.
+     * @return The map containing key value pairs for describe.
      */
-    public Map<String, Object> getDescriberValues (Object target);
+    default public Map<String, Object> getDescriberValues (final Object target)
+    {
+	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	getDescriberValues (result, target);
+	return result;
+    }
+
+    /**
+     * Append to a map describing an object. The return value is intended to be used by a debugger
+     * to print an object decomposition.
+     * 
+     * @param result The map to add entries to.
+     * @param target The object to describe.
+     */
+    default public void getDescriberValues (final Map<String, Object> result, final Object target)
+    {
+    }
 
     /**
      * Get optional documentation string for an object described slot.
