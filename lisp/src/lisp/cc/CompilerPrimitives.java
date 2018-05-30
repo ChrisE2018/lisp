@@ -236,18 +236,18 @@ public class CompilerPrimitives extends Definer
 	    final Object expected = context.eval (expect);
 	    if (same (value, expected))
 	    {
-		System.err.printf ("Pass: value of %s is %s while expecting %s%n", expr, value, expected);
+		System.err.printf ("[%d] Pass: value of %s is %s while expecting %s%n", testCount, expr, value, expected);
 		passCount++;
 	    }
 	    else
 	    {
-		System.err.printf ("Fail: value of %s is %s while expecting %s%n", expr, value, expected);
+		System.err.printf ("[%d] Fail: value of %s is %s while expecting %s%n", testCount, expr, value, expected);
 		failCount++;
 	    }
 	}
 	catch (final Throwable e)
 	{
-	    System.err.printf ("Error: while evaluating %s: %s%n", expr, e);
+	    System.err.printf ("[%d] Error: while evaluating %s: %s%n", testCount, expr, e);
 	    errorCount++;
 	}
 	return null;
@@ -262,12 +262,12 @@ public class CompilerPrimitives extends Definer
 	    final Object value = context.eval (expr);
 	    if (same (value, expected))
 	    {
-		System.err.printf ("Fail: value of %s is %s while expecting error %s%n", expr, value, expected);
+		System.err.printf ("[%d] Fail: value of %s is %s while expecting error %s%n", testCount, expr, value, expected);
 		failCount++;
 	    }
 	    else
 	    {
-		System.err.printf ("Fail: value of %s is %s while expecting error %s%n", expr, value, expected);
+		System.err.printf ("[%d] Fail: value of %s is %s while expecting error %s%n", testCount, expr, value, expected);
 		failCount++;
 	    }
 	}
@@ -275,7 +275,7 @@ public class CompilerPrimitives extends Definer
 	{
 	    if (e.getMessage ().equals (expected))
 	    {
-		System.err.printf ("Pass: Expected error %s found while evaluating %s%n", expected, expr);
+		System.err.printf ("[%d] Pass: Expected error %s found while evaluating %s%n", testCount, expected, expr);
 		passCount++;
 	    }
 	    else

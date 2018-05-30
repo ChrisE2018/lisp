@@ -215,6 +215,24 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
      */
     private void compileExpression (final GeneratorAdapter mv, final Object e, final Class<?> valueType)
     {
+	compileExpression (mv, e, valueType, false, false);
+    }
+
+    /**
+     * Compile a single expression and leave the value on top of the stack. This is the primary
+     * compilation operation and is used recursively to compile all expressions.
+     *
+     * @param mv Bytecode generator.
+     * @param e Expression to compile.
+     * @param valueType Class of value to leave on the stack.
+     * @param allowNarrowing When true, narrowing conversions will be generated if required.
+     *            Otherwise narrowing throws and error.
+     * @param liberalTruth When set, any non-boolean result is accepted as true. Otherwise, boolean
+     *            testing requires strictly boolean values.
+     */
+    private void compileExpression (final GeneratorAdapter mv, final Object e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
+    {
 	// [TOOD] valueType is ignored for now except when it is null or boolean.class
 	// [TODO] valueType should be supported for all primitive types
 	if (e == null)
@@ -223,23 +241,24 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
 	else if (e instanceof LispList)
 	{
-	    compileFunctionCall (mv, (LispList)e, valueType);
+	    compileFunctionCall (mv, (LispList)e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (valueType != null)
 	{
 	    if (e instanceof Symbol)
 	    {
 		final Symbol symbol = (Symbol)e;
-		compileSymbolReference (mv, symbol, valueType);
+		compileSymbolReference (mv, symbol, valueType, allowNarrowing, liberalTruth);
 	    }
 	    else
 	    {
-		compileConstantExpression (mv, e, valueType);
+		compileConstantExpression (mv, e, valueType, allowNarrowing, liberalTruth);
 	    }
 	}
     }
 
-    private void compileSymbolReference (final GeneratorAdapter mv, final Symbol symbol, final Class<?> valueType)
+    private void compileSymbolReference (final GeneratorAdapter mv, final Symbol symbol, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (methodArgs.contains (symbol))
 	{
@@ -250,7 +269,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 		mv.loadArg (argIndex);
 		final Class<?> fromClass = methodArgClasses.get (argIndex);
 		final Class<?> toClass = valueType;
-		convert.convert (mv, fromClass, toClass);
+		convert.convert (mv, fromClass, toClass, allowNarrowing, liberalTruth);
 	    }
 	}
 	else if (localVariableMap.containsKey (symbol))
@@ -263,7 +282,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 		mv.loadLocal (localRef);
 		final Class<?> fromClass = lb.getClass ();
 		final Class<?> toClass = valueType;
-		convert.convert (mv, fromClass, toClass);
+		convert.convert (mv, fromClass, toClass, allowNarrowing, liberalTruth);
 	    }
 	}
 	else if (symbol.is ("true") && valueType.equals (boolean.class))
@@ -296,12 +315,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 		// [TODO] If the valueCell is a TypedValueCell, use the type information.
 		mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
-		coerceRequired (mv, valueType);
+		// [TODO] Implement allowNarrowing and liberalTruth here.
+		coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
 	    }
 	}
     }
 
-    private void compileConstantExpression (final MethodVisitor mv, final Object e, final Class<?> valueType)
+    private void compileConstantExpression (final MethodVisitor mv, final Object e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (valueType.equals (boolean.class))
 	{
@@ -310,8 +331,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 		mv.visitInsn (ICONST_0);
 		return;
 	    }
-	    mv.visitInsn (ICONST_1);
-	    return;
+	    if (liberalTruth)
+	    {
+		mv.visitInsn (ICONST_1);
+		return;
+	    }
+	    throw new IllegalArgumentException ("Constant " + e + " is not a boolean");
 	}
 	// Compile constant expressions
 	// [TODO] All of these box the constant in a class wrapper. If we can use the primitive
@@ -500,7 +525,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
     }
 
-    private void compileFunctionCall (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileFunctionCall (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// Need to be able to compile a call to an undefined function (i.e. recursive call)
 	LOGGER.finer (new LogString ("Compile nested form %s", e));
@@ -527,7 +553,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	{
 	    // Unless this is a known special function, we are stuck and can't
 	    // proceed
-	    compileSpecialFunctionCall (mv, f, e, valueType);
+	    compileSpecialFunctionCall (mv, f, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (function != null && function instanceof MacroFunctionCell)
 	{
@@ -542,23 +568,18 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    {
 		throw new Error ("Error expanding macro " + f, e1);
 	    }
-	    compileExpression (mv, replacement, valueType);
+	    compileExpression (mv, replacement, valueType, allowNarrowing, liberalTruth);
 	}
 	else
 	{
 	    // [TODO] Some 'normal' functions need special coding, i.e, arithmetic and comparisons.
-	    compileStandardFunctionCall (mv, f, e, valueType);
-	    // if (boolean.class.equals (valueType))
-	    // {
-	    // coerceBoolean (mv);
-	    // }
-	    coerceRequired (mv, valueType);
+	    compileStandardFunctionCall (mv, f, e, valueType, allowNarrowing, liberalTruth);
 	}
     }
 
     // (define foo () (not true))
     private void compileStandardFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
-            final Class<?> valueType)
+            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// Save the symbol in a class field.
 	// [TODO] If we are compiling for speed and can assume that the current definition won't
@@ -594,10 +615,11 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	// Assume the function will still be defined when we execute this code.
 	// [TODO] Could define an applyVoid method to return no value.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
+	coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
     }
 
     private void compileSpecialFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
-            final Class<?> valueType)
+            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (getAllSpecialFunctionSymbols)
 	// Done: (quote progn when if unless and or setq repeat while until let let* cond)
@@ -613,21 +635,21 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	// [TODO] Optimization
 	if (symbol.is ("quote"))
 	{
-	    compileQuote (mv, e, valueType);
+	    compileQuote (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("progn"))
 	{
-	    compileProgn (mv, e, valueType);
+	    compileProgn (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("if"))
 	{
 	    if (e.size () <= 3)
 	    { // No else clause, compile as when
-		compileWhen (mv, e, valueType);
+		compileWhen (mv, e, valueType, allowNarrowing, liberalTruth);
 	    }
 	    else
 	    { // If then else
-		compileIf (mv, e, valueType);
+		compileIf (mv, e, valueType, allowNarrowing, liberalTruth);
 	    }
 	}
 	else if (symbol.is ("and"))
@@ -642,7 +664,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    }
 	    else
 	    {
-		compileAnd (mv, e, valueType);
+		compileAnd (mv, e, valueType, allowNarrowing, liberalTruth);
 	    }
 	}
 	else if (symbol.is ("or"))
@@ -657,40 +679,40 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    }
 	    else
 	    {
-		compileOr (mv, e, valueType);
+		compileOr (mv, e, valueType, allowNarrowing, liberalTruth);
 	    }
 	}
 	else if (symbol.is ("when"))
 	{
-	    compileWhen (mv, e, valueType);
+	    compileWhen (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("unless"))
 	{
-	    compileUnless (mv, e, valueType);
+	    compileUnless (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("setq"))
 	{
-	    compileSetq (mv, e, valueType);
+	    compileSetq (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("repeat"))
 	{
-	    compileRepeat (mv, e, valueType);
+	    compileRepeat (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("dotimes"))
 	{
-	    compileDotimes (mv, e, valueType);
+	    compileDotimes (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("while"))
 	{
-	    compileWhile (mv, e, valueType);
+	    compileWhile (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("until"))
 	{
-	    compileUntil (mv, e, valueType);
+	    compileUntil (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("let"))
 	{
-	    compileLet (mv, e, valueType);
+	    compileLet (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("let*"))
 	{
@@ -711,7 +733,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 
 	    // [IDEA] Symbols could have attributes (like, public, protected, private) that affect
 	    // things.
-	    compileLetStar (mv, e, valueType);
+	    compileLetStar (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("cond"))
 	{
@@ -725,12 +747,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    }
 	    else
 	    {
-		compileCond (mv, e, valueType);
+		compileCond (mv, e, valueType, allowNarrowing, liberalTruth);
 	    }
 	}
 	else if (symbol.is ("the"))
 	{
-	    compileThe (mv, e, valueType);
+	    compileThe (mv, e, valueType, allowNarrowing, liberalTruth);
 	}
 	else
 	{
@@ -738,7 +760,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	}
     }
 
-    private void compileQuote (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileQuote (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo () (quote bar))
 	if (boolean.class.equals (valueType))
@@ -761,11 +784,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    mv.visitVarInsn (ALOAD, 0);
 	    final String classInternalName = shellClassType.getInternalName ();
 	    mv.visitFieldInsn (GETFIELD, classInternalName, reference.getName (), typeDescriptor);
-	    coerceRequired (mv, valueType);
+	    coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
 	}
     }
 
-    private void compileProgn (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileProgn (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo () (progn (printf "a%n") (printf "b%n") 3))
 	if (e.size () == 0)
@@ -778,22 +802,23 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    {
 		compileExpression (mv, e.get (i), null);
 	    }
-	    compileExpression (mv, e.last (), valueType);
+	    compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
 	}
     }
 
-    private void compileIf (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileIf (final GeneratorAdapter mv, final LispList e, final Class<?> valueType, final boolean allowNarrowing,
+            final boolean liberalTruth)
     {
 	// (define foo (x) (if x 1 2))
 	// (define foo (x) (if x 1 (printf "a%n") (printf "b%n") 3))
 
-	compileExpression (mv, e.get (1), boolean.class);
+	compileExpression (mv, e.get (1), boolean.class, false, true);
 	final Label l1 = new Label ();
 	final Label l2 = new Label ();
 	mv.visitJumpInsn (IFEQ, l2);
 
 	// True case
-	compileExpression (mv, e.get (2), valueType);
+	compileExpression (mv, e.get (2), valueType, allowNarrowing, liberalTruth);
 	mv.visitJumpInsn (GOTO, l1);
 
 	// False case. Nothing on the stack.
@@ -811,7 +836,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	else
 	{
 	    // Return the last value
-	    compileExpression (mv, e.last (), valueType);
+	    compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
 	}
 
 	// Jump here after true case or fall through after else.
@@ -829,7 +854,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    final Label l1 = new Label ();
 	    for (int i = 1; i < e.size (); i++)
 	    {
-		compileExpression (mv, e.get (i), boolean.class);
+		compileExpression (mv, e.get (i), boolean.class, false, true);
 		mv.visitJumpInsn (IFEQ, l1);
 	    }
 	    mv.visitLabel (l1);
@@ -843,7 +868,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	final Label l1 = new Label ();
 	for (int i = 1; i < e.size (); i++)
 	{
-	    compileExpression (mv, e.get (i), boolean.class);
+	    compileExpression (mv, e.get (i), boolean.class, false, true);
 	    mv.visitJumpInsn (IFEQ, l1);
 	}
 	// True case
@@ -860,7 +885,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	mv.visitLabel (l2);
     }
 
-    private void compileAnd (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileAnd (final GeneratorAdapter mv, final LispList e, final Class<?> valueType, final boolean allowNarrowing,
+            final boolean liberalTruth)
     {
 	// (define foo (a b) (and))
 	// (define foo (a b) (and a b))
@@ -871,7 +897,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	for (int i = 1; i < e.size (); i++)
 	{
 	    mv.visitInsn (POP);
-	    compileExpression (mv, e.get (i), Object.class /* TODO */);
+	    compileExpression (mv, e.get (i), Object.class /* TODO */, false, true);
 	    mv.visitInsn (DUP);
 	    final Label l3 = new Label ();
 	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
@@ -894,7 +920,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	// Jump here after true case or fall through after false.
 	// Return final value.
 	mv.visitLabel (l2);
-	coerceRequired (mv, valueType);
+	coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
     }
 
     /** Compile an 'or' expression whose value will be ignored. */
@@ -907,7 +933,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    final Label l1 = new Label ();
 	    for (int i = 1; i < e.size (); i++)
 	    {
-		compileExpression (mv, e.get (i), boolean.class);
+		compileExpression (mv, e.get (i), boolean.class, false, true);
 		mv.visitJumpInsn (IFNE, l1);
 	    }
 	    mv.visitLabel (l1);
@@ -921,7 +947,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	final Label l1 = new Label ();
 	for (int i = 1; i < e.size (); i++)
 	{
-	    compileExpression (mv, e.get (i), boolean.class);
+	    compileExpression (mv, e.get (i), boolean.class, false, true);
 	    mv.visitJumpInsn (IFNE, l1);
 	}
 	// False case
@@ -938,7 +964,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	mv.visitLabel (l2);
     }
 
-    private void compileOr (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileOr (final GeneratorAdapter mv, final LispList e, final Class<?> valueType, final boolean allowNarrowing,
+            final boolean liberalTruth)
     {
 	// (define foo (a b) (or))
 	// (foo 1 2)
@@ -949,7 +976,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	for (int i = 1; i < e.size (); i++)
 	{
 	    mv.visitInsn (POP);
-	    compileExpression (mv, e.get (i), Object.class /* TODO */);
+	    compileExpression (mv, e.get (i), Object.class /* TODO */, false, true);
 	    mv.visitInsn (DUP);
 	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	    mv.visitJumpInsn (IFEQ, l1);
@@ -965,17 +992,18 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 
 	// Jump here for true case or fall through in false case
 	mv.visitLabel (l1);
-	coerceRequired (mv, valueType);
+	coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
     }
 
-    private void compileWhen (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileWhen (final GeneratorAdapter mv, final LispList e, final Class<?> valueType, final boolean allowNarrowing,
+            final boolean liberalTruth)
     {
 	// (define foo (x) (when x 1 2))
 	// (define foo (x) (when x 1 (printf "a%n") (printf "b%n") 3))
 
 	final Label l1 = new Label ();
 	final Label l2 = new Label ();
-	compileExpression (mv, e.get (1), boolean.class);
+	compileExpression (mv, e.get (1), boolean.class, false, true);
 	mv.visitJumpInsn (IFEQ, l2);
 
 	// True case
@@ -984,7 +1012,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), null);
 	}
 	// Don't pop the last value
-	compileExpression (mv, e.last (), valueType);
+	compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
 	mv.visitJumpInsn (GOTO, l1);
 
 	// False case.
@@ -996,11 +1024,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	mv.visitLabel (l1);
     }
 
-    private void compileUnless (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileUnless (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (unless x 1 2))
 	// (define foo (x) (unless x 1 (printf "a%n") (printf "b%n") 3))
-	compileExpression (mv, e.get (1), boolean.class);
+	compileExpression (mv, e.get (1), boolean.class, false, true);
 	final Label l1 = new Label ();
 	mv.visitJumpInsn (IFNE, l1);
 
@@ -1010,7 +1039,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), null);
 	}
 	// Don't pop the last value
-	compileExpression (mv, e.last (), valueType);
+	compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
 	final Label l3 = new Label ();
 	mv.visitJumpInsn (GOTO, l3);
 
@@ -1023,7 +1052,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	mv.visitLabel (l3);
     }
 
-    private void compileSetq (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileSetq (final GeneratorAdapter mv, final LispList e, final Class<?> valueType, final boolean allowNarrowing,
+            final boolean liberalTruth)
     {
 	// (define foo (x) (setq x 3))
 	// (define foo (x) (setq x 3) x)
@@ -1037,13 +1067,13 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    final int argIndex = methodArgs.indexOf (symbol);
 	    final Class<?> argClass = methodArgClasses.get (argIndex);
 	    LOGGER.finer (new LogString ("Setq parameter %s (%d)", symbol, argIndex));
-	    compileArgSetq (mv, argClass, argIndex, e.get (2), valueType);
+	    compileArgSetq (mv, argClass, argIndex, e.get (2), valueType, allowNarrowing, liberalTruth);
 	}
 	else if (localVariableMap.containsKey (symbol))
 	{
 	    final LocalBinding lb = localVariableMap.get (symbol);
 	    LOGGER.finer (new LogString ("Setq local %s (%d)", symbol, lb));
-	    compileLocalSetq (mv, lb.getClass (), lb.getLocalRef (), e.get (2), valueType);
+	    compileLocalSetq (mv, lb.getClass (), lb.getLocalRef (), e.get (2), valueType, allowNarrowing, liberalTruth);
 	}
 	else
 	{
@@ -1073,13 +1103,13 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    }
 	    if (valueType != null)
 	    {
-		coerceRequired (mv, valueType);
+		coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
 	    }
 	}
     }
 
     private void compileArgSetq (final GeneratorAdapter mv, final Class<?> varClass, final int localRef, final Object expr,
-            final Class<?> valueType)
+            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (valueType == null)
 	{
@@ -1091,12 +1121,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, expr, varClass);
 	    mv.visitInsn (DUP);
 	    mv.storeArg (localRef);
-	    coerceRequired (mv, valueType);
+	    coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
 	}
     }
 
     private void compileLocalSetq (final GeneratorAdapter mv, final Class<?> varClass, final int localRef, final Object expr,
-            final Class<?> valueType)
+            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (valueType == null)
 	{
@@ -1110,11 +1140,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    mv.visitInsn (DUP);
 	    mv.storeLocal (localRef);
 	    // mv.visitVarInsn (ASTORE, localRef);
-	    coerceRequired (mv, valueType);
+	    coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
 	}
     }
 
-    private void compileRepeat (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileRepeat (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (repeat x 3))
 	// (define foo (x) (repeat x 3) 5)
@@ -1135,7 +1166,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	final int countRef = mv.newLocal (Type.getType (int.class));
 
 	// Compute repeat count
-	compileExpression (mv, e.get (1), int.class);
+	compileExpression (mv, e.get (1), int.class, false, false);
 	// Put repeat count number into local variable
 	mv.visitVarInsn (ISTORE, countRef);
 
@@ -1160,13 +1191,17 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    mv.visitInsn (SWAP);
 	}
 	// Stack: value, iteration
-	for (int i = 2; i < e.size (); i++)
+	if (e.size () > 2)
 	{
 	    if (valueType != null)
 	    {
 		mv.visitInsn (POP);
 	    }
-	    compileExpression (mv, e.get (i), valueType);
+	    for (int i = 2; i < e.size () - 1; i++)
+	    {
+		compileExpression (mv, e.get (i), null, false, false);
+	    }
+	    compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
 	}
 	if (valueType != null)
 	{
@@ -1189,9 +1224,11 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	// Stack: iteration, value
 	// Remove iteration count
 	mv.visitInsn (POP);
+	// coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
     }
 
-    private void compileDotimes (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileDotimes (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo () (dotimes (i 3) 0))
 	// (define foo () (dotimes (i 3) 0) 5)
@@ -1202,7 +1239,9 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	// Compute repeat count
 	final List<?> control = (List<?>)e.get (1);
 	final Object count = control.get (1);
-	compileExpression (mv, count, Object.class /* TODO */);
+	// [TODO] Currently always compiles for Object result. Need to analyze the body and
+	// determine if the value is actually referenced.
+	compileExpression (mv, count, Object.class /* TODO */, false, false);
 	mv.visitTypeInsn (CHECKCAST, "java/lang/Integer");
 	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
 	// Leave repeat count on the stack
@@ -1217,7 +1256,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	// Create a local variable to hold the iteration number.
 	// This is always stored in boxed format so body code can reference it.
 	// Should be able to store this as an int if the body code can use it that way.
-	final Type type = boxer.INTEGER_TYPE;
+	final Type type = Boxer.INTEGER_TYPE;
 	final int iterationRef = mv.newLocal (type);
 	final Symbol var = (Symbol)control.get (0);
 	final LocalBinding lb = new LocalBinding (var, type, iterationRef);
@@ -1274,11 +1313,13 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	// Stack repeatCount, [returnValue]
 
 	mv.visitInsn (POP); // Remove repeat count
+	// coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
 	// Return last body value
 	localVariableMap = savedLocalVariableMap;
     }
 
-    private void compileWhile (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileWhile (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (setq a 0) (while (< a x) (printf "A: %s%n" a) (setq a (+ a 1))))
 
@@ -1289,7 +1330,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	final Label l1 = new Label ();
 	mv.visitLabel (l1);
 	final Label l2 = new Label ();
-	compileExpression (mv, e.get (1), boolean.class);
+	compileExpression (mv, e.get (1), boolean.class, false, true);
 	mv.visitJumpInsn (IFEQ, l2);
 
 	// Loop body
@@ -1302,13 +1343,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), null);
 	}
 	// Don't pop the last value
-	compileExpression (mv, e.last (), valueType);
+	compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
 	mv.visitJumpInsn (GOTO, l1);
 
 	mv.visitLabel (l2);
     }
 
-    private void compileUntil (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileUntil (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (setq a 0) (until (> a x) (printf "A: %s%n" a) (setq a (+ a 1))))
 
@@ -1319,7 +1361,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	final Label l1 = new Label ();
 	mv.visitLabel (l1);
 	final Label l2 = new Label ();
-	compileExpression (mv, e.get (1), boolean.class);
+	compileExpression (mv, e.get (1), boolean.class, false, true);
 	mv.visitJumpInsn (IFNE, l2);
 
 	// Loop body
@@ -1332,13 +1374,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), null);
 	}
 	// Don't pop the last value
-	compileExpression (mv, e.last (), valueType);
+	compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
 	mv.visitJumpInsn (GOTO, l1);
 
 	mv.visitLabel (l2);
     }
 
-    private void compileLet (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileLet (final GeneratorAdapter mv, final LispList e, final Class<?> valueType, final boolean allowNarrowing,
+            final boolean liberalTruth)
     {
 	// (define foo (x) (let ((a 1) (b 2)) (+ a b x)))
 	// (define foo () (let ((a 1) (b 2)) a))
@@ -1370,13 +1413,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), null);
 	}
 	// Evaluate last (required) body form
-	compileExpression (mv, e.last (), valueType);
+	compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
 	// Restore original local variables map
 	localVariableMap = savedLocalVariableMap;
-	coerceRequired (mv, valueType);
+	// coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
     }
 
-    private void compileLetStar (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    private void compileLetStar (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (let* ((a 1) (b 2)) (+ a b x)))
 	// (define foo () (let* ((a 1) (b 2)) a))
@@ -1410,47 +1454,52 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), null);
 	}
 	// Evaluate last (required) body form
-	compileExpression (mv, e.last (), valueType);
+	compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
 
 	// Restore original local variables map
 	localVariableMap = savedLocalVariableMap;
-	coerceRequired (mv, valueType);
+	// coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
     }
 
-    private void compileCond (final GeneratorAdapter mv, final LispList e, final Class<?> valueType)
+    /** Compile a cond expression where the value will be used. */
+    private void compileCond (final GeneratorAdapter mv, final LispList e, final Class<?> valueClass,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
+	// (setq showBytecode t)
+	// (define foo (x) (cond (x 1)))
+	// (define foo (x) (cond ((= x 1) 'alpha)))
 	// (define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma) (true 'delta)))
+	if (valueClass == null)
+	{
+	    throw new Error ("Use compileVoidCond when valueType is null");
+	}
 	final Package system = PackageFactory.getSystemPackage ();
 	final Symbol var = system.internSymbol ("result").gensym ();
 
-	int resultRef = 0;
-	if (valueType != null)
-	{
-	    // [TODO] This should use the valueType, not Object.class
-	    resultRef = mv.newLocal (Type.getType (valueType));
-	    final LocalBinding lb = new LocalBinding (var, boxer.OBJECT_TYPE, resultRef);
-	    localVariableMap.put (var, lb);
-	    // mv.visitInsn (ACONST_NULL);
-	    // mv.visitVarInsn (ASTORE, resultRef);
-	    pushDefaultValue (mv, valueType);
-	    mv.storeLocal (resultRef);
-	}
+	// Setup return value in a local variable
+
+	// Store as an object until return time
+	final int resultRef = mv.newLocal (Boxer.OBJECT_TYPE);
+	final LocalBinding lb = new LocalBinding (var, Boxer.OBJECT_TYPE, resultRef);
+	final Map<Symbol, LocalBinding> savedBindings = localVariableMap;
+	localVariableMap = new HashMap<Symbol, LocalBinding> (localVariableMap);
+	localVariableMap.put (var, lb);
+	pushDefaultValue (mv, Object.class);
+	mv.storeLocal (resultRef);
+
 	// Label to goto and return result
 	final Label l1 = new Label ();
 	for (int i = 1; i < e.size (); i++)
 	{
+	    // Stack is empty
 	    final LispList clause = (LispList)e.get (i);
 	    final Object key = clause.get (0);
 	    final Label l2 = new Label ();
 	    final Label l3 = new Label ();
-	    if (valueType == null)
+	    final Label l4 = new Label ();
+	    if (clause.size () == 1)
 	    {
-		compileExpression (mv, key, boolean.class);
-		mv.visitJumpInsn (IFEQ, l3);
-	    }
-	    else
-	    {
-		compileExpression (mv, key, valueType);
+		compileExpression (mv, key, Object.class, false, true);
 		mv.visitInsn (DUP);
 		mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 		mv.visitJumpInsn (IFEQ, l2); // Check for boolean
@@ -1458,36 +1507,46 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 		mv.visitInsn (DUP);
 		mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
 		mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
-		mv.visitJumpInsn (IFEQ, l3);
+		mv.visitJumpInsn (IFEQ, l3); // Proceed to next clause
+
+		// Clause selected and value of key expression is return value
+		mv.visitLabel (l2);
+	    }
+	    else
+	    {
+		// No need to save value of key expression
+		compileExpression (mv, key, boolean.class, false, true);
+		mv.visitJumpInsn (IFEQ, l4); // Proceed to next clause
+
+		// Clause selected
+		mv.visitLabel (l2);
+
+		// One entry on stack
+		if (clause.size () > 1)
+		{
+		    for (int j = 1; j < clause.size () - 1; j++)
+		    {
+			compileExpression (mv, clause.get (j), null, false, false);
+		    }
+		    compileExpression (mv, clause.last (), valueClass, allowNarrowing, liberalTruth);
+		}
 	    }
 
-	    // Clause selected
-	    mv.visitLabel (l2);
-	    if (valueType != null)
-	    {
-		mv.visitVarInsn (ASTORE, resultRef);
-	    }
-	    for (int j = 1; j < clause.size (); j++)
-	    {
-		compileExpression (mv, clause.get (j), valueType);
-	    }
-	    if (valueType != null)
-	    {
-		mv.storeLocal (resultRef);
-	    }
+	    mv.storeLocal (resultRef);
+	    // Stack is empty
 	    mv.visitJumpInsn (GOTO, l1);
 
 	    // Clause not selected
 	    mv.visitLabel (l3);
 	    mv.visitInsn (POP);
+	    mv.visitLabel (l4);
+	    // Stack is empty
 	}
 	// Return result
 	mv.visitLabel (l1);
-	if (valueType != null)
-	{
-	    // mv.visitVarInsn (ALOAD, resultRef);
-	    mv.loadLocal (resultRef);
-	}
+	mv.loadLocal (resultRef);
+	coerceRequired (mv, valueClass, allowNarrowing, liberalTruth);
+	localVariableMap = savedBindings;
     }
 
     /** Case where no return value is required. */
@@ -1561,15 +1620,17 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	mv.visitLabel (l1);
     }
 
-    private void compileThe (final GeneratorAdapter mv, final LispList e, final Class<?> valueClass)
+    private void compileThe (final GeneratorAdapter mv, final LispList e, final Class<?> valueClass, final boolean allowNarrowing,
+            final boolean liberalTruth)
     {
 	final Object type = e.get (1);
 	final Object arg = e.get (2);
 
-	compileThe (mv, type, arg, valueClass);
+	compileThe (mv, type, arg, valueClass, allowNarrowing, liberalTruth);
     }
 
-    private void compileThe (final GeneratorAdapter mv, final Object type, final Object arg, final Class<?> valueClass)
+    private void compileThe (final GeneratorAdapter mv, final Object type, final Object arg, final Class<?> valueClass,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (setq system.showBytecode t)
 	// (define foo () byte:3)
@@ -1580,62 +1641,65 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    if (t.is ("byte"))
 	    {
 		// (define byte:foo () (the byte int:3))
-		compileExpression (mv, arg, int.class);
-		mv.visitInsn (I2B); // Narrow
-		convert.convert (mv, byte.class, valueClass);
+		// (define byte:foo () byte:int:3)
+		// (d (foo))
+		compileExpression (mv, arg, byte.class, true, false);
+		// mv.visitInsn (I2B); // Narrow
+		convert.convert (mv, byte.class, valueClass, false, false);
 		return;
 	    }
 	    if (t.is ("char"))
 	    {
-		compileExpression (mv, arg, int.class);
+		compileExpression (mv, arg, int.class, true, false);
 		mv.visitInsn (I2C); // Narrow
-		convert.convert (mv, char.class, valueClass);
+		convert.convert (mv, char.class, valueClass, false, false);
 		return;
 	    }
 	    if (t.is ("short"))
 	    {
 		// (define short:foo () (the short int:3))
-		compileExpression (mv, arg, int.class);
+		compileExpression (mv, arg, int.class, true, false);
 		mv.visitInsn (I2S); // Narrow
-		convert.convert (mv, short.class, valueClass);
+		convert.convert (mv, short.class, valueClass, false, false);
 		return;
 	    }
 	    if (t.is ("int"))
 	    {
 		// [TODO] Need to allow narrowing conversions here
-		compileExpression (mv, arg, int.class);
-		convert.convert (mv, int.class, valueClass);
+		compileExpression (mv, arg, int.class, true, false);
+		convert.convert (mv, int.class, valueClass, false, false);
 		return;
 	    }
 	    if (t.is ("long"))
 	    {
 		// [TODO] Need to allow narrowing conversions here
-		compileExpression (mv, arg, long.class);
-		convert.convert (mv, long.class, valueClass);
+		compileExpression (mv, arg, long.class, true, false);
+		convert.convert (mv, long.class, valueClass, false, false);
 		return;
 	    }
 	    if (t.is ("float"))
 	    {
 		// NOT WORKING
 		// mv.visitLdcInsn ((float)6.9);
-		compileExpression (mv, arg, float.class);
-		convert.convert (mv, float.class, valueClass);
+		compileExpression (mv, arg, float.class, true, false);
+		convert.convert (mv, float.class, valueClass, false, false);
 		return;
 	    }
 	    if (t.is ("double"))
 	    {
-		compileExpression (mv, arg, double.class);
-		convert.convert (mv, double.class, valueClass);
+		compileExpression (mv, arg, double.class, true, false);
+		convert.convert (mv, double.class, valueClass, false, false);
 		return;
 	    }
-	    compileThe (mv, t.getName (), arg, valueClass);
+	    compileThe (mv, t.getName (), arg, valueClass, allowNarrowing, liberalTruth);
 	    return;
 	}
+	// Narrowing has not been implemented below this line
 	else if (type instanceof Class)
 	{
 	    final Class<?> c = (Class<?>)type;
-	    convert.convert (mv, Object.class, c);
-	    convert.convert (mv, c, valueClass);
+	    convert.convert (mv, Object.class, c, true, false);
+	    convert.convert (mv, c, valueClass, false, false);
 	    return;
 	}
 	if (type instanceof String)
@@ -1644,7 +1708,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    try
 	    {
 		final Class<?> c = Class.forName (t);
-		convert.convert (mv, c, valueClass);
+		convert.convert (mv, c, valueClass, false, false);
 		return;
 	    }
 	    catch (final ClassNotFoundException e)
@@ -1655,7 +1719,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 		try
 		{
 		    final Class<?> c = Class.forName ("java.lang." + t);
-		    convert.convert (mv, c, valueClass);
+		    convert.convert (mv, c, valueClass, false, false);
 		    return;
 		}
 		catch (final ClassNotFoundException e)
@@ -1689,15 +1753,16 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
     }
 
     /** Convert class to type and coerce the value. */
-    private void coerceRequired (final GeneratorAdapter mv, final Class<?> valueClass)
+    private void coerceRequired (final GeneratorAdapter mv, final Class<?> valueClass, final boolean allowNarrowing,
+            final boolean liberalTruth)
     {
 	if (valueClass == null)
 	{
-	    coerceRequired (mv, Type.VOID_TYPE);
+	    coerceRequired (mv, Type.VOID_TYPE, allowNarrowing, liberalTruth);
 	}
 	else
 	{
-	    coerceRequired (mv, Type.getType (valueClass));
+	    coerceRequired (mv, Type.getType (valueClass), allowNarrowing, liberalTruth);
 	}
     }
 
@@ -1707,7 +1772,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
      * contain an instance of the wrapperType. This will work for Boolean since it won't convert
      * other instances to true.
      */
-    private void coerceRequired (final GeneratorAdapter mv, final Type valueType)
+    private void coerceRequired (final GeneratorAdapter mv, final Type valueType, final boolean allowNarrowing,
+            final boolean liberalTruth)
     {
 	final int sort = valueType.getSort ();
 	if (sort == Type.VOID)
@@ -1718,6 +1784,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	{
 	    // Treat anything except Boolean as true.
 	    // unbox booleans
+	    // [TODO] Implement liberalTruth here
 	    convert.coerceBoolean (mv);
 	}
 	else if (sort > Type.VOID && sort < Type.ARRAY)
@@ -1730,26 +1797,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes
 	    // Leave object types alone
 	}
     }
-
-    // /**
-    // * Convert an instance of a boxed wrapper class into the corresponding primitive type. Note:
-    // * short and byte are converted to int. See ByteCodeUtils if this is a problem. The stack must
-    // * contain an instance of the wrapperType. This will work for Boolean since it won't convert
-    // * other instances to true.
-    // */
-    // private void unbox (final GeneratorAdapter mv, final Type wrapperType)
-    // {
-    // // Requires GeneratorAdaptor
-    // mv.unbox (wrapperType);
-    // }
-
-    /** Convert an instance of a primitive type into the corresponding boxed wrapper class. */
-    // private void box (final GeneratorAdapter mv, final Type resultType)
-    // {
-    // // Requires GeneratorAdaptor
-    // // mv.valueOf (resultType);
-    // mv.box (resultType);
-    // }
 
     /**
      * Push a default value onto the stack. If the value will be a primitive boolean, use false as

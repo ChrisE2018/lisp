@@ -20,8 +20,13 @@ public class Convert implements Opcodes
      * @param fromType The current type of the top stack element.
      * @param toType The required type of the top stack element. We must convert to this type (or a
      *            subtype).
+     * @param allowNarrowing When true, narrowing conversions will be generated if required.
+     *            Otherwise narrowing throws and error.
+     * @param liberalTruth When set, any non-boolean result is accepted as true. Otherwise, boolean
+     *            testing requires strictly boolean values.
      */
-    public void convert (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass)
+    public void convert (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	final Type fromType = Type.getType (fromClass);
 	final Type toType = Type.getType (toClass);
@@ -76,7 +81,7 @@ public class Convert implements Opcodes
 	    }
 	    case Type.BYTE:
 	    {
-		convert2byte (mv, fromClass, toClass);
+		convert2byte (mv, fromClass, toClass, allowNarrowing);
 
 		return;
 	    }
@@ -296,7 +301,8 @@ public class Convert implements Opcodes
 	// Succeed
     }
 
-    private void convert2byte (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass)
+    private void convert2byte (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
+            final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	final Type toType = Type.getType (toClass);
@@ -310,6 +316,32 @@ public class Convert implements Opcodes
 	{
 	    mv.unbox (toType);
 	    return;
+	}
+	if (fromClass.equals (int.class) || fromClass.equals (short.class))
+	{
+	    if (allowNarrowing)
+	    {
+		mv.visitInsn (I2B);
+		return;
+	    }
+	}
+	if (fromClass.equals (Integer.class) || fromClass.equals (Short.class))
+	{
+	    if (allowNarrowing)
+	    {
+		mv.unbox (Type.INT_TYPE);
+		mv.visitInsn (I2B);
+		return;
+	    }
+	}
+	if (fromClass.equals (long.class))
+	{
+	    if (allowNarrowing)
+	    {
+		mv.visitInsn (L2I);
+		mv.visitInsn (I2B);
+		return;
+	    }
 	}
 	if (fromClass.equals (int.class) || fromClass.equals (short.class) || fromClass.equals (long.class)
 	    || fromClass.equals (float.class) || fromClass.equals (double.class))
