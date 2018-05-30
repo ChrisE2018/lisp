@@ -147,25 +147,30 @@ public class LispReader
 	final char close = result.getCloseChar ();
 	while (!in.peek (close))
 	{
-	    final Object element = read (in, pkg);
-	    parsing.skipBlanks (in);
-	    if (in.tryChar (parsing.getTheMarker ()))
-	    {
-		final Object e2 = read (in, pkg);
-		final LispList the = new LispList ();
-		the.add (theSymbol);
-		the.add (element);
-		the.add (e2);
-		result.add (the);
-	    }
-	    else
-	    {
-		result.add (element);
-	    }
+	    readInsideList (in, pkg, result);
 	    parsing.skipBlanks (in);
 	}
 	in.read ();
 	return result;
+    }
+
+    private void readInsideList (final LispStream in, final Package pkg, final LispList result) throws IOException
+    {
+	final Parsing parsing = pkg.getParsing ();
+	final Object element = read (in, pkg);
+	parsing.skipBlanks (in);
+	if (in.tryChar (parsing.getTheMarker ()))
+	{
+	    final LispList the = new LispList ();
+	    the.add (theSymbol);
+	    the.add (element);
+	    readInsideList (in, pkg, the);
+	    result.add (the);
+	}
+	else
+	{
+	    result.add (element);
+	}
     }
 
     /** Read a map where comma separates entries. */
