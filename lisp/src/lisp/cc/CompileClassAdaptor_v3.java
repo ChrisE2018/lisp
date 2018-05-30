@@ -820,11 +820,11 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// compileCond (mv, expression, valueType, allowNarrowing, liberalTruth);
 	// }
 	// }
-	else if (symbol.is ("the"))
-	{
-	    compileThe (mv, expression, valueType, allowNarrowing, liberalTruth);
-	}
-	else
+	// else if (symbol.is ("the"))
+	// {
+	// compileThe (mv, expression, valueType, allowNarrowing, liberalTruth);
+	// }
+	// else
 	{
 	    throw new IllegalArgumentException ("NYI special form " + symbol);
 	}
@@ -1723,113 +1723,115 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     // mv.visitLabel (l1);
     // }
 
-    private void compileThe (final GeneratorAdapter mv, final LispList e, final Class<?> valueClass, final boolean allowNarrowing,
-            final boolean liberalTruth)
-    {
-	final Object type = e.get (1);
-	final Object arg = e.get (2);
-
-	compileThe (mv, type, arg, valueClass, allowNarrowing, liberalTruth);
-    }
-
-    private void compileThe (final GeneratorAdapter mv, final Object type, final Object arg, final Class<?> valueClass,
-            final boolean allowNarrowing, final boolean liberalTruth)
-    {
-	// (setq system.showBytecode t)
-	// (define foo () byte:3)
-	// [TODO] Need to allow narrowing conversions here
-	if (type instanceof Symbol)
-	{
-	    final Symbol t = (Symbol)type;
-	    if (t.is ("byte"))
-	    {
-		// (define byte:foo () (the byte int:3))
-		// (define byte:foo () byte:int:3)
-		// (d (foo))
-		compileExpression (mv, arg, byte.class, true, false);
-		convert.convert (mv, byte.class, valueClass, true, false);
-		return;
-	    }
-	    if (t.is ("char"))
-	    {
-		compileExpression (mv, arg, int.class, true, false);
-		// mv.visitInsn (I2C); // Narrow
-		convert.convert (mv, char.class, valueClass, true, false);
-		return;
-	    }
-	    if (t.is ("short"))
-	    {
-		// (define short:foo () (the short int:3))
-		compileExpression (mv, arg, int.class, true, false);
-		convert.convert (mv, short.class, valueClass, true, false);
-		return;
-	    }
-	    if (t.is ("int"))
-	    {
-		compileExpression (mv, arg, int.class, true, false);
-		convert.convert (mv, int.class, valueClass, true, false);
-		return;
-	    }
-	    if (t.is ("long"))
-	    {
-		// (define long:foo () int:3) ; Widening
-		// (define long:foo () float:3.3) ; Error needs cast
-		// (define long:foo () long:float:3.3) ; Explicit cast
-		compileExpression (mv, arg, long.class, true, false);
-		convert.convert (mv, long.class, valueClass, true, false);
-		return;
-	    }
-	    if (t.is ("float"))
-	    {
-		// NOT WORKING
-		// mv.visitLdcInsn ((float)6.9);
-		compileExpression (mv, arg, float.class, true, false);
-		convert.convert (mv, float.class, valueClass, true, false);
-		return;
-	    }
-	    if (t.is ("double"))
-	    {
-		compileExpression (mv, arg, double.class, true, false);
-		convert.convert (mv, double.class, valueClass, true, false);
-		return;
-	    }
-	    compileThe (mv, t.getName (), arg, valueClass, allowNarrowing, liberalTruth);
-	    return;
-	}
-	// Narrowing has not been implemented below this line
-	else if (type instanceof Class)
-	{
-	    final Class<?> c = (Class<?>)type;
-	    convert.convert (mv, Object.class, c, true, false);
-	    convert.convert (mv, c, valueClass, false, false);
-	    return;
-	}
-	if (type instanceof String)
-	{
-	    final String t = (String)type;
-	    try
-	    {
-		final Class<?> c = Class.forName (t);
-		convert.convert (mv, c, valueClass, false, false);
-		return;
-	    }
-	    catch (final ClassNotFoundException e)
-	    {
-	    }
-	    if (t.indexOf (".") < 0)
-	    {
-		try
-		{
-		    final Class<?> c = Class.forName ("java.lang." + t);
-		    convert.convert (mv, c, valueClass, false, false);
-		    return;
-		}
-		catch (final ClassNotFoundException e)
-		{
-		}
-	    }
-	}
-    }
+    // private void compileThe (final GeneratorAdapter mv, final LispList e, final Class<?>
+    // valueClass, final boolean allowNarrowing,
+    // final boolean liberalTruth)
+    // {
+    // final Object type = e.get (1);
+    // final Object arg = e.get (2);
+    //
+    // compileThe (mv, type, arg, valueClass, allowNarrowing, liberalTruth);
+    // }
+    //
+    // private void compileThe (final GeneratorAdapter mv, final Object type, final Object arg,
+    // final Class<?> valueClass,
+    // final boolean allowNarrowing, final boolean liberalTruth)
+    // {
+    // // (setq system.showBytecode t)
+    // // (define foo () byte:3)
+    // // [TODO] Need to allow narrowing conversions here
+    // if (type instanceof Symbol)
+    // {
+    // final Symbol t = (Symbol)type;
+    // if (t.is ("byte"))
+    // {
+    // // (define byte:foo () (the byte int:3))
+    // // (define byte:foo () byte:int:3)
+    // // (d (foo))
+    // compileExpression (mv, arg, byte.class, true, false);
+    // convert.convert (mv, byte.class, valueClass, true, false);
+    // return;
+    // }
+    // if (t.is ("char"))
+    // {
+    // compileExpression (mv, arg, int.class, true, false);
+    // // mv.visitInsn (I2C); // Narrow
+    // convert.convert (mv, char.class, valueClass, true, false);
+    // return;
+    // }
+    // if (t.is ("short"))
+    // {
+    // // (define short:foo () (the short int:3))
+    // compileExpression (mv, arg, int.class, true, false);
+    // convert.convert (mv, short.class, valueClass, true, false);
+    // return;
+    // }
+    // if (t.is ("int"))
+    // {
+    // compileExpression (mv, arg, int.class, true, false);
+    // convert.convert (mv, int.class, valueClass, true, false);
+    // return;
+    // }
+    // if (t.is ("long"))
+    // {
+    // // (define long:foo () int:3) ; Widening
+    // // (define long:foo () float:3.3) ; Error needs cast
+    // // (define long:foo () long:float:3.3) ; Explicit cast
+    // compileExpression (mv, arg, long.class, true, false);
+    // convert.convert (mv, long.class, valueClass, true, false);
+    // return;
+    // }
+    // if (t.is ("float"))
+    // {
+    // // NOT WORKING
+    // // mv.visitLdcInsn ((float)6.9);
+    // compileExpression (mv, arg, float.class, true, false);
+    // convert.convert (mv, float.class, valueClass, true, false);
+    // return;
+    // }
+    // if (t.is ("double"))
+    // {
+    // compileExpression (mv, arg, double.class, true, false);
+    // convert.convert (mv, double.class, valueClass, true, false);
+    // return;
+    // }
+    // compileThe (mv, t.getName (), arg, valueClass, allowNarrowing, liberalTruth);
+    // return;
+    // }
+    // // Narrowing has not been implemented below this line
+    // else if (type instanceof Class)
+    // {
+    // final Class<?> c = (Class<?>)type;
+    // convert.convert (mv, Object.class, c, true, false);
+    // convert.convert (mv, c, valueClass, false, false);
+    // return;
+    // }
+    // if (type instanceof String)
+    // {
+    // final String t = (String)type;
+    // try
+    // {
+    // final Class<?> c = Class.forName (t);
+    // convert.convert (mv, c, valueClass, false, false);
+    // return;
+    // }
+    // catch (final ClassNotFoundException e)
+    // {
+    // }
+    // if (t.indexOf (".") < 0)
+    // {
+    // try
+    // {
+    // final Class<?> c = Class.forName ("java.lang." + t);
+    // convert.convert (mv, c, valueClass, false, false);
+    // return;
+    // }
+    // catch (final ClassNotFoundException e)
+    // {
+    // }
+    // }
+    // }
+    // }
 
     private void createField (final int fieldAccess, final String fieldName, final String fieldDescriptor)
     {
