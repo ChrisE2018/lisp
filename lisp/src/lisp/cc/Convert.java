@@ -236,6 +236,54 @@ public class Convert implements Opcodes
     }
 
     /**
+     * If there is a Long on the stack, convert it to an int. Otherwise, leave the top value on the
+     * stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Long.
+     */
+    private void convertLong2int (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Long");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.LONG_TYPE);
+	mv.visitInsn (L2I);
+    }
+
+    /**
+     * If there is a Float on the stack, convert it to an int. Otherwise, leave the top value on the
+     * stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Float.
+     */
+    private void convertFloat2int (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Float");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.FLOAT_TYPE);
+	mv.visitInsn (F2I);
+    }
+
+    /**
+     * If there is a Double on the stack, convert it to an int. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Double.
+     */
+    private void convertDouble2int (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Double");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.DOUBLE_TYPE);
+	mv.visitInsn (D2I);
+    }
+
+    /**
      * If there is a Long on the stack, convert it to an long. Otherwise, leave the top value on the
      * stack alone and jump to the label otherwise.
      *
@@ -251,6 +299,102 @@ public class Convert implements Opcodes
     }
 
     /**
+     * If there is a Float on the stack, convert it to an long. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Float.
+     */
+    private void convertFloat2long (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Float");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.FLOAT_TYPE);
+	mv.visitInsn (F2L);
+    }
+
+    /**
+     * If there is a Double on the stack, convert it to an long. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Double.
+     */
+    private void convertDouble2long (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Double");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.DOUBLE_TYPE);
+	mv.visitInsn (D2L);
+    }
+
+    /**
+     * If there is a Byte on the stack, convert it to an float. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Byte.
+     */
+    private void convertByte2float (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Byte");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.BYTE_TYPE);
+	mv.visitInsn (I2F);
+    }
+
+    /**
+     * If there is a Character on the stack, convert it to an float. Otherwise, leave the top value
+     * on the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Character.
+     */
+    private void convertCharacter2float (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Character");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.CHAR_TYPE);
+	mv.visitInsn (I2F);
+    }
+
+    /**
+     * If there is a Short on the stack, convert it to an float. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Short.
+     */
+    private void convertShort2float (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Short");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.SHORT_TYPE);
+	mv.visitInsn (I2F);
+    }
+
+    /**
+     * If there is a Integer on the stack, convert it to an float. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Integer.
+     */
+    private void convertInteger2float (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Integer");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.INT_TYPE);
+	mv.visitInsn (I2F);
+    }
+
+    /**
      * If there is a Float on the stack, convert it to an float. Otherwise, leave the top value on
      * the stack alone and jump to the label otherwise.
      *
@@ -263,6 +407,38 @@ public class Convert implements Opcodes
 	mv.visitTypeInsn (INSTANCEOF, "java/lang/Float");
 	mv.visitJumpInsn (IFEQ, otherwise);
 	mv.unbox (Type.FLOAT_TYPE);
+    }
+
+    /**
+     * If there is a Long on the stack, convert it to an float. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Long.
+     */
+    private void convertLong2float (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Long");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.LONG_TYPE);
+	mv.visitInsn (L2F);
+    }
+
+    /**
+     * If there is a Double on the stack, convert it to an float. Otherwise, leave the top value on
+     * the stack alone and jump to the label otherwise.
+     *
+     * @param mv Bytecode generator.
+     * @param otherwise Label to jump to if the stack does not have a Double.
+     */
+    private void convertDouble2float (final GeneratorAdapter mv, final Label otherwise)
+    {
+	mv.visitInsn (DUP);
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Double");
+	mv.visitJumpInsn (IFEQ, otherwise);
+	mv.unbox (Type.DOUBLE_TYPE);
+	mv.visitInsn (D2F);
     }
 
     // /**
@@ -406,15 +582,16 @@ public class Convert implements Opcodes
 		return;
 	    }
 	}
-	if (fromClass.equals (long.class))
-	{
-	    if (allowNarrowing)
-	    {
-		mv.visitInsn (L2I);
-		mv.visitInsn (I2B);
-		return;
-	    }
-	}
+	// Convert from long to byte in two steps
+	// if (fromClass.equals (long.class))
+	// {
+	// if (allowNarrowing)
+	// {
+	// mv.visitInsn (L2I);
+	// mv.visitInsn (I2B);
+	// return;
+	// }
+	// }
 	if (fromClass.equals (int.class) || fromClass.equals (short.class) || fromClass.equals (long.class)
 	    || fromClass.equals (float.class) || fromClass.equals (double.class) || fromClass.equals (Integer.class)
 	    || fromClass.equals (Short.class) || fromClass.equals (Long.class) || fromClass.equals (Float.class)
@@ -425,13 +602,25 @@ public class Convert implements Opcodes
 	final Label l0 = new Label (); // Good
 	final Label l1 = new Label ();
 	final Label l2 = new Label ();
+	final Label l3 = new Label ();
+	final Label l4 = new Label ();
 	convertByte2int (mv, l1);
 	mv.visitJumpInsn (GOTO, l0);
 	mv.visitLabel (l1);
 	convertChar2int (mv, l2);
 	mv.visitJumpInsn (GOTO, l0);
 	mv.visitLabel (l2);
-	throwException (mv, "java/lang/IllegalArgumentException", "Can't convert to %s", toClass);
+	if (allowNarrowing)
+	{
+	    convertInt2int (mv, l3);
+	    mv.visitJumpInsn (GOTO, l0);
+	    mv.visitLabel (l3);
+	    convertShort2int (mv, l4);
+	    mv.visitJumpInsn (GOTO, l0);
+	    mv.visitLabel (l4);
+	}
+
+	throwException (mv, "java/lang/IllegalArgumentException", "Use 'the' for explicit narrowing conversion to byte");
 	mv.visitLabel (l0);
 	// Succeed
     }
@@ -465,45 +654,46 @@ public class Convert implements Opcodes
 		mv.visitInsn (I2S);
 		return;
 	    }
-	    if (fromClass.equals (Long.class))
-	    {
-		mv.unbox (boxer.getUnboxedType (fromType));
-		mv.visitInsn (L2I);
-		mv.visitInsn (I2S);
-		return;
-	    }
-	    if (fromClass.equals (long.class))
-	    {
-		mv.visitInsn (L2I);
-		mv.visitInsn (I2S);
-		return;
-	    }
-	    if (fromClass.equals (Float.class))
-	    {
-		mv.unbox (boxer.getUnboxedType (fromType));
-		mv.visitInsn (F2I);
-		mv.visitInsn (I2S);
-		return;
-	    }
-	    if (fromClass.equals (float.class))
-	    {
-		mv.visitInsn (F2I);
-		mv.visitInsn (I2S);
-		return;
-	    }
-	    if (fromClass.equals (Double.class))
-	    {
-		mv.unbox (boxer.getUnboxedType (fromType));
-		mv.visitInsn (D2I);
-		mv.visitInsn (I2S);
-		return;
-	    }
-	    if (fromClass.equals (double.class))
-	    {
-		mv.visitInsn (D2I);
-		mv.visitInsn (I2S);
-		return;
-	    }
+	    // Convert to int, then to short if required.
+	    // if (fromClass.equals (Long.class))
+	    // {
+	    // mv.unbox (boxer.getUnboxedType (fromType));
+	    // mv.visitInsn (L2I);
+	    // mv.visitInsn (I2S);
+	    // return;
+	    // }
+	    // if (fromClass.equals (long.class))
+	    // {
+	    // mv.visitInsn (L2I);
+	    // mv.visitInsn (I2S);
+	    // return;
+	    // }
+	    // if (fromClass.equals (Float.class))
+	    // {
+	    // mv.unbox (boxer.getUnboxedType (fromType));
+	    // mv.visitInsn (F2I);
+	    // mv.visitInsn (I2S);
+	    // return;
+	    // }
+	    // if (fromClass.equals (float.class))
+	    // {
+	    // mv.visitInsn (F2I);
+	    // mv.visitInsn (I2S);
+	    // return;
+	    // }
+	    // if (fromClass.equals (Double.class))
+	    // {
+	    // mv.unbox (boxer.getUnboxedType (fromType));
+	    // mv.visitInsn (D2I);
+	    // mv.visitInsn (I2S);
+	    // return;
+	    // }
+	    // if (fromClass.equals (double.class))
+	    // {
+	    // mv.visitInsn (D2I);
+	    // mv.visitInsn (I2S);
+	    // return;
+	    // }
 	}
 	if (fromClass.equals (int.class) || fromClass.equals (long.class) || fromClass.equals (float.class)
 	    || fromClass.equals (double.class) || fromClass.equals (Integer.class) || fromClass.equals (Long.class)
@@ -515,6 +705,7 @@ public class Convert implements Opcodes
 	final Label l1 = new Label ();
 	final Label l2 = new Label ();
 	final Label l3 = new Label ();
+	final Label l4 = new Label ();
 	convertByte2int (mv, l1);
 	mv.visitJumpInsn (GOTO, l0);
 	mv.visitLabel (l1);
@@ -524,7 +715,14 @@ public class Convert implements Opcodes
 	convertShort2int (mv, l3);
 	mv.visitJumpInsn (GOTO, l0);
 	mv.visitLabel (l3);
-	throwException (mv, "java/lang/IllegalArgumentException", "Can't convert to %s", toClass);
+	if (allowNarrowing)
+	{
+	    // (define foo (x) (the short x))
+	    convertInt2int (mv, l4);
+	    mv.visitJumpInsn (GOTO, l0);
+	    mv.visitLabel (l4);
+	}
+	throwException (mv, "java/lang/IllegalArgumentException", "Use 'the' for explicit narrowing conversion to short");
 	mv.visitLabel (l0);
     }
 
@@ -585,6 +783,9 @@ public class Convert implements Opcodes
 	final Label l2 = new Label ();
 	final Label l3 = new Label ();
 	final Label l4 = new Label ();
+	final Label l5 = new Label ();
+	final Label l6 = new Label ();
+	final Label l7 = new Label ();
 	convertByte2int (mv, l1);
 	mv.visitJumpInsn (GOTO, l0);
 	mv.visitLabel (l1);
@@ -597,7 +798,24 @@ public class Convert implements Opcodes
 	convertInt2int (mv, l4);
 	mv.visitJumpInsn (GOTO, l0);
 	mv.visitLabel (l4);
-	throwException (mv, "java/lang/IllegalArgumentException", "Can't convert to %s", toClass);
+	if (allowNarrowing)
+	{
+	    // Support long, float and double
+	    // (define short:foo (x) short:int:x)
+	    // (foo long:4)
+	    convertLong2int (mv, l5);
+	    mv.visitJumpInsn (GOTO, l0);
+	    mv.visitLabel (l5);
+
+	    convertFloat2int (mv, l6);
+	    mv.visitJumpInsn (GOTO, l0);
+	    mv.visitLabel (l6);
+
+	    convertDouble2int (mv, l7);
+	    mv.visitJumpInsn (GOTO, l0);
+	    mv.visitLabel (l7);
+	}
+	throwException (mv, "java/lang/IllegalArgumentException", "Use 'the' for explicit narrowing conversion to int");
 	mv.visitLabel (l0);
     }
 
@@ -663,6 +881,8 @@ public class Convert implements Opcodes
 	final Label l3 = new Label ();
 	final Label l4 = new Label ();
 	final Label l5 = new Label ();
+	final Label l6 = new Label ();
+	final Label l7 = new Label ();
 	convertByte2int (mv, l1);
 	mv.visitJumpInsn (GOTO, l0);
 	mv.visitLabel (l1);
@@ -678,7 +898,20 @@ public class Convert implements Opcodes
 	convertLong2long (mv, l5);
 	mv.visitJumpInsn (GOTO, l00);
 	mv.visitLabel (l5);
-	throwException (mv, "java/lang/IllegalArgumentException", "Can't convert to %s", toClass);
+	if (allowNarrowing)
+	{
+	    // Support float and double
+	    // (define long:foo (x) long:int:x)
+	    // (foo double:4)
+	    convertFloat2long (mv, l6);
+	    mv.visitJumpInsn (GOTO, l00);
+	    mv.visitLabel (l6);
+
+	    convertDouble2long (mv, l7);
+	    mv.visitJumpInsn (GOTO, l00);
+	    mv.visitLabel (l7);
+	}
+	throwException (mv, "java/lang/IllegalArgumentException", "Use 'the' for explicit narrowing conversion to long");
 	mv.visitLabel (l0);
 	mv.visitInsn (I2L);
 	mv.visitLabel (l00);
@@ -736,7 +969,7 @@ public class Convert implements Opcodes
 	{
 	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to float");
 	}
-
+	// (define float:foo (x) float:x)
 	final Label l0 = new Label (); // got to int
 	final Label l00 = new Label (); // got to float
 	final Label l1 = new Label ();
@@ -744,22 +977,35 @@ public class Convert implements Opcodes
 	final Label l3 = new Label ();
 	final Label l4 = new Label ();
 	final Label l5 = new Label ();
-	convertByte2int (mv, l1);
-	mv.visitJumpInsn (GOTO, l0);
+	final Label l6 = new Label ();
+	final Label l7 = new Label ();
+	convertByte2float (mv, l1);
+	mv.visitJumpInsn (GOTO, l00);
 	mv.visitLabel (l1);
-	convertChar2int (mv, l2);
-	mv.visitJumpInsn (GOTO, l0);
+	convertCharacter2float (mv, l2);
+	mv.visitJumpInsn (GOTO, l00);
 	mv.visitLabel (l2);
-	convertShort2int (mv, l3);
-	mv.visitJumpInsn (GOTO, l0);
+	convertShort2float (mv, l3);
+	mv.visitJumpInsn (GOTO, l00);
 	mv.visitLabel (l3);
-	convertInt2int (mv, l4);
-	mv.visitJumpInsn (GOTO, l0);
+	convertInteger2float (mv, l4);
+	mv.visitJumpInsn (GOTO, l00);
 	mv.visitLabel (l4);
 	convertFloat2float (mv, l5);
 	mv.visitJumpInsn (GOTO, l00);
 	mv.visitLabel (l5);
-	throwException (mv, "java/lang/IllegalArgumentException", "Can't convert to %s", toClass);
+	if (allowNarrowing)
+	{
+	    // Support long and double
+	    convertLong2float (mv, l6);
+	    mv.visitJumpInsn (GOTO, l00);
+	    mv.visitLabel (l6);
+
+	    convertDouble2float (mv, l7);
+	    mv.visitJumpInsn (GOTO, l00);
+	    mv.visitLabel (l7);
+	}
+	throwException (mv, "java/lang/IllegalArgumentException", "Use 'the' for explicit narrowing conversion to float");
 	mv.visitLabel (l0);
 	mv.visitInsn (I2F);
 	mv.visitLabel (l00);
