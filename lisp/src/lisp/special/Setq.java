@@ -102,7 +102,7 @@ public class Setq extends Definer implements Opcodes
 	    // }
 	    if (valueType != null)
 	    {
-		generator.coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+		generator.coerceRequired (mv, valueType);
 	    }
 	}
     }
@@ -121,7 +121,7 @@ public class Setq extends Definer implements Opcodes
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    mv.visitInsn (DUP);
 	    mv.storeArg (localRef);
-	    generator.coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+	    generator.coerceRequired (mv, valueType);
 	}
     }
 
@@ -141,7 +141,7 @@ public class Setq extends Definer implements Opcodes
 	    mv.visitInsn (DUP);
 	    mv.storeLocal (localRef);
 	    // mv.visitVarInsn (ASTORE, localRef);
-	    generator.coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+	    generator.coerceRequired (mv, valueType);
 	}
     }
 

@@ -112,7 +112,7 @@ public class Or extends LogicDefiner implements Opcodes
 
 	// Jump here for true case or fall through in false case
 	mv.visitLabel (l1);
-	generator.coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+	generator.coerceRequired (mv, valueType);
     }
 
     @Override

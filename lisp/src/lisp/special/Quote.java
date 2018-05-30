@@ -35,7 +35,7 @@ public class Quote extends Definer implements Opcodes
 	    mv.visitVarInsn (ALOAD, 0);
 	    final String classInternalName = generator.getClassType ().getInternalName ();
 	    mv.visitFieldInsn (GETFIELD, classInternalName, reference.getName (), typeDescriptor);
-	    generator.coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+	    generator.coerceRequired (mv, valueType);
 	}
     }
 

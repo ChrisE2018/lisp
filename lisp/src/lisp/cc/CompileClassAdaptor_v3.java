@@ -374,8 +374,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 		// [TODO] If the valueCell is a TypedValueCell, use the type information.
 		mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
-		// [TODO] Implement allowNarrowing and liberalTruth here.
-		coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+		coerceRequired (mv, valueType);
 	    }
 	}
     }
@@ -674,7 +673,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// Assume the function will still be defined when we execute this code.
 	// [TODO] Could define an applyVoid method to return no value.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
-	coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+	coerceRequired (mv, valueType);
     }
 
     private void compileSpecialFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList expression,
@@ -745,18 +744,21 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	}
     }
 
-    /** Convert class to type and coerce the value. */
+    /**
+     * Convert class to type and coerce the value. Not a well defined function.
+     */
     @Override
-    public void coerceRequired (final GeneratorAdapter mv, final Class<?> valueClass, final boolean allowNarrowing,
-            final boolean liberalTruth)
+    @Deprecated
+    public void coerceRequired (final GeneratorAdapter mv, final Class<?> valueClass)
     {
 	if (valueClass == null)
 	{
-	    coerceRequired (mv, Type.VOID_TYPE, allowNarrowing, liberalTruth);
+	    // coerceRequired (mv, Type.VOID_TYPE, allowNarrowing, liberalTruth);
+	    mv.visitInsn (POP);
 	}
 	else
 	{
-	    coerceRequired (mv, Type.getType (valueClass), allowNarrowing, liberalTruth);
+	    coerceRequired (mv, Type.getType (valueClass));
 	}
     }
 
@@ -766,19 +768,18 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
      * contain an instance of the wrapperType. This will work for Boolean since it won't convert
      * other instances to true.
      */
-    private void coerceRequired (final GeneratorAdapter mv, final Type valueType, final boolean allowNarrowing,
-            final boolean liberalTruth)
+    @Deprecated
+    private void coerceRequired (final GeneratorAdapter mv, final Type valueType)
     {
 	final int sort = valueType.getSort ();
-	if (sort == Type.VOID)
-	{
-	    mv.visitInsn (POP);
-	}
-	else if (valueType.equals (Type.BOOLEAN_TYPE))
+	// if (sort == Type.VOID)
+	// {
+	// mv.visitInsn (POP);
+	// }
+	// else
+	if (valueType.equals (Type.BOOLEAN_TYPE))
 	{
 	    // Treat anything except Boolean as true.
-	    // unbox booleans
-	    // [TODO] Implement liberalTruth here
 	    convert.coerceBoolean (mv);
 	}
 	else if (sort > Type.VOID && sort < Type.ARRAY)
@@ -786,10 +787,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    // Call unbox with the type that we want to end up with
 	    mv.unbox (valueType);
 	}
-	else
-	{
-	    // Leave object types alone
-	}
+	// Leave object types alone
     }
 
     /**

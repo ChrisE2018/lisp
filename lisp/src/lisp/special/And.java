@@ -121,7 +121,7 @@ public class And extends LogicDefiner implements Opcodes
 	// Jump here after true case or fall through after false.
 	// Return final value.
 	mv.visitLabel (l2);
-	generator.coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+	generator.coerceRequired (mv, valueType);
     }
 
     @Override

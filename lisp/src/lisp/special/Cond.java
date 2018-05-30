@@ -214,7 +214,7 @@ public class Cond extends LogicDefiner implements Opcodes
 	// Return result
 	mv.visitLabel (l1);
 	mv.loadLocal (resultRef);
-	generator.coerceRequired (mv, valueClass, allowNarrowing, liberalTruth);
+	generator.coerceRequired (mv, valueClass);
 	// localVariableMap = savedBindings;
 	generator.setLocalBindingContext (savedBindings);
     }
