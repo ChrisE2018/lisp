@@ -124,7 +124,10 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	}
     }
 
-    /** Keep track of a symbol that has a global reference. */
+    /**
+     * Keep track of a symbol that has a global reference. This is only used to produce a log
+     * message. globalReferences does nothing else.
+     */
     @Override
     public void addGlobalReference (final Symbol symbol)
     {
@@ -431,7 +434,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
      *
      * @param mv The bytecode generator.
      * @param symbol The symbol value to calculate.
-     * @param valueClass The class that the output value needs to be converted to.
+     * @param valueClass The class that the output value needs to be converted to. When this is
+     *            called the valueClass null has already been eliminated.
      * @param allowNarrowing Should output value conversion be allowed to make narrowing conversions
      *            or should an error be produced instead. If the determination can be made at
      *            compile time, it will be, but this may require production of runtime code to check
@@ -445,60 +449,45 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	if (methodArgs.contains (symbol))
 	{
 	    // Parameter reference
-	    if (valueClass != null)
-	    {
-		final int argIndex = methodArgs.indexOf (symbol);
-		mv.loadArg (argIndex);
-		final Class<?> fromClass = methodArgClasses.get (argIndex);
-		final Class<?> toClass = valueClass;
-		convert.convert (mv, fromClass, toClass, allowNarrowing, liberalTruth);
-	    }
+	    final int argIndex = methodArgs.indexOf (symbol);
+	    mv.loadArg (argIndex);
+	    final Class<?> fromClass = methodArgClasses.get (argIndex);
+	    final Class<?> toClass = valueClass;
+	    convert.convert (mv, fromClass, toClass, allowNarrowing, liberalTruth);
 	}
 	else if (localVariableMap.containsKey (symbol))
 	{
-	    if (valueClass != null)
-	    {
-		// [TODO] If we can determine the type, use that information.
-		final LocalBinding lb = localVariableMap.get (symbol);
-		final int localRef = lb.getLocalRef ();
-		mv.loadLocal (localRef);
-		final Class<?> fromClass = lb.getClass ();
-		final Class<?> toClass = valueClass;
-		convert.convert (mv, fromClass, toClass, allowNarrowing, liberalTruth);
-	    }
+	    // Reference to a local lexical variable
+	    // [TODO] If we can determine the type, use that information.
+	    final LocalBinding lb = localVariableMap.get (symbol);
+	    final int localRef = lb.getLocalRef ();
+	    mv.loadLocal (localRef);
+	    final Class<?> fromClass = lb.getClass ();
+	    final Class<?> toClass = valueClass;
+	    convert.convert (mv, fromClass, toClass, allowNarrowing, liberalTruth);
 	}
 	else if (symbol.is ("true") && valueClass.equals (boolean.class))
 	{
-	    // Special case for symbol "true"
+	    // Special case for global symbol "true"
 	    mv.visitLdcInsn (true);
 	}
 	else if (symbol.is ("false") && valueClass.equals (boolean.class))
 	{
-	    // Special case for symbol "false"
+	    // Special case for global symbol "false"
 	    mv.visitLdcInsn (false);
 	}
 	else
 	{
-	    if (valueClass != null)
-	    {
-		if (!globalReferences.contains (symbol))
-		{
-		    globalReferences.add (symbol);
-		    LOGGER.finer (new LogString ("Compiled global reference to %s", symbol));
-		}
-		if (!symbolReferences.contains (symbol))
-		{
-		    symbolReferences.add (symbol);
-		    LOGGER.finer (new LogString ("Symbol reference to %s", symbol));
-		}
-		mv.visitVarInsn (ALOAD, 0);
-		final String classInternalName = shellClassType.getInternalName ();
-		// [TODO] If the symbol valueCell is constant, use the current value.
-		// [TODO] If the valueCell is a TypedValueCell, use the type information.
-		mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
-		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
-		coerceRequired (mv, valueClass);
-	    }
+	    // Reference to a global variable
+	    addGlobalReference (symbol); // Log message
+	    addSymbolReference (symbol); // Make symbol available at execution time
+	    // [TODO] If the symbol valueCell is constant, use the current value.
+	    // [TODO] If the valueCell is a TypedValueCell, use the type information.
+	    mv.visitVarInsn (ALOAD, 0);
+	    final String classInternalName = shellClassType.getInternalName ();
+	    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
+	    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
+	    coerceRequired (mv, valueClass);
 	}
     }
 
@@ -509,7 +498,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	LOGGER.finer (new LogString ("Compile nested form %s", e));
 	if (e.size () == 0)
 	{
-	    throw new Error ("No function in function call");
+	    throw new Error ("Mal-formed function call");
 	}
 	final Object head = e.get (0);
 	if (!(head instanceof Symbol))
@@ -528,8 +517,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	final FunctionCell function = f.getFunction ();
 	if (function != null && function instanceof SpecialFunctionCell)
 	{
-	    // Unless this is a known special function, we are stuck and can't
-	    // proceed
+	    // Unless this is a known special function, we are stuck and can't proceed
 	    compileSpecialFunctionCall (mv, f, e, valueClass, allowNarrowing, liberalTruth);
 	}
 	else if (function != null && function instanceof MacroFunctionCell)
@@ -558,37 +546,50 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     private void compileStandardFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
-	// Save the symbol in a class field.
-	// [TODO] If we are compiling for speed and can assume that the current definition won't
-	// change, then compile a direct call to the current function method.
-
-	if (!symbolReferences.contains (symbol))
+	final FunctionCell function = symbol.getFunction ();
+	if (function != null)
 	{
-	    symbolReferences.add (symbol);
+	    final ObjectMethod compiler = function.getCompiler ();
+	    if (compiler != null)
+	    {
+		LOGGER.finer (new LogString ("Compiling optimized call to standard function %s", symbol));
+		compileSpecialFunctionCall (mv, symbol, e, valueClass, allowNarrowing, liberalTruth);
+		return;
+	    }
+	    // [TODO] If we are compiling for speed and can assume that the current definition won't
+	    // change, then compile a direct call to the current function method.
 	}
-	LOGGER.finer (new LogString ("Function symbol reference to %s", symbol));
 
+	// Produce a generic call to a standard function.
+
+	// Get to the function symbol at runtime.
+	addSymbolReference (symbol);
+	LOGGER.finer (new LogString ("Function symbol reference to %s", symbol));
 	mv.visitVarInsn (ALOAD, 0);
 	final String classInternalName = shellClassType.getInternalName ();
 	mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 
+	// Get the FunctionCell from the function symbol.
 	// The call to getDefaultHandlerFunction will return a DefaultHandler that tries to invoke
 	// the java method on arg 1 if the function has not been given any other definition.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;", false);
-	// Compile the arguments
+
+	// Compile the arguments. We always pass all the arguments as elements of a single array of
+	// Object.
+	// [TODO] If we know argument types of the function we are about to call we can try to
+	// compile the expression more efficiently.
 	final int argCount = e.size () - 1;
 	ldcGeneral (mv, argCount);
 	mv.visitTypeInsn (ANEWARRAY, "java/lang/Object");
 	for (int i = 0; i < argCount; i++)
 	{
-	    // [TODO] If we know argument types of the function we are about to call we can try to
-	    // compile the expression more efficiently.
 	    mv.visitInsn (DUP);
 	    ldcGeneral (mv, i);
-	    compileExpression (mv, e.get (i + 1), Object.class /* TODO */, false, false);
+	    compileExpression (mv, e.get (i + 1), Object.class, false, false);
 	    mv.visitInsn (AASTORE);
 	}
-	// Call invoke on the method.
+
+	// Call invoke on the method retrieved from the FunctionCell of the function symbol.
 	// Assume the function will still be defined when we execute this code.
 	// [TODO] Could define an applyVoid method to return no value.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
@@ -615,7 +616,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// [done] Calls to Java methods
 	// Defmacro
 	// &optional, &key, &rest
-	// Hookup definition of special function calls to DefineLisp annotation.
+	// [done] Hookup definition of special function calls to DefineLisp annotation.
 
 	final FunctionCell function = symbol.getFunction ();
 	final ObjectMethod compiler = function.getCompiler ();
@@ -636,7 +637,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	throw new IllegalArgumentException ("Unrecognized special form " + symbol);
     }
 
-    /** Load a constant using the quick version when value is small enough. */
+    /** Load an integer constant using the best bytecode when value is small enough. */
     private void ldcGeneral (final MethodVisitor mv, final int i)
     {
 	if (i <= 5)
