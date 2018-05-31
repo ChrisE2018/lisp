@@ -75,7 +75,7 @@ public interface CompilerGenerator
     // /**
     // * Generate code to convert the top stack element to a required valueClass.
     // *
-    // * @Deprecated Use convertResultType instead
+    // * @Deprecated Use convert instead
     // */
     // @Deprecated
     // public void coerceRequiredXX (final GeneratorAdapter mv, final Class<?> valueClass);
