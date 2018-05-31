@@ -4,6 +4,8 @@ package lisp.symbol;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import org.objectweb.asm.Type;
+
 import lisp.Describer;
 
 public class ObjectMethod implements Describer
@@ -34,19 +36,51 @@ public class ObjectMethod implements Describer
 	return documentation;
     }
 
-    String getMethodName ()
+    public String getMethodName ()
     {
 	return method.getName ();
     }
 
-    boolean isVarArgs ()
+    public boolean isVarArgs ()
     {
 	return method.isVarArgs ();
     }
 
-    Class<?>[] getParameterTypes ()
+    public Class<?>[] getParameterTypes ()
     {
 	return method.getParameterTypes ();
+    }
+
+    /**
+     * Direct calls to methods produce bad results when there are non-object parameters. Use this
+     * method to filter out those cases until it is debugged.
+     *
+     * @return True if this is a simple method call that only involves objects.
+     */
+    public boolean isObjectOnly ()
+    {
+	for (final Class<?> type : method.getParameterTypes ())
+	{
+	    if (!type.equals (Object.class))
+	    {
+		return false;
+	    }
+	}
+	return method.getReturnType ().equals (Object.class);
+    }
+
+    public String getSignature ()
+    {
+	final StringBuilder buffer = new StringBuilder ();
+	buffer.append ('(');
+	for (final Class<?> param : method.getParameterTypes ())
+	{
+	    final Type type = Type.getType (param);
+	    buffer.append (type.getDescriptor ());
+	}
+	buffer.append (')');
+	buffer.append (Type.getType (method.getReturnType ()).getDescriptor ());
+	return buffer.toString ();
     }
 
     @Override
