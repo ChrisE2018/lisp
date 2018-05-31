@@ -20,6 +20,8 @@ public class CompilerPrimitives extends Definer
 
     private Symbol verifyPhase = null;
 
+    private final List<Symbol> verifyFailures = new ArrayList<Symbol> ();
+
     public static void incrementReplErrorCount ()
     {
 	replErrorCount++;
@@ -182,6 +184,7 @@ public class CompilerPrimitives extends Definer
 	passCount = 0;
 	failCount = 0;
 	errorCount = 0;
+	verifyFailures.clear ();
 	return null;
     }
 
@@ -213,6 +216,10 @@ public class CompilerPrimitives extends Definer
 	    {
 		System.out.printf ("%nThere were test failures%n");
 	    }
+	    for (final Symbol s : verifyFailures)
+	    {
+		System.out.printf ("Failure: %s%n", s);
+	    }
 	}
 	else
 	{
@@ -239,7 +246,7 @@ public class CompilerPrimitives extends Definer
 	return verifyPhase;
     }
 
-    private Object getVerifyPhase ()
+    private Symbol getVerifyPhase ()
     {
 	if (verifyPhase == null)
 	{
@@ -257,25 +264,28 @@ public class CompilerPrimitives extends Definer
     @DefineLisp (special = true)
     public Object verify (final LexicalContext context, final Object expr, final Object expect)
     {
+	final Symbol phase = getVerifyPhase ();
+	testCount++;
 	try
 	{
-	    testCount++;
 	    final Object value = context.eval (expr);
 	    final Object expected = context.eval (expect);
 	    if (same (value, expected))
 	    {
-		System.out.printf ("[%s] Pass: value of %s is %s while expecting %s%n", getVerifyPhase (), expr, value, expected);
+		System.out.printf ("[%s] Pass: value of %s is %s while expecting %s%n", phase, expr, value, expected);
 		passCount++;
 	    }
 	    else
 	    {
-		System.out.printf ("[%s] Fail: value of %s is %s while expecting %s%n", getVerifyPhase (), expr, value, expected);
+		verifyFailures.add (phase);
+		System.out.printf ("[%s] Fail: value of %s is %s while expecting %s%n", phase, expr, value, expected);
 		failCount++;
 	    }
 	}
 	catch (final Throwable e)
 	{
-	    System.out.printf ("[%s] Error: while evaluating %s: %s%n", getVerifyPhase (), expr, e);
+	    verifyFailures.add (phase);
+	    System.out.printf ("[%s] Error: while evaluating %s: %s%n", phase, expr, e);
 	    errorCount++;
 	}
 	return null;
@@ -284,34 +294,26 @@ public class CompilerPrimitives extends Definer
     @DefineLisp (special = true)
     public Object verifyError (final LexicalContext context, final Object expr, final String expected)
     {
+	final Symbol phase = getVerifyPhase ();
+	testCount++;
 	try
 	{
-	    testCount++;
 	    final Object value = context.eval (expr);
-	    if (same (value, expected))
-	    {
-		System.out.printf ("[%s] Fail: value of %s is %s while expecting error %s%n", getVerifyPhase (), expr, value,
-		        expected);
-		failCount++;
-	    }
-	    else
-	    {
-		System.out.printf ("[%s] Fail: value of %s is %s while expecting error %s%n", getVerifyPhase (), expr, value,
-		        expected);
-		failCount++;
-	    }
+	    verifyFailures.add (phase);
+	    System.out.printf ("[%s] Fail: value of %s is %s while expecting error %s%n", phase, expr, value, expected);
+	    failCount++;
 	}
 	catch (final Throwable e)
 	{
 	    if (e.getMessage ().equals (expected))
 	    {
-		System.out.printf ("[%s] Pass: Expected error %s found while evaluating %s%n", getVerifyPhase (), expected, expr);
+		System.out.printf ("[%s] Pass: Expected error %s found while evaluating %s%n", phase, expected, expr);
 		passCount++;
 	    }
 	    else
 	    {
-		System.out.printf ("[%s] Fail: Expected error %s not found while evaluating %s: %s%n", getVerifyPhase (),
-		        expected, expr, e);
+		verifyFailures.add (phase);
+		System.out.printf ("[%s] Fail: Expected error %s not found while evaluating %s: %s%n", phase, expected, expr, e);
 		passCount++;
 	    }
 	}

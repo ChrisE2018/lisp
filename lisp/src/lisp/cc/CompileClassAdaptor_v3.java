@@ -594,7 +594,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    {
 		// Only methods with Object parameters work right now.
 		// coerceRequired will need to be improved before general method parameters are ok.
-		if (objectMethod.isObjectOnly () && !objectMethod.isVarArgs ())
+		if (// objectMethod.isObjectOnly () &&
+		!objectMethod.isVarArgs ())
 		{
 		    return Symbol.test ("optimize", true);
 		}
@@ -613,7 +614,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// (define foo (a b) (rem a b))
 	final Symbol symbol = expression.head ();
 	final Label l1 = new Label ();
-	mv.visitLineNumber (101, l1);
+	mv.visitLineNumber (617, l1);
 	mv.visitLabel (l1);
 	final FunctionCell function = symbol.getFunction ();
 	final int argCount = expression.size () - 1;
@@ -634,21 +635,15 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	final Class<?>[] params = method.getParameterTypes ();
 	for (int i = 0; i < params.length; i++)
 	{
-	    compileExpression (mv, expression.get (i + 1), params[i], false, false);
+	    // (define f (x) (incr x))
+	    final Object arg = expression.get (i + 1);
+	    final Class<?> argType = params[i];
+	    // System.out.printf ("%s (%s : %s) %s %n", symbol, i, arg, argType);
+	    compileExpression (mv, arg, argType, false, false);
 	}
 	mv.visitMethodInsn (INVOKEVIRTUAL, objectClassInternalName, method.getName (), methodSignature, false);
 	final Class<?> methodValueClass = method.getReturnType ();
-	// if (methodValueClass.equals (void.class))
-	// {
-	// if (valueClass != null)
-	// {
-	// pushDefaultValue (mv, valueClass, false);
-	// }
-	// }
-	// else if (!methodValueClass.equals (valueClass))
-	{
-	    convert.convert (mv, methodValueClass, valueClass, allowNarrowing, liberalTruth);
-	}
+	convert.convert (mv, methodValueClass, valueClass, allowNarrowing, liberalTruth);
     }
 
     /**

@@ -10,6 +10,18 @@ public class SandboxPrimitives extends Definer
 	return a % b;
     }
 
+    @DefineLisp
+    public Object incr (final Integer a)
+    {
+	return a + 1;
+    }
+
+    @DefineLisp
+    public Object iincr (final int a)
+    {
+	return a + 1;
+    }
+
     @Override
     public String toString ()
     {

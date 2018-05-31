@@ -885,6 +885,7 @@ public class Convert implements Opcodes
 	}
 	throwException (mv, "java/lang/IllegalArgumentException", "Use 'the' for explicit narrowing conversion to int");
 	mv.visitLabel (l0);
+	mv.visitLineNumber (888, l0);
     }
 
     private void convert2long (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
@@ -1200,14 +1201,14 @@ public class Convert implements Opcodes
 	    mv.box (fromType);
 	    return;
 	}
-	mv.visitLdcInsn (toType);
-	mv.visitInsn (SWAP);
-	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
-	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "isAssignableFrom", "(Ljava/lang/Class;)Z", false);
-	final Label l1 = new Label ();
-	mv.visitJumpInsn (IFNE, l1);
-	throwException (mv, "java/lang/IllegalArgumentException", "Can't convert to %s", toClass);
-	mv.visitLabel (l1);
+	// The value is an object and we are trying to convert to a specific class.
+	// If the value is a primitive, try boxing it
+	if (fromType.getSort () != Type.OBJECT && fromType.getSort () != Type.ARRAY)
+	{
+	    mv.box (fromType);
+	}
+	// If the value is an Object, try a cast
+	mv.visitTypeInsn (CHECKCAST, toType.getInternalName ());
     }
 
     @Override

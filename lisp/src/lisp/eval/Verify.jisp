@@ -293,6 +293,17 @@
 	b))
 (verify (foo) 6)
 
+(verifyPhase optimizeInteger)
+
+(define foo () (incr 4))
+
+(verify (foo) 5)
+
+(define foo (a b)
+	(rem a b))
+
+(verify (foo 11 4) 3)
+	
 (verifyPhase primes)
 
 ; Now do it compiled
