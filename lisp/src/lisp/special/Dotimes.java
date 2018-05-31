@@ -67,7 +67,7 @@ public class Dotimes extends LogicDefiner implements Opcodes
 	final Type type = Boxer.INTEGER_TYPE;
 	final int iterationRef = mv.newLocal (type);
 	final Symbol var = (Symbol)control.get (0);
-	final LocalBinding lb = new LocalBinding (var, type, iterationRef);
+	final LocalBinding lb = new LocalBinding (var, Integer.class, iterationRef);
 	localVariableMap.put (var, lb);
 	mv.visitInsn (ICONST_0);
 	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);

@@ -146,7 +146,7 @@ public class Cond extends LogicDefiner implements Opcodes
 
 	// Store as an object until return time
 	final int resultRef = mv.newLocal (Boxer.OBJECT_TYPE);
-	final LocalBinding lb = new LocalBinding (var, Boxer.OBJECT_TYPE, resultRef);
+	final LocalBinding lb = new LocalBinding (var, Object.class, resultRef);
 
 	final Map<Symbol, LocalBinding> savedBindings = generator.getLocalBindingContext ();
 	// final Map<Symbol, LocalBinding> savedBindings = localVariableMap;

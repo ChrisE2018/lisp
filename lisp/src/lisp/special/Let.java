@@ -98,7 +98,7 @@ public class Let extends LogicDefiner implements Opcodes
 	    final int localRef = mv.newLocal (varType);
 	    generator.compileExpression (mv, c.get (1), varClass, false, false);
 	    mv.storeLocal (localRef);
-	    final LocalBinding lb = new LocalBinding (var, varType, localRef);
+	    final LocalBinding lb = new LocalBinding (var, varClass, localRef);
 	    newLocalVariableMap.put (var, lb);
 	}
 	generator.setLocalBindingContext (newLocalVariableMap);
@@ -142,7 +142,7 @@ public class Let extends LogicDefiner implements Opcodes
 	    generator.compileExpression (mv, c.get (1), varClass, false, false);
 	    final int localRef = mv.newLocal (varType);
 	    mv.storeLocal (localRef);
-	    final LocalBinding lb = new LocalBinding (var, varType, localRef);
+	    final LocalBinding lb = new LocalBinding (var, varClass, localRef);
 	    localVariableMap.put (var, lb);
 	}
 

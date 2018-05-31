@@ -8,19 +8,26 @@ import lisp.Symbol;
 public class LocalBinding
 {
     private final Symbol variable;
+    private final Class<?> varClass;
     private final Type type;
     private final int localRef;
 
-    public LocalBinding (final Symbol variable, final Type type, final int localRef)
+    public LocalBinding (final Symbol variable, final Class<?> varClass, final int localRef)
     {
 	this.variable = variable;
-	this.type = type;
+	this.varClass = varClass;
+	type = Type.getType (varClass);
 	this.localRef = localRef;
     }
 
     public Symbol getVariable ()
     {
 	return variable;
+    }
+
+    public Class<?> getVariableClass ()
+    {
+	return varClass;
     }
 
     public Type getType ()
