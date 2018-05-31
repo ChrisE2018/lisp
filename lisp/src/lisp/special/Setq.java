@@ -23,9 +23,9 @@ public class Setq extends Definer implements Opcodes
      * @return The new value.
      */
     @DefineLisp (special = true)
-    public Object setq (final LexicalContext context, final Symbol symbol, final Object form) throws Exception
+    public Object setq (final LexicalContext context, final Symbol symbol, final Object expr) throws Exception
     {
-	final Object value = context.eval (form);
+	final Object value = context.eval (expr);
 	context.set (symbol, value);
 	return value;
     }
@@ -48,19 +48,19 @@ public class Setq extends Definer implements Opcodes
     }
 
     @DefineLisp (special = true, name = "setq", compiler = true)
-    public void compileSetq (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
-            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
+    public void compileSetq (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expr,
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (setq x 3))
 	// (define foo (x) (setq x 3) x)
 	// (define foo (x) (setq a x))
 	// (define foo (x) (let ((a 3)) (setq a (+ a x)) a))
-	final Symbol symbol = (Symbol)e.get (1);
+	final Symbol symbol = (Symbol)expr.get (1);
 	final LocalBinding lb = generator.getLocalVariableBinding (symbol);
 	if (lb != null)
 	{
 	    LOGGER.finer (new LogString ("Setq local %s (%d)", symbol, lb));
-	    compileLocalSetq (generator, mv, lb.getClass (), lb.getLocalRef (), e.get (2), valueType, allowNarrowing,
+	    compileLocalSetq (generator, mv, lb.getClass (), lb.getLocalRef (), expr.get (2), valueClass, allowNarrowing,
 	            liberalTruth);
 	}
 	else if (generator.isMethodArg (symbol))
@@ -70,7 +70,7 @@ public class Setq extends Definer implements Opcodes
 	    final int argIndex = generator.getMethodArgIndex (symbol);
 	    final Class<?> argClass = generator.getMethodArgClass (symbol);
 	    LOGGER.finer (new LogString ("Setq parameter %s (%d)", symbol, argIndex));
-	    compileArgSetq (generator, mv, argClass, argIndex, e.get (2), valueType, allowNarrowing, liberalTruth);
+	    compileArgSetq (generator, mv, argClass, argIndex, expr.get (2), valueClass, allowNarrowing, liberalTruth);
 	}
 	else
 	{
@@ -85,8 +85,8 @@ public class Setq extends Definer implements Opcodes
 	    mv.visitVarInsn (ALOAD, 0);
 	    final String classInternalName = generator.getClassType ().getInternalName ();
 	    mv.visitFieldInsn (GETFIELD, classInternalName, generator.createJavaSymbolName (symbol), "Llisp/Symbol;");
-	    generator.compileExpression (mv, e.get (2), Object.class /* TODO */, false, false);
-	    if (valueType != null)
+	    generator.compileExpression (mv, expr.get (2), Object.class /* TODO */, false, false);
+	    if (valueClass != null)
 	    {
 		// Copy the expression value so it becomes the return value
 		mv.visitInsn (DUP_X1);
@@ -100,18 +100,19 @@ public class Setq extends Definer implements Opcodes
 	    // globalReferences.add (symbol);
 	    // LOGGER.finer (new LogString ("Compiled global assignment to %s", symbol));
 	    // }
-	    if (valueType != null)
+	    if (valueClass != null)
 	    {
-		generator.coerceRequired (mv, valueType);
+		generator.coerceRequired (mv, valueClass);
 	    }
 	}
     }
 
+    /** Compile a setq that modifies a function argument. */
     private void compileArgSetq (final CompilerGenerator generator, final GeneratorAdapter mv, final Class<?> varClass,
-            final int localRef, final Object expr, final Class<?> valueType, final boolean allowNarrowing,
+            final int localRef, final Object expr, final Class<?> valueClass, final boolean allowNarrowing,
             final boolean liberalTruth)
     {
-	if (valueType == null)
+	if (valueClass == null)
 	{
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    mv.storeArg (localRef);
@@ -121,27 +122,26 @@ public class Setq extends Definer implements Opcodes
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    mv.visitInsn (DUP);
 	    mv.storeArg (localRef);
-	    generator.coerceRequired (mv, valueType);
+	    generator.coerceRequired (mv, valueClass);
 	}
     }
 
+    /** Compile a setq that modifies a local variable. */
     private void compileLocalSetq (final CompilerGenerator generator, final GeneratorAdapter mv, final Class<?> varClass,
-            final int localRef, final Object expr, final Class<?> valueType, final boolean allowNarrowing,
+            final int localRef, final Object expr, final Class<?> valueClass, final boolean allowNarrowing,
             final boolean liberalTruth)
     {
-	if (valueType == null)
+	if (valueClass == null)
 	{
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    mv.storeLocal (localRef);
-	    // mv.visitVarInsn (ASTORE, localRef);
 	}
 	else
 	{
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    mv.visitInsn (DUP);
 	    mv.storeLocal (localRef);
-	    // mv.visitVarInsn (ASTORE, localRef);
-	    generator.coerceRequired (mv, valueType);
+	    generator.coerceRequired (mv, valueClass);
 	}
     }
 

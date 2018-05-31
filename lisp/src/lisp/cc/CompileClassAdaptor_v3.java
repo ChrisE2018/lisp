@@ -99,16 +99,15 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	return localVariableMap.get (symbol);
     }
 
-    // private final Deque<Map<Symbol, LocalBinding>> localBindingStack = new LinkedList<Map<Symbol,
-    // LocalBinding>> ();
-
     /** Get the current local binding context. */
+    @Override
     public Map<Symbol, LocalBinding> getLocalBindingContext ()
     {
 	return localVariableMap;
     }
 
     /** Set the current local binding context. */
+    @Override
     public void setLocalBindingContext (final Map<Symbol, LocalBinding> variableMap)
     {
 	localVariableMap = variableMap;
@@ -133,6 +132,104 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    globalReferences.add (symbol);
 	    LOGGER.finer (new LogString ("Compiled global assignment to %s", symbol));
 	}
+    }
+
+    @Override
+    public void addQuotedConstant (final Symbol reference, final Object quoted)
+    {
+	if (!quotedReferences.containsKey (quoted))
+	{
+	    // Save the reference and build it in the init method.
+	    quotedReferences.put (quoted, reference);
+	    quotedReferencesMap.put (reference.getName (), quoted);
+	}
+    }
+
+    /**
+     * Push a default value onto the stack.
+     *
+     * @param mv GeneratorAdapter to produce code.
+     * @param valueClass The value type to return.
+     * @param booleanDefault If the value will be a primitive boolean, use this as the default
+     *            value.
+     */
+    @Override
+    public void pushDefaultValue (final GeneratorAdapter mv, final Class<?> valueClass, final boolean booleanDefault)
+    {
+	if (valueClass != null)
+	{
+	    if (boolean.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (booleanDefault);
+	    }
+	    else if (byte.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Byte.valueOf ((byte)0));
+	    }
+	    else if (char.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Character.valueOf ((char)0));
+	    }
+	    else if (short.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Short.valueOf ((short)0));
+	    }
+	    else if (int.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Integer.valueOf (0));
+	    }
+	    else if (long.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Long.valueOf (0));
+	    }
+	    else if (float.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Float.valueOf (0.0f));
+	    }
+	    else if (double.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Double.valueOf (0.0));
+	    }
+	    else
+	    {
+		mv.visitInsn (ACONST_NULL);
+	    }
+	}
+
+    }
+
+    /**
+     * Turn a symbol name into something acceptable to Java. Lisp symbols can include characters
+     * like '+' that are not allowed in Java.
+     */
+    @Override
+    public String createJavaSymbolName (final Symbol symbol)
+    {
+	final StringBuilder buffer = new StringBuilder ();
+	buffer.append ("SYM_");
+	final String name = symbol.getName ();
+	for (int i = 0; i < name.length (); i++)
+	{
+	    final char c = name.charAt (i);
+	    if (Character.isJavaIdentifierPart (c))
+	    {
+		buffer.append (c);
+	    }
+	    else
+	    {
+		final int codePoint = name.codePointAt (i);
+		final String cn = Character.getName (codePoint);
+		if (cn != null)
+		{
+		    buffer.append (c);
+		}
+		else
+		{
+		    buffer.append (String.format ("%03d", codePoint));
+		}
+	    }
+	}
+	return buffer.toString ();
     }
 
     /**
@@ -164,6 +261,16 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// steps are known
 	createInitI ();
 	cv.visitEnd ();
+    }
+
+    private void createField (final int fieldAccess, final String fieldName, final String fieldDescriptor)
+    {
+	// Field initial value only applies to static fields
+	final FieldVisitor fv = cv.visitField (fieldAccess, fieldName, fieldDescriptor, null, null);
+	if (fv != null)
+	{
+	    fv.visitEnd ();
+	}
     }
 
     private void compileDefinition ()
@@ -285,13 +392,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
      *
      * @param mv Bytecode generator.
      * @param e Expression to compile.
-     * @param valueType Class of value to leave on the stack.
+     * @param valueClass Class of value to leave on the stack.
      * @param allowNarrowing When true, narrowing conversions will be generated if required.
      *            Otherwise narrowing throws and error.
      * @param liberalTruth When set, any non-boolean result is accepted as true. Otherwise, boolean
      *            testing requires strictly boolean values.
      */
-    public void compileExpression (final GeneratorAdapter mv, final Object e, final Class<?> valueType,
+    @Override
+    public void compileExpression (final GeneratorAdapter mv, final Object e, final Class<?> valueClass,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (e == null)
@@ -300,63 +408,77 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	}
 	else if (e instanceof LispList)
 	{
-	    compileFunctionCall (mv, (LispList)e, valueType, allowNarrowing, liberalTruth);
+	    compileFunctionCall (mv, (LispList)e, valueClass, allowNarrowing, liberalTruth);
 	}
-	else if (valueType != null)
+	else if (valueClass != null)
 	{
 	    if (e instanceof Symbol)
 	    {
 		final Symbol symbol = (Symbol)e;
-		compileSymbolReference (mv, symbol, valueType, allowNarrowing, liberalTruth);
+		compileSymbolReference (mv, symbol, valueClass, allowNarrowing, liberalTruth);
 	    }
 	    else
 	    {
-		compileConstantExpression (mv, e, valueType, allowNarrowing, liberalTruth);
+		compileConstantExpression (mv, e, valueClass, allowNarrowing, liberalTruth);
 	    }
 	}
     }
 
-    private void compileSymbolReference (final GeneratorAdapter mv, final Symbol symbol, final Class<?> valueType,
+    /**
+     * Compile an expression to calculate the value of a symbol. This determines if the symbol is an
+     * argument, local variable or global symbol and calculates the correct value.
+     *
+     * @param mv The bytecode generator.
+     * @param symbol The symbol value to calculate.
+     * @param valueClass The class that the output value needs to be converted to.
+     * @param allowNarrowing Should output value conversion be allowed to make narrowing conversions
+     *            or should an error be produced instead. If the determination can be made at
+     *            compile time, it will be, but this may require production of runtime code to check
+     *            the value type.
+     * @param liberalTruth Should non-boolean values be treated as the value 'true', or throw an
+     *            error? This is significant when the valueClass is primitive boolean.
+     */
+    private void compileSymbolReference (final GeneratorAdapter mv, final Symbol symbol, final Class<?> valueClass,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (methodArgs.contains (symbol))
 	{
 	    // Parameter reference
-	    if (valueType != null)
+	    if (valueClass != null)
 	    {
 		final int argIndex = methodArgs.indexOf (symbol);
 		mv.loadArg (argIndex);
 		final Class<?> fromClass = methodArgClasses.get (argIndex);
-		final Class<?> toClass = valueType;
+		final Class<?> toClass = valueClass;
 		convert.convert (mv, fromClass, toClass, allowNarrowing, liberalTruth);
 	    }
 	}
 	else if (localVariableMap.containsKey (symbol))
 	{
-	    if (valueType != null)
+	    if (valueClass != null)
 	    {
 		// [TODO] If we can determine the type, use that information.
 		final LocalBinding lb = localVariableMap.get (symbol);
 		final int localRef = lb.getLocalRef ();
 		mv.loadLocal (localRef);
 		final Class<?> fromClass = lb.getClass ();
-		final Class<?> toClass = valueType;
+		final Class<?> toClass = valueClass;
 		convert.convert (mv, fromClass, toClass, allowNarrowing, liberalTruth);
 	    }
 	}
-	else if (symbol.is ("true") && valueType.equals (boolean.class))
+	else if (symbol.is ("true") && valueClass.equals (boolean.class))
 	{
 	    // Special case for symbol "true"
 	    mv.visitLdcInsn (true);
 	}
-	else if (symbol.is ("false") && valueType.equals (boolean.class))
+	else if (symbol.is ("false") && valueClass.equals (boolean.class))
 	{
 	    // Special case for symbol "false"
 	    mv.visitLdcInsn (false);
 	}
 	else
 	{
-	    if (valueType != null)
+	    if (valueClass != null)
 	    {
 		if (!globalReferences.contains (symbol))
 		{
@@ -374,15 +496,15 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 		// [TODO] If the valueCell is a TypedValueCell, use the type information.
 		mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
-		coerceRequired (mv, valueType);
+		coerceRequired (mv, valueClass);
 	    }
 	}
     }
 
-    private void compileConstantExpression (final MethodVisitor mv, final Object e, final Class<?> valueType,
+    private void compileConstantExpression (final MethodVisitor mv, final Object e, final Class<?> valueClass,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
-	if (valueType.equals (boolean.class))
+	if (valueClass.equals (boolean.class))
 	{
 	    if (e instanceof Boolean && !((Boolean)e).booleanValue ())
 	    {
@@ -407,28 +529,28 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	else if (e instanceof Byte)
 	{
 	    final Byte b = (Byte)e;
-	    if (valueType.equals (byte.class))
+	    if (valueClass.equals (byte.class))
 	    {
 		mv.visitLdcInsn (b.byteValue ());
 	    }
-	    else if (valueType.equals (short.class))
+	    else if (valueClass.equals (short.class))
 	    {
 		mv.visitLdcInsn (b.shortValue ());
 	    }
-	    else if (valueType.equals (int.class))
+	    else if (valueClass.equals (int.class))
 	    {
 		mv.visitLdcInsn (b.intValue ());
 	    }
-	    else if (valueType.equals (long.class))
+	    else if (valueClass.equals (long.class))
 	    {
 		mv.visitLdcInsn (b.longValue ());
 	    }
-	    else if (valueType.equals (float.class))
+	    else if (valueClass.equals (float.class))
 	    {
 		// Does this make sense?
 		mv.visitLdcInsn (b.floatValue ());
 	    }
-	    else if (valueType.equals (double.class))
+	    else if (valueClass.equals (double.class))
 	    {
 		// Does this make sense?
 		mv.visitLdcInsn (b.doubleValue ());
@@ -442,24 +564,24 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	else if (e instanceof Short)
 	{
 	    final Short s = (Short)e;
-	    if (valueType.equals (short.class))
+	    if (valueClass.equals (short.class))
 	    {
 		mv.visitLdcInsn (s.shortValue ());
 	    }
-	    else if (valueType.equals (int.class))
+	    else if (valueClass.equals (int.class))
 	    {
 		mv.visitLdcInsn (s.intValue ());
 	    }
-	    else if (valueType.equals (long.class))
+	    else if (valueClass.equals (long.class))
 	    {
 		mv.visitLdcInsn (s.longValue ());
 	    }
-	    else if (valueType.equals (float.class))
+	    else if (valueClass.equals (float.class))
 	    {
 		// Does this make sense?
 		mv.visitLdcInsn (s.floatValue ());
 	    }
-	    else if (valueType.equals (double.class))
+	    else if (valueClass.equals (double.class))
 	    {
 		// Does this make sense?
 		mv.visitLdcInsn (s.doubleValue ());
@@ -473,27 +595,27 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	else if (e instanceof Integer)
 	{
 	    final Integer i = (Integer)e;
-	    if (valueType.equals (int.class))
+	    if (valueClass.equals (int.class))
 	    {
 		mv.visitLdcInsn (i.intValue ());
 	    }
-	    else if (valueType.equals (byte.class))
+	    else if (valueClass.equals (byte.class))
 	    {
 		mv.visitLdcInsn (i.byteValue ());
 	    }
-	    else if (valueType.equals (short.class))
+	    else if (valueClass.equals (short.class))
 	    {
 		mv.visitLdcInsn (i.shortValue ());
 	    }
-	    else if (valueType.equals (long.class))
+	    else if (valueClass.equals (long.class))
 	    {
 		mv.visitLdcInsn (i.longValue ());
 	    }
-	    else if (valueType.equals (float.class))
+	    else if (valueClass.equals (float.class))
 	    {
 		mv.visitLdcInsn (i.floatValue ());
 	    }
-	    else if (valueType.equals (double.class))
+	    else if (valueClass.equals (double.class))
 	    {
 		mv.visitLdcInsn (i.doubleValue ());
 	    }
@@ -507,27 +629,27 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	else if (e instanceof Long)
 	{
 	    final Long l = (Long)e;
-	    if (valueType.equals (int.class))
+	    if (valueClass.equals (int.class))
 	    {
 		mv.visitLdcInsn (l.intValue ());
 	    }
-	    else if (valueType.equals (byte.class))
+	    else if (valueClass.equals (byte.class))
 	    {
 		mv.visitLdcInsn (l.byteValue ());
 	    }
-	    else if (valueType.equals (short.class))
+	    else if (valueClass.equals (short.class))
 	    {
 		mv.visitLdcInsn (l.shortValue ());
 	    }
-	    else if (valueType.equals (long.class))
+	    else if (valueClass.equals (long.class))
 	    {
 		mv.visitLdcInsn (l.longValue ());
 	    }
-	    else if (valueType.equals (float.class))
+	    else if (valueClass.equals (float.class))
 	    {
 		mv.visitLdcInsn (l.floatValue ());
 	    }
-	    else if (valueType.equals (double.class))
+	    else if (valueClass.equals (double.class))
 	    {
 		mv.visitLdcInsn (l.doubleValue ());
 	    }
@@ -541,11 +663,11 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	else if (e instanceof Float)
 	{
 	    final Float f = (Float)e;
-	    if (valueType.equals (float.class))
+	    if (valueClass.equals (float.class))
 	    {
 		mv.visitLdcInsn (f.floatValue ());
 	    }
-	    else if (valueType.equals (double.class))
+	    else if (valueClass.equals (double.class))
 	    {
 		mv.visitLdcInsn (f.doubleValue ());
 	    }
@@ -558,11 +680,11 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	else if (e instanceof Double)
 	{
 	    final Double d = (Double)e;
-	    if (valueType.equals (float.class))
+	    if (valueClass.equals (float.class))
 	    {
 		mv.visitLdcInsn (d.floatValue ());
 	    }
-	    else if (valueType.equals (double.class))
+	    else if (valueClass.equals (double.class))
 	    {
 		mv.visitLdcInsn (d.doubleValue ());
 	    }
@@ -583,7 +705,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	}
     }
 
-    private void compileFunctionCall (final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+    private void compileFunctionCall (final GeneratorAdapter mv, final LispList e, final Class<?> valueClass,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// Need to be able to compile a call to an undefined function (i.e. recursive call)
@@ -611,7 +733,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	{
 	    // Unless this is a known special function, we are stuck and can't
 	    // proceed
-	    compileSpecialFunctionCall (mv, f, e, valueType, allowNarrowing, liberalTruth);
+	    compileSpecialFunctionCall (mv, f, e, valueClass, allowNarrowing, liberalTruth);
 	}
 	else if (function != null && function instanceof MacroFunctionCell)
 	{
@@ -626,18 +748,18 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    {
 		throw new Error ("Error expanding macro " + f, e1);
 	    }
-	    compileExpression (mv, replacement, valueType, allowNarrowing, liberalTruth);
+	    compileExpression (mv, replacement, valueClass, allowNarrowing, liberalTruth);
 	}
 	else
 	{
 	    // [TODO] Some 'normal' functions need special coding, i.e, arithmetic and comparisons.
-	    compileStandardFunctionCall (mv, f, e, valueType, allowNarrowing, liberalTruth);
+	    compileStandardFunctionCall (mv, f, e, valueClass, allowNarrowing, liberalTruth);
 	}
     }
 
     // (define foo () (not true))
     private void compileStandardFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
-            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// Save the symbol in a class field.
 	// [TODO] If we are compiling for speed and can assume that the current definition won't
@@ -673,18 +795,18 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// Assume the function will still be defined when we execute this code.
 	// [TODO] Could define an applyVoid method to return no value.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
-	if (valueType == null)
+	if (valueClass == null)
 	{
 	    mv.visitInsn (POP);
 	}
 	else
 	{
-	    coerceRequired (mv, valueType);
+	    coerceRequired (mv, valueClass);
 	}
     }
 
     private void compileSpecialFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList expression,
-            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (getAllSpecialFunctionSymbols)
 	// Done: (quote progn when if unless and or setq repeat while until let let* cond)
@@ -706,7 +828,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    final Method method = compiler.getMethod ();
 	    try
 	    {
-		method.invoke (object, this, mv, expression, valueType, allowNarrowing, liberalTruth);
+		method.invoke (object, this, mv, expression, valueClass, allowNarrowing, liberalTruth);
 	    }
 	    catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
 	    {
@@ -715,27 +837,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    return;
 	}
 	throw new IllegalArgumentException ("Unrecognized special form " + symbol);
-    }
-
-    @Override
-    public void addQuotedConstant (final Symbol reference, final Object quoted)
-    {
-	if (!quotedReferences.containsKey (quoted))
-	{
-	    // Save the reference and build it in the init method.
-	    quotedReferences.put (quoted, reference);
-	    quotedReferencesMap.put (reference.getName (), quoted);
-	}
-    }
-
-    private void createField (final int fieldAccess, final String fieldName, final String fieldDescriptor)
-    {
-	// Field initial value only applies to static fields
-	final FieldVisitor fv = cv.visitField (fieldAccess, fieldName, fieldDescriptor, null, null);
-	if (fv != null)
-	{
-	    fv.visitEnd ();
-	}
     }
 
     /** Load a constant using the quick version when value is small enough. */
@@ -781,121 +882,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    mv.unbox (valueType);
 	}
 	// Leave object types alone
-	// coerceRequired (mv, Type.getType (valueClass));
-    }
-
-    // /**
-    // * Convert an instance of a boxed wrapper class into the corresponding primitive type. Note:
-    // * short and byte are converted to int. See ByteCodeUtils if this is a problem. The stack must
-    // * contain an instance of the wrapperType. This will work for Boolean since it won't convert
-    // * other instances to true.
-    // */
-    // @Deprecated
-    // private void coerceRequired (final GeneratorAdapter mv, final Type valueType)
-    // {
-    // final int sort = valueType.getSort ();
-    // // if (sort == Type.VOID)
-    // // {
-    // // mv.visitInsn (POP);
-    // // }
-    // // else
-    // if (valueType.equals (Type.BOOLEAN_TYPE))
-    // {
-    // // Treat anything except Boolean as true.
-    // convert.coerceBoolean (mv);
-    // }
-    // else if (sort > Type.VOID && sort < Type.ARRAY)
-    // {
-    // // Call unbox with the type that we want to end up with
-    // mv.unbox (valueType);
-    // }
-    // // Leave object types alone
-    // }
-
-    /**
-     * Push a default value onto the stack.
-     *
-     * @param mv GeneratorAdapter to produce code.
-     * @param valueClass The value type to return.
-     * @param booleanDefault If the value will be a primitive boolean, use this as the default
-     *            value.
-     */
-    public void pushDefaultValue (final GeneratorAdapter mv, final Class<?> valueClass, final boolean booleanDefault)
-    {
-	if (valueClass != null)
-	{
-	    if (boolean.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (booleanDefault);
-	    }
-	    else if (byte.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Byte.valueOf ((byte)0));
-	    }
-	    else if (char.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Character.valueOf ((char)0));
-	    }
-	    else if (short.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Short.valueOf ((short)0));
-	    }
-	    else if (int.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Integer.valueOf (0));
-	    }
-	    else if (long.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Long.valueOf (0));
-	    }
-	    else if (float.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Float.valueOf (0.0f));
-	    }
-	    else if (double.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Double.valueOf (0.0));
-	    }
-	    else
-	    {
-		mv.visitInsn (ACONST_NULL);
-	    }
-	}
-
-    }
-
-    /**
-     * Turn a symbol name into something acceptable to Java. Lisp symbols can include characters
-     * like '+' that are not allowed in Java.
-     */
-    @Override
-    public String createJavaSymbolName (final Symbol symbol)
-    {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("SYM_");
-	final String name = symbol.getName ();
-	for (int i = 0; i < name.length (); i++)
-	{
-	    final char c = name.charAt (i);
-	    if (Character.isJavaIdentifierPart (c))
-	    {
-		buffer.append (c);
-	    }
-	    else
-	    {
-		final int codePoint = name.codePointAt (i);
-		final String cn = Character.getName (codePoint);
-		if (cn != null)
-		{
-		    buffer.append (c);
-		}
-		else
-		{
-		    buffer.append (String.format ("%03d", codePoint));
-		}
-	    }
-	}
-	return buffer.toString ();
     }
 
     @Override
