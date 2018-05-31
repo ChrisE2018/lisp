@@ -166,6 +166,10 @@ public abstract class FunctionCell implements Describer
 	{
 	    result = overloads[argCount];
 	}
+	else if (overloads.length == 0)
+	{
+	    throw new IllegalArgumentException ("No defined methods for " + symbol);
+	}
 	else
 	{
 	    final int n = overloads.length - 1;
