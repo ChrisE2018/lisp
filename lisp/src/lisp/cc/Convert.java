@@ -91,6 +91,16 @@ public class Convert implements Opcodes
     public void convert (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
+	if (fromClass == null)
+	{
+	    convert (mv, void.class, toClass, allowNarrowing, liberalTruth);
+	    return;
+	}
+	if (toClass == null)
+	{
+	    convert (mv, fromClass, void.class, allowNarrowing, liberalTruth);
+	    return;
+	}
 	final Type fromType = Type.getType (fromClass);
 	final Type toType = Type.getType (toClass);
 	final int fromSort = fromType.getSort ();
@@ -135,7 +145,7 @@ public class Convert implements Opcodes
 		    }
 		    else
 		    {
-			coerceBoolean (mv);
+			coerceBoolean (mv, liberalTruth);
 		    }
 		    return;
 		}
@@ -192,6 +202,44 @@ public class Convert implements Opcodes
 	cantConvert (fromClass, toClass);
     }
 
+    /**
+     * Convert value on top of the stack from a Boolean to a boolean. This is used as a last resort
+     * when the return type must be boolean and there is no better way to get there. If the top of
+     * the stack is not a Boolean, the result left on the stack is always true.
+     * <p>
+     * This should only be called if liberalTruth is true.
+     * </p>
+     */
+    private void coerceBoolean (final GeneratorAdapter mv, final boolean liberalTruth)
+    {
+	// (define boolean:foo () true)
+	// (define boolean:foo (x) x)
+	if (liberalTruth)
+	{
+	    mv.visitInsn (DUP);
+	    final Label l1 = new Label ();
+	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
+	    mv.visitJumpInsn (IFNE, l1);
+	    mv.visitInsn (POP);
+	    mv.visitLdcInsn (true);
+	    final Label l2 = new Label ();
+	    mv.visitJumpInsn (GOTO, l2);
+	    mv.visitLabel (l1);
+	    mv.unbox (Type.BOOLEAN_TYPE);
+	    mv.visitLabel (l2);
+	}
+	else
+	{
+	    mv.visitInsn (DUP);
+	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
+	    final Label l1 = new Label ();
+	    mv.visitJumpInsn (IFNE, l1);
+	    mv.visitInsn (POP);
+	    throwException (mv, "java/lang/IllegalArgumentException", "Boolean required");
+	    mv.visitLabel (l1);
+	    mv.unbox (Type.BOOLEAN_TYPE);
+	}
+    }
     // private void throwException (final GeneratorAdapter mv, final String internalName)
     // {
     // mv.visitTypeInsn (NEW, internalName);
@@ -215,32 +263,6 @@ public class Convert implements Opcodes
 	final Type fromType = Type.getType (fromClass);
 	final Type toType = Type.getType (toClass);
 	throw new Error ("Can't convert from " + fromClass + "(" + fromType + ") to " + toClass + "(" + toType + ")");
-    }
-
-    /**
-     * Convert value on top of the stack from a Boolean to a boolean. This is used as a last resort
-     * when the return type must be boolean and there is no better way to get there. If the top of
-     * the stack is not a Boolean, the result left on the stack is always true.
-     *
-     * @Deprecated This needs to be checked to verify that liberalTruth and allowNarrowing are
-     *             handled correctly.
-     */
-    @Deprecated
-    public void coerceBoolean (final GeneratorAdapter mv)
-    {
-	// (define boolean:foo () true)
-	// (define boolean:foo (x) x)
-	mv.visitInsn (DUP);
-	final Label l1 = new Label ();
-	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
-	mv.visitJumpInsn (IFNE, l1);
-	mv.visitInsn (POP);
-	mv.visitLdcInsn (true);
-	final Label l2 = new Label ();
-	mv.visitJumpInsn (GOTO, l2);
-	mv.visitLabel (l1);
-	mv.unbox (Type.BOOLEAN_TYPE);
-	mv.visitLabel (l2);
     }
 
     /**

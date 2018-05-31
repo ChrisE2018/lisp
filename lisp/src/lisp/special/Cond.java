@@ -40,19 +40,19 @@ public class Cond extends LogicDefiner implements Opcodes
 
     @DefineLisp (special = true, name = "cond", compiler = true)
     public void compileGeneralCond (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expression,
-            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
-	if (valueType == null)
+	if (valueClass == null)
 	{
 	    compileVoidCond (generator, mv, expression);
 	}
-	else if (valueType.equals (boolean.class))
+	else if (valueClass.equals (boolean.class))
 	{
 	    compileBooleanCond (generator, mv, expression);
 	}
 	else
 	{
-	    compileCond (generator, mv, expression, valueType, allowNarrowing, liberalTruth);
+	    compileCond (generator, mv, expression, valueClass, allowNarrowing, liberalTruth);
 	}
     }
 
@@ -214,7 +214,8 @@ public class Cond extends LogicDefiner implements Opcodes
 	// Return result
 	mv.visitLabel (l1);
 	mv.loadLocal (resultRef);
-	generator.coerceRequired (mv, valueClass);
+	// generator.coerceRequiredX (mv, valueClass);
+	// generator.convert (mv, Object.class, valueClass, allowNarrowing, liberalTruth);
 	// localVariableMap = savedBindings;
 	generator.setLocalBindingContext (savedBindings);
     }

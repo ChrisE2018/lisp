@@ -89,7 +89,8 @@ public class Setq extends Definer implements Opcodes
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    mv.visitInsn (DUP);
 	    mv.storeLocal (localRef);
-	    generator.coerceRequired (mv, valueClass);
+	    // generator.coerceRequiredX (mv, valueClass);
+	    generator.convert (mv, varClass, valueClass, allowNarrowing, liberalTruth);
 	}
     }
 
@@ -112,7 +113,8 @@ public class Setq extends Definer implements Opcodes
 	    mv.visitInsn (DUP);
 	    mv.storeArg (localRef);
 	    // [TODO] Use convert.convert here instead
-	    generator.coerceRequired (mv, valueClass);
+	    // generator.coerceRequiredX (mv, valueClass);
+	    generator.convert (mv, varClass, valueClass, allowNarrowing, liberalTruth);
 	}
     }
 
@@ -136,10 +138,11 @@ public class Setq extends Definer implements Opcodes
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "setValue", "(Ljava/lang/Object;)V", false);
 	// Return the expression value
 	generator.addGlobalReference (symbol);
-	if (valueClass != null)
-	{
-	    generator.coerceRequired (mv, valueClass);
-	}
+	// if (valueClass != null)
+	// {
+	// generator.coerceRequiredX (mv, valueClass);
+	// }
+	generator.convert (mv, Object.class, valueClass, allowNarrowing, liberalTruth);
     }
 
     @Override

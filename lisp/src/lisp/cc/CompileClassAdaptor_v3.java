@@ -159,17 +159,18 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     }
 
     /** Convert the result of an expression to the type required by the called. */
-    public void convertResultType (final GeneratorAdapter mv, final Class<?> actualClass, final Class<?> requiredClass,
+    public void convert (final GeneratorAdapter mv, final Class<?> actualClass, final Class<?> requiredClass,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
-	if (actualClass.equals (void.class))
-	{
-	    if (requiredClass != null)
-	    {
-		pushDefaultValue (mv, requiredClass, false);
-	    }
-	}
-	else if (!actualClass.equals (requiredClass))
+	// if (actualClass.equals (void.class))
+	// {
+	// if (requiredClass != null)
+	// {
+	// pushDefaultValue (mv, requiredClass, false);
+	// }
+	// }
+	// else
+	if (!actualClass.equals (requiredClass))
 	{
 	    convert.convert (mv, actualClass, requiredClass, allowNarrowing, liberalTruth);
 	}
@@ -460,7 +461,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    final String classInternalName = shellClassType.getInternalName ();
 	    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 	    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
-	    coerceRequired (mv, valueClass);
+	    convert.convert (mv, Object.class, valueClass, allowNarrowing, liberalTruth);
 	}
     }
 
@@ -677,14 +678,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// Assume the function will still be defined when we execute this code.
 	// [TODO] Could define an applyVoid method to return no value.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
-	if (valueClass == null)
-	{
-	    mv.visitInsn (POP);
-	}
-	else
-	{
-	    coerceRequired (mv, valueClass);
-	}
+	convert.convert (mv, Object.class, valueClass, allowNarrowing, liberalTruth);
     }
 
     /** Load an integer constant using the best bytecode when value is small enough. */
@@ -700,37 +694,38 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	}
     }
 
-    /**
-     * Convert an instance of a boxed wrapper class into the corresponding primitive type. This
-     * should only be called when the stack must contain an instance of a wrapper type. Note: short
-     * and byte are converted to int. See ByteCodeUtils if this is a problem.
-     */
-    @Override
-    @Deprecated
-    public void coerceRequired (final GeneratorAdapter mv, final Class<?> valueClass)
-    {
-	if (valueClass == null)
-	{
-	    // coerceRequired (mv, Type.VOID_TYPE, allowNarrowing, liberalTruth);
-	    // mv.visitInsn (POP);
-	    throw new Error ("Don't use coerceRequired here");
-	}
-	final Type valueType = Type.getType (valueClass);
-	final int sort = valueType.getSort ();
-
-	// if (valueType.equals (Type.BOOLEAN_TYPE))
-	// {
-	// // Treat anything except Boolean as true.
-	// convert.coerceBoolean (mv);
-	// }
-	// else
-	if (sort > Type.VOID && sort < Type.ARRAY)
-	{
-	    // Call unbox with the type that we want to end up with
-	    mv.unbox (valueType);
-	}
-	// Leave object types alone
-    }
+    // /**
+    // * Convert an instance of a boxed wrapper class into the corresponding primitive type. This
+    // * should only be called when the stack must contain an instance of a wrapper type. Note:
+    // short
+    // * and byte are converted to int. See ByteCodeUtils if this is a problem.
+    // */
+    // @Override
+    // @Deprecated
+    // public void coerceRequiredXX (final GeneratorAdapter mv, final Class<?> valueClass)
+    // {
+    // if (valueClass == null)
+    // {
+    // // coerceRequired (mv, Type.VOID_TYPE, allowNarrowing, liberalTruth);
+    // // mv.visitInsn (POP);
+    // throw new Error ("Don't use coerceRequired here");
+    // }
+    // final Type valueType = Type.getType (valueClass);
+    // final int sort = valueType.getSort ();
+    //
+    // // if (valueType.equals (Type.BOOLEAN_TYPE))
+    // // {
+    // // // Treat anything except Boolean as true.
+    // // convert.coerceBoolean (mv);
+    // // }
+    // // else
+    // if (sort > Type.VOID && sort < Type.ARRAY)
+    // {
+    // // Call unbox with the type that we want to end up with
+    // mv.unbox (valueType);
+    // }
+    // // Leave object types alone
+    // }
 
     @Override
     public String toString ()

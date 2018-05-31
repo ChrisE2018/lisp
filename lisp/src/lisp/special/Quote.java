@@ -17,25 +17,27 @@ public class Quote extends Definer implements Opcodes
 {
     @DefineLisp (special = true, name = "quote", compiler = true)
     public void compileQuote (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
-            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo () (quote bar))
-	if (boolean.class.equals (valueType))
+	if (boolean.class.equals (valueClass))
 	{
 	    mv.visitLdcInsn (true);
 	}
-	else if (valueType != null)
+	else if (valueClass != null)
 	{
 	    final Symbol quote = (Symbol)e.get (0);
 	    final Symbol reference = quote.gensym ();
 	    final Object quoted = e.get (1);
+	    final Class<?> quotedClass = quoted.getClass ();
 	    generator.addQuotedConstant (reference, quoted);
-	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
+	    final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
 	    // LOGGER.finer (new LogString ("Quoted reference to %s (%s)", typeDescriptor, quoted));
 	    mv.visitVarInsn (ALOAD, 0);
 	    final String classInternalName = generator.getClassType ().getInternalName ();
 	    mv.visitFieldInsn (GETFIELD, classInternalName, reference.getName (), typeDescriptor);
-	    generator.coerceRequired (mv, valueType);
+	    // generator.coerceRequiredXX (mv, valueType);
+	    generator.convert (mv, quotedClass, valueClass, allowNarrowing, liberalTruth);
 	}
     }
 

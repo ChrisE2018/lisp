@@ -29,19 +29,19 @@ public class And extends LogicDefiner implements Opcodes
 
     @DefineLisp (special = true, name = "and", compiler = true)
     public void compileGeneralAnd (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expression,
-            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
-	if (valueType == null)
+	if (valueClass == null)
 	{
 	    compileVoidAnd (generator, mv, expression);
 	}
-	else if (valueType.equals (boolean.class))
+	else if (valueClass.equals (boolean.class))
 	{
 	    compileBooleanAnd (generator, mv, expression);
 	}
 	else
 	{
-	    compileAnd (generator, mv, expression, valueType, allowNarrowing, liberalTruth);
+	    compileAnd (generator, mv, expression, valueClass, allowNarrowing, liberalTruth);
 	}
     }
 
@@ -87,7 +87,7 @@ public class And extends LogicDefiner implements Opcodes
     }
 
     private void compileAnd (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
-            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (a b) (and))
 	// (define foo (a b) (and a b))
@@ -122,7 +122,8 @@ public class And extends LogicDefiner implements Opcodes
 	// Return final value.
 	mv.visitLabel (l2);
 	// (define int:foo (a b) (and a b))
-	generator.coerceRequired (mv, valueType);
+	// generator.coerceRequiredX (mv, valueType);
+	generator.convert (mv, Object.class, valueClass, allowNarrowing, liberalTruth);
     }
 
     @Override

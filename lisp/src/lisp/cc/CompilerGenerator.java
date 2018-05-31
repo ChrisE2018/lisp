@@ -68,9 +68,17 @@ public interface CompilerGenerator
      */
     public void pushDefaultValue (GeneratorAdapter mv, Class<?> valueClass, final boolean booleanDefault);
 
-    /** Generate code to convert the top stack element to a required valueClass. */
-    @Deprecated
-    public void coerceRequired (final GeneratorAdapter mv, final Class<?> valueClass);
+    /** Convert the result of an expression to the type required by the called. */
+    public void convert (final GeneratorAdapter mv, final Class<?> actualClass, final Class<?> requiredClass,
+            final boolean allowNarrowing, final boolean liberalTruth);
+
+    // /**
+    // * Generate code to convert the top stack element to a required valueClass.
+    // *
+    // * @Deprecated Use convertResultType instead
+    // */
+    // @Deprecated
+    // public void coerceRequiredXX (final GeneratorAdapter mv, final Class<?> valueClass);
 
     /** Define a field to contain quoted data. */
     public void addQuotedConstant (final Symbol reference, final Object quoted);

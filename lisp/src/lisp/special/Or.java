@@ -27,19 +27,19 @@ public class Or extends LogicDefiner implements Opcodes
 
     @DefineLisp (special = true, name = "or", compiler = true)
     public void compileGeneralOr (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expression,
-            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
-	if (valueType == null)
+	if (valueClass == null)
 	{
 	    compileVoidOr (generator, mv, expression);
 	}
-	else if (valueType.equals (boolean.class))
+	else if (valueClass.equals (boolean.class))
 	{
 	    compileBooleanOr (generator, mv, expression);
 	}
 	else
 	{
-	    compileOr (generator, mv, expression, valueType, allowNarrowing, liberalTruth);
+	    compileOr (generator, mv, expression, valueClass, allowNarrowing, liberalTruth);
 	}
     }
 
@@ -85,7 +85,7 @@ public class Or extends LogicDefiner implements Opcodes
     }
 
     private void compileOr (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
-            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (a b) (or))
 	// (foo 1 2)
@@ -96,7 +96,7 @@ public class Or extends LogicDefiner implements Opcodes
 	for (int i = 1; i < e.size (); i++)
 	{
 	    mv.visitInsn (POP);
-	    generator.compileExpression (mv, e.get (i), Object.class /* TODO */, false, true);
+	    generator.compileExpression (mv, e.get (i), Object.class, false, true);
 	    mv.visitInsn (DUP);
 	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	    mv.visitJumpInsn (IFEQ, l1);
@@ -113,7 +113,8 @@ public class Or extends LogicDefiner implements Opcodes
 	// Jump here for true case or fall through in false case
 	mv.visitLabel (l1);
 	// (define int:bar (a b) (or a b))
-	generator.coerceRequired (mv, valueType);
+	// generator.coerceRequiredX (mv, valueType);
+	generator.convert (mv, Object.class, valueClass, allowNarrowing, liberalTruth);
     }
 
     @Override
