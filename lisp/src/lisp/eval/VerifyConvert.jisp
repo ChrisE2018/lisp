@@ -3,10 +3,14 @@
 
 (resetTestStatistics)
 
+(verifyPhase simple)
+
 (verify 1 1)
 (verify 2 2)
 
 ;(setq system.showBytecode t)
+
+(verifyPhase intArg)
 
 (define foo (int:a) a)
 
@@ -14,11 +18,15 @@
 (verify (foo -2) -2)
 (verify (foo 3) 3)
 
+(verifyPhase doubleArg)
+
 (define foo (double:a) a)
 (verify (foo 1) 1.0)
 (verify (foo -2) -2.0)
 (verify (foo 3) 3.0)
 (verify (foo 3.5) 3.5)
+
+(verifyPhase primitives)
 
 (verify (getName (getClass (the byte 2))) "java.lang.Byte")
 (verify (getName (getClass (the short 4))) "java.lang.Short")
@@ -33,17 +41,23 @@
 (verify (getName (getClass float:4)) "java.lang.Float")
 (verify (getName (getClass double:4)) "java.lang.Double")
 
+(verifyPhase intValue)
+
 (define int:foo (int:a) a)
 
 (verify (foo 1) 1)
 (verify (foo -2) -2)
 (verify (foo 3) 3)
 
+(verifyPhase longValue)
+
 (define long:foo (int:a) a)
 
 (verify (foo 1) 1)
 (verify (foo -2) -2)
 (verify (foo 3) 3)
+
+(verifyPhase simpleTypedReturnValues)
 
 ;; Verify very simple cases of returning typed values
 (define foo () byte:3)
@@ -89,6 +103,8 @@
 
 (define double:foo () double:2.2)
 (verify (foo) 2.2)
+
+(verifyPhase conversion)
 
 ; Now change type on return
 (define int:foo () byte:3)
@@ -137,14 +153,14 @@
 (define double:foo () long:7)
 (verify (foo) 7)
 
+(verifyPhase narrowing)
+
 ; Narrowing conversions
 (define byte:foo () (the byte int:3))
 (verify (foo) 3)
 
-(sleep 0.2)
-(printTestStatistics)
-
 ; And quit
+(verifyPhase verifyComplete)
 (exit)
 
 (define foo (a b)

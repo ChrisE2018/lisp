@@ -5,156 +5,16 @@
 
 (verify 1 1)
 (verify 2 2)
+
+(verifyPhase interpreter)
+
 (verify (+ 2 3) 5)
 (setq a 5)
 (verify a 5)
 (verify (+ a 3) 8)
 
-(define alpha (x)
-   (+ a x 4))
-
-(verify a 5)	;; Test 10
-(verify (alpha 3) 12)
-
-(setq a 6) 
-(verify (alpha 3) 13) 
-
-(define foo (x)
-	(setq a x))
-(foo 3)
-(verify a 3)
-(foo 5)
-(verify a 5) 
-
 (verify (if true 1 2) 1)
 (verify (if false 1 2) 2)
-
-(define foo (x) (not x))
-(verify (foo true) false)
-(verify (foo false) true)
-(verify (foo 2) false)
-
-(define foo (a b) (and))
-(verify (foo 1 2) true)
-(define foo (a b) (and a b))
-(verify (foo true true) true)
-(verify (foo true false) false)
-(verify (foo false true) false)
-(verify (foo false false) false)		;; Test 20
-(verify (foo 1 true) true)
-(verify (foo true 2) 2)
-(verify (foo false 2) false)
-
-(define foo (a b) (if (and a b) 1 2))
-(verify (foo true true) 1)
-(verify (foo false true) 2)
-(verify (foo true false) 2)
-(verify (foo false false) 2)
-
-(define foo (a b) (or))
-(verify (foo 1 2) false)
-(define foo (a b) (or a b))
-(verify (foo true true) true)
-(verify (foo true false) true)			;; Test 30
-(verify (foo false true) true)
-(verify (foo false false) false)
-(verify (foo 1 true) 1)
-(verify (foo true 2) true)
-(verify (foo false 2) 2)
-	
-(define foo (a b) (if (or a b) 1 2))
-(verify (foo true true) 1)
-(verify (foo false true) 1)
-(verify (foo true false) 1)
-(verify (foo false false) 2)
-	
-(define foo (x) (repeat x 3))
-(verify (foo 1) 3)						;; Test 40
-(define foo (int:x) (repeat x 3) 5)
-(define foo (x) (repeat x 3) 5)
-(verify (foo 1) 5)
-
-(define foo (x) (setq a (+ a 1)))
-(setq a 0)
-(foo 2)
-(verify a 1)
-
-(define foo (x) (repeat x (setq a (+ a 1))))
-(setq a 0)
-(foo 5)
-(verify a 5)
-
-(define foo () (dotimes (i 3) 0))
-(verify (foo) 0)
-
-(define foo () (dotimes (i 3) 0) 5)
-
-(define foo () (quote bar))
-(eq (foo) 'bar)
-
-(verify (> (static "java.lang.System" "currentTimeMillis") 1526859416568) true)
-
-(define foo ()
-	(static "java.lang.System" "currentTimeMillis"))
-
-(verify (> (foo) 152685941) true)
-
-(define foo (x) (let ((a 1) (b 2)) (+ a b x)))
-(verify (foo 3) 6)
-
-(define foo () (let ((a 1) (b 2)) a))
-(verify (foo) 1)
-
-(setq a 11)
-(setq b 22)
-(define foo (x) (let ((a b) (b a)) (if x a b)))
-(verify (foo true) 22)						;; Test 50
-(verify (foo false) 11)
-
-(define foo () (let* ((a b) (b a)) b))
-(define bar () (let ((a b) (b a)) b))
-(verify (foo) 22)
-(verify (bar) 11)
-
-(define foo () (cond))
-(verify (foo) null)
-
-(define foo (boolean:x) (cond (x 1)))
-(verify (foo true) 1)
-(verify (foo false) null)
-
-(define foo (x) (cond (x 1)))
-(verify (foo true) 1)
-(verify (foo false) null)
-
-(define foo (x) (cond ((= x 1) 'alpha)))
-(verify (foo 1) 'alpha)
-(verify (foo 2) null)
-
-(define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma) (true 'delta)))
-(verify (foo 1) 'alpha)
-(verify (foo 2) 'beta)
-(verify (foo 3) 'gamma)
-(verify (foo 4) 'delta)
-(verify (foo 5) 'delta)
-
-(define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma)))
-(verify (foo 1) 'alpha)
-(verify (foo 2) 'beta)						;; Test 60
-(verify (foo 3) 'gamma)
-(verify (foo 4) null)
-(verify (foo 5) null)
-
-; This will test compilation of a call to an undefined function.
-(define factorial (n)
-	(if (<= n 0)
-		1
-		(* n (factorial (- n 1)))))
-
-(verify (factorial 5) 120)
-	
-(define foo (x) (length x))
-(verify (foo "foobar") 6)
 
 (verify (* 3 4) 12)
 (verify (* 3.0 4) 12.0)
@@ -181,11 +41,174 @@
 (verify (sign 2.5) 1)
 (verify (sign -2.5) -1)
 
+(verifyPhase compile)
+
+(define foo (x) (not x))
+(verify (foo true) false)
+(verify (foo false) true)
+(verify (foo 2) false)
+
+(define foo (a b) (and))
+(verify (foo 1 2) true)
+(define foo (a b) (and a b))
+(verify (foo true true) true)
+(verify (foo true false) false)
+(verify (foo false true) false)
+(verify (foo false false) false)
+(verify (foo 1 true) true)
+(verify (foo true 2) 2)
+(verify (foo false 2) false)
+
+(define alpha (x)
+   (+ a x 4))
+
+(verify a 5)	;; Test 10
+(verify (alpha 3) 12)
+
+(setq a 6) 
+(verify (alpha 3) 13) 
+
+(define foo (x)
+	(setq a x))
+(foo 3)
+(verify a 3)
+(foo 5)
+(verify a 5) 
+
+(verifyPhase logic)
+
+(define foo (a b) (if (and a b) 1 2))
+(verify (foo true true) 1)
+(verify (foo false true) 2)
+(verify (foo true false) 2)
+(verify (foo false false) 2)
+
+(define foo (a b) (or))
+(verify (foo 1 2) false)
+(define foo (a b) (or a b))
+(verify (foo true true) true)
+(verify (foo true false) true)			;; Test 30
+(verify (foo false true) true)
+(verify (foo false false) false)
+(verify (foo 1 true) 1)
+(verify (foo true 2) true)
+(verify (foo false 2) 2)
+	
+(define foo (a b) (if (or a b) 1 2))
+(verify (foo true true) 1)
+(verify (foo false true) 1)
+(verify (foo true false) 1)
+(verify (foo false false) 2)
+
+(verifyPhase loops)
+
+(define foo (x) (repeat x 3))
+(verify (foo 1) 3)						;; Test 40
+(define foo (int:x) (repeat x 3) 5)
+(define foo (x) (repeat x 3) 5)
+(verify (foo 1) 5)
+
+(verifyPhase setq)
+
+(define foo (x) (setq a (+ a 1)))
+(setq a 0)
+(foo 2)
+(verify a 1)
+
+(define foo (x) (repeat x (setq a (+ a 1))))
+(setq a 0)
+(foo 5)
+(verify a 5)
+
+(define foo () (dotimes (i 3) 0))
+(verify (foo) 0)
+
+(define foo () (dotimes (i 3) 0) 5)
+
+(define foo () (quote bar))
+(eq (foo) 'bar)
+
+(verifyPhase static)
+
+(verify (> (static "java.lang.System" "currentTimeMillis") 1526859416568) true)
+
+(define foo ()
+	(static "java.lang.System" "currentTimeMillis"))
+
+(verify (> (foo) 152685941) true)
+
+(verifyPhase locals)
+
+(define foo (x) (let ((a 1) (b 2)) (+ a b x)))
+(verify (foo 3) 6)
+
+(define foo () (let ((a 1) (b 2)) a))
+(verify (foo) 1)
+
+(setq a 11)
+(setq b 22)
+(define foo (x) (let ((a b) (b a)) (if x a b)))
+(verify (foo true) 22)						;; Test 50
+(verify (foo false) 11)
+
+(define foo () (let* ((a b) (b a)) b))
+(define bar () (let ((a b) (b a)) b))
+(verify (foo) 22)
+(verify (bar) 11)
+
+(verifyPhase cond)
+
+(define foo () (cond))
+(verify (foo) null)
+
+(define foo (x) (cond (x 1)))
+(verify (foo true) 1)
+(verify (foo false) null)
+
+(define foo (x) (cond ((= x 1) 'alpha)))
+(verify (foo 1) 'alpha)
+(verify (foo 2) null)
+
+(define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma) (true 'delta)))
+(verify (foo 1) 'alpha)
+(verify (foo 2) 'beta)
+(verify (foo 3) 'gamma)
+(verify (foo 4) 'delta)
+(verify (foo 5) 'delta)
+
+(define foo (x) (cond ((= x 1) 'alpha) ((= x 2) 'beta) ((= x 3) 'gamma)))
+(verify (foo 1) 'alpha)
+(verify (foo 2) 'beta)						;; Test 60
+(verify (foo 3) 'gamma)
+(verify (foo 4) null)
+(verify (foo 5) null)
+
+(verifyPhase types)
+
+(define foo (boolean:x) (cond (x 1)))
+(verify (foo true) 1)
+(verify (foo false) null)
+
+(verifyPhase factorial)
+
+; This will test compilation of a call to an undefined function.
+(define factorial (n)
+	(if (<= n 0)
+		1
+		(* n (factorial (- n 1)))))
+
+(verify (factorial 5) 120)
+	
+(define foo (x) (length x))
+(verify (foo "foobar") 6)
+
 (verify (+ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20) 210)
 
 (define foo ()
 	(+ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))
 (verify (foo) 210)
+
+(verifyPhase interpretedPrimes)
 
 (def isprime (a)
   (let ((b 2)
@@ -205,7 +228,72 @@
 
 (verify (collectPrimes 10) '(2 3 5 7 11 13 17 19 23 29 31))
 
-(printf "Testing compiled prime number test %n")
+(verifyPhase primeConstructs)
+
+(define foo (a) (let ((b (+ a 2))) b))
+(verify (foo 4) 6)
+
+(define foo (x)
+  (let ((result 0))
+	(setq result (* x x))
+	result))
+(verify (foo 3) 9)
+(verify (foo 4) 16)
+
+(define foo ()
+   (let ((b 5))
+	(setq b 7)
+	b))
+(verify (foo) 7)
+
+(define foo ()
+   (let ((b 5))
+	(1+ 98)))
+(verify (foo) 99)
+
+(define foo (x)
+   (let ((b 42))
+	(1+ x)))
+(verify (foo 34) 35)
+	
+(define foo ()
+   (let ((b 42))
+	(1+ b)))
+(verify (foo) 43)
+	
+(define foo (x)
+   (let ((b 5))
+	(setq x (1+ x))
+	x))
+(verify (foo 17) 18)
+
+(define foo (x)
+   (let ((b 5))
+	(setq x (1+ 99))
+	x))
+(verify (foo 17) 100)
+
+(define foo () (let ((b 5)) (setq bb (1+ 99))))
+(define foo () (let ((b 5)) (setq b (1+ 99))))
+
+(define foo ()
+   (let ((b 5))
+	(setq b (1+ 99))
+	b))
+(verify (foo) 100)
+
+(define foo ()
+   (let ((b 2))
+	(setq b (1+ b))))
+(verify (foo) 3)
+
+(define foo ()
+   (let ((b 5))
+	(setq b (1+ b))
+	b))
+(verify (foo) 6)
+
+(verifyPhase primes)
 
 ; Now do it compiled
 (define isprime (a)
@@ -255,6 +343,7 @@
 (printTestStatistics)
 
 ; And quit
+(verifyPhase verifyComplete)
 (exit)
 
 

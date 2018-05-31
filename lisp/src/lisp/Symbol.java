@@ -118,8 +118,28 @@ public class Symbol implements Describer
     }
 
     /**
-     * If the current value of this symbol can be coerced to an int, return that. Otherwise return
-     * the defaultValue.
+     * If the current value of this symbol exists and can be coerced to an boolean, return that.
+     * Otherwise return the defaultValue.
+     *
+     * @param defaultValue
+     * @return
+     */
+    public boolean getBooleanValue (final boolean defaultValue)
+    {
+	if (symbolValue != null)
+	{
+	    final Object value = symbolValue.getValue ();
+	    if (value instanceof Boolean)
+	    {
+		return (Boolean)value;
+	    }
+	}
+	return defaultValue;
+    }
+
+    /**
+     * If the current value of this symbol exists and can be coerced to an int, return that.
+     * Otherwise return the defaultValue.
      *
      * @param defaultValue
      * @return
@@ -138,8 +158,8 @@ public class Symbol implements Describer
     }
 
     /**
-     * If the current value of this symbol can be coerced to an double, return that. Otherwise
-     * return the defaultValue.
+     * If the current value of this symbol exists and can be coerced to an double, return that.
+     * Otherwise return the defaultValue.
      *
      * @param defaultValue
      * @return
@@ -158,8 +178,8 @@ public class Symbol implements Describer
     }
 
     /**
-     * If the current value of this symbol can be coerced to a String, return that. Otherwise return
-     * the defaultValue.
+     * If the current value of this symbol exists and can be coerced to a String, return that.
+     * Otherwise return the defaultValue.
      *
      * @param defaultValue
      * @return
@@ -384,6 +404,19 @@ public class Symbol implements Describer
     }
 
     /**
+     * Read a symbol from a string, using a LispReader in the default package. This is slower than
+     * directly interning the symbol in a package, but easier to write into code. Using a LispReader
+     * allows package prefix notation to be used.
+     */
+    public static Symbol named (final String name)
+    {
+	final LispReader lispReader = new LispReader ();
+	final Package p = PackageFactory.getDefaultPackage ();
+	final Symbol symbol = lispReader.readSymbol (p, name);
+	return symbol;
+    }
+
+    /**
      * Quick way for Java code to get at Lisp symbol values. This uses a LispReader so package
      * prefix notation can be used.
      *
@@ -391,10 +424,7 @@ public class Symbol implements Describer
      */
     public static Object value (final String name)
     {
-	final LispReader lispReader = new LispReader ();
-	final Package p = PackageFactory.getDefaultPackage ();
-	final Symbol symbol = lispReader.readSymbol (p, name);
-	return symbol.getValue ();
+	return named (name).getValue ();
     }
 
     /**
@@ -403,9 +433,12 @@ public class Symbol implements Describer
      */
     public static Object value (final String name, final Object defaultValue)
     {
-	final LispReader lispReader = new LispReader ();
-	final Package p = PackageFactory.getDefaultPackage ();
-	final Symbol symbol = lispReader.readSymbol (p, name);
-	return symbol.getValue (defaultValue);
+	return named (name).getValue (defaultValue);
+    }
+
+    /** Get a boolean value from a named flag. */
+    public static boolean test (final String name, final boolean defaultValue)
+    {
+	return named (name).getBooleanValue (defaultValue);
     }
 }
