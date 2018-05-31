@@ -160,46 +160,24 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     @Override
     public void pushDefaultValue (final GeneratorAdapter mv, final Class<?> valueClass, final boolean booleanDefault)
     {
-	if (valueClass != null)
+	convert.pushDefaultValue (mv, valueClass, booleanDefault);
+    }
+
+    /** Convert the result of an expression to the type required by the called. */
+    public void convertResultType (final GeneratorAdapter mv, final Class<?> actualClass, final Class<?> requiredClass,
+            final boolean allowNarrowing, final boolean liberalTruth)
+    {
+	if (actualClass.equals (void.class))
 	{
-	    if (boolean.class.equals (valueClass))
+	    if (requiredClass != null)
 	    {
-		mv.visitLdcInsn (booleanDefault);
-	    }
-	    else if (byte.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Byte.valueOf ((byte)0));
-	    }
-	    else if (char.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Character.valueOf ((char)0));
-	    }
-	    else if (short.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Short.valueOf ((short)0));
-	    }
-	    else if (int.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Integer.valueOf (0));
-	    }
-	    else if (long.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Long.valueOf (0));
-	    }
-	    else if (float.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Float.valueOf (0.0f));
-	    }
-	    else if (double.class.equals (valueClass))
-	    {
-		mv.visitLdcInsn (Double.valueOf (0.0));
-	    }
-	    else
-	    {
-		mv.visitInsn (ACONST_NULL);
+		pushDefaultValue (mv, requiredClass, false);
 	    }
 	}
-
+	else if (!actualClass.equals (requiredClass))
+	{
+	    convert.convert (mv, actualClass, requiredClass, allowNarrowing, liberalTruth);
+	}
     }
 
     /**
@@ -537,12 +515,10 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	}
 	else
 	{
-	    // [TODO] Some 'normal' functions need special coding, i.e, arithmetic and comparisons.
 	    compileStandardFunctionCall (mv, f, e, valueClass, allowNarrowing, liberalTruth);
 	}
     }
 
-    // (define foo () (not true))
     private void compileStandardFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
@@ -552,55 +528,21 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    final ObjectMethod compiler = function.getCompiler ();
 	    if (compiler != null)
 	    {
+		// [TODO] Some 'normal' functions need special coding, i.e, arithmetic and
+		// comparisons.
 		LOGGER.finer (new LogString ("Compiling optimized call to standard function %s", symbol));
 		compileSpecialFunctionCall (mv, symbol, e, valueClass, allowNarrowing, liberalTruth);
 		return;
 	    }
-	    // [TODO] If we are compiling for speed and can assume that the current definition won't
-	    // change, then compile a direct call to the current function method.
+	    if (optimizeFunctionCall (e))
+	    {
+		compileDirectFunctionCall (mv, symbol, e, valueClass, allowNarrowing, liberalTruth);
+		return;
+	    }
 	}
 
 	// Produce a generic call to a standard function.
-
-	// Get to the function symbol at runtime.
-	addSymbolReference (symbol);
-	LOGGER.finer (new LogString ("Function symbol reference to %s", symbol));
-	mv.visitVarInsn (ALOAD, 0);
-	final String classInternalName = shellClassType.getInternalName ();
-	mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
-
-	// Get the FunctionCell from the function symbol.
-	// The call to getDefaultHandlerFunction will return a DefaultHandler that tries to invoke
-	// the java method on arg 1 if the function has not been given any other definition.
-	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;", false);
-
-	// Compile the arguments. We always pass all the arguments as elements of a single array of
-	// Object.
-	// [TODO] If we know argument types of the function we are about to call we can try to
-	// compile the expression more efficiently.
-	final int argCount = e.size () - 1;
-	ldcGeneral (mv, argCount);
-	mv.visitTypeInsn (ANEWARRAY, "java/lang/Object");
-	for (int i = 0; i < argCount; i++)
-	{
-	    mv.visitInsn (DUP);
-	    ldcGeneral (mv, i);
-	    compileExpression (mv, e.get (i + 1), Object.class, false, false);
-	    mv.visitInsn (AASTORE);
-	}
-
-	// Call invoke on the method retrieved from the FunctionCell of the function symbol.
-	// Assume the function will still be defined when we execute this code.
-	// [TODO] Could define an applyVoid method to return no value.
-	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
-	if (valueClass == null)
-	{
-	    mv.visitInsn (POP);
-	}
-	else
-	{
-	    coerceRequired (mv, valueClass);
-	}
+	compileGeneralFunctionCall (mv, symbol, e, valueClass, allowNarrowing, liberalTruth);
     }
 
     private void compileSpecialFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList expression,
@@ -635,6 +577,121 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    return;
 	}
 	throw new IllegalArgumentException ("Unrecognized special form " + symbol);
+    }
+
+    private boolean optimizeFunctionCall (final LispList e)
+    {
+	// [TODO] If we are compiling for speed and can assume that the current definition won't
+	// change, then compile a direct call to the current function method.
+	// [TODO] If we know argument types of the function we are about to call we can try to
+	// compile the expression more efficiently.
+	final int argCount = e.size () - 1;
+	final Symbol symbol = (Symbol)e.get (0);
+	final FunctionCell function = symbol.getFunction ();
+	if (function != null)
+	{
+	    final ObjectMethod objectMethod = function.selectMethod (argCount);
+	    if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
+	    {
+		// Only methods with Object parameters work right now.
+		// coerceRequired will need to be improved before general method parameters are ok.
+		if (objectMethod.isObjectOnly () && !objectMethod.isVarArgs ())
+		{
+		    return Symbol.test ("optimize", true);
+		}
+	    }
+	}
+	return false;
+    }
+
+    private void compileDirectFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
+    {
+	// (setq showBytecode t)
+	// (define foo () (getDefaultPackage))
+	// (define foo (x) (1+ x))
+	// (define foo (x) (not x))
+	// (define foo (a b) (rem a b))
+	final Label l1 = new Label ();
+	mv.visitLineNumber (101, l1);
+	mv.visitLabel (l1);
+	final FunctionCell function = symbol.getFunction ();
+	final int argCount = e.size () - 1;
+	final ObjectMethod objectMethod = function.selectMethod (argCount);
+	final Object target = objectMethod.getObject ();
+	final Method method = objectMethod.getMethod ();
+
+	LOGGER.fine ("Direct call to " + symbol);
+	final Symbol reference = symbol.gensym ();
+	final String methodSignature = objectMethod.getSignature ();
+	final Type objectType = Type.getType (target.getClass ());
+	final String objectClassInternalName = objectType.getInternalName ();
+	addQuotedConstant (reference, target);
+	mv.visitVarInsn (ALOAD, 0);
+	final String classInternalName = shellClassType.getInternalName ();
+	mv.visitFieldInsn (GETFIELD, classInternalName, reference.getName (), objectType.getDescriptor ());
+	// Compile arguments here
+	final Class<?>[] params = method.getParameterTypes ();
+	for (int i = 0; i < params.length; i++)
+	{
+	    compileExpression (mv, e.get (i + 1), params[i], false, false);
+	}
+	mv.visitMethodInsn (INVOKEVIRTUAL, objectClassInternalName, method.getName (), methodSignature, false);
+	final Class<?> methodValueClass = method.getReturnType ();
+	// if (methodValueClass.equals (void.class))
+	// {
+	// if (valueClass != null)
+	// {
+	// pushDefaultValue (mv, valueClass, false);
+	// }
+	// }
+	// else if (!methodValueClass.equals (valueClass))
+	{
+	    convert.convert (mv, methodValueClass, valueClass, allowNarrowing, liberalTruth);
+	}
+    }
+
+    private void compileGeneralFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
+            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
+    {
+	final FunctionCell function = symbol.getFunction ();
+
+	// Get to the function symbol at runtime.
+	addSymbolReference (symbol);
+	LOGGER.finer (new LogString ("Function symbol reference to %s", symbol));
+	mv.visitVarInsn (ALOAD, 0);
+	final String classInternalName = shellClassType.getInternalName ();
+	mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
+
+	// Get the FunctionCell from the function symbol.
+	// The call to getDefaultHandlerFunction will return a DefaultHandler that tries to invoke
+	// the java method on arg 1 if the function has not been given any other definition.
+	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;", false);
+
+	// Compile the arguments. Pass all the arguments as elements of a single array of Objects.
+	final int argCount = e.size () - 1;
+	ldcGeneral (mv, argCount);
+	mv.visitTypeInsn (ANEWARRAY, "java/lang/Object");
+	for (int i = 0; i < argCount; i++)
+	{
+	    mv.visitInsn (DUP);
+	    ldcGeneral (mv, i);
+	    compileExpression (mv, e.get (i + 1), Object.class, false, false);
+	    mv.visitInsn (AASTORE);
+	}
+
+	// Call invoke on the method retrieved from the FunctionCell of the function symbol.
+	// Assume the function will still be defined when we execute this code.
+	// [TODO] Could define an applyVoid method to return no value.
+	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
+	if (valueClass == null)
+	{
+	    mv.visitInsn (POP);
+	}
+	else
+	{
+	    coerceRequired (mv, valueClass);
+	}
     }
 
     /** Load an integer constant using the best bytecode when value is small enough. */

@@ -4,17 +4,80 @@ package lisp.cc;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
+/**
+ * Class to generate conversion code. There are only two public methods in this class:
+ * pushDefaultValue and convert.
+ */
 public class Convert implements Opcodes
 {
     private static final Boxer boxer = new Boxer ();
 
     /**
-     * Convert the top element of the stack from one type to another. This is the only public method
-     * in this gigantic class. This method will generate code to convert from one class to another
-     * class. The generated code will take advantage of provided type information to implement the
-     * best conversion possible. If the types are known at compile time, the primitive types will be
-     * converted directly. If not known at compile time, a series of type checks will be put into
-     * the code to do the right thing.
+     * Push a default value of a specified class onto the stack.
+     *
+     * @param mv GeneratorAdapter to produce code.
+     * @param valueClass The value type to return.
+     * @param booleanDefault If the value will be a primitive boolean, use this as the default
+     *            value.
+     */
+    public void pushDefaultValue (final GeneratorAdapter mv, final Class<?> valueClass, final boolean booleanDefault)
+    {
+	if (valueClass != null)
+	{
+	    if (boolean.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (booleanDefault);
+	    }
+	    else if (byte.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Byte.valueOf ((byte)0));
+	    }
+	    else if (char.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Character.valueOf ((char)0));
+	    }
+	    else if (short.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Short.valueOf ((short)0));
+	    }
+	    else if (int.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Integer.valueOf (0));
+	    }
+	    else if (long.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Long.valueOf (0));
+	    }
+	    else if (float.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Float.valueOf (0.0f));
+	    }
+	    else if (double.class.equals (valueClass))
+	    {
+		mv.visitLdcInsn (Double.valueOf (0.0));
+	    }
+	    else
+	    {
+		mv.visitInsn (ACONST_NULL);
+	    }
+	}
+    }
+
+    /**
+     * Convert the top element of the stack from one type to another. This is the one of two public
+     * methods in this gigantic class. This method will generate code to convert from one class to
+     * another class. The generated code will take advantage of provided type information to
+     * implement the best conversion possible. If the types are known at compile time, the primitive
+     * types will be converted directly. If not known at compile time, a series of type checks will
+     * be put into the code to do the right thing.
+     * <p>
+     * Supported conversions include all the boxing and unboxing operations for primitive data
+     * types.
+     * </p>
+     * <p>
+     * If the toClass is void, then the current data will be popped from the stack. If fromClass is
+     * void a default value will be pushed onto the stack.
+     * </p>
      *
      * @param mv The bytecode generator
      * @param fromType The current type of the top stack element.
@@ -50,6 +113,11 @@ public class Convert implements Opcodes
 	if (toType.equals (boxer.getBoxedType (fromType)))
 	{
 	    mv.box (fromType);
+	    return;
+	}
+	if (fromSort == Type.VOID)
+	{
+	    pushDefaultValue (mv, toClass, false);
 	    return;
 	}
 	switch (toSort)
@@ -112,7 +180,7 @@ public class Convert implements Opcodes
 	    }
 	    case Type.OBJECT:
 	    {
-		// Special case for String, Symbol
+		// [TODO] Special case for String, Symbol?
 		convert2Object (mv, fromClass, toClass);
 		return;
 	    }
