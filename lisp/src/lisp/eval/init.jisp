@@ -1,5 +1,14 @@
 ;; Default initialization file
 
+;; These 'new' statements create an instance of classes that define Lisp functionality.
+;; The packages are loaded in alphabetic order, there is no specific need to load them
+;; in this order. For most special forms, the interpreter and compiler definition is in the same
+;; source file. Let and Let* are in the same source file. The and TheCompiler are separate because
+;; the interpreted version (The.java) is used by the interpreter.
+;; All of these classes are based on Definer which scans for annotations in the constructor.
+;; When @DefineLisp annotations are found attached to a method it is saved in a Symbol FunctionCell,
+;; where the interpreter and compiler can find it.
+
 (new "lisp.special.And")
 (new "lisp.special.Cond")
 (new "lisp.special.Dotimes")
@@ -15,6 +24,10 @@
 (new "lisp.special.While")
 (new "lisp.special.Unless")
 (new "lisp.special.Until")
+
+;; These lisp primitives contain only simple functions that do not need special compiler support.
+;; Some of them will benefit if they are given special compiler support to produce better code.
+
 (new "lisp.eval.ArithmeticPrimitives")
 (new "lisp.eval.ControlPrimitives")
 (new "lisp.eval.DescribePrimitives")
@@ -29,17 +42,22 @@
 (inPackage "system")
 
 (def d (x)
+	"Shorthand for describe"
 	(describe x))
 
-;(def exit (x)
+;(def exit (x) 
 ;  (static "java.lang.System" "exit" x))
- 
- (def v ()
-   (load "src/lisp/eval/Verify.jisp")) 
+
+;; Menus for Interactor gui
 
 (setq *menus* '(("File" 
 					("foo" (printf "foo hit"))
 					("exit" (static "java.lang.System" "exit" 0))
 					)
-			    ("Edit" "bar")))
+			    ("Edit" "bar")
+			    ("Lisp" 
+			    	("Show Bytecode" (setq system.showBytecode true))
+			    	("Hide Bytecode" (setq system.showBytecode false))
+			    	)
+			    ))
 

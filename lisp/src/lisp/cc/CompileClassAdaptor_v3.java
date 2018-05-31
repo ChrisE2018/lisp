@@ -673,7 +673,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// Assume the function will still be defined when we execute this code.
 	// [TODO] Could define an applyVoid method to return no value.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
-	coerceRequired (mv, valueType);
+	if (valueType == null)
+	{
+	    mv.visitInsn (POP);
+	}
+	else
+	{
+	    coerceRequired (mv, valueType);
+	}
     }
 
     private void compileSpecialFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList expression,
@@ -745,7 +752,9 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     }
 
     /**
-     * Convert class to type and coerce the value. Not a well defined function.
+     * Convert an instance of a boxed wrapper class into the corresponding primitive type. This
+     * should only be called when the stack must contain an instance of a wrapper type. Note: short
+     * and byte are converted to int. See ByteCodeUtils if this is a problem.
      */
     @Override
     @Deprecated
@@ -754,41 +763,54 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	if (valueClass == null)
 	{
 	    // coerceRequired (mv, Type.VOID_TYPE, allowNarrowing, liberalTruth);
-	    mv.visitInsn (POP);
+	    // mv.visitInsn (POP);
+	    throw new Error ("Don't use coerceRequired here");
 	}
-	else
-	{
-	    coerceRequired (mv, Type.getType (valueClass));
-	}
-    }
-
-    /**
-     * Convert an instance of a boxed wrapper class into the corresponding primitive type. Note:
-     * short and byte are converted to int. See ByteCodeUtils if this is a problem. The stack must
-     * contain an instance of the wrapperType. This will work for Boolean since it won't convert
-     * other instances to true.
-     */
-    @Deprecated
-    private void coerceRequired (final GeneratorAdapter mv, final Type valueType)
-    {
+	final Type valueType = Type.getType (valueClass);
 	final int sort = valueType.getSort ();
-	// if (sort == Type.VOID)
+
+	// if (valueType.equals (Type.BOOLEAN_TYPE))
 	// {
-	// mv.visitInsn (POP);
+	// // Treat anything except Boolean as true.
+	// convert.coerceBoolean (mv);
 	// }
 	// else
-	if (valueType.equals (Type.BOOLEAN_TYPE))
-	{
-	    // Treat anything except Boolean as true.
-	    convert.coerceBoolean (mv);
-	}
-	else if (sort > Type.VOID && sort < Type.ARRAY)
+	if (sort > Type.VOID && sort < Type.ARRAY)
 	{
 	    // Call unbox with the type that we want to end up with
 	    mv.unbox (valueType);
 	}
 	// Leave object types alone
+	// coerceRequired (mv, Type.getType (valueClass));
     }
+
+    // /**
+    // * Convert an instance of a boxed wrapper class into the corresponding primitive type. Note:
+    // * short and byte are converted to int. See ByteCodeUtils if this is a problem. The stack must
+    // * contain an instance of the wrapperType. This will work for Boolean since it won't convert
+    // * other instances to true.
+    // */
+    // @Deprecated
+    // private void coerceRequired (final GeneratorAdapter mv, final Type valueType)
+    // {
+    // final int sort = valueType.getSort ();
+    // // if (sort == Type.VOID)
+    // // {
+    // // mv.visitInsn (POP);
+    // // }
+    // // else
+    // if (valueType.equals (Type.BOOLEAN_TYPE))
+    // {
+    // // Treat anything except Boolean as true.
+    // convert.coerceBoolean (mv);
+    // }
+    // else if (sort > Type.VOID && sort < Type.ARRAY)
+    // {
+    // // Call unbox with the type that we want to end up with
+    // mv.unbox (valueType);
+    // }
+    // // Leave object types alone
+    // }
 
     /**
      * Push a default value onto the stack.

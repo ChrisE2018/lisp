@@ -98,7 +98,7 @@ public class And extends LogicDefiner implements Opcodes
 	for (int i = 1; i < e.size (); i++)
 	{
 	    mv.visitInsn (POP);
-	    generator.compileExpression (mv, e.get (i), Object.class /* TODO */, false, true);
+	    generator.compileExpression (mv, e.get (i), Object.class, false, true);
 	    mv.visitInsn (DUP);
 	    final Label l3 = new Label ();
 	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
@@ -121,6 +121,7 @@ public class And extends LogicDefiner implements Opcodes
 	// Jump here after true case or fall through after false.
 	// Return final value.
 	mv.visitLabel (l2);
+	// (define int:foo (a b) (and a b))
 	generator.coerceRequired (mv, valueType);
     }
 
