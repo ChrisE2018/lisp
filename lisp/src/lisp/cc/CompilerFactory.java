@@ -36,7 +36,7 @@ public class CompilerFactory
     {
 	final String versionName = compilerVersionSymbol.getStringValue (DEFAULT_VERSION.toString ());
 	final Version version = Version.valueOf (versionName);
-	LOGGER.info (new LogString ("Using compiler version %s", version));
+	LOGGER.fine (new LogString ("Using compiler version %s", version));
 	switch (version)
 	{
 	    case V1:
