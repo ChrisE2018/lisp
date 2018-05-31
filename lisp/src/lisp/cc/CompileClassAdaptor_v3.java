@@ -32,13 +32,13 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     private final List<Object> methodBody;
     private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
     private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
-    private final Map<Object, Symbol> quotedReferences = new LinkedHashMap<Object, Symbol> ();
 
     /**
-     * Inverse map of quoted references. This is created in the CompileLoader and saved here. When
-     * it is modified, the class can get at it by getClassLoader().getQuotedReferences ();
+     * Map from reference name to quoted Object. This is created in the CompileLoader and saved
+     * here. When it is modified, the class can get at it by getClassLoader().getQuotedReferences
+     * ();
      */
-    private final Map<String, Object> quotedReferencesMap;
+    private final Map<String, Object> quotedReferences;
 
     private Map<Symbol, LocalBinding> localVariableMap = new LinkedHashMap<Symbol, LocalBinding> ();
 
@@ -61,7 +61,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    methodArgTypes.add (varType);
 	}
 	this.methodBody = methodBody;
-	this.quotedReferencesMap = quotedReferencesMap;
+	quotedReferences = quotedReferencesMap;
     }
 
     /** get the ASM type of the class being generated. */
@@ -141,12 +141,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     @Override
     public void addQuotedConstant (final Symbol reference, final Object quoted)
     {
-	if (!quotedReferences.containsKey (quoted))
-	{
-	    // Save the reference and build it in the init method.
-	    quotedReferences.put (quoted, reference);
-	    quotedReferencesMap.put (reference.getName (), quoted);
-	}
+	quotedReferences.put (reference.getName (), quoted);
     }
 
     /**
@@ -231,13 +226,13 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    createField (ACC_PRIVATE, name, typeDescriptor);
 	    // LOGGER.finer (new LogString ("Field: private Symbol %s; [%s]", name, symbol));
 	}
-	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
+	for (final Entry<String, Object> entry : quotedReferences.entrySet ())
 	{
-	    final Object quoted = entry.getKey ();
-	    final Symbol reference = entry.getValue ();
+	    final String reference = entry.getKey ();
+	    final Object quoted = entry.getValue ();
 	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
 	    // LOGGER.finer (new LogString ("Field: private Quoted %s; [%s]", reference, quoted));
-	    createField (ACC_PRIVATE, reference.getName (), typeDescriptor);
+	    createField (ACC_PRIVATE, reference, typeDescriptor);
 	}
 	// Create init method as the very last step, so all requirements from other compilation
 	// steps are known
@@ -342,11 +337,11 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 
 	    LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaName, symbol));
 	}
-	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
+	for (final Entry<String, Object> entry : quotedReferences.entrySet ())
 	{
 	    // (define foo () (quote bar))
-	    final Object quoted = entry.getKey ();
-	    final Symbol reference = entry.getValue ();
+	    final String reference = entry.getKey ();
+	    final Object quoted = entry.getValue ();
 	    mv.visitVarInsn (ALOAD, 0);
 	    mv.visitInsn (DUP);
 	    mv.visitMethodInsn (INVOKEVIRTUAL, objectType.getInternalName (), "getClass", Type.getMethodDescriptor (classType),
@@ -356,12 +351,12 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    mv.visitTypeInsn (CHECKCAST, classLoaderInternalName);
 	    mv.visitMethodInsn (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;", false);
 
-	    mv.visitLdcInsn (reference.getName ());
+	    mv.visitLdcInsn (reference);
 	    mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", Type.getMethodDescriptor (objectType, objectType), true);
 	    final Type quotedType = Type.getType (quoted.getClass ());
 	    final String typeDescriptor = quotedType.getDescriptor ();
 	    mv.visitTypeInsn (CHECKCAST, quotedType.getInternalName ());
-	    mv.visitFieldInsn (PUTFIELD, classInternalName, reference.getName (), typeDescriptor);
+	    mv.visitFieldInsn (PUTFIELD, classInternalName, reference, typeDescriptor);
 	}
 	mv.visitInsn (RETURN);
 	mv.visitMaxs (0, 0);
