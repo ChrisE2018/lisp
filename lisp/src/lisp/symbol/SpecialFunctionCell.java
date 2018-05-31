@@ -85,6 +85,18 @@ public class SpecialFunctionCell extends FunctionCell
 	for (int i = 1; i < parameters.length; i++)
 	{
 	    arguments[i] = form.get (i);
+	    if (!parameters[i].isAssignableFrom (arguments[i].getClass ()))
+	    {
+		final StringBuilder buffer = new StringBuilder ();
+		buffer.append ("Can't bind ");
+		buffer.append (parameters[i]);
+		buffer.append (" = ");
+		buffer.append (arguments[i]);
+		buffer.append (" (");
+		buffer.append (arguments[i].getClass ());
+		buffer.append (")");
+		throw new IllegalArgumentException (buffer.toString ());
+	    }
 	}
 	return method.method.invoke (method.object, arguments);
     }
