@@ -469,19 +469,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	}
     }
 
-    private void compileFunctionCall (final GeneratorAdapter mv, final LispList e, final Class<?> valueClass,
+    private void compileFunctionCall (final GeneratorAdapter mv, final LispList expression, final Class<?> valueClass,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// Need to be able to compile a call to an undefined function (i.e. recursive call)
-	LOGGER.finer (new LogString ("Compile nested form %s", e));
-	if (e.size () == 0)
+	LOGGER.finer (new LogString ("Compile nested form %s", expression));
+	if (expression.size () == 0)
 	{
 	    throw new Error ("Mal-formed function call");
-	}
-	final Object head = e.get (0);
-	if (!(head instanceof Symbol))
-	{
-	    throw new IllegalArgumentException ("Function is not a symbol " + head);
 	}
 	// [TODO] Consider alternatives of pushing this code into the compiled function
 	// vs making these choices at compile time. The compile time choice will produce
@@ -491,62 +486,66 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// and pass them in. The compiler should keep track of all the function
 	// definitions it uses, and also keep the source expression. If any function
 	// definition changes, the code should be recompiled.
-	final Symbol f = (Symbol)head;
-	final FunctionCell function = f.getFunction ();
-	if (function != null && function instanceof SpecialFunctionCell)
-	{
-	    // Unless this is a known special function, we are stuck and can't proceed
-	    compileSpecialFunctionCall (mv, f, e, valueClass, allowNarrowing, liberalTruth);
-	}
-	else if (function != null && function instanceof MacroFunctionCell)
-	{
-	    // Expand and replace
-	    final MacroFunctionCell macro = (MacroFunctionCell)function;
-	    Object replacement;
-	    try
-	    {
-		replacement = macro.expand (e);
-	    }
-	    catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e1)
-	    {
-		throw new Error ("Error expanding macro " + f, e1);
-	    }
-	    compileExpression (mv, replacement, valueClass, allowNarrowing, liberalTruth);
-	}
-	else
-	{
-	    compileStandardFunctionCall (mv, f, e, valueClass, allowNarrowing, liberalTruth);
-	}
-    }
-
-    private void compileStandardFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
-            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
-    {
+	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
 	if (function != null)
 	{
+	    // Look for a specialized compiler definition
 	    final ObjectMethod compiler = function.getCompiler ();
 	    if (compiler != null)
 	    {
-		// [TODO] Some 'normal' functions need special coding, i.e, arithmetic and
-		// comparisons.
-		LOGGER.finer (new LogString ("Compiling optimized call to standard function %s", symbol));
-		compileSpecialFunctionCall (mv, symbol, e, valueClass, allowNarrowing, liberalTruth);
+		// Some 'normal' functions need special coding, i.e, arithmetic and comparisons, so
+		// this is called for any function with a compiler, not just special forms.
+		compileSpecialFunctionCall (mv, expression, valueClass, allowNarrowing, liberalTruth);
 		return;
 	    }
-	    if (optimizeFunctionCall (e))
+	    if (function instanceof SpecialFunctionCell)
 	    {
-		compileDirectFunctionCall (mv, symbol, e, valueClass, allowNarrowing, liberalTruth);
+		// Since this is not a known special function, we are stuck and can't proceed
+		throw new IllegalArgumentException ("Unrecognized special form " + symbol);
+		// compileSpecialFunctionCall (mv, symbol, e, valueClass, allowNarrowing,
+		// liberalTruth);
+		// return;
+	    }
+	    if (function instanceof MacroFunctionCell)
+	    {
+		// Expand and replace
+		final MacroFunctionCell macro = (MacroFunctionCell)function;
+		Object replacement;
+		try
+		{
+		    replacement = macro.expand (expression);
+		}
+		catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e1)
+		{
+		    throw new Error ("Error expanding macro " + symbol, e1);
+		}
+		compileExpression (mv, replacement, valueClass, allowNarrowing, liberalTruth);
+		return;
+	    }
+	    // final ObjectMethod compiler = function.getCompiler ();
+	    // if (compiler != null)
+	    // {
+	    // // [TODO] Some 'normal' functions need special coding, i.e, arithmetic and
+	    // // comparisons.
+	    // LOGGER.finer (new LogString ("Compiling optimized call to standard function %s",
+	    // symbol));
+	    // compileSpecialFunctionCall (mv, symbol, e, valueClass, allowNarrowing, liberalTruth);
+	    // return;
+	    // }
+	    if (optimizeFunctionCall (expression))
+	    {
+		compileDirectFunctionCall (mv, expression, valueClass, allowNarrowing, liberalTruth);
 		return;
 	    }
 	}
 
 	// Produce a generic call to a standard function.
-	compileGeneralFunctionCall (mv, symbol, e, valueClass, allowNarrowing, liberalTruth);
+	compileGeneralFunctionCall (mv, expression, valueClass, allowNarrowing, liberalTruth);
     }
 
-    private void compileSpecialFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList expression,
-            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
+    private void compileSpecialFunctionCall (final GeneratorAdapter mv, final LispList expression, final Class<?> valueClass,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (getAllSpecialFunctionSymbols)
 	// Done: (quote progn when if unless and or setq repeat while until let let* cond)
@@ -559,7 +558,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	// Defmacro
 	// &optional, &key, &rest
 	// [done] Hookup definition of special function calls to DefineLisp annotation.
-
+	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
 	final ObjectMethod compiler = function.getCompiler ();
 	if (compiler != null)
@@ -579,14 +578,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	throw new IllegalArgumentException ("Unrecognized special form " + symbol);
     }
 
-    private boolean optimizeFunctionCall (final LispList e)
+    private boolean optimizeFunctionCall (final LispList expression)
     {
 	// [TODO] If we are compiling for speed and can assume that the current definition won't
 	// change, then compile a direct call to the current function method.
 	// [TODO] If we know argument types of the function we are about to call we can try to
 	// compile the expression more efficiently.
-	final int argCount = e.size () - 1;
-	final Symbol symbol = (Symbol)e.get (0);
+	final int argCount = expression.size () - 1;
+	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
 	if (function != null)
 	{
@@ -604,19 +603,20 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	return false;
     }
 
-    private void compileDirectFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
-            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
+    private void compileDirectFunctionCall (final GeneratorAdapter mv, final LispList expression, final Class<?> valueClass,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (setq showBytecode t)
 	// (define foo () (getDefaultPackage))
 	// (define foo (x) (1+ x))
 	// (define foo (x) (not x))
 	// (define foo (a b) (rem a b))
+	final Symbol symbol = expression.head ();
 	final Label l1 = new Label ();
 	mv.visitLineNumber (101, l1);
 	mv.visitLabel (l1);
 	final FunctionCell function = symbol.getFunction ();
-	final int argCount = e.size () - 1;
+	final int argCount = expression.size () - 1;
 	final ObjectMethod objectMethod = function.selectMethod (argCount);
 	final Object target = objectMethod.getObject ();
 	final Method method = objectMethod.getMethod ();
@@ -634,7 +634,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	final Class<?>[] params = method.getParameterTypes ();
 	for (int i = 0; i < params.length; i++)
 	{
-	    compileExpression (mv, e.get (i + 1), params[i], false, false);
+	    compileExpression (mv, expression.get (i + 1), params[i], false, false);
 	}
 	mv.visitMethodInsn (INVOKEVIRTUAL, objectClassInternalName, method.getName (), methodSignature, false);
 	final Class<?> methodValueClass = method.getReturnType ();
@@ -651,11 +651,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	}
     }
 
-    private void compileGeneralFunctionCall (final GeneratorAdapter mv, final Symbol symbol, final LispList e,
-            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
+    /**
+     * @param allowNarrowing
+     * @param liberalTruth
+     */
+    private void compileGeneralFunctionCall (final GeneratorAdapter mv, final LispList expression, final Class<?> valueClass,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
-	final FunctionCell function = symbol.getFunction ();
-
+	final Symbol symbol = expression.head ();
 	// Get to the function symbol at runtime.
 	addSymbolReference (symbol);
 	LOGGER.finer (new LogString ("Function symbol reference to %s", symbol));
@@ -669,14 +672,14 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;", false);
 
 	// Compile the arguments. Pass all the arguments as elements of a single array of Objects.
-	final int argCount = e.size () - 1;
+	final int argCount = expression.size () - 1;
 	ldcGeneral (mv, argCount);
 	mv.visitTypeInsn (ANEWARRAY, "java/lang/Object");
 	for (int i = 0; i < argCount; i++)
 	{
 	    mv.visitInsn (DUP);
 	    ldcGeneral (mv, i);
-	    compileExpression (mv, e.get (i + 1), Object.class, false, false);
+	    compileExpression (mv, expression.get (i + 1), Object.class, false, false);
 	    mv.visitInsn (AASTORE);
 	}
 

@@ -41,7 +41,7 @@ public class LispList extends ArrayList<Object> implements Describer
 	this (parsing.getDefaultOpenChar (), parsing.getDefaultCloseChar (), p);
     }
 
-    public LispList (final Object[] p)
+    public LispList (final Object... p)
     {
 	this (parsing.getDefaultOpenChar (), parsing.getDefaultCloseChar ());
 	for (final Object o : p)
@@ -60,6 +60,29 @@ public class LispList extends ArrayList<Object> implements Describer
     public char getCloseChar ()
     {
 	return closeChar;
+    }
+
+    /** First element of a list, converted to a Symbol for convenience */
+    public Symbol head ()
+    {
+	final Object result = get (0);
+	if (result instanceof Symbol)
+	{
+	    return (Symbol)result;
+	}
+	throw new IllegalArgumentException ("List does not start with a Symbol " + result);
+    }
+
+    /** First element of a list, using standard Lisp terminology. */
+    public Object car ()
+    {
+	return get (0);
+    }
+
+    /** First element of a list. */
+    public Object first ()
+    {
+	return get (0);
     }
 
     public Object last ()
