@@ -2,7 +2,6 @@
 package lisp.cc;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -95,80 +94,82 @@ public class CompileLoader_v1 extends ClassLoader implements Compiler
 	return c;
     }
 
-    private void checkCreatedClass (final Class<?> c) throws InstantiationException, IllegalAccessException,
-            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
-    {
-	LOGGER.info (String.format ("List of Declared Methods"));
-	for (final Method method : c.getDeclaredMethods ())
-	{
-	    LOGGER.info (String.format ("* Method: %s", method));
-	}
+    // private void checkCreatedClass (final Class<?> c) throws InstantiationException,
+    // IllegalAccessException,
+    // IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
+    // {
+    // LOGGER.info (String.format ("List of Declared Methods"));
+    // for (final Method method : c.getDeclaredMethods ())
+    // {
+    // LOGGER.info (String.format ("* Method: %s", method));
+    // }
+    //
+    // // System.out.printf ("Calling newInstance()%n");
+    // final Object instance = c.newInstance ();
+    // // System.out.printf ("=> Instance: %s %n", instance);
+    // // System.out.printf ("%n");
+    // checkNewInstance (c, instance);
+    //
+    // final Class<?>[] types =
+    // {int.class};
+    // final Constructor<?> con = c.getConstructor (types);
+    // // System.out.printf ("Calling newInstance(1)%n");
+    // final Object in2 = con.newInstance (1);
+    // // System.out.printf ("=> Instance: %s %n", in2);
+    // checkNewInstance (c, in2);
+    // }
 
-	// System.out.printf ("Calling newInstance()%n");
-	final Object instance = c.newInstance ();
-	// System.out.printf ("=> Instance: %s %n", instance);
-	// System.out.printf ("%n");
-	checkNewInstance (c, instance);
-
-	final Class<?>[] types =
-	    {int.class};
-	final Constructor<?> con = c.getConstructor (types);
-	// System.out.printf ("Calling newInstance(1)%n");
-	final Object in2 = con.newInstance (1);
-	// System.out.printf ("=> Instance: %s %n", in2);
-	checkNewInstance (c, in2);
-    }
-
-    private void checkNewInstance (final Class<?> c, final Object instance)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
-    {
-	System.out.printf ("Calling Zero Param Instance Methods%n");
-	for (final Method method : c.getDeclaredMethods ())
-	{
-	    if (Modifier.isPublic (method.getModifiers ()))
-	    {
-		final Class<?>[] params = method.getParameterTypes ();
-		if (params.length == 0)
-		{
-		    final Object result = method.invoke (instance);
-		    if (result == null)
-		    {
-			System.out.printf ("* Invoke Method %s() => %s [null] %n", method.getName (), result);
-		    }
-		    else
-		    {
-			System.out.printf ("* Invoke Method %s() => %s %s %n", method.getName (), result, result.getClass ());
-		    }
-		}
-	    }
-	}
-	System.out.printf ("%n");
-
-	System.out.printf ("Calling One Param Instance Methods%n");
-	for (final Method method : c.getDeclaredMethods ())
-	{
-	    // System.out.printf ("Method: %s %n", method);
-	    if (Modifier.isPublic (method.getModifiers ()))
-	    {
-		final Class<?>[] params = method.getParameterTypes ();
-		if (params.length == 1)
-		{
-		    final String arg = "blah";
-		    final Object result = method.invoke (instance, arg);
-		    if (result == null)
-		    {
-			System.out.printf ("* Invoke Method %s() => %s [null] %n", method.getName (), result);
-		    }
-		    else
-		    {
-			System.out.printf ("* Invoke method %s('%s') => %s %s%n", method.getName (), arg, result,
-			        result.getClass ());
-		    }
-		}
-	    }
-	}
-	System.out.printf ("%n");
-    }
+    // private void checkNewInstance (final Class<?> c, final Object instance)
+    // throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    // {
+    // System.out.printf ("Calling Zero Param Instance Methods%n");
+    // for (final Method method : c.getDeclaredMethods ())
+    // {
+    // if (Modifier.isPublic (method.getModifiers ()))
+    // {
+    // final Class<?>[] params = method.getParameterTypes ();
+    // if (params.length == 0)
+    // {
+    // final Object result = method.invoke (instance);
+    // if (result == null)
+    // {
+    // System.out.printf ("* Invoke Method %s() => %s [null] %n", method.getName (), result);
+    // }
+    // else
+    // {
+    // System.out.printf ("* Invoke Method %s() => %s %s %n", method.getName (), result,
+    // result.getClass ());
+    // }
+    // }
+    // }
+    // }
+    // System.out.printf ("%n");
+    //
+    // System.out.printf ("Calling One Param Instance Methods%n");
+    // for (final Method method : c.getDeclaredMethods ())
+    // {
+    // // System.out.printf ("Method: %s %n", method);
+    // if (Modifier.isPublic (method.getModifiers ()))
+    // {
+    // final Class<?>[] params = method.getParameterTypes ();
+    // if (params.length == 1)
+    // {
+    // final String arg = "blah";
+    // final Object result = method.invoke (instance, arg);
+    // if (result == null)
+    // {
+    // System.out.printf ("* Invoke Method %s() => %s [null] %n", method.getName (), result);
+    // }
+    // else
+    // {
+    // System.out.printf ("* Invoke method %s('%s') => %s %s%n", method.getName (), arg, result,
+    // result.getClass ());
+    // }
+    // }
+    // }
+    // }
+    // System.out.printf ("%n");
+    // }
 
     /**
      * Get the name from created names to quoted objects. This only works because compiled code is
