@@ -7,13 +7,35 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.LispList;
 import lisp.Symbol;
 import lisp.cc.CompilerGenerator;
-import lisp.symbol.LispFunction;
+import lisp.symbol.*;
 
 public class IfFunction extends LispFunction implements Opcodes
 {
     public IfFunction (final Symbol symbol)
     {
 	super (symbol);
+    }
+
+    /** Call visitor on all directly nested subexpressions. */
+    @Override
+    public void walker (final LispVisitor visitor, final LispList expression)
+    {
+	visitor.visitStart (expression);
+	visitor.visitBoolean (expression.get (1));
+	visitor.visitValue (expression.get (2));
+	if (expression.size () > 3)
+	{
+	    for (int i = 3; i < expression.size () - 1; i++)
+	    {
+		visitor.visitIgnored (expression.get (i));
+	    }
+	    visitor.visitValue (expression.last ());
+	}
+	else
+	{
+	    // May return a default value
+	}
+	visitor.visitEnd (expression);
     }
 
     @Override

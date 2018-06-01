@@ -7,13 +7,26 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.LispList;
 import lisp.Symbol;
 import lisp.cc.CompilerGenerator;
-import lisp.symbol.LispFunction;
+import lisp.symbol.*;
 
 public class OrFunction extends LispFunction implements Opcodes
 {
     public OrFunction (final Symbol symbol)
     {
 	super (symbol);
+    }
+
+    /** Call visitor on all directly nested subexpressions. */
+    @Override
+    public void walker (final LispVisitor visitor, final LispList expression)
+    {
+	visitor.visitStart (expression);
+	for (int i = 1; i < expression.size (); i++)
+	{
+	    // [TODO] If the expression always returns false, ignore it.
+	    visitor.visitValue (expression.get (i));
+	}
+	visitor.visitEnd (expression);
     }
 
     @Override

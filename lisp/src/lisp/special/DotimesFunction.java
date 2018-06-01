@@ -9,13 +9,29 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.LispList;
 import lisp.Symbol;
 import lisp.cc.*;
-import lisp.symbol.LispFunction;
+import lisp.symbol.*;
 
 public class DotimesFunction extends LispFunction implements Opcodes
 {
     public DotimesFunction (final Symbol symbol)
     {
 	super (symbol);
+    }
+
+    /** Call visitor on all directly nested subexpressions. */
+    @Override
+    public void walker (final LispVisitor visitor, final LispList expression)
+    {
+	visitor.visitStart (expression);
+	final LispList clause = (LispList)expression.get (1);
+	// [TODO] visit variable binding
+	visitor.visitInteger (clause.get (1));
+	for (int i = 2; i < expression.size () - 1; i++)
+	{
+	    visitor.visitIgnored (expression.get (i));
+	}
+	visitor.visitValue (expression.last ());
+	visitor.visitEnd (expression);
     }
 
     @Override

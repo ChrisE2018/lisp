@@ -7,7 +7,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.LispList;
 import lisp.Symbol;
 import lisp.cc.CompilerGenerator;
-import lisp.symbol.LispFunction;
+import lisp.symbol.*;
 
 public class AndFunction extends LispFunction implements Opcodes
 {
@@ -16,13 +16,26 @@ public class AndFunction extends LispFunction implements Opcodes
 	super (symbol);
     }
 
+    /** Call visitor on all directly nested subexpressions. */
+    @Override
+    public void walker (final LispVisitor visitor, final LispList expression)
+    {
+	visitor.visitStart (expression);
+	for (int i = 1; i < expression.size (); i++)
+	{
+	    // [TODO] If the expression always returns non-false, ignore it.
+	    visitor.visitValue (expression.get (i));
+	}
+	visitor.visitEnd (expression);
+    }
+
     @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expression,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (valueClass == null)
 	{
-	    compileVoidAnd (generator, mv, expression);
+	    compile2void (generator, mv, expression);
 	}
 	else if (valueClass.equals (boolean.class))
 	{
@@ -35,7 +48,8 @@ public class AndFunction extends LispFunction implements Opcodes
     }
 
     /** Compile an 'and' expression whose value will be ignored. */
-    private void compileVoidAnd (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e)
+    @Override
+    public void compile2void (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e)
     {
 	// (define foo (a b) (and) 1)
 	// (define foo (a b) (and a b) 2)

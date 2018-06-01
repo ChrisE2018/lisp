@@ -6,13 +6,26 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.*;
 import lisp.cc.CompilerGenerator;
-import lisp.symbol.LispFunction;
+import lisp.symbol.*;
 
 public class PrognFunction extends LispFunction implements Opcodes
 {
     public PrognFunction (final Symbol symbol)
     {
 	super (symbol);
+    }
+
+    /** Call visitor on all directly nested subexpressions. */
+    @Override
+    public void walker (final LispVisitor visitor, final LispList expression)
+    {
+	visitor.visitStart (expression);
+	for (int i = 1; i < expression.size () - 1; i++)
+	{
+	    visitor.visitIgnored (expression.get (i));
+	}
+	visitor.visitValue (expression.last ());
+	visitor.visitEnd (expression);
     }
 
     @Override

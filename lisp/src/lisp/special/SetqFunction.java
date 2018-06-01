@@ -8,7 +8,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.*;
 import lisp.cc.*;
-import lisp.symbol.LispFunction;
+import lisp.symbol.*;
 import lisp.util.LogString;
 
 public class SetqFunction extends LispFunction implements Opcodes
@@ -18,6 +18,17 @@ public class SetqFunction extends LispFunction implements Opcodes
     public SetqFunction (final Symbol symbol)
     {
 	super (symbol);
+    }
+
+    /** Call visitor on all directly nested subexpressions. */
+    @Override
+    public void walker (final LispVisitor visitor, final LispList expression)
+    {
+	visitor.visitStart (expression);
+	final Symbol symbol = (Symbol)expression.get (1);
+	visitor.visitSymbolSet (symbol);
+	visitor.visitValue (expression.get (2));
+	visitor.visitEnd (expression);
     }
 
     @Override

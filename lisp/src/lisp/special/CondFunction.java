@@ -10,13 +10,39 @@ import lisp.*;
 import lisp.Package;
 import lisp.Symbol;
 import lisp.cc.*;
-import lisp.symbol.LispFunction;
+import lisp.symbol.*;
 
 public class CondFunction extends LispFunction implements Opcodes
 {
     public CondFunction (final Symbol symbol)
     {
 	super (symbol);
+    }
+
+    /** Call visitor on all directly nested subexpressions. */
+    @Override
+    public void walker (final LispVisitor visitor, final LispList expression)
+    {
+	visitor.visitStart (expression);
+	for (int i = 1; i < expression.size (); i++)
+	{
+	    final LispList clause = (LispList)expression.get (i);
+	    if (clause.size () == 1)
+	    {
+		visitor.visitBooleanValue (clause.get (0));
+	    }
+	    else
+	    {
+		visitor.visitBoolean (clause.get (0));
+		for (int j = 1; j < clause.size () - 1; j++)
+		{
+		    visitor.visitIgnored (clause.get (j));
+		}
+		visitor.visitValue (clause.last ());
+	    }
+	}
+	visitor.visitEnd (expression);
+	// May return a default value
     }
 
     @Override

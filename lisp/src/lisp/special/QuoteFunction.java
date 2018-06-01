@@ -7,13 +7,22 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.LispList;
 import lisp.Symbol;
 import lisp.cc.CompilerGenerator;
-import lisp.symbol.LispFunction;
+import lisp.symbol.*;
 
 public class QuoteFunction extends LispFunction implements Opcodes
 {
     public QuoteFunction (final Symbol symbol)
     {
 	super (symbol);
+    }
+
+    /** Call visitor on all directly nested subexpressions. */
+    @Override
+    public void walker (final LispVisitor visitor, final LispList expression)
+    {
+	visitor.visitStart (expression);
+	visitor.visitConstantValue (expression.get (1));
+	visitor.visitEnd (expression);
     }
 
     @Override

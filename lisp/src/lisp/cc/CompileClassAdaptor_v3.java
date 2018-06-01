@@ -544,8 +544,26 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
 	final LispFunction lispFunction = function.getLispFunction ();
-
-	lispFunction.compile (this, mv, expression, valueClass, allowNarrowing, liberalTruth);
+	if (valueClass == null)
+	{
+	    lispFunction.compile2void (this, mv, expression);
+	}
+	else if (valueClass.equals (int.class))
+	{
+	    lispFunction.compile2int (this, mv, expression);
+	}
+	else if (valueClass.equals (double.class))
+	{
+	    lispFunction.compile2double (this, mv, expression);
+	}
+	else if (valueClass.equals (boolean.class) && !liberalTruth)
+	{
+	    lispFunction.compile2boolean (this, mv, expression);
+	}
+	else
+	{
+	    lispFunction.compile (this, mv, expression, valueClass, allowNarrowing, liberalTruth);
+	}
     }
 
     private boolean optimizeFunctionCall (final LispList expression)

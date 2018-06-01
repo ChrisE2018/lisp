@@ -7,13 +7,28 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.LispList;
 import lisp.Symbol;
 import lisp.cc.CompilerGenerator;
-import lisp.symbol.LispFunction;
+import lisp.symbol.*;
 
 public class RepeatFunction extends LispFunction implements Opcodes
 {
     public RepeatFunction (final Symbol symbol)
     {
 	super (symbol);
+    }
+
+    /** Call visitor on all directly nested subexpressions. */
+    @Override
+    public void walker (final LispVisitor visitor, final LispList expression)
+    {
+	visitor.visitStart (expression);
+
+	visitor.visitInteger (expression.get (1));
+	for (int i = 2; i < expression.size () - 1; i++)
+	{
+	    visitor.visitIgnored (expression.get (i));
+	}
+	visitor.visitValue (expression.last ());
+	visitor.visitEnd (expression);
     }
 
     @Override
