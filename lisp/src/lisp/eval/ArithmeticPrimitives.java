@@ -45,64 +45,6 @@ public class ArithmeticPrimitives extends Definer
 	return a % b;
     }
 
-    @DefineLisp (name = "1+")
-    public Object plusOne (final Object x)
-    {
-	if (x instanceof Integer)
-	{
-	    return (Integer)x + 1;
-	}
-	else if (x instanceof Double)
-	{
-	    return (Double)x + 1;
-	}
-	else if (x instanceof Short)
-	{
-	    return (Short)x + 1;
-	}
-	else if (x instanceof Byte)
-	{
-	    return (Byte)x + 1;
-	}
-	else if (x instanceof Float)
-	{
-	    return (Float)x + 1;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + x);
-	}
-    }
-
-    @DefineLisp (name = "1-")
-    public Object plusMinus (final Object x)
-    {
-	if (x instanceof Integer)
-	{
-	    return (Integer)x - 1;
-	}
-	else if (x instanceof Double)
-	{
-	    return (Double)x - 1;
-	}
-	else if (x instanceof Short)
-	{
-	    return (Short)x - 1;
-	}
-	else if (x instanceof Byte)
-	{
-	    return (Byte)x - 1;
-	}
-	else if (x instanceof Float)
-	{
-	    return (Float)x - 1;
-	}
-	else
-	{
-	    throw new IllegalArgumentException ("Number required " + x);
-	}
-    }
-
     @DefineLisp (name = "+")
     public Object plus (final Object... arguments)
     {

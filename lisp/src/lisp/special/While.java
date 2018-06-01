@@ -1,16 +1,13 @@
 
 package lisp.special;
 
-import org.objectweb.asm.*;
-import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.Opcodes;
 
-import lisp.LispList;
-import lisp.cc.CompilerGenerator;
 import lisp.eval.*;
 
 public class While extends LogicDefiner implements Opcodes
 {
-    @DefineLisp (special = true, name = "while")
+    @DefineLisp (special = true, name = "while", classname = "lisp.special.WhileFunction")
     public Object whileForm (final LexicalContext context, final Object test, final Object... arguments) throws Exception
     {
 	Object result = true;
@@ -23,38 +20,6 @@ public class While extends LogicDefiner implements Opcodes
 	    }
 	}
 	return result;
-    }
-
-    @DefineLisp (special = true, name = "while", compiler = true)
-    public void compileWhile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
-            final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
-    {
-	// (define foo (x) (setq a 0) (while (< a x) (printf "A: %s%n" a) (setq a (+ a 1))))
-
-	// Load default value
-	generator.pushDefaultValue (mv, valueType, false);
-
-	// Perform iteration test
-	final Label l1 = new Label ();
-	mv.visitLabel (l1);
-	final Label l2 = new Label ();
-	generator.compileExpression (mv, e.get (1), boolean.class, false, true);
-	mv.visitJumpInsn (IFEQ, l2);
-
-	// Loop body
-	if (valueType != null)
-	{
-	    mv.visitInsn (POP);
-	}
-	for (int i = 2; i < e.size () - 1; i++)
-	{
-	    generator.compileExpression (mv, e.get (i), null, false, false);
-	}
-	// Don't pop the last value
-	generator.compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
-	mv.visitJumpInsn (GOTO, l1);
-
-	mv.visitLabel (l2);
     }
 
     @Override

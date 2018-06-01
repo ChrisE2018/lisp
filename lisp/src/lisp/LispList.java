@@ -109,37 +109,37 @@ public class LispList extends ArrayList<Object> implements Describer
 		}
 	    }
 	}
-	if (isBraceMap ())
-	{
-	    buffer.append (getOpenChar ());
-	    for (int i = 0; i < size (); i++)
-	    {
-		if (i > 0)
-		{
-		    buffer.append (parsing.getMapSeparator ());
-		    buffer.append (' ');
-		}
-		final Object rawItem = get (i);
-		if (rawItem instanceof List)
-		{
-		    final List<?> item = (List<?>)get (i);
-		    for (int j = 0; j < item.size (); j++)
-		    {
-			if (j > 0)
-			{
-			    buffer.append (' ');
-			}
-			LispReader.printElement (buffer, item.get (j));
-		    }
-		}
-		else
-		{
-		    LispReader.printElement (buffer, rawItem);
-		}
-	    }
-	    buffer.append (getCloseChar ());
-	    return;
-	}
+	// if (isBraceMap ())
+	// {
+	// buffer.append (getOpenChar ());
+	// for (int i = 0; i < size (); i++)
+	// {
+	// if (i > 0)
+	// {
+	// buffer.append (parsing.getMapSeparator ());
+	// buffer.append (' ');
+	// }
+	// final Object rawItem = get (i);
+	// if (rawItem instanceof List)
+	// {
+	// final List<?> item = (List<?>)get (i);
+	// for (int j = 0; j < item.size (); j++)
+	// {
+	// if (j > 0)
+	// {
+	// buffer.append (' ');
+	// }
+	// LispReader.printElement (buffer, item.get (j));
+	// }
+	// }
+	// else
+	// {
+	// LispReader.printElement (buffer, rawItem);
+	// }
+	// }
+	// buffer.append (getCloseChar ());
+	// return;
+	// }
 
 	buffer.append (getOpenChar ());
 	for (int i = 0; i < size (); i++)
@@ -153,10 +153,10 @@ public class LispList extends ArrayList<Object> implements Describer
 	buffer.append (getCloseChar ());
     }
 
-    private boolean isBraceMap ()
-    {
-	return getOpenChar () == parsing.getMapOpen () && getCloseChar () == parsing.getMapClose ();
-    }
+    // protected boolean isBraceMap ()
+    // {
+    // return getOpenChar () == parsing.getMapOpen () && getCloseChar () == parsing.getMapClose ();
+    // }
 
     @Override
     public String toString ()

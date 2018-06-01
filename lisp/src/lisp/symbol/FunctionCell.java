@@ -18,7 +18,8 @@ public abstract class FunctionCell implements Describer
 
     private ObjectMethod[] overloads = new ObjectMethod[0];
 
-    private ObjectMethod compiler;
+    /** Optional support object with compiler and analyzer. */
+    private LispFunction lispFunction;
 
     abstract public Object eval (final LexicalContext context, final List<?> form) throws Exception;
 
@@ -40,14 +41,14 @@ public abstract class FunctionCell implements Describer
 	return allowRedefinition;
     }
 
-    public ObjectMethod getCompiler ()
+    public LispFunction getLispFunction ()
     {
-	return compiler;
+	return lispFunction;
     }
 
-    public void setCompiler (final Object obj, final Method method, final String documentation)
+    public void setLispFunction (final LispFunction lispFunction)
     {
-	compiler = new ObjectMethod (obj, method, documentation);
+	this.lispFunction = lispFunction;
     }
 
     /**
@@ -211,9 +212,9 @@ public abstract class FunctionCell implements Describer
     {
 	result.put ("Symbol", symbol);
 	result.put ("AllowRedefinition", allowRedefinition);
-	if (compiler != null)
+	if (lispFunction != null)
 	{
-	    result.put ("Compiler", compiler);
+	    result.put ("Function", lispFunction);
 	}
 	for (final ObjectMethod method : overloads)
 	{

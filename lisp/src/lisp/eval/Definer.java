@@ -1,7 +1,7 @@
 
 package lisp.eval;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -75,7 +75,7 @@ public class Definer
 	final DefineLisp a = method.getAnnotation (DefineLisp.class);
 	final String packageName = a.packageName ();
 	final Package p = PackageFactory.getPackage (packageName);
-	// final boolean external = a.external ();
+	final String className = a.classname ();
 	final boolean special = a.special ();
 	final boolean macro = a.macro ();
 	String symbolName = a.name ();
@@ -88,6 +88,7 @@ public class Definer
 	LOGGER.info (String.format ("define %s as %s", symbolName, method));
 	final Symbol symbol = p.internSymbol (symbolName);
 
+	// Overloading requires adding the method to an existing function cell
 	if (macro)
 	{
 	    final FunctionCell function = new MacroFunctionCell (symbol, object, method, documentation);
@@ -95,7 +96,6 @@ public class Definer
 	}
 	else
 	{
-	    // Overloading requires adding the method to an existing function cell
 	    FunctionCell function = symbol.getFunction ();
 	    if (function == null)
 	    {
@@ -104,34 +104,31 @@ public class Definer
 		    function = new SpecialFunctionCell (symbol);
 		    symbol.setFunction (function);
 		}
-		else if (!macro)
+		else
 		{
 		    function = new StandardFunctionCell (symbol);
 		    symbol.setFunction (function);
 		}
 	    }
-	    if (function != null)
+	    function.overload (object, method, documentation);
+	}
+
+	if (!className.isEmpty ())
+	{
+	    try
 	    {
-		if (a.compiler ())
-		{
-		    function.setCompiler (object, method, documentation);
-		}
-		else
-		{
-		    function.overload (object, method, documentation);
-		}
+		final Class<? extends LispFunction> functionClass = Class.forName (className).asSubclass (LispFunction.class);
+		final Constructor<? extends LispFunction> constructor = functionClass.getConstructor (Symbol.class);
+		final FunctionCell function = symbol.getFunction ();
+		final LispFunction lispFunction = constructor.newInstance (symbol);
+		function.setLispFunction (lispFunction);
+	    }
+	    catch (final ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
+	            | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
+	    {
+		e.printStackTrace ();
 	    }
 	}
-	// else if (special)
-	// {
-	// function = new SpecialFunctionCell (symbol, object, method, documentation);
-	// symbol.setFunction (function);
-	// }
-	// else
-	// {
-	// function = new StandardFunctionCell (symbol, object, method, documentation);
-	// symbol.setFunction (function);
-	// }
     }
 
     /** Make an Object into a String. Convenience method to simplify function definition. */

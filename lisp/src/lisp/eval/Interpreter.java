@@ -181,7 +181,7 @@ public class Interpreter extends Definer
      * @param context Required by calling convention but not used.
      * @param interpreter Not used, but required by calling protocol.
      */
-    @DefineLisp (special = true, name = "quote")
+    @DefineLisp (special = true, name = "quote", classname = "lisp.special.QuoteFunction")
     public Object quoteEvaluator (final LexicalContext context, final Object result)
     {
 	return result;

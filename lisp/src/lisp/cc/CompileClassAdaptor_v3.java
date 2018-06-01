@@ -486,13 +486,11 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	final FunctionCell function = symbol.getFunction ();
 	if (function != null)
 	{
-	    // Look for a specialized compiler definition
-	    final ObjectMethod compiler = function.getCompiler ();
-	    if (compiler != null)
+	    if (function.getLispFunction () != null)
 	    {
 		// Some 'normal' functions need special coding, i.e, arithmetic and comparisons, so
 		// this is called for any function with a compiler, not just special forms.
-		compileSpecialFunctionCall (mv, expression, valueClass, allowNarrowing, liberalTruth);
+		compileSpecialLispFunction (mv, expression, valueClass, allowNarrowing, liberalTruth);
 		return;
 	    }
 	    if (function instanceof SpecialFunctionCell)
@@ -519,16 +517,6 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 		compileExpression (mv, replacement, valueClass, allowNarrowing, liberalTruth);
 		return;
 	    }
-	    // final ObjectMethod compiler = function.getCompiler ();
-	    // if (compiler != null)
-	    // {
-	    // // [TODO] Some 'normal' functions need special coding, i.e, arithmetic and
-	    // // comparisons.
-	    // LOGGER.finer (new LogString ("Compiling optimized call to standard function %s",
-	    // symbol));
-	    // compileSpecialFunctionCall (mv, symbol, e, valueClass, allowNarrowing, liberalTruth);
-	    // return;
-	    // }
 	    if (optimizeFunctionCall (expression))
 	    {
 		compileDirectFunctionCall (mv, expression, valueClass, allowNarrowing, liberalTruth);
@@ -540,38 +528,24 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	compileGeneralFunctionCall (mv, expression, valueClass, allowNarrowing, liberalTruth);
     }
 
-    private void compileSpecialFunctionCall (final GeneratorAdapter mv, final LispList expression, final Class<?> valueClass,
+    // (getAllSpecialFunctionSymbols)
+    // Done: (quote progn when if unless and or setq repeat dotimes the while until let let* cond)
+    // Done: Calls to new & static
+    // Todo: (try block block-named return return-from tagbody go loop)
+    // Skip: (def verify verifyError define)
+    // Think: Multiple value calls?
+    // Defmacro
+    // &optional, &key, &rest
+    // [done] Hookup definition of special function calls to DefineLisp annotation.
+
+    private void compileSpecialLispFunction (final GeneratorAdapter mv, final LispList expression, final Class<?> valueClass,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
-	// (getAllSpecialFunctionSymbols)
-	// Done: (quote progn when if unless and or setq repeat while until let let* cond)
-	// Done: Calls to new & static
-	// Todo: (try)
-	// Skip: (def verify verifyError define)
-	// Future: (loop block return block-named)
-	// Think: Multiple value calls?
-	// [done] Calls to Java methods
-	// Defmacro
-	// &optional, &key, &rest
-	// [done] Hookup definition of special function calls to DefineLisp annotation.
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
-	final ObjectMethod compiler = function.getCompiler ();
-	if (compiler != null)
-	{
-	    final Object object = compiler.getObject ();
-	    final Method method = compiler.getMethod ();
-	    try
-	    {
-		method.invoke (object, this, mv, expression, valueClass, allowNarrowing, liberalTruth);
-	    }
-	    catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
-	    {
-		throw new Error ("Internal compiler error", e);
-	    }
-	    return;
-	}
-	throw new IllegalArgumentException ("Unrecognized special form " + symbol);
+	final LispFunction lispFunction = function.getLispFunction ();
+
+	lispFunction.compile (this, mv, expression, valueClass, allowNarrowing, liberalTruth);
     }
 
     private boolean optimizeFunctionCall (final LispList expression)

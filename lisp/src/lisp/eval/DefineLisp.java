@@ -19,4 +19,6 @@ public @interface DefineLisp
     boolean macro () default false;
 
     boolean compiler () default false;
+
+    String classname () default "";
 }
