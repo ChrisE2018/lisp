@@ -263,6 +263,16 @@ public class Interpreter extends Definer
 	throw new NoSuchMethodException ("Method " + className + "." + methodName + " not found");
     }
 
+    public Object evalString (final String expression) throws Exception
+    {
+	final Package pkg = PackageFactory.getDefaultPackage ();
+	final LexicalContext context = new LexicalContext (this);
+	final LispStream stream = new LispStream (expression);
+	final LispReader lispReader = new LispReader ();
+	final Object form = lispReader.read (stream);
+	return eval (context, form);
+    }
+
     @DefineLisp
     public boolean loadResource (final String pathname) throws Exception
     {
