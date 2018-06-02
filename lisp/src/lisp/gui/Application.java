@@ -6,7 +6,9 @@ import java.net.URL;
 import java.util.*;
 import java.util.logging.*;
 
-import lisp.eval.Interpreter;
+import lisp.*;
+import lisp.Package;
+import lisp.eval.*;
 import lisp.util.*;
 
 public class Application
@@ -20,8 +22,10 @@ public class Application
 
     public Application ()
     {
-	// [TODO] --setq "var=form"
-	// [TODO] --package pkg
+	// Try: defaults write -g NSAutomaticDashSubstitutionEnabled 0
+	// --setq "var=form"
+	// --eval "form"
+	// --package pkg
 	addParameter (new ThrowingConsumer<String> ()
 	{
 	    @Override
@@ -45,6 +49,51 @@ public class Application
 		}
 	    }
 	}, "Load lisp resource or file", "-l", "--load");
+
+	addParameter (new ThrowingConsumer<String> ()
+	{
+	    @Override
+	    public void accept (final String expression) throws Exception
+	    {
+		final LispStream stream = new LispStream (expression);
+		final LispReader lispReader = new LispReader ();
+		final Object form = lispReader.read (stream);
+		final Object result = interpreter.eval (new LexicalContext (interpreter), form);
+		System.out.printf ("-E %s => %s %n", form, result);
+	    }
+	}, "Evaluate a form", "-E", "--eval");
+
+	addParameter (new ThrowingConsumer<String> ()
+	{
+	    @Override
+	    public void accept (final String assignment) throws Exception
+	    {
+		final int pos = assignment.indexOf ("=");
+		final String var = assignment.substring (0, pos);
+		final String value = assignment.substring (pos + 1);
+		final LispStream stream = new LispStream (value);
+		final LispReader lispReader = new LispReader ();
+		final Object form = lispReader.read (stream);
+		final Object result = interpreter.eval (new LexicalContext (interpreter), form);
+		final Package pkg = lispReader.getCurrentPackage ();
+		final Symbol symbol = lispReader.readSymbol (pkg, var);
+		symbol.setValue (result);
+		System.out.printf ("-setq %s %s => %s %n", var, form, result);
+	    }
+	}, "Evaluate a form", "-S", "--setq");
+
+	addParameter (new ThrowingConsumer<String> ()
+	{
+	    @Override
+	    public void accept (final String packageName) throws Exception
+	    {
+		final Package pkg = PackageFactory.getPackage (packageName);
+		PackageFactory.setDefaultPackage (pkg);
+		final LispReader lispReader = LispReader.getLispThreadReader ();
+		lispReader.setCurrentPackage (pkg);
+		System.out.printf ("-Package %s %n", pkg);
+	    }
+	}, "Evaluate a form", "-P", "--package");
     }
 
     public void addParameter (final ThrowingConsumer<String> action, final String doc, final String... keys)
@@ -64,7 +113,15 @@ public class Application
 	    final String value = args[i];
 	    LOGGER.finer (new LogString ("Initialize %s: %s", key, value));
 	    final ThrowingConsumer<String> action = parameterActions.get (key);
-	    action.accept (value);
+	    if (action != null)
+	    {
+		action.accept (value);
+	    }
+	    else
+	    {
+		LOGGER.severe ("Invalid application parameter " + key);
+		throw new Error ("Invalid application parameter " + key);
+	    }
 	}
     }
 
