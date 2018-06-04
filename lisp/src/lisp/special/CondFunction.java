@@ -10,10 +10,10 @@ import lisp.*;
 import lisp.Package;
 import lisp.Symbol;
 import lisp.cc.*;
-import lisp.cc4.LispTreeFunction;
+import lisp.cc4.LispTreeWalker;
 import lisp.symbol.*;
 
-public class CondFunction extends LispFunction implements Opcodes, LispTreeFunction
+public class CondFunction extends LispFunction implements Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override

@@ -228,7 +228,7 @@ public class TreeCompilerContext implements Opcodes
 	    final int localRef = lb.getLocalRef ();
 	    final Type varType = lb.getType ();
 	    il.add (new VarInsnNode (varType.getOpcode (ILOAD), localRef));
-	    final Class<?> fromClass = lb.getClass ();
+	    final Class<?> fromClass = lb.getVariableClass ();
 	    return fromClass;
 	}
 	else if (symbol.is ("true"))

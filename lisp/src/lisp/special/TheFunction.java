@@ -6,10 +6,10 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.*;
 import lisp.cc.*;
-import lisp.cc4.LispTreeFunction;
+import lisp.cc4.LispTreeWalker;
 import lisp.symbol.*;
 
-public class TheFunction extends LispFunction implements Opcodes, LispTreeFunction
+public class TheFunction extends LispFunction implements Opcodes, LispTreeWalker
 {
     private static Convert convert = new Convert ();
 

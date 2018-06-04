@@ -9,10 +9,10 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.LispList;
 import lisp.Symbol;
 import lisp.cc.*;
-import lisp.cc4.LispTreeFunction;
+import lisp.cc4.LispTreeWalker;
 import lisp.symbol.*;
 
-public class LetStarFunction extends LispFunction implements Opcodes, LispTreeFunction
+public class LetStarFunction extends LispFunction implements Opcodes, LispTreeWalker
 {
 
     /** Call visitor on all directly nested subexpressions. */

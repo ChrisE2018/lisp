@@ -6,10 +6,10 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.LispList;
 import lisp.cc.CompilerGenerator;
-import lisp.cc4.LispTreeFunction;
+import lisp.cc4.LispTreeWalker;
 import lisp.symbol.*;
 
-public class RepeatFunction extends LispFunction implements Opcodes, LispTreeFunction
+public class RepeatFunction extends LispFunction implements Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override

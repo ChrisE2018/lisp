@@ -9,7 +9,7 @@ import lisp.cc.CompilerGenerator;
 import lisp.cc4.*;
 import lisp.symbol.*;
 
-public class PrognFunction extends LispFunction implements Opcodes, LispTreeFunction
+public class PrognFunction extends LispFunction implements Opcodes, LispTreeWalker, LispTreeFunction
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
