@@ -20,7 +20,7 @@
 (new "lisp.special.Quote")
 (new "lisp.special.Repeat")
 (new "lisp.special.Setq")
-(new "lisp.special.TheCompiler")
+;(new "lisp.special.TheCompiler")
 (new "lisp.special.When")
 (new "lisp.special.While")
 (new "lisp.special.Unless")
