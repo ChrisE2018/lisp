@@ -16,7 +16,7 @@ import lisp.util.LogString;
 public class TreeCompiler extends ClassNode implements Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (TreeCompiler.class.getName ());
-
+    private static final TreeBoxer boxer = new TreeBoxer ();
     private final CompileLoader compileLoader;
     private final Type returnType;
     private final Class<?> methodReturnClass;
@@ -245,14 +245,33 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	for (int i = 0; i < methodBody.size () - 1; i++)
 	{
 	    final Object expr = methodBody.get (i);
-	    final Class<?> resultClass = context.compile (expr, false);
+	    final CompileResultSet resultClass = context.compile (expr, false);
 	    context.convert (resultClass, void.class, false, false);
 	}
-	final Class<?> resultClass = context.compile (methodBody.last (), true);
+	final CompileResultSet resultClass = context.compile (methodBody.last (), true);
 	// (define double:foo (int:n) 1 2 n)
-	context.convert (resultClass, methodReturnClass, false, false);
-
-	il.add (new InsnNode (returnType.getOpcode (IRETURN)));
+	for (final CompileResult resultKind : resultClass.getResults ())
+	{
+	    final LabelNode label = resultKind.getLabel ();
+	    if (label != null)
+	    {
+		il.add (label);
+	    }
+	    if (resultKind instanceof ExplicitCompileResult)
+	    {
+		context.convert (((ExplicitCompileResult)resultKind).getResultClass (), methodReturnClass, false, false);
+	    }
+	    else
+	    {
+		final Object x = ((ImplicitCompileResult)resultKind).getValue ();
+		il.add (new LdcInsnNode (x));
+		final Class<?> ec = x.getClass ();
+		final Class<?> p = boxer.getUnboxedClass (ec);
+		context.convert (p != null ? p : ec, methodReturnClass, false, false);
+	    }
+	    il.add (new InsnNode (returnType.getOpcode (IRETURN)));
+	}
+	// Better not get here
 	mn.maxStack = 0;
 	mn.maxLocals = 0;
 	return mn;

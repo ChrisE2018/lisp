@@ -7,7 +7,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.LispList;
 import lisp.cc.*;
 import lisp.cc4.*;
-import lisp.symbol.*;
+import lisp.symbol.LispVisitor;
 
 public class PrognFunction implements LispCCFunction, Opcodes, LispTreeWalker, LispTreeFunction
 {
@@ -25,11 +25,13 @@ public class PrognFunction implements LispCCFunction, Opcodes, LispTreeWalker, L
     }
 
     @Override
-    public Class<?> compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	for (int i = 1; i < expression.size () - 1; i++)
 	{
-	    context.compile (expression.get (i), false);
+	    final CompileResultSet resultSet = context.compile (expression.get (i), false);
+	    // Do something with r to throw away garbage if required
+	    context.convert (resultSet, void.class, false, false);
 	}
 	return context.compile (expression.last (), true);
     }

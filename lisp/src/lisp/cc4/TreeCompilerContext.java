@@ -52,7 +52,10 @@ public class TreeCompilerContext implements Opcodes
 
     public void add (final AbstractInsnNode insnNode)
     {
-	il.add (insnNode);
+	if (insnNode != null)
+	{
+	    il.add (insnNode);
+	}
     }
 
     public void convert (final Class<?> fromClass, final Class<?> toClass, final boolean allowNarrowing,
@@ -61,7 +64,47 @@ public class TreeCompilerContext implements Opcodes
 	converter.convert (il, fromClass, toClass, allowNarrowing, liberalTruth);
     }
 
-    public Class<?> compile (final Object expr, final boolean resultDesired)
+    public void convert (final CompileResultSet fromClass, final Class<?> toClass, final boolean allowNarrowing,
+            final boolean liberalTruth)
+    {
+	if (fromClass == null)
+	{
+	    converter.convert (il, void.class, toClass, allowNarrowing, liberalTruth);
+	    return;
+	}
+	// [TODO] If toClass is void (or null) then collapse all cases of the same size
+	final LabelNode l = new LabelNode ();
+	final List<CompileResult> results = fromClass.getResults ();
+	for (int i = 0; i < results.size (); i++)
+	{
+	    final CompileResult r = results.get (i);
+	    final Object s = r.getLabel ();
+	    if (s instanceof LabelNode)
+	    {
+		il.add ((LabelNode)s);
+	    }
+	    else if (r instanceof ExplicitCompileResult)
+	    {
+		final Class<?> fc = (((ExplicitCompileResult)r).getResultClass ());
+		converter.convert (il, fc, toClass, allowNarrowing, liberalTruth);
+	    }
+	    else if (r instanceof ImplicitCompileResult)
+	    {
+		il.add (new LdcInsnNode (((ImplicitCompileResult)r).getValue ()));
+	    }
+	    // Jump to exit label if required
+	    if (results.size () > 1 && i + 1 < results.size ())
+	    {
+		il.add (new JumpInsnNode (GOTO, l));
+	    }
+	}
+	if (results.size () > 1)
+	{
+	    add (l);
+	}
+    }
+
+    public CompileResultSet compile (final Object expr, final boolean resultDesired)
     {
 	if (expr instanceof List)
 	{
@@ -77,17 +120,18 @@ public class TreeCompilerContext implements Opcodes
 	    else
 	    {
 		// Constant expression
-		il.add (new LdcInsnNode (expr));
+		// il.add (new LdcInsnNode (expr));
 		// Top result class is the same as the expr, perhaps converted to a primitive type.
 		final Class<?> ec = expr.getClass ();
 		final Class<?> p = boxer.getUnboxedClass (ec);
-		return p != null ? p : ec;
+		// return p != null ? p : ec;
+		return new CompileResultSet (new ImplicitCompileResult (null, expr));
 	    }
 	}
 	return null;
     }
 
-    private Class<?> compileFunctionCall (final LispList expression, final boolean resultDesired)
+    private CompileResultSet compileFunctionCall (final LispList expression, final boolean resultDesired)
     {
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
@@ -126,7 +170,7 @@ public class TreeCompilerContext implements Opcodes
 	return compileDefaultFunctionCall (expression);
     }
 
-    private Class<?> compileSpecialLispFunction (final LispList expression, final boolean resultDesired)
+    private CompileResultSet compileSpecialLispFunction (final LispList expression, final boolean resultDesired)
     {
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
@@ -147,7 +191,7 @@ public class TreeCompilerContext implements Opcodes
 	return false;
     }
 
-    private Class<?> compileDirectFunctionCall (final LispList expression, final boolean resultDesired)
+    private CompileResultSet compileDirectFunctionCall (final LispList expression, final boolean resultDesired)
     {
 	return null;
     }
@@ -163,7 +207,7 @@ public class TreeCompilerContext implements Opcodes
      * @param expression The function call expression.
      * @return The class of the return value.
      */
-    private Class<?> compileDefaultFunctionCall (final LispList expression)
+    private CompileResultSet compileDefaultFunctionCall (final LispList expression)
     {
 	final Symbol symbol = expression.head ();
 	treeCompiler.addSymbolReference (symbol);
@@ -187,8 +231,8 @@ public class TreeCompilerContext implements Opcodes
 	{
 	    il.add (new InsnNode (DUP));
 	    il.add (new LdcInsnNode (i));
-	    final Class<?> fromClass = compile (expression.get (i + 1), true);
-	    converter.convert (il, fromClass, Object.class, false, false);
+	    final CompileResultSet resultDescriptor = compile (expression.get (i + 1), true);
+	    convert (resultDescriptor, Object.class, false, false);
 	    il.add (new InsnNode (AASTORE));
 	}
 
@@ -196,7 +240,8 @@ public class TreeCompilerContext implements Opcodes
 	// Assume the function will still be defined when we execute this code.
 	il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;",
 	        false));
-	return Object.class;
+	// return new Object[][] {{null, Object.class}};
+	return new CompileResultSet (new ExplicitCompileResult (null, Object.class));
     }
 
     /**
@@ -208,19 +253,8 @@ public class TreeCompilerContext implements Opcodes
      * @param symbol The symbol value to calculate.
      * @return The class of the result produced.
      */
-    private Class<?> compileSymbolReference (final Symbol symbol)
+    private CompileResultSet compileSymbolReference (final Symbol symbol)
     {
-	// if (treeCompiler.isMethodArg (symbol))
-	// {
-	// // Parameter reference
-	// // final int argIndex = methodArgs.indexOf (symbol);
-	// // final Type argType = treeCompiler.getMethodArgType (symbol);
-	// // il.add (new VarInsnNode (argType.getOpcode (ILOAD), argIndex + 1));
-	// il.add (treeCompiler.getLoadArgInsnNode (symbol));
-	// final Class<?> fromClass = treeCompiler.getMethodArgClass (symbol);
-	// return fromClass;
-	// }
-	// else
 	if (locals.containsKey (symbol))
 	{
 	    // Reference to a local lexical variable
@@ -229,19 +263,24 @@ public class TreeCompilerContext implements Opcodes
 	    final Type varType = lb.getType ();
 	    il.add (new VarInsnNode (varType.getOpcode (ILOAD), localRef));
 	    final Class<?> fromClass = lb.getVariableClass ();
-	    return fromClass;
+	    // return new Object[][] {{null, fromClass}};
+	    return new CompileResultSet (new ExplicitCompileResult (null, fromClass));
 	}
 	else if (symbol.is ("true"))
 	{
 	    // Special case for global symbol "true"
-	    il.add (new LdcInsnNode (true));
-	    return boolean.class;
+	    // il.add (new LdcInsnNode (true));
+	    // return boolean.class;
+	    // return new Object[][] {{null, true}};
+	    return new CompileResultSet (new ImplicitCompileResult (null, true));
 	}
 	else if (symbol.is ("false"))
 	{
 	    // Special case for global symbol "false"
-	    il.add (new LdcInsnNode (false));
-	    return boolean.class;
+	    // il.add (new LdcInsnNode (false));
+	    // return boolean.class;
+	    // return new Object[][] {{null, false}};
+	    return new CompileResultSet (new ImplicitCompileResult (null, false));
 	}
 	else
 	{
@@ -255,7 +294,8 @@ public class TreeCompilerContext implements Opcodes
 	    final String classInternalName = classType.getInternalName ();
 	    il.add (new FieldInsnNode (GETFIELD, classInternalName, treeCompiler.createJavaSymbolName (symbol), "Llisp/Symbol;"));
 	    il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false));
-	    return Object.class;
+	    // return new Object[][] {{null, Object.class}};
+	    return new CompileResultSet (new ExplicitCompileResult (null, Object.class));
 	}
     }
 

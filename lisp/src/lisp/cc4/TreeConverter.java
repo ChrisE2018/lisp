@@ -240,6 +240,7 @@ public class TreeConverter implements Opcodes
 	    il.add (new InsnNode (POP));
 	    throwException (il, "java/lang/IllegalArgumentException", "Boolean required");
 	    il.add (l1);
+	    il.add (new TypeInsnNode (CHECKCAST, "java/lang/Boolean"));
 	    boxer.unbox (il, Type.BOOLEAN_TYPE);
 	}
     }
@@ -281,6 +282,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Byte"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Byte"));
 	boxer.unbox (il, Type.BYTE_TYPE);
     }
 
@@ -296,6 +298,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Character"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Character"));
 	boxer.unbox (il, Type.CHAR_TYPE);
     }
 
@@ -311,6 +314,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Short"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Short"));
 	boxer.unbox (il, Type.SHORT_TYPE);
     }
 
@@ -326,6 +330,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Integer"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Integer"));
 	boxer.unbox (il, Type.INT_TYPE);
     }
 
@@ -341,6 +346,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Long"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Long"));
 	boxer.unbox (il, Type.LONG_TYPE);
 	il.add (new InsnNode (L2I));
     }
@@ -357,6 +363,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Float"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Float"));
 	boxer.unbox (il, Type.FLOAT_TYPE);
 	il.add (new InsnNode (F2I));
     }
@@ -373,6 +380,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Double"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Double"));
 	boxer.unbox (il, Type.DOUBLE_TYPE);
 	il.add (new InsnNode (D2I));
     }
@@ -389,6 +397,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Long"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Long"));
 	boxer.unbox (il, Type.LONG_TYPE);
     }
 
@@ -404,6 +413,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Float"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Float"));
 	boxer.unbox (il, Type.FLOAT_TYPE);
 	il.add (new InsnNode (F2L));
     }
@@ -420,6 +430,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Double"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Double"));
 	boxer.unbox (il, Type.DOUBLE_TYPE);
 	il.add (new InsnNode (D2L));
     }
@@ -436,6 +447,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Byte"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Byte"));
 	boxer.unbox (il, Type.BYTE_TYPE);
 	il.add (new InsnNode (I2F));
     }
@@ -452,6 +464,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Character"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Character"));
 	boxer.unbox (il, Type.CHAR_TYPE);
 	il.add (new InsnNode (I2F));
     }
@@ -468,6 +481,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Short"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Short"));
 	boxer.unbox (il, Type.SHORT_TYPE);
 	il.add (new InsnNode (I2F));
     }
@@ -484,6 +498,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Integer"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Integer"));
 	boxer.unbox (il, Type.INT_TYPE);
 	il.add (new InsnNode (I2F));
     }
@@ -500,6 +515,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Float"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Float"));
 	boxer.unbox (il, Type.FLOAT_TYPE);
     }
 
@@ -515,6 +531,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Long"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Long"));
 	boxer.unbox (il, Type.LONG_TYPE);
 	il.add (new InsnNode (L2F));
     }
@@ -531,6 +548,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Double"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Double"));
 	boxer.unbox (il, Type.DOUBLE_TYPE);
 	il.add (new InsnNode (D2F));
     }
@@ -547,6 +565,7 @@ public class TreeConverter implements Opcodes
     // il.add (new InsnNode (DUP));
     // il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Float"));
     // il.add (new JumpInsnNode (IFEQ, otherwise));
+    // il.add (new TypeInsnNode (CHECKCAST, "java/lang/Float"));
     // boxer.unbox (il, Type.FLOAT_TYPE);
     // il.add (new InsnNode (F2D));
     // }
@@ -563,6 +582,7 @@ public class TreeConverter implements Opcodes
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Double"));
 	il.add (new JumpInsnNode (IFEQ, otherwise));
+	il.add (new TypeInsnNode (CHECKCAST, "java/lang/Double"));
 	boxer.unbox (il, Type.DOUBLE_TYPE);
     }
 

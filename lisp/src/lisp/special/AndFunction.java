@@ -1,15 +1,18 @@
 
 package lisp.special;
 
+import java.util.List;
+
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.cc.*;
-import lisp.cc4.LispTreeWalker;
-import lisp.symbol.*;
+import lisp.cc4.*;
+import lisp.symbol.LispVisitor;
 
-public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker
+public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, LispTreeFunction
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
@@ -22,6 +25,215 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	    visitor.visitValue (expression.get (i));
 	}
 	visitor.visitEnd (expression);
+    }
+
+    @Override
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	if (resultDesired)
+	{
+	    return compileAnd (context, expression, resultDesired);
+	}
+	else
+	{
+	    compile2void (context, expression);
+	    return VOID_RETURN;
+	}
+    }
+
+    private CompileResultSet compileAnd (final TreeCompilerContext context, final LispList e, final boolean resultDesired)
+    {
+	// (define foo (a b) (and))
+	// (define foo (a b) (and a b))
+	// Fall through to implicit true
+	final CompileResultSet result = new CompileResultSet ();
+	final LabelNode lTrue = new LabelNode (); // Implicit true
+	final LabelNode lFalse = new LabelNode (); // Implicit false
+	final LabelNode lPopFalse = new LabelNode (); // pop false
+
+	final boolean lTrueUsed = false;
+	boolean lFalseUsed = false;
+	boolean lPopFalseUsed = false;
+
+	boolean stackOccupied = false;
+	for (int i = 1; i < e.size () - 1; i++)
+	{
+	    if (stackOccupied)
+	    {
+		// May need to keep track of the size
+		context.add (new InsnNode (POP));
+	    }
+	    // Jump here to check next conjunct
+	    final LabelNode lNext = new LabelNode ();
+	    final CompileResultSet r = context.compile (e.get (i), true);
+	    final List<CompileResult> crl = r.getResults ();
+	    for (int j = 0; j < crl.size (); j++)
+	    {
+		final boolean lastCrl = j == crl.size () - 1;
+		// Should dynamically rearrange the crls to merge cases
+		final CompileResult cr = crl.get (j);
+		context.add (cr.getLabel ());
+		if (cr instanceof ImplicitCompileResult)
+		{
+		    if ((((ImplicitCompileResult)cr).getValue ().equals (Boolean.FALSE)))
+		    {
+			lFalseUsed = true;
+			// If we found a hard false result we can delete the remaining clauses
+			context.add (new JumpInsnNode (GOTO, lFalse));
+		    }
+		    else
+		    {
+			// Make this crl be last if possible
+			if (!lastCrl)
+			{
+			    context.add (new JumpInsnNode (GOTO, lNext));
+			}
+		    }
+		}
+		else
+		{
+		    final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
+		    final Class<?> resultClass = ecr.getResultClass ();
+		    if (resultClass.equals (Boolean.class))
+		    {
+			context.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
+			lFalseUsed = true;
+			context.add (new JumpInsnNode (IFEQ, lFalse));
+			if (!lastCrl)
+			{
+			    context.add (new JumpInsnNode (GOTO, lNext));
+			}
+		    }
+		    else if (resultClass.equals (boolean.class))
+		    {
+			lFalseUsed = true;
+			context.add (new JumpInsnNode (IFEQ, lFalse));
+			if (!lastCrl)
+			{
+			    context.add (new JumpInsnNode (GOTO, lNext));
+			}
+		    }
+		    else if (Boolean.class.isAssignableFrom (resultClass))
+		    {
+			stackOccupied = true;
+			context.add (new InsnNode (DUP));
+			context.add (new TypeInsnNode (CHECKCAST, "java/lang/Boolean"));
+			context.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
+			context.add (new JumpInsnNode (IFEQ, lFalse));
+			if (!lastCrl)
+			{
+			    context.add (new JumpInsnNode (GOTO, lNext));
+			}
+		    }
+		    else
+		    {
+			stackOccupied = true;
+			context.add (new InsnNode (DUP));
+			context.add (new TypeInsnNode (INSTANCEOF, "java/lang/Boolean"));
+			context.add (new JumpInsnNode (IFEQ, lNext));
+			context.add (new InsnNode (DUP));
+			context.add (new TypeInsnNode (CHECKCAST, "java/lang/Boolean"));
+			context.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
+			lPopFalseUsed = true;
+			context.add (new JumpInsnNode (IFEQ, lPopFalse));
+			if (!lastCrl)
+			{
+			    context.add (new JumpInsnNode (GOTO, lNext));
+			}
+		    }
+		}
+	    }
+	    context.add (lNext);
+	}
+	// If we get here, just return the value
+	final CompileResultSet r = context.compile (e.last (), true);
+	final List<CompileResult> crl = r.getResults ();
+	for (int j = 0; j < crl.size () - 1; j++)
+	{
+	    final CompileResult cr = crl.get (j);
+	    if (cr.getLabel () != null)
+	    {
+		result.getResults ().add (cr);
+	    }
+	    else
+	    {
+		final LabelNode ll = new LabelNode ();
+		context.add (new JumpInsnNode (GOTO, ll));
+		result.getResults ().add (cr.getJumpTo (ll)); // [TODO] Set the label
+	    }
+	}
+	// Put the last one in
+	final CompileResult last = crl.get (crl.size () - 1);
+	result.getResults ().add (last);
+	LabelNode lexit = null;
+	if (last.getLabel () == null)
+	{
+	    if (lPopFalseUsed)
+	    {
+		lexit = new LabelNode ();
+		context.add (new JumpInsnNode (GOTO, lexit));
+	    }
+	}
+
+	if (lPopFalseUsed)
+	{
+	    context.add (lPopFalse);
+	    context.add (new InsnNode (POP));
+	    lFalseUsed = true;
+	    context.add (new JumpInsnNode (GOTO, lFalse));
+	}
+	if (lTrueUsed)
+	{
+	    result.addImplicitCompileResult (lTrue, true);
+	}
+	if (lFalseUsed)
+	{
+	    result.addImplicitCompileResult (lFalse, false);
+	}
+	context.add (lexit);
+	return result;
+    }
+
+    /** Compile an 'and' expression whose value is only used as a boolean */
+    private void compileBooleanAnd (final TreeCompilerContext context, final LispList e)
+    {
+	// (define foo (a b) (if (and a b) 1 2))
+	final LabelNode l1 = new LabelNode ();
+	for (int i = 1; i < e.size (); i++)
+	{
+	    final CompileResultSet r = context.compile (e.get (i), true);
+	    context.convert (r, boolean.class, false, true);
+	    context.add (new JumpInsnNode (IFEQ, l1));
+	}
+	// True case
+	final LabelNode l2 = new LabelNode ();
+	context.add (new InsnNode (ICONST_1));
+	context.add (new JumpInsnNode (GOTO, l2));
+
+	// False case
+	context.add (l1);
+	context.add (new InsnNode (ICONST_0));
+
+	// Jump here after true case or fall through after false.
+	// Return final value.
+	context.add (l2);
+    }
+
+    /** Compile an 'and' expression whose value will be ignored. */
+    public void compile2void (final TreeCompilerContext context, final LispList e)
+    {
+	// (define foo (a b) (and) 1)
+	// (define foo (a b) (and a b) 2)
+	if (e.size () > 0)
+	{
+	    final LabelNode l1 = new LabelNode ();
+	    for (int i = 1; i < e.size (); i++)
+	    {
+		context.compile (e.get (i), false);
+		context.add (new JumpInsnNode (IFEQ, l1));
+	    }
+	    context.add (l1);
+	}
     }
 
     // public InsnSegment compile (final TreeCompiler compiler, final Map<Symbol, LocalBinding>

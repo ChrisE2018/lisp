@@ -8,7 +8,7 @@ import org.objectweb.asm.tree.*;
 import lisp.LispList;
 import lisp.cc.*;
 import lisp.cc4.*;
-import lisp.symbol.*;
+import lisp.symbol.LispVisitor;
 
 public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, LispTreeFunction
 {
@@ -27,32 +27,27 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
     }
 
     @Override
-    public Class<?> compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
-	final Class<?> testClass = context.compile (expression.get (1), true);
+	final CompileResultSet testResultSet = context.compile (expression.get (1), true);
 	// At this point we can optimize handling of information returned from the compiler.compile
 	// call. Any result that is not boolean can just be wired to goto l2.
 	// Any result that is a constant true or false can go directly to l1 or l2.
-	context.convert (testClass, boolean.class, false, true);
+
+	// [TODO] Need a special converter to boolean that returns result information.
+	context.convert (testResultSet, boolean.class, false, true);
 
 	final LabelNode l1 = new LabelNode ();// This label means we return false
-	final LabelNode l2 = new LabelNode ();
 	context.add (new JumpInsnNode (IFEQ, l1));
 
 	for (int i = 2; i < expression.size () - 1; i++)
 	{
-	    final Class<?> r = context.compile (expression.get (i), false);
+	    final CompileResultSet r = context.compile (expression.get (i), false);
 	    // Do something with r to throw away garbage if required
 	    context.convert (r, void.class, false, false);
 	}
-	final Class<?> result = context.compile (expression.last (), true);
-	context.add (new JumpInsnNode (GOTO, l2));
-	context.add (l1);
-	if (resultDesired)
-	{
-	    context.add (new LdcInsnNode (false));
-	}
-	context.add (l2);
+	final CompileResultSet result = context.compile (expression.last (), true);
+	result.addImplicitCompileResult (l1, false);
 	return result;
     }
 
