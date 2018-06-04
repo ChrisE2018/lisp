@@ -93,7 +93,7 @@ public class TreeCompilerContext implements Opcodes
 	final FunctionCell function = symbol.getFunction ();
 	if (function != null)
 	{
-	    if (function.getLispFunction () != null)
+	    if (function.getLispFunction () instanceof LispTreeFunction)
 	    {
 		// Some 'normal' functions need special coding, i.e, arithmetic and comparisons, so
 		// this is called for any function with a compiler, not just special forms.
