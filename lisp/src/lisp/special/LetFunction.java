@@ -12,7 +12,7 @@ import lisp.cc.*;
 import lisp.cc4.LispTreeWalker;
 import lisp.symbol.*;
 
-public class LetFunction extends LispFunction implements Opcodes, LispTreeWalker
+public class LetFunction implements LispCCFunction, Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override

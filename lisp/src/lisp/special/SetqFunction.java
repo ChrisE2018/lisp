@@ -12,7 +12,7 @@ import lisp.cc4.LispTreeWalker;
 import lisp.symbol.*;
 import lisp.util.LogString;
 
-public class SetqFunction extends LispFunction implements Opcodes, LispTreeWalker
+public class SetqFunction implements LispCCFunction, Opcodes, LispTreeWalker
 {
     private static final Logger LOGGER = Logger.getLogger (SetqFunction.class.getName ());
 

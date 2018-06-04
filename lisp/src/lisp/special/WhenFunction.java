@@ -6,11 +6,11 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
-import lisp.cc.CompilerGenerator;
+import lisp.cc.*;
 import lisp.cc4.*;
 import lisp.symbol.*;
 
-public class WhenFunction extends LispFunction implements Opcodes, LispTreeWalker, LispTreeFunction
+public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, LispTreeFunction
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override

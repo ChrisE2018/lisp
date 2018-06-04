@@ -6,11 +6,11 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.LispList;
 import lisp.Symbol;
-import lisp.cc.CompilerGenerator;
+import lisp.cc.*;
 import lisp.cc4.LispTreeWalker;
 import lisp.symbol.*;
 
-public class QuoteFunction extends LispFunction implements Opcodes, LispTreeWalker
+public class QuoteFunction implements LispCCFunction, Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override

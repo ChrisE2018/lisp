@@ -486,7 +486,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	final FunctionCell function = symbol.getFunction ();
 	if (function != null)
 	{
-	    if (function.getLispFunction () != null)
+	    if (function.getLispFunction () instanceof LispCCFunction)
 	    {
 		// Some 'normal' functions need special coding, i.e, arithmetic and comparisons, so
 		// this is called for any function with a compiler, not just special forms.
@@ -543,24 +543,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     {
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
-	final LispFunction lispFunction = function.getLispFunction ();
-	// if (valueClass == null)
-	// {
-	// lispFunction.compile2void (this, mv, expression);
-	// }
-	// else if (valueClass.equals (int.class))
-	// {
-	// lispFunction.compile2int (this, mv, expression);
-	// }
-	// else if (valueClass.equals (double.class))
-	// {
-	// lispFunction.compile2double (this, mv, expression);
-	// }
-	// else if (valueClass.equals (boolean.class) && !liberalTruth)
-	// {
-	// lispFunction.compile2boolean (this, mv, expression);
-	// }
-	// else
+	final LispCCFunction lispFunction = (LispCCFunction)function.getLispFunction ();
 	{
 	    lispFunction.compile (this, mv, expression, valueClass, allowNarrowing, liberalTruth);
 	}

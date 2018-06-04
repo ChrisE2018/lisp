@@ -2,8 +2,9 @@
 package lisp.cc4;
 
 import lisp.LispList;
+import lisp.symbol.LispFunction;
 
-public interface LispTreeFunction
+public interface LispTreeFunction extends LispFunction
 {
     /**
      * Compile an expression.

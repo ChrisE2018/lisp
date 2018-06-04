@@ -9,7 +9,7 @@ import lisp.cc.*;
 import lisp.cc4.LispTreeWalker;
 import lisp.symbol.*;
 
-public class TheFunction extends LispFunction implements Opcodes, LispTreeWalker
+public class TheFunction implements LispCCFunction, Opcodes, LispTreeWalker
 {
     private static Convert convert = new Convert ();
 

@@ -117,11 +117,15 @@ public class Definer
 	{
 	    try
 	    {
-		final Class<? extends LispFunction> functionClass = Class.forName (className).asSubclass (LispFunction.class);
-		final Constructor<? extends LispFunction> constructor = functionClass.getConstructor ();
-		final FunctionCell function = symbol.getFunction ();
-		final LispFunction lispFunction = constructor.newInstance ();
-		function.setLispFunction (lispFunction);
+		final Class<?> fnClass = Class.forName (className);
+		if (LispFunction.class.isAssignableFrom (fnClass))
+		{
+		    final Class<? extends LispFunction> functionClass = fnClass.asSubclass (LispFunction.class);
+		    final Constructor<? extends LispFunction> constructor = functionClass.getConstructor ();
+		    final FunctionCell function = symbol.getFunction ();
+		    final LispFunction lispFunction = constructor.newInstance ();
+		    function.setLispFunction (lispFunction);
+		}
 	    }
 	    catch (final ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
 	            | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
