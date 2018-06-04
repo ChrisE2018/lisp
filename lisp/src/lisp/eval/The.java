@@ -13,7 +13,7 @@ public class The extends Definer
      * @return The converted object or null if it cannot be converted.
      * @throws Exception
      */
-    @DefineLisp (special = true)
+    @DefineLisp (special = true, classname = "lisp.special.TheFunction")
     public Object the (final LexicalContext context, final Object type, final Object arg) throws Exception
     {
 	return coerce (type, context.eval (arg));

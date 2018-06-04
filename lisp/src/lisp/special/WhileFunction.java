@@ -5,17 +5,12 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.LispList;
-import lisp.Symbol;
 import lisp.cc.CompilerGenerator;
+import lisp.cc4.LispTreeFunction;
 import lisp.symbol.*;
 
-public class WhileFunction extends LispFunction implements Opcodes
+public class WhileFunction extends LispFunction implements Opcodes, LispTreeFunction
 {
-    public WhileFunction (final Symbol symbol)
-    {
-	super (symbol);
-    }
-
     /** Call visitor on all directly nested subexpressions. */
     @Override
     public void walker (final LispVisitor visitor, final LispList expression)
@@ -69,7 +64,7 @@ public class WhileFunction extends LispFunction implements Opcodes
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
-	buffer.append (getSymbol ());
+	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
     }

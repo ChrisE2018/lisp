@@ -4,17 +4,13 @@ package lisp.special;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-import lisp.*;
+import lisp.LispList;
 import lisp.cc.CompilerGenerator;
+import lisp.cc4.*;
 import lisp.symbol.*;
 
-public class PrognFunction extends LispFunction implements Opcodes
+public class PrognFunction extends LispFunction implements Opcodes, LispTreeFunction
 {
-    public PrognFunction (final Symbol symbol)
-    {
-	super (symbol);
-    }
-
     /** Call visitor on all directly nested subexpressions. */
     @Override
     public void walker (final LispVisitor visitor, final LispList expression)
@@ -26,6 +22,16 @@ public class PrognFunction extends LispFunction implements Opcodes
 	}
 	visitor.visitValue (expression.last ());
 	visitor.visitEnd (expression);
+    }
+
+    @Override
+    public Class<?> compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	for (int i = 1; i < expression.size () - 1; i++)
+	{
+	    context.compile (expression.get (i), false);
+	}
+	return context.compile (expression.last (), true);
     }
 
     @Override
@@ -54,7 +60,7 @@ public class PrognFunction extends LispFunction implements Opcodes
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
-	buffer.append (getSymbol ());
+	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
     }

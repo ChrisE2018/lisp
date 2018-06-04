@@ -46,7 +46,7 @@ public class ArithmeticPrimitives extends Definer
     }
 
     @DefineLisp (name = "1+")
-    public Object plusOne (final Object x)
+    public Number addOne (final Number x)
     {
 	if (x instanceof Integer)
 	{
@@ -75,7 +75,7 @@ public class ArithmeticPrimitives extends Definer
     }
 
     @DefineLisp (name = "1-")
-    public Object plusMinus (final Object x)
+    public Number subOne (final Number x)
     {
 	if (x instanceof Integer)
 	{

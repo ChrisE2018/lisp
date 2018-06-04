@@ -8,17 +8,13 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.*;
 import lisp.cc.*;
+import lisp.cc4.LispTreeFunction;
 import lisp.symbol.*;
 import lisp.util.LogString;
 
-public class SetqFunction extends LispFunction implements Opcodes
+public class SetqFunction extends LispFunction implements Opcodes, LispTreeFunction
 {
     private static final Logger LOGGER = Logger.getLogger (SetqFunction.class.getName ());
-
-    public SetqFunction (final Symbol symbol)
-    {
-	super (symbol);
-    }
 
     /** Call visitor on all directly nested subexpressions. */
     @Override
@@ -136,7 +132,7 @@ public class SetqFunction extends LispFunction implements Opcodes
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
-	buffer.append (getSymbol ());
+	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
     }

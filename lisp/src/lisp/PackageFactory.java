@@ -92,6 +92,21 @@ public class PackageFactory
 	return result;
     }
 
+    public static Package getPackage (final String packageName, final boolean create)
+    {
+	Package result = packages.get (packageName);
+	if (result == null)
+	{
+	    if (!create)
+	    {
+		throw new IllegalArgumentException ("There is no package named " + packageName);
+	    }
+	    result = new Package (packageName);
+	    packages.put (packageName, result);
+	}
+	return result;
+    }
+
     public static Map<String, Package> getPackageMap ()
     {
 	return packages;

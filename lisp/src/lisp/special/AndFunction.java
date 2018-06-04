@@ -5,17 +5,12 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.LispList;
-import lisp.Symbol;
 import lisp.cc.CompilerGenerator;
+import lisp.cc4.LispTreeFunction;
 import lisp.symbol.*;
 
-public class AndFunction extends LispFunction implements Opcodes
+public class AndFunction extends LispFunction implements Opcodes, LispTreeFunction
 {
-    public AndFunction (final Symbol symbol)
-    {
-	super (symbol);
-    }
-
     /** Call visitor on all directly nested subexpressions. */
     @Override
     public void walker (final LispVisitor visitor, final LispList expression)
@@ -28,6 +23,32 @@ public class AndFunction extends LispFunction implements Opcodes
 	}
 	visitor.visitEnd (expression);
     }
+
+    // public InsnSegment compile (final TreeCompiler compiler, final Map<Symbol, LocalBinding>
+    // locals, final LispList expression,
+    // final boolean resultDesired)
+    // {
+    // final InsnSegment result = null;
+    // final InsnSegment trueCase = null;
+    // // Need to say that this segment ends in false, but it does not matter how it gets there
+    // final InsnSegment falseCase = compiler.compile (locals, false, boolean.class, false, true);
+    // final Label l1 = new Label ();
+    // InsnSegment previous = result;
+    // for (int i = 1; i < expression.size (); i++)
+    // {
+    // final InsnSegment seg = compiler.compile (locals, expression.get (i), boolean.class, false,
+    // true);
+    // previous.getTail ().addCase (null/* default */, seg);
+    // seg.addCase (new Object[]
+    // {"false", "s0"}, falseCase);
+    // previous = seg;
+    // }
+    // // True case
+    // previous.addCase (null, trueCase);
+    // result.addTail (trueCase);
+    // result.addTail (falseCase);
+    // return result;
+    // }
 
     @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expression,
@@ -48,7 +69,6 @@ public class AndFunction extends LispFunction implements Opcodes
     }
 
     /** Compile an 'and' expression whose value will be ignored. */
-    @Override
     public void compile2void (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e)
     {
 	// (define foo (a b) (and) 1)
@@ -136,7 +156,7 @@ public class AndFunction extends LispFunction implements Opcodes
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
-	buffer.append (getSymbol ());
+	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
     }

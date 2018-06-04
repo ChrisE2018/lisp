@@ -118,9 +118,9 @@ public class Definer
 	    try
 	    {
 		final Class<? extends LispFunction> functionClass = Class.forName (className).asSubclass (LispFunction.class);
-		final Constructor<? extends LispFunction> constructor = functionClass.getConstructor (Symbol.class);
+		final Constructor<? extends LispFunction> constructor = functionClass.getConstructor ();
 		final FunctionCell function = symbol.getFunction ();
-		final LispFunction lispFunction = constructor.newInstance (symbol);
+		final LispFunction lispFunction = constructor.newInstance ();
 		function.setLispFunction (lispFunction);
 	    }
 	    catch (final ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException

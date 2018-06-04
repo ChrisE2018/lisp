@@ -20,7 +20,7 @@ public class CompileLoader extends ClassLoader implements Compiler
      * [TODO] Maybe use a gensym in the defineClass call to allow ClassLoader re-use?
      */
     private static final String SHELL_CLASS_DESCRIPTOR = "Llisp/cc/CompiledShell;";
-    private final Type classType = Type.getType (SHELL_CLASS_DESCRIPTOR);
+    private Type classType = Type.getType (SHELL_CLASS_DESCRIPTOR);
 
     /**
      * Trick to compile references to quoted data. This map is obtained by the method compiler and
@@ -31,8 +31,8 @@ public class CompileLoader extends ClassLoader implements Compiler
      * time.
      */
     private final Map<String, Object> quotedReferences = new HashMap<String, Object> ();
-    private final ClassReader cr;
-    private final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
+    private ClassReader cr;
+    private ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
     private ClassVisitor cv = cw;
 
     public CompileLoader () throws IOException
@@ -48,9 +48,29 @@ public class CompileLoader extends ClassLoader implements Compiler
 	return classType;
     }
 
+    public void setClassType (final Type classType)
+    {
+	this.classType = classType;
+    }
+
+    public ClassReader getClassReader ()
+    {
+	return cr;
+    }
+
+    public void setClassReader (final ClassReader cr)
+    {
+	this.cr = cr;
+    }
+
     public ClassWriter getClassWriter ()
     {
 	return cw;
+    }
+
+    public void setClassWriter (final ClassWriter cw)
+    {
+	this.cw = cw;
     }
 
     public ClassVisitor getClassVisitor ()
@@ -68,7 +88,17 @@ public class CompileLoader extends ClassLoader implements Compiler
      */
     public Class<?> compile () throws IOException
     {
-	cr.accept (cv, 0);
+	if (cr == null)
+	{
+	    final String name = classType.getInternalName ();
+	    // cv.visit (version, access, name, signature, superName, interfaces);
+	    cv.visit (Opcodes.V1_5, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", new String[] {});
+	    cv.visitEnd ();
+	}
+	else
+	{
+	    cr.accept (cv, 0);
+	}
 
 	final byte[] b = cw.toByteArray ();
 	final String className = classType.getClassName ();

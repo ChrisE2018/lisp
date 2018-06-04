@@ -1,6 +1,8 @@
 
 package lisp.cc;
 
+import java.util.*;
+
 import org.objectweb.asm.Type;
 
 public class Boxer
@@ -39,39 +41,83 @@ public class Boxer
     //
     // protected static final Method DOUBLE_VALUE = Method.getMethod ("double doubleValue()");
 
-    protected static Type[][] BOXED_PRIMITIVES =
+    private static Class<?>[][] BOXED_PRIMITIVE_CLASSES =
 	{
-	 {BYTE_TYPE, Type.BYTE_TYPE},
-	 {BOOLEAN_TYPE, Type.BOOLEAN_TYPE},
-	 {SHORT_TYPE, Type.SHORT_TYPE},
-	 {CHARACTER_TYPE, Type.CHAR_TYPE},
-	 {INTEGER_TYPE, Type.INT_TYPE},
-	 {FLOAT_TYPE, Type.FLOAT_TYPE},
-	 {LONG_TYPE, Type.LONG_TYPE},
-	 {DOUBLE_TYPE, Type.DOUBLE_TYPE}};
+	 {byte.class, Byte.class},
+	 {boolean.class, Boolean.class},
+	 {short.class, Short.class},
+	 {char.class, Character.class},
+	 {int.class, Integer.class},
+	 {long.class, Long.class},
+	 {float.class, Float.class},
+	 {double.class, Double.class}};
+
+    // private static Type[][] BOXED_PRIMITIVES =
+    // {
+    // {BYTE_TYPE, Type.BYTE_TYPE},
+    // {BOOLEAN_TYPE, Type.BOOLEAN_TYPE},
+    // {SHORT_TYPE, Type.SHORT_TYPE},
+    // {CHARACTER_TYPE, Type.CHAR_TYPE},
+    // {INTEGER_TYPE, Type.INT_TYPE},
+    // {FLOAT_TYPE, Type.FLOAT_TYPE},
+    // {LONG_TYPE, Type.LONG_TYPE},
+    // {DOUBLE_TYPE, Type.DOUBLE_TYPE}};
+
+    private final Map<Class<?>, Class<?>> primitive2boxed = new HashMap<Class<?>, Class<?>> ();
+    private final Map<Class<?>, Class<?>> boxed2primitive = new HashMap<Class<?>, Class<?>> ();
+
+    private final Map<Type, Type> primitive2boxedType = new HashMap<Type, Type> ();
+    private final Map<Type, Type> boxed2primitiveType = new HashMap<Type, Type> ();
+
+    public Boxer ()
+    {
+	for (final Class<?>[] entry : BOXED_PRIMITIVE_CLASSES)
+	{
+	    final Class<?> primitiveClass = entry[0];
+	    final Class<?> boxedClass = entry[1];
+	    primitive2boxed.put (primitiveClass, boxedClass);
+	    boxed2primitive.put (boxedClass, primitiveClass);
+	    final Type primitiveType = Type.getType (primitiveClass);
+	    final Type boxedType = Type.getType (boxedClass);
+	    primitive2boxedType.put (primitiveType, boxedType);
+	    boxed2primitiveType.put (boxedType, primitiveType);
+	}
+    }
+
+    public Class<?> getBoxedClass (final Class<?> primitiveClass)
+    {
+	return primitive2boxed.get (primitiveClass);
+    }
+
+    public Class<?> getUnboxedClass (final Class<?> boxedClass)
+    {
+	return boxed2primitive.get (boxedClass);
+    }
 
     public Type getBoxedType (final Type type)
     {
-	for (final Type[] clause : BOXED_PRIMITIVES)
-	{
-	    if (clause[1] == type)
-	    {
-		return clause[0];
-	    }
-	}
-	return null;
+	return primitive2boxedType.get (type);
+	// for (final Type[] clause : BOXED_PRIMITIVES)
+	// {
+	// if (clause[1] == type)
+	// {
+	// return clause[0];
+	// }
+	// }
+	// return null;
     }
 
     public Type getUnboxedType (final Type type)
     {
-	for (final Type[] clause : BOXED_PRIMITIVES)
-	{
-	    if (clause[0] == type)
-	    {
-		return clause[1];
-	    }
-	}
-	return null;
+	return boxed2primitiveType.get (type);
+	// for (final Type[] clause : BOXED_PRIMITIVES)
+	// {
+	// if (clause[0] == type)
+	// {
+	// return clause[1];
+	// }
+	// }
+	// return null;
     }
 
     @Override

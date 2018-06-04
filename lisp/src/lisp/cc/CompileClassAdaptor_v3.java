@@ -17,7 +17,7 @@ import lisp.util.LogString;
 
 public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, CompilerGenerator
 {
-    private static final Logger LOGGER = Logger.getLogger (CompileLoader_v2.class.getName ());
+    private static final Logger LOGGER = Logger.getLogger (CompileClassAdaptor_v3.class.getName ());
 
     private static Convert convert = new Convert ();
     private static ConstantExpression constantExpression = new ConstantExpression ();
@@ -544,23 +544,23 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
 	final LispFunction lispFunction = function.getLispFunction ();
-	if (valueClass == null)
-	{
-	    lispFunction.compile2void (this, mv, expression);
-	}
-	else if (valueClass.equals (int.class))
-	{
-	    lispFunction.compile2int (this, mv, expression);
-	}
-	else if (valueClass.equals (double.class))
-	{
-	    lispFunction.compile2double (this, mv, expression);
-	}
-	else if (valueClass.equals (boolean.class) && !liberalTruth)
-	{
-	    lispFunction.compile2boolean (this, mv, expression);
-	}
-	else
+	// if (valueClass == null)
+	// {
+	// lispFunction.compile2void (this, mv, expression);
+	// }
+	// else if (valueClass.equals (int.class))
+	// {
+	// lispFunction.compile2int (this, mv, expression);
+	// }
+	// else if (valueClass.equals (double.class))
+	// {
+	// lispFunction.compile2double (this, mv, expression);
+	// }
+	// else if (valueClass.equals (boolean.class) && !liberalTruth)
+	// {
+	// lispFunction.compile2boolean (this, mv, expression);
+	// }
+	// else
 	{
 	    lispFunction.compile (this, mv, expression, valueClass, allowNarrowing, liberalTruth);
 	}
