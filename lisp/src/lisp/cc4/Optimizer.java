@@ -1,6 +1,7 @@
 
 package lisp.cc4;
 
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
@@ -30,12 +31,19 @@ public class Optimizer extends ClassNode implements Opcodes
 		removeRedundantJumps (method);
 	    }
 	}
+	if (Symbol.named ("system", "optimizeDeadLabels").getBooleanValue (true))
+	{
+	    for (final MethodNode method : methods)
+	    {
+		removeDeadLabels (method);
+	    }
+	}
 	accept (cv);
     }
 
     private void removeRedundantJumps (final MethodNode method)
     {
-	System.out.printf ("Method %s %n", method);
+	LOGGER.finer (new LogString ("removeRedundantJumps Method %s", method));
 	final InsnList il = method.instructions;
 	for (int i = 0; i < il.size (); i++)
 	{
@@ -49,6 +57,33 @@ public class Optimizer extends ClassNode implements Opcodes
 		    il.remove (jins);
 		}
 	    }
+	}
+    }
+
+    private void removeDeadLabels (final MethodNode method)
+    {
+	LOGGER.finer (new LogString ("removeDeadLabels Method %s", method));
+	final InsnList il = method.instructions;
+	final Set<LabelNode> foundLabels = new HashSet<LabelNode> ();
+	final Set<LabelNode> usedLabels = new HashSet<LabelNode> ();
+	for (int i = 0; i < il.size (); i++)
+	{
+	    final AbstractInsnNode ins = il.get (i);
+	    if (ins instanceof JumpInsnNode)
+	    {
+		final JumpInsnNode jins = (JumpInsnNode)ins;
+		final LabelNode target = jins.label;
+		usedLabels.add (target);
+	    }
+	    if (ins instanceof LabelNode)
+	    {
+		foundLabels.add ((LabelNode)ins);
+	    }
+	}
+	foundLabels.removeAll (usedLabels);
+	for (final LabelNode l : foundLabels)
+	{
+	    il.remove (l);
 	}
     }
 
