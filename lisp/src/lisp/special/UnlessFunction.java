@@ -6,10 +6,10 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.LispList;
 import lisp.cc.*;
-import lisp.cc4.LispTreeWalker;
-import lisp.symbol.*;
+import lisp.cc4.*;
+import lisp.symbol.LispVisitor;
 
-public class UnlessFunction implements LispCCFunction, Opcodes, LispTreeWalker
+public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
@@ -23,6 +23,30 @@ public class UnlessFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	}
 	visitor.visitValue (expression.last ());
 	visitor.visitEnd (expression);
+    }
+
+    @Override
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	// (define foo (boolean:x) (unless x 3))
+	final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	// At this point we can optimize handling of information returned from the compiler.compile
+	// call. Any result that is not boolean can just be wired to goto l2.
+	// Any result that is a constant true or false can go directly to l1 or l2.
+
+	// [TODO] Need a special converter to boolean that returns result information.
+	final LabelNodeSet lTrue = new LabelNodeSet ();// This label means we return true
+	context.convertIfTrue (testResultSet, false, true, lTrue);
+
+	for (int i = 2; i < expression.size () - 1; i++)
+	{
+	    final CompileResultSet r = context.compile (expression.get (i), false);
+	    // Do something with r to throw away garbage if required
+	    context.convert (r, void.class, false, false);
+	}
+	final CompileResultSet result = context.compile (expression.last (), true);
+	result.addImplicitCompileResult (lTrue, false);
+	return result;
     }
 
     @Override
