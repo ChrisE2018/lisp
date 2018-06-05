@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
-import lisp.LispList;
+import lisp.*;
 import lisp.Symbol;
 import lisp.cc.*;
 import lisp.util.LogString;
@@ -17,6 +17,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (TreeCompiler.class.getName ());
     private static final TreeBoxer boxer = new TreeBoxer ();
+    private static Symbol QUOTE_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("quote");
     private final CompileLoader compileLoader;
     private final Type returnType;
     private final Class<?> methodReturnClass;
@@ -88,6 +89,13 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	quotedReferences.put (reference.getName (), quoted);
     }
 
+    public Symbol addQuotedConstant (final Object quoted)
+    {
+	final Symbol reference = QUOTE_SYMBOL.gensym ();
+	quotedReferences.put (reference.getName (), quoted);
+	return reference;
+    }
+
     @Override
     public void visitEnd ()
     {
@@ -134,8 +142,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	il.add (new MethodInsnNode (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false));
 
 	// Do other things here...
-	final Type classType = compileLoader.getClassType ();
-	final String classInternalName = classType.getInternalName ();
+	final String classInternalName = getClassType ().getInternalName ();
 
 	final Type objectType = Type.getType (Object.class);
 	final Type symbolType = Type.getType (Symbol.class);
@@ -165,6 +172,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	    final Object quoted = entry.getValue ();
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    il.add (new InsnNode (DUP));
+	    final Type classType = Type.getType (Class.class);
 	    il.add (new MethodInsnNode (INVOKEVIRTUAL, objectType.getInternalName (), "getClass",
 	            Type.getMethodDescriptor (classType), false));
 	    il.add (new MethodInsnNode (INVOKEVIRTUAL, classType.getInternalName (), "getClassLoader",
@@ -263,11 +271,25 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	    }
 	    else
 	    {
-		final Object x = ((ImplicitCompileResult)resultKind).getValue ();
-		il.add (new LdcInsnNode (x));
-		final Class<?> ec = x.getClass ();
-		final Class<?> p = boxer.getUnboxedClass (ec);
-		context.convert (p != null ? p : ec, methodReturnClass, false, false);
+		final ImplicitCompileResult icr = (ImplicitCompileResult)resultKind;
+		final Object x = icr.getValue ();
+		if (validLdcInsnParam (x))
+		{
+		    il.add (new LdcInsnNode (x));
+		    final Class<?> ec = x.getClass ();
+		    final Class<?> p = boxer.getUnboxedClass (ec);
+		    context.convert (p != null ? p : ec, methodReturnClass, false, false);
+		}
+		else
+		{
+		    final Symbol s = addQuotedConstant (x);
+		    final Class<?> quotedClass = x.getClass ();
+		    final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
+		    il.add (new VarInsnNode (ALOAD, 0));
+		    final String classInternalName = getClassType ().getInternalName ();
+		    il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
+		    context.convert (quotedClass, methodReturnClass, false, false);
+		}
 	    }
 	    il.add (new InsnNode (returnType.getOpcode (IRETURN)));
 	}
@@ -275,6 +297,15 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	mn.maxStack = 0;
 	mn.maxLocals = 0;
 	return mn;
+    }
+
+    /**
+     * Test for {@linkInteger}, a {@link Float}, a {@link Long}, a {@link Double} or a
+     * {@link String}
+     */
+    private boolean validLdcInsnParam (final Object x)
+    {
+	return x instanceof Integer || x instanceof Float || x instanceof Long || x instanceof Double || x instanceof String;
     }
 
     // private MethodNode getCompiledMethodOLD ()

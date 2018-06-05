@@ -58,6 +58,21 @@ public class TreeCompilerContext implements Opcodes
 	}
     }
 
+    /**
+     * When a LabelNodeSet is added, we add all the component labels too. A later phase should
+     * optimize all but one of these labels out.
+     * 
+     * @param labels
+     */
+    public void add (final LabelNodeSet labels)
+    {
+	il.add (labels);
+	for (final LabelNode ln : labels.getLabels ())
+	{
+	    add (ln);
+	}
+    }
+
     public void convert (final Class<?> fromClass, final Class<?> toClass, final boolean allowNarrowing,
             final boolean liberalTruth)
     {

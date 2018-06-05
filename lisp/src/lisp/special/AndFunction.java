@@ -30,14 +30,24 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
     @Override
     public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
-	if (resultDesired)
-	{
-	    return compileAnd (context, expression, resultDesired);
-	}
-	else
+	if (!resultDesired)
 	{
 	    compile2void (context, expression);
 	    return VOID_RETURN;
+	}
+	else if (expression.size () == 1)
+	{
+	    // case (and)
+	    return new CompileResultSet (new ImplicitCompileResult (null, true));
+	}
+	else if (expression.size () == 2)
+	{
+	    // case (and x)
+	    return context.compile (expression.get (1), resultDesired);
+	}
+	else
+	{
+	    return compileAnd (context, expression, resultDesired);
 	}
     }
 
@@ -47,11 +57,11 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	// (define foo (a b) (and a b))
 	// Fall through to implicit true
 	final CompileResultSet result = new CompileResultSet ();
-	final LabelNode lTrue = new LabelNode (); // Implicit true
-	final LabelNode lFalse = new LabelNode (); // Implicit false
+	// final LabelNodeSet lTrue = new LabelNodeSet (); // Implicit true
+	final LabelNodeSet lFalse = new LabelNodeSet (); // Implicit false
 	final LabelNode lPopFalse = new LabelNode (); // pop false
 
-	final boolean lTrueUsed = false;
+	// final boolean lTrueUsed = false;
 	boolean lFalseUsed = false;
 	boolean lPopFalseUsed = false;
 
@@ -60,11 +70,11 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	{
 	    if (stackOccupied)
 	    {
-		// May need to keep track of the size
+		// [TODO] Keep track of the size of the stack object
 		context.add (new InsnNode (POP));
 	    }
 	    // Jump here to check next conjunct
-	    final LabelNode lNext = new LabelNode ();
+	    final LabelNodeSet lNext = new LabelNodeSet ();
 	    final CompileResultSet r = context.compile (e.get (i), true);
 	    final List<CompileResult> crl = r.getResults ();
 	    for (int j = 0; j < crl.size (); j++)
@@ -75,18 +85,23 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 		context.add (cr.getLabel ());
 		if (cr instanceof ImplicitCompileResult)
 		{
-		    if ((((ImplicitCompileResult)cr).getValue ().equals (Boolean.FALSE)))
+		    final ImplicitCompileResult icr = ((ImplicitCompileResult)cr);
+		    if (icr.getValue ().equals (Boolean.FALSE))
 		    {
 			lFalseUsed = true;
 			// If we found a hard false result we can delete the remaining clauses
-			context.add (new JumpInsnNode (GOTO, lFalse));
+			// context.add (new JumpInsnNode (GOTO, lFalse));
+			lFalse.add (icr.getLabel ());
 		    }
 		    else
 		    {
-			// Make this crl be last if possible
+			// [TODO] This does not look right, the cr label should be used
 			if (!lastCrl)
 			{
-			    context.add (new JumpInsnNode (GOTO, lNext));
+			    // Any constant conjunct that is not false can be discarded
+			    // Make this crl be last if possible
+			    // context.add (new JumpInsnNode (GOTO, lNext));
+			    lNext.add (icr.getLabel ());
 			}
 		    }
 		}
@@ -94,9 +109,8 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 		{
 		    final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
 		    final Class<?> resultClass = ecr.getResultClass ();
-		    if (resultClass.equals (Boolean.class))
+		    if (boolean.class.equals (resultClass))
 		    {
-			context.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
 			lFalseUsed = true;
 			context.add (new JumpInsnNode (IFEQ, lFalse));
 			if (!lastCrl)
@@ -104,8 +118,9 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 			    context.add (new JumpInsnNode (GOTO, lNext));
 			}
 		    }
-		    else if (resultClass.equals (boolean.class))
+		    else if (Boolean.class.equals (resultClass))
 		    {
+			context.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
 			lFalseUsed = true;
 			context.add (new JumpInsnNode (IFEQ, lFalse));
 			if (!lastCrl)
@@ -120,6 +135,17 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 			context.add (new TypeInsnNode (CHECKCAST, "java/lang/Boolean"));
 			context.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
 			context.add (new JumpInsnNode (IFEQ, lFalse));
+			lFalseUsed = true;
+			if (!lastCrl)
+			{
+			    context.add (new JumpInsnNode (GOTO, lNext));
+			}
+		    }
+		    else if (long.class.equals (resultClass) || double.class.equals (resultClass))
+		    {
+			// Need to handle primitive long and double differently to keep stack size
+			// right
+			context.add (new InsnNode (POP2));
 			if (!lastCrl)
 			{
 			    context.add (new JumpInsnNode (GOTO, lNext));
@@ -127,7 +153,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 		    }
 		    else
 		    {
-			stackOccupied = true;
+			stackOccupied = true; // What size object?
 			context.add (new InsnNode (DUP));
 			context.add (new TypeInsnNode (INSTANCEOF, "java/lang/Boolean"));
 			context.add (new JumpInsnNode (IFEQ, lNext));
@@ -159,7 +185,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	    {
 		final LabelNode ll = new LabelNode ();
 		context.add (new JumpInsnNode (GOTO, ll));
-		result.getResults ().add (cr.getJumpTo (ll)); // [TODO] Set the label
+		result.getResults ().add (cr.getJumpTo (ll));
 	    }
 	}
 	// Put the last one in
@@ -182,10 +208,10 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	    lFalseUsed = true;
 	    context.add (new JumpInsnNode (GOTO, lFalse));
 	}
-	if (lTrueUsed)
-	{
-	    result.addImplicitCompileResult (lTrue, true);
-	}
+	// if (lTrueUsed)
+	// {
+	// result.addImplicitCompileResult (lTrue, true);
+	// }
 	if (lFalseUsed)
 	{
 	    result.addImplicitCompileResult (lFalse, false);
@@ -220,16 +246,19 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
     }
 
     /** Compile an 'and' expression whose value will be ignored. */
-    public void compile2void (final TreeCompilerContext context, final LispList e)
+    private void compile2void (final TreeCompilerContext context, final LispList e)
     {
 	// (define foo (a b) (and) 1)
 	// (define foo (a b) (and a b) 2)
+	// (define boolean:foo (a b) (and) 1)
+	// (define foo () (and (printf "foo") (printf "bar")) 4)
 	if (e.size () > 0)
 	{
 	    final LabelNode l1 = new LabelNode ();
 	    for (int i = 1; i < e.size (); i++)
 	    {
-		context.compile (e.get (i), false);
+		final CompileResultSet crs = context.compile (e.get (i), false);
+		context.convert (crs, boolean.class, false, true);
 		context.add (new JumpInsnNode (IFEQ, l1));
 	    }
 	    context.add (l1);

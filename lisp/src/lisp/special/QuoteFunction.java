@@ -7,10 +7,10 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.LispList;
 import lisp.Symbol;
 import lisp.cc.*;
-import lisp.cc4.LispTreeWalker;
-import lisp.symbol.*;
+import lisp.cc4.*;
+import lisp.symbol.LispVisitor;
 
-public class QuoteFunction implements LispCCFunction, Opcodes, LispTreeWalker
+public class QuoteFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
@@ -22,13 +22,32 @@ public class QuoteFunction implements LispCCFunction, Opcodes, LispTreeWalker
     }
 
     @Override
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	if (resultDesired)
+	{
+	    final Object value = expression.get (1);
+	    return new CompileResultSet (new ImplicitCompileResult (null, value));
+	}
+	return null;
+    }
+
+    @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo () (quote bar))
+	final Object value = e.get (1);
 	if (boolean.class.equals (valueClass))
 	{
-	    mv.visitLdcInsn (true);
+	    if (value instanceof Boolean)
+	    {
+		mv.visitLdcInsn (value);
+	    }
+	    else
+	    {
+		mv.visitLdcInsn (true);
+	    }
 	}
 	else if (valueClass != null)
 	{
