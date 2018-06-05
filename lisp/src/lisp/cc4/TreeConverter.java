@@ -1,6 +1,8 @@
 
 package lisp.cc4;
 
+import java.util.List;
+
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
@@ -8,11 +10,34 @@ import lisp.cc.Boxer;
 
 /**
  * Class to generate conversion code. There are only two public methods in this class:
- * pushDefaultValue and convert.
+ * pushDefaultValue and convert. Added convertIfFalse and convertIfTrue.
  */
 public class TreeConverter implements Opcodes
 {
     private static final TreeBoxer boxer = new TreeBoxer ();
+
+    public void add (final InsnList il, final AbstractInsnNode insnNode)
+    {
+	if (insnNode != null)
+	{
+	    il.add (insnNode);
+	}
+    }
+
+    /**
+     * When a LabelNodeSet is added, we add all the component labels too. A later phase should
+     * optimize all but one of these labels out.
+     *
+     * @param labels
+     */
+    public void add (final InsnList il, final LabelNodeSet labels)
+    {
+	il.add (labels);
+	for (final LabelNode ln : labels.getLabels ())
+	{
+	    add (il, ln);
+	}
+    }
 
     /**
      * Push a default value of a specified class onto the stack.
@@ -63,6 +88,90 @@ public class TreeConverter implements Opcodes
 		il.add (new LdcInsnNode (ACONST_NULL));
 	    }
 	}
+    }
+
+    /**
+     * Convert to boolean and jump to label if true and fall through if false. Nothing is left on
+     * the stack. (untested)
+     */
+    public void convertIfTrue (final InsnList il, final CompileResultSet fromClass, final boolean allowNarrowing,
+            final boolean liberalTruth, final LabelNodeSet lTrue)
+    {
+	if (fromClass == null)
+	{
+	    throw new Error ("Compiler error: can't convert void to boolean");
+	}
+	final LabelNodeSet lExit = new LabelNodeSet ();
+	final List<CompileResult> results = fromClass.getResults ();
+	for (int i = 0; i < results.size (); i++)
+	{
+	    final CompileResult cr = results.get (i);
+	    if (cr instanceof ExplicitCompileResult)
+	    {
+		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
+		final Class<?> fc = ecr.getResultClass ();
+		add (il, cr.getLabel ());
+		convert (il, fc, boolean.class, allowNarrowing, liberalTruth);
+		il.add (new JumpInsnNode (IFNE, lTrue));
+		il.add (new JumpInsnNode (GOTO, lExit));
+	    }
+	    else if (cr instanceof ImplicitCompileResult)
+	    {
+		final ImplicitCompileResult icr = (ImplicitCompileResult)cr;
+		final Object value = icr.getValue ();
+		if (value instanceof Boolean && (Boolean)value)
+		{
+		    lTrue.add (cr.getLabel ());
+		}
+		else
+		{
+		    lExit.add (cr.getLabel ());
+		}
+	    }
+	}
+	add (il, lExit);
+    }
+
+    /**
+     * Convert to boolean and jump to label if false and fall through if true. Nothing is left on
+     * the stack.
+     */
+    public void convertIfFalse (final InsnList il, final CompileResultSet fromClass, final boolean allowNarrowing,
+            final boolean liberalTruth, final LabelNodeSet lFalse)
+    {
+	if (fromClass == null)
+	{
+	    throw new Error ("Compiler error: can't convert void to boolean");
+	}
+	final LabelNodeSet lExit = new LabelNodeSet ();
+	final List<CompileResult> results = fromClass.getResults ();
+	for (int i = 0; i < results.size (); i++)
+	{
+	    final CompileResult cr = results.get (i);
+	    if (cr instanceof ExplicitCompileResult)
+	    {
+		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
+		final Class<?> fc = ecr.getResultClass ();
+		add (il, cr.getLabel ());
+		convert (il, fc, boolean.class, allowNarrowing, liberalTruth);
+		il.add (new JumpInsnNode (IFEQ, lFalse));
+		il.add (new JumpInsnNode (GOTO, lExit));
+	    }
+	    else if (cr instanceof ImplicitCompileResult)
+	    {
+		final ImplicitCompileResult icr = (ImplicitCompileResult)cr;
+		final Object value = icr.getValue ();
+		if (value instanceof Boolean && (Boolean)value)
+		{
+		    lExit.add (cr.getLabel ());
+		}
+		else
+		{
+		    lFalse.add (cr.getLabel ());
+		}
+	    }
+	}
+	add (il, lExit);
     }
 
     /**

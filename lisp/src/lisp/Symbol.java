@@ -411,9 +411,15 @@ public class Symbol implements Describer
     public static Symbol named (final String name)
     {
 	final LispReader lispReader = new LispReader ();
-	final Package p = PackageFactory.getDefaultPackage ();
-	final Symbol symbol = lispReader.readSymbol (p, name);
-	return symbol;
+	return lispReader.readSymbol (PackageFactory.getDefaultPackage (), name);
+    }
+
+    /**
+     * Simple way to intern a symbol in a package.
+     */
+    public static Symbol named (final String packageName, final String name)
+    {
+	return PackageFactory.getPackage (packageName).internSymbol (name);
     }
 
     /**

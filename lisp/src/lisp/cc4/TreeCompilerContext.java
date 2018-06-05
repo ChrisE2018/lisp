@@ -61,7 +61,7 @@ public class TreeCompilerContext implements Opcodes
     /**
      * When a LabelNodeSet is added, we add all the component labels too. A later phase should
      * optimize all but one of these labels out.
-     * 
+     *
      * @param labels
      */
     public void add (final LabelNodeSet labels)
@@ -71,6 +71,18 @@ public class TreeCompilerContext implements Opcodes
 	{
 	    add (ln);
 	}
+    }
+
+    public void convertIfTrue (final CompileResultSet testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
+            final LabelNodeSet lTrue)
+    {
+	converter.convertIfTrue (il, testResultSet, allowNarrowing, liberalTruth, lTrue);
+    }
+
+    public void convertIfFalse (final CompileResultSet testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
+            final LabelNodeSet lFalse)
+    {
+	converter.convertIfFalse (il, testResultSet, allowNarrowing, liberalTruth, lFalse);
     }
 
     public void convert (final Class<?> fromClass, final Class<?> toClass, final boolean allowNarrowing,
@@ -92,20 +104,16 @@ public class TreeCompilerContext implements Opcodes
 	final List<CompileResult> results = fromClass.getResults ();
 	for (int i = 0; i < results.size (); i++)
 	{
-	    final CompileResult r = results.get (i);
-	    final Object s = r.getLabel ();
-	    if (s instanceof LabelNode)
+	    final CompileResult cr = results.get (i);
+	    add (cr.getLabel ());
+	    if (cr instanceof ExplicitCompileResult)
 	    {
-		il.add ((LabelNode)s);
-	    }
-	    else if (r instanceof ExplicitCompileResult)
-	    {
-		final Class<?> fc = (((ExplicitCompileResult)r).getResultClass ());
+		final Class<?> fc = (((ExplicitCompileResult)cr).getResultClass ());
 		converter.convert (il, fc, toClass, allowNarrowing, liberalTruth);
 	    }
-	    else if (r instanceof ImplicitCompileResult)
+	    else if (cr instanceof ImplicitCompileResult)
 	    {
-		il.add (new LdcInsnNode (((ImplicitCompileResult)r).getValue ()));
+		il.add (new LdcInsnNode (((ImplicitCompileResult)cr).getValue ()));
 	    }
 	    // Jump to exit label if required
 	    if (results.size () > 1 && i + 1 < results.size ())

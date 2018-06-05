@@ -13,15 +13,14 @@ public class PackageFactory
     private static boolean initializedp = false;
 
     /** Names of packages to create initially. */
-    private static final String[] INITIAL_PACKAGES =
-	{SYSTEM_PACKAGE_NAME, DEFAULT_PACKAGE_NAME};
+    private static final String[] INITIAL_PACKAGES = {SYSTEM_PACKAGE_NAME, DEFAULT_PACKAGE_NAME};
 
     /**
      * Predefined constant values. Each entry is packageName, (symbolName, symbolValue)*
      */
     private static final Object[][] CONSTANT_SYMBOLS =
-	{
-	 {SYSTEM_PACKAGE_NAME, "true", Boolean.TRUE, "false", Boolean.FALSE, "null", null, "t", true, "f", false, "pi", Math.PI}};
+        {
+         {SYSTEM_PACKAGE_NAME, "true", Boolean.TRUE, "false", Boolean.FALSE, "null", null, "t", true, "f", false, "pi", Math.PI}};
 
     /** Map from package name to package object for all packages that exist. */
     private static final Map<String, Package> packages = new HashMap<String, Package> ();
@@ -80,6 +79,11 @@ public class PackageFactory
     public static void setDefaultPackage (final Package pkg)
     {
 	defaultPackage = pkg;
+    }
+
+    public static Package findPackage (final String packageName)
+    {
+	return packages.get (packageName);
     }
 
     public static Package getPackage (final String packageName)

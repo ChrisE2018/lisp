@@ -35,6 +35,7 @@
 (new "lisp.eval.FunctionPrimitives")
 (new "lisp.eval.IOPrimitives")
 (new "lisp.eval.ListPrimitives")
+(new "lisp.eval.LoggerPrimitives")
 (new "lisp.eval.NetPrimitives")
 (new "lisp.eval.PackagePrimitives")
 

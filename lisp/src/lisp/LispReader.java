@@ -90,6 +90,7 @@ public class LispReader
      * @param in The input stream.
      * @return The form read.
      * @throws IOException
+     * @throws ClassNotFoundException
      */
     public Object read (final LispStream in) throws IOException
     {
@@ -103,6 +104,7 @@ public class LispReader
      * @param pkg The default package for symbols.
      * @return The form read.
      * @throws IOException
+     * @throws ClassNotFoundException
      */
     public Object read (final LispStream in, final Package pkg) throws IOException
     {
@@ -252,7 +254,11 @@ public class LispReader
 	return buffer.toString ();
     }
 
-    /** Read a number or symbol. */
+    /**
+     * Read a number or symbol.
+     *
+     * @throws ClassNotFoundException
+     */
     private Object readAtom (final LispStream in, final Package pkg) throws IOException
     {
 	final StringBuilder buffer = new StringBuilder ();
@@ -288,21 +294,30 @@ public class LispReader
 
 	}
 	// Not a number. Return a symbol.
-	return readSymbol (pkg, s);
+	final Symbol symbol = readSymbol (pkg, s);
+	if (symbol != null)
+	{
+	    return symbol;
+	}
+	return readJavaSymbol (s);
     }
 
     public Symbol readSymbol (final Package pkg, final String name)
     {
+	// java.util.logging.Level.SEVERE
 	final int pos = name.indexOf (Symbol.PACKAGE_SEPARATOR);
 	if (pos >= 0)
 	{
 	    // Process package prefix
 	    final String packageName = name.substring (0, pos);
-	    final Package p = PackageFactory.getPackage (packageName);
-
-	    final String symbolName = name.substring (pos + 1);
-	    final Symbol result = p.internSymbol (symbolName);
-	    return result;
+	    final Package p = PackageFactory.findPackage (packageName);
+	    if (p != null)
+	    {
+		final String symbolName = name.substring (pos + 1);
+		final Symbol result = p.internSymbol (symbolName);
+		return result;
+	    }
+	    return null;
 	}
 	final Symbol result = findImportedSymbol (name);
 	if (result != null)
@@ -310,6 +325,70 @@ public class LispReader
 	    return result;
 	}
 	return pkg.internSymbol (name);
+    }
+
+    private java.lang.Package findJavaPackage (final String name)
+    {
+	java.lang.Package result = null;
+	final String[] parts = name.split ("\\.");
+	final StringBuilder buffer = new StringBuilder ();
+	for (int i = 0; i < parts.length; i++)
+	{
+	    buffer.append (parts[i]);
+	    final java.lang.Package pp = java.lang.Package.getPackage (buffer.toString ());
+	    if (pp != null)
+	    {
+		result = pp;
+	    }
+	    buffer.append ('.');
+	}
+
+	return result;
+    }
+
+    private Object readJavaSymbol (final String name)
+    {
+	final java.lang.Package pkg = findJavaPackage (name);
+	if (pkg != null)
+	{
+	    final String packageName = pkg.getName ();
+	    final String tail = name.substring (packageName.length ());
+	    if (tail.isEmpty ())
+	    {
+		return pkg;
+	    }
+	    else
+	    {
+		try
+		{
+		    final String[] words = tail.split ("\\.");
+		    final String className = words[1];
+		    final Class<?> cls = Class.forName (packageName + "." + className);
+		    if (words.length == 2)
+		    {
+			return cls;
+		    }
+		    else
+		    {
+			return cls.getField (words[2]);
+		    }
+		}
+		catch (final ClassNotFoundException e)
+		{
+		    throw new Error ("Error reading symbol (" + name + ") " + e);
+		}
+		catch (final NoSuchFieldException e)
+		{
+		    e.printStackTrace ();
+		}
+		catch (final SecurityException e)
+		{
+		    e.printStackTrace ();
+		}
+	    }
+	}
+
+	return null;
     }
 
     /** Lookup a name to determine if it represents an imported symbol. */

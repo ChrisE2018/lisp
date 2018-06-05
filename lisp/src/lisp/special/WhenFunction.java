@@ -3,7 +3,6 @@ package lisp.special;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.cc.*;
@@ -29,16 +28,15 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
     @Override
     public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
+	// (define foo (boolean:x) (when x 3))
 	final CompileResultSet testResultSet = context.compile (expression.get (1), true);
 	// At this point we can optimize handling of information returned from the compiler.compile
 	// call. Any result that is not boolean can just be wired to goto l2.
 	// Any result that is a constant true or false can go directly to l1 or l2.
 
 	// [TODO] Need a special converter to boolean that returns result information.
-	context.convert (testResultSet, boolean.class, false, true);
-
-	final LabelNode l1 = new LabelNode ();// This label means we return false
-	context.add (new JumpInsnNode (IFEQ, l1));
+	final LabelNodeSet lFalse = new LabelNodeSet ();// This label means we return false
+	context.convertIfFalse (testResultSet, false, true, lFalse);
 
 	for (int i = 2; i < expression.size () - 1; i++)
 	{
@@ -47,7 +45,7 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
 	    context.convert (r, void.class, false, false);
 	}
 	final CompileResultSet result = context.compile (expression.last (), true);
-	result.addImplicitCompileResult (l1, false);
+	result.addImplicitCompileResult (lFalse, false);
 	return result;
     }
 

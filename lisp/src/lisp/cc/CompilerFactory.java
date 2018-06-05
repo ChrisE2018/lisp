@@ -3,14 +3,14 @@ package lisp.cc;
 
 import java.io.*;
 import java.util.Map;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 import org.objectweb.asm.*;
 
 import lisp.*;
 import lisp.Package;
 import lisp.Symbol;
-import lisp.cc4.TreeCompiler;
+import lisp.cc4.*;
 import lisp.util.LogString;
 
 public class CompilerFactory
@@ -51,7 +51,7 @@ public class CompilerFactory
 		if (showBytecode)
 		{
 		    final ClassVisitor cv = result.getClassVisitor ();
-		    result.setClassVisitor (new PrintBytecodeClassAdaptor (Opcodes.ASM5, cv, new StringWriter ()));
+		    result.setClassVisitor (new PrintBytecodeClassAdaptor (Compiler.ASM_VERSION, cv, new StringWriter ()));
 		}
 		return result;
 	    }
@@ -62,7 +62,7 @@ public class CompilerFactory
 		final boolean showBytecode = showBytecodeSymbol.getValue (false) != Boolean.FALSE;
 		if (showBytecode)
 		{
-		    cv = new PrintBytecodeClassAdaptor (Opcodes.ASM5, cv, new StringWriter ());
+		    cv = new PrintBytecodeClassAdaptor (Compiler.ASM_VERSION, cv, new StringWriter ());
 		}
 		final Map<String, Object> quotedReferences = result.getQuotedReferences ();
 		cv = new CompileClassAdaptor_v3 (cv, result.getClassType (), returnType, methodName, methodArgs, methodBody,
@@ -77,11 +77,13 @@ public class CompilerFactory
 		result.setClassReader (null);
 		result.setClassType (classType);
 		ClassVisitor cv = result.getClassVisitor ();
-		final boolean showBytecode = showBytecodeSymbol.getValue (false) != Boolean.FALSE;
-		if (showBytecode)
+		// (setLoggerLevel "lisp.cc.PrintBytecodeClassAdaptor" "INFO")
+		final Logger pbl = Logger.getLogger (PrintBytecodeClassAdaptor.class.getName ());
+		if (pbl.isLoggable (Level.INFO))
 		{
-		    cv = new PrintBytecodeClassAdaptor (Opcodes.ASM5, cv, new StringWriter ());
+		    cv = new PrintBytecodeClassAdaptor (Compiler.ASM_VERSION, cv, new StringWriter ());
 		}
+		cv = new Optimizer (Compiler.ASM_VERSION, cv);
 		cv = new TreeCompiler (cv, result, returnType, methodName, methodArgs, methodBody);
 		result.setClassVisitor (cv);
 		return result;

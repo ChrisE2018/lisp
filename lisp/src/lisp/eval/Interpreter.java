@@ -338,14 +338,14 @@ public class Interpreter extends Definer
     }
 
     @DefineLisp
-    public void error (final String format, final Object... args) throws Throwable
+    public void throwError (final String format, final Object... args) throws Throwable
     {
 	final String message = String.format (format, args);
 	throw new Error (message);
     }
 
     @DefineLisp
-    public void warning (final String format, final Object... args) throws Throwable
+    public void throwWarning (final String format, final Object... args) throws Throwable
     {
 	final String message = String.format (format, args);
 	throw new Throwable (message);

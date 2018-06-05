@@ -261,10 +261,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	for (final CompileResult resultKind : resultClass.getResults ())
 	{
 	    final LabelNode label = resultKind.getLabel ();
-	    if (label != null)
-	    {
-		il.add (label);
-	    }
+	    context.add (label);
 	    if (resultKind instanceof ExplicitCompileResult)
 	    {
 		context.convert (((ExplicitCompileResult)resultKind).getResultClass (), methodReturnClass, false, false);
@@ -300,12 +297,13 @@ public class TreeCompiler extends ClassNode implements Opcodes
     }
 
     /**
-     * Test for {@linkInteger}, a {@link Float}, a {@link Long}, a {@link Double} or a
-     * {@link String}
+     * Test for {@link Integer}, a {@link Float}, a {@link Long}, a {@link Double} or a
+     * {@link String}. {@link Boolean} also works.
      */
     private boolean validLdcInsnParam (final Object x)
     {
-	return x instanceof Integer || x instanceof Float || x instanceof Long || x instanceof Double || x instanceof String;
+	return x instanceof Boolean || x instanceof Integer || x instanceof Float || x instanceof Long || x instanceof Double
+	       || x instanceof String;
     }
 
     // private MethodNode getCompiledMethodOLD ()
