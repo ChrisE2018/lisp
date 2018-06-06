@@ -43,16 +43,16 @@ public class Optimizer extends ClassNode implements Opcodes
 
     private void removeRedundantJumps (final MethodNode method)
     {
-	LOGGER.finer (new LogString ("removeRedundantJumps Method %s", method));
+	LOGGER.finer (new LogString ("removeRedundantJumps Method %s", method.name));
 	final InsnList il = method.instructions;
-	for (int i = 0; i < il.size (); i++)
+	for (int i = 1; i < il.size (); i++)
 	{
-	    final AbstractInsnNode ins = il.get (i);
+	    final AbstractInsnNode ins = il.get (i - 1);
 	    if (ins instanceof JumpInsnNode)
 	    {
 		final JumpInsnNode jins = (JumpInsnNode)ins;
 		final LabelNode target = jins.label;
-		if (il.get (i + 1) == target)
+		if (il.get (i) == target)
 		{
 		    il.remove (jins);
 		}
@@ -62,7 +62,7 @@ public class Optimizer extends ClassNode implements Opcodes
 
     private void removeDeadLabels (final MethodNode method)
     {
-	LOGGER.finer (new LogString ("removeDeadLabels Method %s", method));
+	LOGGER.finer (new LogString ("removeDeadLabels Method %s", method.name));
 	final InsnList il = method.instructions;
 	final Set<LabelNode> foundLabels = new HashSet<LabelNode> ();
 	final Set<LabelNode> usedLabels = new HashSet<LabelNode> ();

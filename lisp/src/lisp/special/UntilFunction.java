@@ -3,13 +3,14 @@ package lisp.special;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.JumpInsnNode;
 
 import lisp.LispList;
 import lisp.cc.*;
-import lisp.cc4.LispTreeWalker;
-import lisp.symbol.*;
+import lisp.cc4.*;
+import lisp.symbol.LispVisitor;
 
-public class UntilFunction implements LispCCFunction, Opcodes, LispTreeWalker
+public class UntilFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
@@ -25,6 +26,32 @@ public class UntilFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	visitor.visitEnd (expression);
     }
 
+    @Override
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	// (define foo () (until false (printf "foo")))
+
+	final LabelNodeSet l0 = new LabelNodeSet ();
+	final LabelNodeSet l1 = new LabelNodeSet ();
+
+	context.add (l1);
+	final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	context.convertIfTrue (testResultSet, false, true, l0);
+
+	for (int i = 2; i < expression.size (); i++)
+	{
+	    final CompileResultSet r = context.compile (expression.get (i), false);
+	    // Do something with r to throw away garbage if required
+	    context.convert (r, void.class, false, false);
+	}
+	context.add (new JumpInsnNode (GOTO, l1));
+
+	context.add (l0);
+	// Always return false
+	return new CompileResultSet (new ImplicitCompileResult (null, false));
+    }
+
+    // [TODO] This should be changed to always return false like the above definition
     @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
             final boolean allowNarrowing, final boolean liberalTruth)
