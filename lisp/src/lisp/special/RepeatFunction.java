@@ -3,13 +3,14 @@ package lisp.special;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.cc.*;
-import lisp.cc4.LispTreeWalker;
-import lisp.symbol.*;
+import lisp.cc4.*;
+import lisp.symbol.LispVisitor;
 
-public class RepeatFunction implements LispCCFunction, Opcodes, LispTreeWalker
+public class RepeatFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
@@ -24,6 +25,38 @@ public class RepeatFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	}
 	visitor.visitValue (expression.last ());
 	visitor.visitEnd (expression);
+    }
+
+    @Override
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	// (define foo () (repeat 10 (printf "foo")))
+	// (define foo () (repeat 3 (printf "foo")))
+
+	final LabelNodeSet l0 = new LabelNodeSet ();
+	final LabelNodeSet l1 = new LabelNodeSet ();
+
+	final CompileResultSet repeatCount = context.compile (expression.get (1), true);
+	context.convert (repeatCount, int.class, false, false);
+	context.add (new InsnNode (ICONST_0));
+	context.add (l1);
+	context.add (new InsnNode (DUP2));
+	context.add (new JumpInsnNode (IF_ICMPLE, l0));
+
+	for (int i = 2; i < expression.size (); i++)
+	{
+	    final CompileResultSet r = context.compile (expression.get (i), false);
+	    // Do something with r to throw away garbage if required
+	    context.convert (r, void.class, false, false);
+	}
+	context.add (new InsnNode (ICONST_1));
+	context.add (new InsnNode (IADD));
+	context.add (new JumpInsnNode (GOTO, l1));
+
+	context.add (l0);
+	context.add (new InsnNode (POP2));
+	// Always return false
+	return new CompileResultSet (new ImplicitCompileResult (null, false));
     }
 
     @Override
