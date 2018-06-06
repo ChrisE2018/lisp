@@ -17,6 +17,7 @@ public class CompileSupport
      */
     public static Symbol getNameVariable (final Object nameSpec)
     {
+	// [TODO] Change method to getVariableName
 	if (nameSpec instanceof Symbol)
 	{
 	    return (Symbol)nameSpec;
@@ -26,7 +27,7 @@ public class CompileSupport
     }
 
     /**
-     * Return the <type> from a nameSpec.
+     * [TODO] Change method to getVariableClass Return the <type> from a nameSpec.
      *
      * @param nameSpec Either a <variable> or form (the <type> <variable>)
      * @return The <type> which is Object.class if unspecified.
@@ -44,6 +45,7 @@ public class CompileSupport
      */
     public static Class<?> getNameType (final Object nameSpec, final Class<?> defaultType)
     {
+	// [TODO] Change method to getVariableClass
 	if (nameSpec instanceof Symbol)
 	{
 	    return defaultType;
@@ -69,6 +71,7 @@ public class CompileSupport
 
     public static Class<?> getNameType (final String type)
     {
+	// [TODO] Change method to getVariableClass
 	try
 	{
 	    if (type.equals ("boolean"))
@@ -124,6 +127,7 @@ public class CompileSupport
 
     public static String getNameTypeDescriptor (final Object nameSpec)
     {
+	// [TODO] Change method to getVariableDescriptor
 	return Type.getType (getNameType (nameSpec)).getDescriptor ();
     }
 

@@ -96,6 +96,11 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	return reference;
     }
 
+    public int getArgCount ()
+    {
+	return methodArgs.size ();
+    }
+
     @Override
     public void visitEnd ()
     {

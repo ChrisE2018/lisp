@@ -5,14 +5,15 @@ import java.util.*;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import lisp.LispList;
 import lisp.Symbol;
 import lisp.cc.*;
-import lisp.cc4.LispTreeWalker;
-import lisp.symbol.*;
+import lisp.cc4.*;
+import lisp.symbol.LispVisitor;
 
-public class LetFunction implements LispCCFunction, Opcodes, LispTreeWalker
+public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
@@ -33,6 +34,53 @@ public class LetFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	}
 	visitor.visitValue (expression.last ());
 	visitor.visitEnd (expression);
+    }
+
+    @Override
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	// (define foo () (dotimes (i 10) (printf "foo")))
+	// (define foo (int:n) (dotimes (i n) (printf "foo")))
+	// (define foo (x) (let ((a 1) (b 2)) (+ a b x)))
+	// (define foo () (let ((a 1) (b 2)) a))
+	// (define foo () (let ((a b) (b a)) a))
+	// (define foo (x) (let ((a b) (b a)) (if x a b)))
+	// (define foo (int:a int:b) (let ((int:c a) (int:d b)) (+ c d)))
+
+	final LispList bindings = expression.getSublist (1);
+	final Map<Symbol, Class<?>> newLocals = new HashMap<Symbol, Class<?>> ();
+	for (int i = 0; i < bindings.size (); i++)
+	{
+	    final LispList clause = bindings.getSublist (i);
+	    final Object varSpec = clause.get (0);
+	    final Symbol varName = CompileSupport.getNameVariable (varSpec);
+	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
+	    newLocals.put (varName, varClass);
+	}
+	final TreeCompilerContext innerContext = context.bindVariables (newLocals);
+	for (int i = 0; i < bindings.size (); i++)
+	{
+	    final LispList clause = bindings.getSublist (i);
+	    final Object varSpec = clause.get (0);
+	    final Symbol varName = CompileSupport.getNameVariable (varSpec);
+	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
+	    final Type varType = Type.getType (varClass);
+	    final Object valueExpression = clause.get (1);
+	    final CompileResultSet valueResult = context.compile (valueExpression, true);
+	    context.convert (valueResult, varClass, false, false);
+	    final LocalBinding binding = innerContext.getLocalVariableBinding (varName);
+	    final int varRef = binding.getLocalRef ();
+	    innerContext.add (new VarInsnNode (varType.getOpcode (ISTORE), varRef));
+	}
+	for (int i = 2; i < expression.size () - 1; i++)
+	{
+	    final CompileResultSet r = innerContext.compile (expression.get (i), false);
+	    // Do something with r to throw away garbage if required
+	    innerContext.convert (r, void.class, false, false);
+	}
+
+	final CompileResultSet result = innerContext.compile (expression.last (), true);
+	return result;
     }
 
     @Override

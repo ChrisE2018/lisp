@@ -35,24 +35,28 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
     public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo () (dotimes (i 10) (printf "foo")))
-	// (define foo (int:n) (dotimes (i n) (printf "foo")))
+	// (define foo (int:n) (dotimes (i n) (printf "foo %s%n" i)))
 
 	final LabelNodeSet l0 = new LabelNodeSet ();
 	final LabelNodeSet l1 = new LabelNodeSet ();
 
 	final LispList control = expression.getSublist (1);
-	final Symbol var = control.head ();
+	final Symbol var = control.head (); // always an int, not need to declare
+	final TreeCompilerContext innerContext = context.bindVariable (var, int.class);
+	final LocalBinding binding = innerContext.getLocalVariableBinding (var);
+	final int countRef = binding.getLocalRef ();
+	innerContext.add (new InsnNode (ICONST_0));
+	innerContext.add (new VarInsnNode (ISTORE, countRef));
+
 	final Object countExpression = control.get (1);
 	final CompileResultSet repeatCount = context.compile (countExpression, true);
 	context.convert (repeatCount, int.class, false, false);
 	{
-	    final TreeCompilerContext innerContext = context.bindVariable (var, int.class);
-	    // Get varRef and store the repeatCount in the local
-
-	    innerContext.add (new InsnNode (ICONST_0));
+	    // Current index is in local, repeat limit is on stack
 	    innerContext.add (l1);
-	    innerContext.add (new InsnNode (DUP2));
-	    innerContext.add (new JumpInsnNode (IF_ICMPLE, l0));
+	    innerContext.add (new InsnNode (DUP));
+	    innerContext.add (new VarInsnNode (ILOAD, countRef));
+	    innerContext.add (new JumpInsnNode (IF_ICMPLT, l0));
 
 	    for (int i = 2; i < expression.size (); i++)
 	    {
@@ -60,13 +64,12 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 		// Do something with r to throw away garbage if required
 		innerContext.convert (r, void.class, false, false);
 	    }
-	    innerContext.add (new InsnNode (ICONST_1));
-	    innerContext.add (new InsnNode (IADD));
+	    innerContext.add (new IincInsnNode (countRef, 1));
 	    innerContext.add (new JumpInsnNode (GOTO, l1));
 
 	}
 	context.add (l0);
-	context.add (new InsnNode (POP2));
+	context.add (new InsnNode (POP));
 	// Always return false
 	return new CompileResultSet (new ImplicitCompileResult (null, false));
     }
