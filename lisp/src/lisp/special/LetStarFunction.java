@@ -56,8 +56,8 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 	{
 	    final LispList clause = bindings.getSublist (i);
 	    final Object varSpec = clause.get (0);
-	    final Symbol varName = CompileSupport.getNameVariable (varSpec);
-	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
+	    final Symbol varName = NameSpec.getVariableName (varSpec);
+	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);
 	    final Type varType = Type.getType (varClass);
 	    final Object valueExpression = clause.get (1);
 	    final CompileResultSet valueResult = innerContext.compile (valueExpression, true);
@@ -99,8 +99,8 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 	{
 	    final LispList c = (LispList)clause;
 	    final Object varSpec = c.get (0);
-	    final Symbol var = CompileSupport.getNameVariable (varSpec);
-	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
+	    final Symbol var = NameSpec.getVariableName (varSpec);
+	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);
 	    final Type varType = Type.getType (varClass);
 	    generator.compileExpression (mv, c.get (1), varClass, false, false);
 	    final int localRef = mv.newLocal (varType);

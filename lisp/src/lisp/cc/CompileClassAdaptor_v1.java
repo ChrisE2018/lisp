@@ -178,7 +178,7 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	buffer.append ("(");
 	for (int i = 0; i < methodArgs.size (); i++)
 	{
-	    buffer.append (CompileSupport.getNameTypeDescriptor (methodArgs.get (i)));
+	    buffer.append (NameSpec.getVariableDescriptor (methodArgs.get (i)));
 	}
 	buffer.append (")");
 	buffer.append (returnTypeDescriptor);

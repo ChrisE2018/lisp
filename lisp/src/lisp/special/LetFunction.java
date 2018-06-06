@@ -53,8 +53,8 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	{
 	    final LispList clause = bindings.getSublist (i);
 	    final Object varSpec = clause.get (0);
-	    final Symbol varName = CompileSupport.getNameVariable (varSpec);
-	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
+	    final Symbol varName = NameSpec.getVariableName (varSpec);
+	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);
 	    newLocals.put (varName, varClass);
 	}
 	final TreeCompilerContext innerContext = context.bindVariables (newLocals);
@@ -62,8 +62,8 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	{
 	    final LispList clause = bindings.getSublist (i);
 	    final Object varSpec = clause.get (0);
-	    final Symbol varName = CompileSupport.getNameVariable (varSpec);
-	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
+	    final Symbol varName = NameSpec.getVariableName (varSpec);
+	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);
 	    final Type varType = Type.getType (varClass);
 	    final Object valueExpression = clause.get (1);
 	    final CompileResultSet valueResult = context.compile (valueExpression, true);
@@ -101,8 +101,8 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	    final Object clause = args.get (i);
 	    final LispList c = (LispList)clause;
 	    final Object varSpec = c.get (0);
-	    final Symbol var = CompileSupport.getNameVariable (varSpec);
-	    final Class<?> varClass = CompileSupport.getNameType (varSpec);
+	    final Symbol var = NameSpec.getVariableName (varSpec);
+	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);
 	    final Type varType = Type.getType (varClass);
 	    final int localRef = mv.newLocal (varType);
 	    generator.compileExpression (mv, c.get (1), varClass, false, false);

@@ -42,8 +42,8 @@ public class Analyzer
 	methodArgMap = new HashMap<Symbol, Class<?>> ();
 	for (final Object nameSpec : methodArgs)
 	{
-	    final Symbol argName = CompileSupport.getNameVariable (nameSpec);
-	    final Class<?> argType = CompileSupport.getNameType (nameSpec);
+	    final Symbol argName = NameSpec.getVariableName (nameSpec);
+	    final Class<?> argType = NameSpec.getVariableClass (nameSpec);
 	    methodArgNames.add (argName);
 	    methodArgMap.put (argName, argType);
 	}
@@ -607,8 +607,8 @@ public class Analyzer
 	    {
 		final LispList clause = (LispList)bindings.get (i);
 		final Object nameSpec = clause.get (0);
-		final Symbol varName = CompileSupport.getNameVariable (nameSpec);
-		final Class<?> varType = CompileSupport.getNameType (nameSpec);
+		final Symbol varName = NameSpec.getVariableName (nameSpec);
+		final Class<?> varType = NameSpec.getVariableClass (nameSpec);
 		analyzeValueExpression (level + 1, clause.get (1), localVariables, varType);
 		final Local varSpec = new Local (varName, varType);
 		boundVariables.put (varName, varSpec);
@@ -627,8 +627,8 @@ public class Analyzer
 	    {
 		final LispList clause = (LispList)bindings.get (i);
 		final Object nameSpec = clause.get (0);
-		final Symbol varName = CompileSupport.getNameVariable (nameSpec);
-		final Class<?> varType = CompileSupport.getNameType (nameSpec);
+		final Symbol varName = NameSpec.getVariableName (nameSpec);
+		final Class<?> varType = NameSpec.getVariableClass (nameSpec);
 		analyzeValueExpression (level + 1, clause.get (1), boundVariables, varType);
 		final Local varSpec = new Local (varName, varType);
 		boundVariables.put (varName, varSpec);
@@ -774,8 +774,8 @@ public class Analyzer
 	    {
 		final LispList clause = (LispList)bindings.get (i);
 		final Object nameSpec = clause.get (0);
-		final Symbol varName = CompileSupport.getNameVariable (nameSpec);
-		final Class<?> varType = CompileSupport.getNameType (nameSpec);
+		final Symbol varName = NameSpec.getVariableName (nameSpec);
+		final Class<?> varType = NameSpec.getVariableClass (nameSpec);
 		analyzeValueExpression (level + 1, clause.get (1), localVariables, varType);
 		final Local varSpec = new Local (varName, varType);
 		boundVariables.put (varName, varSpec);
@@ -795,8 +795,8 @@ public class Analyzer
 	    {
 		final LispList clause = (LispList)bindings.get (i);
 		final Object nameSpec = clause.get (0);
-		final Symbol varName = CompileSupport.getNameVariable (nameSpec);
-		final Class<?> varType = CompileSupport.getNameType (nameSpec);
+		final Symbol varName = NameSpec.getVariableName (nameSpec);
+		final Class<?> varType = NameSpec.getVariableClass (nameSpec);
 		analyzeValueExpression (level + 1, clause.get (1), boundVariables, varType);
 		final Local varSpec = new Local (varName, varType);
 		boundVariables.put (varName, varSpec);

@@ -27,8 +27,8 @@ public class Prototype
 	argTypes = new ArrayList<Class<?>> ();
 	for (final Object arg : arguments)
 	{
-	    argNames.add (CompileSupport.getNameVariable (arg));
-	    argTypes.add (CompileSupport.getNameType (arg));
+	    argNames.add (NameSpec.getVariableName (arg));
+	    argTypes.add (NameSpec.getVariableClass (arg));
 	}
 	this.returnType = returnType;
     }

@@ -53,8 +53,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	this.methodName = methodName;
 	for (final Object arg : methodArgs)
 	{
-	    final Symbol variable = CompileSupport.getNameVariable (arg);
-	    final Class<?> varClass = CompileSupport.getNameType (arg);
+	    final Symbol variable = NameSpec.getVariableName (arg);
+	    final Class<?> varClass = NameSpec.getVariableClass (arg);
 	    final Type varType = Type.getType (varClass);
 	    this.methodArgs.add (variable);
 	    methodArgClasses.add (varClass);

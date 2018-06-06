@@ -7,7 +7,7 @@ import org.objectweb.asm.Type;
 
 import lisp.Symbol;
 
-public class CompileSupport
+public class NameSpec
 {
     /**
      * Return the variable from a nameSpec.
@@ -15,9 +15,8 @@ public class CompileSupport
      * @param nameSpec Either a <variable> or form (the <type> <variable>)
      * @return The <variable>.
      */
-    public static Symbol getNameVariable (final Object nameSpec)
+    public static Symbol getVariableName (final Object nameSpec)
     {
-	// [TODO] Change method to getVariableName
 	if (nameSpec instanceof Symbol)
 	{
 	    return (Symbol)nameSpec;
@@ -27,25 +26,24 @@ public class CompileSupport
     }
 
     /**
-     * [TODO] Change method to getVariableClass Return the <type> from a nameSpec.
+     * Return the <class> from a nameSpec.
      *
-     * @param nameSpec Either a <variable> or form (the <type> <variable>)
-     * @return The <type> which is Object.class if unspecified.
+     * @param nameSpec Either a <variable> or form (the <class> <variable>)
+     * @return The <class> which is Object.class if unspecified.
      */
-    public static Class<?> getNameType (final Object nameSpec)
+    public static Class<?> getVariableClass (final Object nameSpec)
     {
-	return getNameType (nameSpec, Object.class);
+	return getVariableClass (nameSpec, Object.class);
     }
 
     /**
-     * Return the <type> from a nameSpec.
+     * Return the <class> from a nameSpec.
      *
-     * @param nameSpec Either a <variable> or form (the <type> <variable>)
-     * @return The <type> which is Object.class if unspecified.
+     * @param nameSpec Either a <variable> or form (the <class> <variable>)
+     * @return The <class> which is Object.class if unspecified.
      */
-    public static Class<?> getNameType (final Object nameSpec, final Class<?> defaultType)
+    public static Class<?> getVariableClass (final Object nameSpec, final Class<?> defaultType)
     {
-	// [TODO] Change method to getVariableClass
 	if (nameSpec instanceof Symbol)
 	{
 	    return defaultType;
@@ -59,19 +57,25 @@ public class CompileSupport
 	}
 	if (type instanceof String)
 	{
-	    return getNameType ((String)type);
+	    return getStringClass ((String)type);
 	}
 	if (type instanceof Symbol)
 	{
 	    // Try with the qualified name of the symbol
-	    return getNameType (((Symbol)type).getName ());
+	    return getStringClass (((Symbol)type).getName ());
 	}
 	return defaultType;
     }
 
-    public static Class<?> getNameType (final String type)
+    /**
+     * Convert a string to a class name. Assume this names a primitive class in java.lang if not
+     * fully qualified.
+     *
+     * @param type
+     * @return
+     */
+    public static Class<?> getStringClass (final String type)
     {
-	// [TODO] Change method to getVariableClass
 	try
 	{
 	    if (type.equals ("boolean"))
@@ -114,7 +118,8 @@ public class CompileSupport
 	    {
 		try
 		{
-		    return Class.forName ("java.lang." + type);
+		    final char ch = type.charAt (0);
+		    return Class.forName ("java.lang." + Character.toUpperCase (ch) + type.substring (1));
 		}
 		catch (final ClassNotFoundException ee)
 		{
@@ -125,10 +130,14 @@ public class CompileSupport
 	return Object.class;
     }
 
-    public static String getNameTypeDescriptor (final Object nameSpec)
+    public static Type getVariableType (final Object nameSpec)
     {
-	// [TODO] Change method to getVariableDescriptor
-	return Type.getType (getNameType (nameSpec)).getDescriptor ();
+	return Type.getType (getVariableClass (nameSpec));
+    }
+
+    public static String getVariableDescriptor (final Object nameSpec)
+    {
+	return getVariableType (nameSpec).getDescriptor ();
     }
 
     @Override

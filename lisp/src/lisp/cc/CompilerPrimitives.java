@@ -55,8 +55,8 @@ public class CompilerPrimitives extends Definer
     public Object analyze (@SuppressWarnings ("unused") final LexicalContext context, final Object nameSpec,
             final LispList methodArgs, final Object... bodyForms)
     {
-	final Class<?> returnType = CompileSupport.getNameType (nameSpec);
-	final Symbol methodName = CompileSupport.getNameVariable (nameSpec);
+	final Class<?> returnType = NameSpec.getVariableClass (nameSpec);
+	final Symbol methodName = NameSpec.getVariableName (nameSpec);
 	final LispList body = new LispList (bodyForms);
 	final Analyzer analyzer = new Analyzer ("foo", returnType, methodName, methodArgs, body);
 	analyzer.analyze ();
@@ -68,8 +68,8 @@ public class CompilerPrimitives extends Definer
             final LispList methodArgs)
     {
 	final Symbol protos = PackageFactory.getSystemPackage ().internSymbol ("*protos*");
-	final Class<?> returnType = CompileSupport.getNameType (nameSpec);
-	final Symbol methodName = CompileSupport.getNameVariable (nameSpec);
+	final Class<?> returnType = NameSpec.getVariableClass (nameSpec);
+	final Symbol methodName = NameSpec.getVariableName (nameSpec);
 	final Prototype spec = new Prototype (methodName, methodArgs, returnType);
 	if (!protos.hasValue ())
 	{
@@ -105,8 +105,8 @@ public class CompilerPrimitives extends Definer
 		body.add (f);
 	    }
 	    // If functionName looks like (the <type> <name>) then declare a return type.
-	    final Symbol functionName = CompileSupport.getNameVariable (nameSpec);
-	    final Class<?> returnType = CompileSupport.getNameType (nameSpec);
+	    final Symbol functionName = NameSpec.getVariableName (nameSpec);
+	    final Class<?> returnType = NameSpec.getVariableClass (nameSpec);
 	    LOGGER.info (String.format ("Compiling %s %s: %s", returnType, functionName, body));
 	    final Class<?> c = createCompiledFunction (returnType, functionName, args, body);
 	    LOGGER.info (String.format ("Compiled %s", functionName));
@@ -155,7 +155,7 @@ public class CompilerPrimitives extends Definer
 	for (int i = 0; i < parameterTypes.length; i++)
 	{
 	    // parameterTypes[i] = java.lang.Object.class;
-	    parameterTypes[i] = CompileSupport.getNameType (args.get (i));
+	    parameterTypes[i] = NameSpec.getVariableClass (args.get (i));
 	}
 	final Method method = cls.getDeclaredMethod (methodName, parameterTypes);
 	FunctionCell function = symbol.getFunction ();
