@@ -5,6 +5,8 @@ import org.objectweb.asm.tree.LabelNode;
 
 public class ImplicitCompileResult extends CompileResult
 {
+    private static final TreeBoxer boxer = new TreeBoxer ();
+
     private final Object value;
 
     public ImplicitCompileResult (final LabelNode l, final Object value)
@@ -16,6 +18,13 @@ public class ImplicitCompileResult extends CompileResult
     public Object getValue ()
     {
 	return value;
+    }
+
+    public Class<?> getResultClass ()
+    {
+	final Class<?> ec = value.getClass ();
+	final Class<?> p = boxer.getUnboxedClass (ec);
+	return p == null ? ec : p;
     }
 
     @Override

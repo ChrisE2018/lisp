@@ -60,6 +60,11 @@ public class TreeCompilerContext implements Opcodes
 	return new TreeCompilerContext (treeCompiler, mn, newLocals);
     }
 
+    public LocalBinding getLocalVariableBinding (final Symbol var)
+    {
+	return locals.get (var);
+    }
+
     public TreeCompiler getTreeCompiler ()
     {
 	return treeCompiler;
@@ -138,7 +143,10 @@ public class TreeCompilerContext implements Opcodes
 	    }
 	    else if (cr instanceof ImplicitCompileResult)
 	    {
-		il.add (new LdcInsnNode (((ImplicitCompileResult)cr).getValue ()));
+		final ImplicitCompileResult icr = (ImplicitCompileResult)cr;
+		final Class<?> fc = icr.getResultClass ();
+		il.add (new LdcInsnNode (icr.getValue ()));
+		converter.convert (il, fc, toClass, allowNarrowing, liberalTruth);
 	    }
 	    // Jump to exit label if required
 	    if (results.size () > 1 && i + 1 < results.size ())

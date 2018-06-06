@@ -37,6 +37,14 @@ public class Optimizer extends ClassNode implements Opcodes
 		}
 	    }
 
+	    if (Symbol.named ("system", "removeStoreLoad").getBooleanValue (true))
+	    {
+		for (final MethodNode method : methods)
+		{
+		    removeStoreLoad (method);
+		}
+	    }
+
 	    if (Symbol.named ("system", "optimizeJumpToJump").getBooleanValue (true))
 	    {
 		for (final MethodNode method : methods)
@@ -92,6 +100,58 @@ public class Optimizer extends ClassNode implements Opcodes
 		if (ins2 instanceof LabelNode)
 		{
 		    retargetJumps (il, (LabelNode)ins2, (LabelNode)ins);
+		}
+	    }
+	}
+    }
+
+    /**
+     * If STORE n/LOAD n appears in a row, remove the.
+     */
+    private void removeStoreLoad (final MethodNode method)
+    {
+	LOGGER.finer (new LogString ("removeStoreLoad Method %s (%s so far)", method.name, removals));
+	final InsnList il = method.instructions;
+	for (int i = 1; i < il.size (); i++)
+	{
+	    final AbstractInsnNode ins = il.get (i - 1);
+	    if (ins instanceof VarInsnNode)
+	    {
+		final AbstractInsnNode ins2 = il.get (i);
+		if (ins2 instanceof VarInsnNode)
+		{
+		    final VarInsnNode v1 = (VarInsnNode)ins;
+		    final VarInsnNode v2 = (VarInsnNode)ins2;
+		    if (v1.var == v2.var)
+		    {
+			// This opcode must be ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, ISTORE, LSTORE,
+			// FSTORE, DSTORE, ASTORE or RET.
+			int matchOp = 0;
+			switch (v1.getOpcode ())
+			{
+			    case ISTORE:
+				matchOp = ILOAD;
+				break;
+			    case LSTORE:
+				matchOp = LLOAD;
+				break;
+			    case FSTORE:
+				matchOp = FLOAD;
+				break;
+			    case DSTORE:
+				matchOp = DLOAD;
+				break;
+			    case ASTORE:
+				matchOp = ALOAD;
+				break;
+			}
+			if (v2.getOpcode () == matchOp)
+			{
+			    il.remove (ins);
+			    il.remove (ins2);
+			    removals += 2;
+			}
+		    }
 		}
 	    }
 	}
