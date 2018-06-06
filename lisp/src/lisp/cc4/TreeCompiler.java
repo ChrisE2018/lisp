@@ -249,7 +249,8 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	    final Symbol arg = methodArgs.get (i);
 	    locals.put (arg, new LocalBinding (arg, methodArgClasses.get (i), i + 1));
 	}
-	final TreeCompilerContext context = new TreeCompilerContext (this, il, locals);
+	// [TODO] Should pass mn to the TreeCompilerContext so it can get at the method locals.
+	final TreeCompilerContext context = new TreeCompilerContext (this, mn, locals);
 	for (int i = 0; i < methodBody.size () - 1; i++)
 	{
 	    final Object expr = methodBody.get (i);

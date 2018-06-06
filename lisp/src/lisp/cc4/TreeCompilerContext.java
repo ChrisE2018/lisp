@@ -24,15 +24,24 @@ public class TreeCompilerContext implements Opcodes
 
     private final TreeCompiler treeCompiler;
 
+    private final MethodNode mn;
+
     private final InsnList il;
 
+    // Can we use mn.locals instead of our own structure?
     private final Map<Symbol, LocalBinding> locals;
 
-    public TreeCompilerContext (final TreeCompiler treeCompiler, final InsnList il, final Map<Symbol, LocalBinding> locals)
+    public TreeCompilerContext (final TreeCompiler treeCompiler, final MethodNode mn, final Map<Symbol, LocalBinding> locals)
     {
 	this.treeCompiler = treeCompiler;
-	this.il = il;
+	this.mn = mn;
+	il = mn.instructions;
 	this.locals = locals;
+    }
+
+    public void bindVariable (final Symbol var, final Class<?> varClass)
+    {
+	// mn.visitLocalVariable (name, descriptor, signature, start, end, index);
     }
 
     public TreeCompiler getTreeCompiler ()

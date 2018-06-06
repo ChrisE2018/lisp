@@ -14,6 +14,8 @@ public class Optimizer extends ClassNode implements Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (Optimizer.class.getName ());
 
+    private boolean progress = true;
+
     public Optimizer (final int api, final ClassVisitor classVisitor)
     {
 	super (api);
@@ -24,26 +26,97 @@ public class Optimizer extends ClassNode implements Opcodes
     public void visitEnd ()
     {
 	LOGGER.fine (new LogString ("Optimizer visits class %s %s", name, signature));
-	if (Symbol.named ("system", "optimizeJumps").getBooleanValue (true))
+	progress = true;
+	while (progress)
 	{
-	    for (final MethodNode method : methods)
+	    progress = false;
+	    if (Symbol.named ("system", "optimizeMultipleLabels").getBooleanValue (true))
 	    {
-		removeRedundantJumps (method);
+		for (final MethodNode method : methods)
+		{
+		    optimizeMultipleLabels (method);
+		}
 	    }
-	}
-	if (Symbol.named ("system", "optimizeDeadLabels").getBooleanValue (true))
-	{
-	    for (final MethodNode method : methods)
+
+	    if (Symbol.named ("system", "optimizeJumpToJump").getBooleanValue (true))
 	    {
-		removeDeadLabels (method);
+		for (final MethodNode method : methods)
+		{
+		    removeJumpToJump (method);
+		}
+	    }
+
+	    if (Symbol.named ("system", "optimizeJumpToNext").getBooleanValue (true))
+	    {
+		for (final MethodNode method : methods)
+		{
+		    removeJumpToNext (method);
+		}
+	    }
+
+	    if (Symbol.named ("system", "optimizeDeadLabels").getBooleanValue (true))
+	    {
+		for (final MethodNode method : methods)
+		{
+		    removeDeadLabels (method);
+		}
 	    }
 	}
 	accept (cv);
     }
 
-    private void removeRedundantJumps (final MethodNode method)
+    /**
+     * If two labels appear in a row, change jumps to the second one to jump to the first. Remove
+     * dead labels should clear it out.
+     */
+    private void optimizeMultipleLabels (final MethodNode method)
     {
-	LOGGER.finer (new LogString ("removeRedundantJumps Method %s", method.name));
+	LOGGER.finer (new LogString ("optimizeMultipleLabels Method %s", method.name));
+	final InsnList il = method.instructions;
+	for (int i = 1; i < il.size (); i++)
+	{
+	    final AbstractInsnNode ins = il.get (i - 1);
+	    if (ins instanceof LabelNode)
+	    {
+		final AbstractInsnNode ins2 = il.get (i);
+		if (ins2 instanceof LabelNode)
+		{
+		    retargetJumps (il, (LabelNode)ins2, (LabelNode)ins);
+		}
+	    }
+	}
+    }
+
+    /** Remove jumps to a label with a GOTO jump in the next instruction. */
+    private void removeJumpToJump (final MethodNode method)
+    {
+	LOGGER.finer (new LogString ("removeJumpToJump Method %s", method.name));
+	final InsnList il = method.instructions;
+	for (int i = 1; i < il.size (); i++)
+	{
+	    final AbstractInsnNode ln = il.get (i - 1);
+	    if (ln instanceof LabelNode)
+	    {
+		final LabelNode oldLabel = (LabelNode)ln;
+		final AbstractInsnNode ins = il.get (i);
+		if (ins instanceof JumpInsnNode)
+		{
+		    final JumpInsnNode jins = (JumpInsnNode)ins;
+		    if (ins.getOpcode () == GOTO)
+		    {
+			// We have a label followed by a GOTO
+			final LabelNode target = jins.label;
+			retargetJumps (il, oldLabel, target);
+		    }
+		}
+	    }
+	}
+    }
+
+    /** Remove jumps to a label in the next instruction. */
+    private void removeJumpToNext (final MethodNode method)
+    {
+	LOGGER.finer (new LogString ("removeJumpToNext Method %s", method.name));
 	final InsnList il = method.instructions;
 	for (int i = 1; i < il.size (); i++)
 	{
@@ -51,15 +124,20 @@ public class Optimizer extends ClassNode implements Opcodes
 	    if (ins instanceof JumpInsnNode)
 	    {
 		final JumpInsnNode jins = (JumpInsnNode)ins;
-		final LabelNode target = jins.label;
-		if (il.get (i) == target)
+		if (ins.getOpcode () == GOTO)
 		{
-		    il.remove (jins);
+		    final LabelNode target = jins.label;
+		    if (il.get (i) == target)
+		    {
+			il.remove (jins);
+			progress = true;
+		    }
 		}
 	    }
 	}
     }
 
+    /** Remove labels that are not used. */
     private void removeDeadLabels (final MethodNode method)
     {
 	LOGGER.finer (new LogString ("removeDeadLabels Method %s", method.name));
@@ -84,6 +162,30 @@ public class Optimizer extends ClassNode implements Opcodes
 	for (final LabelNode l : foundLabels)
 	{
 	    il.remove (l);
+	    progress = true;
+	}
+    }
+
+    /**
+     * Change all jump that go to oldLabel to go to newLabel instead. The Opcode of the jump does
+     * not matter.
+     */
+    private void retargetJumps (final InsnList il, final LabelNode oldLabel, final LabelNode newLabel)
+    {
+	for (int i = 0; i < il.size (); i++)
+	{
+	    final AbstractInsnNode ins = il.get (i - 1);
+	    if (ins instanceof JumpInsnNode)
+	    {
+		final JumpInsnNode jins = (JumpInsnNode)ins;
+
+		final LabelNode target = jins.label;
+		if (target == oldLabel)
+		{
+		    jins.label = newLabel;
+		    progress = true;
+		}
+	    }
 	}
     }
 
