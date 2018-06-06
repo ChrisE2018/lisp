@@ -14,7 +14,7 @@ public class Optimizer extends ClassNode implements Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (Optimizer.class.getName ());
 
-    private boolean progress = true;
+    private int removals = 0;
 
     public Optimizer (final int api, final ClassVisitor classVisitor)
     {
@@ -25,11 +25,10 @@ public class Optimizer extends ClassNode implements Opcodes
     @Override
     public void visitEnd ()
     {
-	LOGGER.fine (new LogString ("Optimizer visits class %s %s", name, signature));
-	progress = true;
-	while (progress)
+	final int initialCount = countInstructions ();
+	LOGGER.finer (new LogString ("Optimizer visits class %s %s with %s instructions", name, signature, initialCount));
+	for (int oldRemovals = removals - 1; oldRemovals < removals; oldRemovals = removals)
 	{
-	    progress = false;
 	    if (Symbol.named ("system", "optimizeMultipleLabels").getBooleanValue (true))
 	    {
 		for (final MethodNode method : methods)
@@ -62,7 +61,18 @@ public class Optimizer extends ClassNode implements Opcodes
 		}
 	    }
 	}
+	LOGGER.fine (new LogString ("Optimization of %s removed %s of %s instructions", name, removals, initialCount));
 	accept (cv);
+    }
+
+    private int countInstructions ()
+    {
+	int result = 0;
+	for (final MethodNode method : methods)
+	{
+	    result += method.instructions.size ();
+	}
+	return result;
     }
 
     /**
@@ -71,7 +81,7 @@ public class Optimizer extends ClassNode implements Opcodes
      */
     private void optimizeMultipleLabels (final MethodNode method)
     {
-	LOGGER.finer (new LogString ("optimizeMultipleLabels Method %s", method.name));
+	LOGGER.finer (new LogString ("optimizeMultipleLabels Method %s (%s so far)", method.name, removals));
 	final InsnList il = method.instructions;
 	for (int i = 1; i < il.size (); i++)
 	{
@@ -90,7 +100,7 @@ public class Optimizer extends ClassNode implements Opcodes
     /** Remove jumps to a label with a GOTO jump in the next instruction. */
     private void removeJumpToJump (final MethodNode method)
     {
-	LOGGER.finer (new LogString ("removeJumpToJump Method %s", method.name));
+	LOGGER.finer (new LogString ("removeJumpToJump Method %s (%s so far)", method.name, removals));
 	final InsnList il = method.instructions;
 	for (int i = 1; i < il.size (); i++)
 	{
@@ -116,7 +126,7 @@ public class Optimizer extends ClassNode implements Opcodes
     /** Remove jumps to a label in the next instruction. */
     private void removeJumpToNext (final MethodNode method)
     {
-	LOGGER.finer (new LogString ("removeJumpToNext Method %s", method.name));
+	LOGGER.finer (new LogString ("removeJumpToNext Method %s (%s so far)", method.name, removals));
 	final InsnList il = method.instructions;
 	for (int i = 1; i < il.size (); i++)
 	{
@@ -130,7 +140,7 @@ public class Optimizer extends ClassNode implements Opcodes
 		    if (il.get (i) == target)
 		    {
 			il.remove (jins);
-			progress = true;
+			removals++;
 		    }
 		}
 	    }
@@ -140,10 +150,11 @@ public class Optimizer extends ClassNode implements Opcodes
     /** Remove labels that are not used. */
     private void removeDeadLabels (final MethodNode method)
     {
-	LOGGER.finer (new LogString ("removeDeadLabels Method %s", method.name));
+	LOGGER.finer (new LogString ("removeDeadLabels Method %s (%s so far)", method.name, removals));
 	final InsnList il = method.instructions;
 	final Set<LabelNode> foundLabels = new HashSet<LabelNode> ();
 	final Set<LabelNode> usedLabels = new HashSet<LabelNode> ();
+	// Ignore references from LocalVariableNodes. They are not really here.
 	for (int i = 0; i < il.size (); i++)
 	{
 	    final AbstractInsnNode ins = il.get (i);
@@ -162,7 +173,7 @@ public class Optimizer extends ClassNode implements Opcodes
 	for (final LabelNode l : foundLabels)
 	{
 	    il.remove (l);
-	    progress = true;
+	    removals++;
 	}
     }
 
@@ -183,7 +194,7 @@ public class Optimizer extends ClassNode implements Opcodes
 		if (target == oldLabel)
 		{
 		    jins.label = newLabel;
-		    progress = true;
+		    removals++;
 		}
 	    }
 	}
@@ -197,6 +208,8 @@ public class Optimizer extends ClassNode implements Opcodes
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
 	buffer.append (System.identityHashCode (this));
+	buffer.append (" removed: ");
+	buffer.append (removals);
 	buffer.append (">");
 	return buffer.toString ();
     }

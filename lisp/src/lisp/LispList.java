@@ -66,11 +66,28 @@ public class LispList extends ArrayList<Object> implements Describer
     public Symbol head ()
     {
 	final Object result = get (0);
-	if (result instanceof Symbol)
+	try
 	{
 	    return (Symbol)result;
 	}
-	throw new IllegalArgumentException ("List does not start with a Symbol " + result);
+	catch (final ClassCastException e)
+	{
+	    throw new IllegalArgumentException ("List does not start with a Symbol " + result, e);
+	}
+    }
+
+    /** Convenience method that allows the caller to avoid a cast. */
+    public LispList getSublist (final int i)
+    {
+	final Object result = get (i);
+	try
+	{
+	    return (LispList)result;
+	}
+	catch (final ClassCastException e)
+	{
+	    throw new IllegalArgumentException ("List member " + i + " is not a sublist", e);
+	}
     }
 
     /** First element of a list, using standard Lisp terminology. */

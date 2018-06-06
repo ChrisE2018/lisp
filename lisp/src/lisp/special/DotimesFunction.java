@@ -5,14 +5,15 @@ import java.util.*;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.Symbol;
 import lisp.cc.*;
-import lisp.cc4.LispTreeWalker;
-import lisp.symbol.*;
+import lisp.cc4.*;
+import lisp.symbol.LispVisitor;
 
-public class DotimesFunction implements LispCCFunction, Opcodes, LispTreeWalker
+public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
@@ -28,6 +29,46 @@ public class DotimesFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	}
 	visitor.visitValue (expression.last ());
 	visitor.visitEnd (expression);
+    }
+
+    @Override
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	// (define foo () (dotimes (i 10) (printf "foo")))
+	// (define foo (int:n) (dotimes (i n) (printf "foo")))
+
+	final LabelNodeSet l0 = new LabelNodeSet ();
+	final LabelNodeSet l1 = new LabelNodeSet ();
+
+	final LispList control = expression.getSublist (1);
+	final Symbol var = control.head ();
+	final Object countExpression = control.get (1);
+	final CompileResultSet repeatCount = context.compile (countExpression, true);
+	context.convert (repeatCount, int.class, false, false);
+	{
+	    final TreeCompilerContext innerContext = context.bindVariable (var, int.class);
+	    // Get varRef and store the repeatCount in the local
+
+	    innerContext.add (new InsnNode (ICONST_0));
+	    innerContext.add (l1);
+	    innerContext.add (new InsnNode (DUP2));
+	    innerContext.add (new JumpInsnNode (IF_ICMPLE, l0));
+
+	    for (int i = 2; i < expression.size (); i++)
+	    {
+		final CompileResultSet r = innerContext.compile (expression.get (i), false);
+		// Do something with r to throw away garbage if required
+		innerContext.convert (r, void.class, false, false);
+	    }
+	    innerContext.add (new InsnNode (ICONST_1));
+	    innerContext.add (new InsnNode (IADD));
+	    innerContext.add (new JumpInsnNode (GOTO, l1));
+
+	}
+	context.add (l0);
+	context.add (new InsnNode (POP2));
+	// Always return false
+	return new CompileResultSet (new ImplicitCompileResult (null, false));
     }
 
     @Override

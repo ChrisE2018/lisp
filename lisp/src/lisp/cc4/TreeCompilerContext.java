@@ -39,9 +39,25 @@ public class TreeCompilerContext implements Opcodes
 	this.locals = locals;
     }
 
-    public void bindVariable (final Symbol var, final Class<?> varClass)
+    /** Setup the binding for a new local variable. */
+    public TreeCompilerContext bindVariable (final Symbol var, final Class<?> varClass)
     {
+	final Type varType = Type.getType (varClass);
+	final List<LocalVariableNode> lvl = mn.localVariables;
+	final String name = var.getName ();
+	final String descriptor = varType.getDescriptor ();
+	final String signature = null;
+	final LabelNode start = new LabelNode ();
+	final LabelNode end = new LabelNode ();
+	final int index = lvl.size ();
+	final LocalVariableNode local = new LocalVariableNode (name, descriptor, signature, start, end, index);
+	lvl.add (local);
+	final Map<Symbol, LocalBinding> newLocals = new HashMap<Symbol, LocalBinding> (locals);
 	// mn.visitLocalVariable (name, descriptor, signature, start, end, index);
+	newLocals.put (var, new LocalBinding (var, varClass, index));
+	// [TODO] When we create the new TreeCompilerContext we should save this LocalVariableNode
+	// so we can add the end label when we return to the old context.
+	return new TreeCompilerContext (treeCompiler, mn, newLocals);
     }
 
     public TreeCompiler getTreeCompiler ()
