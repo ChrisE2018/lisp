@@ -5,6 +5,13 @@ import java.util.*;
 
 import org.objectweb.asm.tree.LabelNode;
 
+/**
+ * A label node that can be combined.
+ *
+ * @Deprecated Just use extra gotos and let them be optimized out.
+ * @author cre
+ */
+@Deprecated
 public class LabelNodeSet extends LabelNode
 {
     private final List<LabelNode> labels = new ArrayList<LabelNode> ();

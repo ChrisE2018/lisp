@@ -83,7 +83,10 @@ public class CompilerFactory
 		{
 		    cv = new PrintBytecodeClassAdaptor (Compiler.ASM_VERSION, cv, new StringWriter ());
 		}
-		cv = new Optimizer (Compiler.ASM_VERSION, cv);
+		if (Symbol.named ("system", "optimize").getBooleanValue (true))
+		{
+		    cv = new Optimizer (Compiler.ASM_VERSION, cv);
+		}
 		cv = new TreeCompiler (cv, result, returnType, methodName, methodArgs, methodBody);
 		result.setClassVisitor (cv);
 		return result;

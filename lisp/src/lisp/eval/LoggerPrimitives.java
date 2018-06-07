@@ -38,7 +38,7 @@ public class LoggerPrimitives extends Definer
     public void showBytecode (final boolean flag)
     {
 	final Logger logger = Logger.getLogger (lisp.cc.PrintBytecodeClassAdaptor.class.getName ());
-	logger.setLevel (flag ? Level.INFO : Level.FINE);
+	logger.setLevel (flag ? Level.FINE : Level.WARNING);
     }
 
     @Override

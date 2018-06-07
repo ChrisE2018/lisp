@@ -13,6 +13,7 @@ public class ExplicitCompileResult extends CompileResult
 	this.resultClass = resultClass;
     }
 
+    @Override
     public Class<?> getResultClass ()
     {
 	return resultClass;
@@ -22,6 +23,17 @@ public class ExplicitCompileResult extends CompileResult
     public CompileResult getJumpTo (final LabelNode ll)
     {
 	return new ExplicitCompileResult (ll, resultClass);
+    }
+
+    @Override
+    public boolean equals (final Object o)
+    {
+	if (o instanceof ExplicitCompileResult)
+	{
+	    final ExplicitCompileResult ecr = (ExplicitCompileResult)o;
+	    return ecr.getLabel () == getLabel () && ecr.resultClass.equals (resultClass);
+	}
+	return false;
     }
 
     @Override

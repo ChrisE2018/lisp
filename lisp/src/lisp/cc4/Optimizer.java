@@ -27,13 +27,23 @@ public class Optimizer extends ClassNode implements Opcodes
     {
 	final int initialCount = countInstructions ();
 	LOGGER.finer (new LogString ("Optimizer visits class %s %s with %s instructions", name, signature, initialCount));
-	for (int oldRemovals = removals - 1; oldRemovals < removals; oldRemovals = removals)
+	int oldRemovals = removals - 1;
+	while (oldRemovals < removals)
 	{
+	    oldRemovals = removals;
 	    if (Symbol.named ("system", "optimizeMultipleLabels").getBooleanValue (true))
 	    {
 		for (final MethodNode method : methods)
 		{
 		    optimizeMultipleLabels (method);
+		}
+	    }
+
+	    if (Symbol.named ("system", "optimizeAfterJump").getBooleanValue (true))
+	    {
+		for (final MethodNode method : methods)
+		{
+		    optimizeAfterJump (method);
 		}
 	    }
 
@@ -45,19 +55,19 @@ public class Optimizer extends ClassNode implements Opcodes
 		}
 	    }
 
-	    if (Symbol.named ("system", "optimizeJumpToJump").getBooleanValue (true))
-	    {
-		for (final MethodNode method : methods)
-		{
-		    removeJumpToJump (method);
-		}
-	    }
-
 	    if (Symbol.named ("system", "optimizeJumpToNext").getBooleanValue (true))
 	    {
 		for (final MethodNode method : methods)
 		{
 		    removeJumpToNext (method);
+		}
+	    }
+
+	    if (Symbol.named ("system", "optimizeJumpToJump").getBooleanValue (true))
+	    {
+		for (final MethodNode method : methods)
+		{
+		    removeJumpToJump (method);
 		}
 	    }
 
@@ -102,6 +112,36 @@ public class Optimizer extends ClassNode implements Opcodes
 		    retargetJumps (il, (LabelNode)ins2, (LabelNode)ins);
 		}
 	    }
+	}
+    }
+
+    /**
+     * Remove non-label code right after an unconditional jump
+     */
+    private void optimizeAfterJump (final MethodNode method)
+    {
+	LOGGER.finer (new LogString ("optimizeAfterJump Method %s (%s so far)", method.name, removals));
+	final InsnList il = method.instructions;
+	final List<AbstractInsnNode> remove = new ArrayList<AbstractInsnNode> ();
+	for (int i = 1; i < il.size (); i++)
+	{
+	    final AbstractInsnNode ins = il.get (i - 1);
+	    if (ins instanceof JumpInsnNode)
+	    {
+		if (ins.getOpcode () == GOTO)
+		{
+		    final AbstractInsnNode ins2 = il.get (i);
+		    if (!(ins2 instanceof LabelNode))
+		    {
+			remove.add (ins2);
+		    }
+		}
+	    }
+	}
+	for (final AbstractInsnNode ins : remove)
+	{
+	    removals++;
+	    il.remove (ins);
 	}
     }
 
@@ -243,7 +283,7 @@ public class Optimizer extends ClassNode implements Opcodes
      */
     private void retargetJumps (final InsnList il, final LabelNode oldLabel, final LabelNode newLabel)
     {
-	for (int i = 0; i < il.size (); i++)
+	for (int i = 1; i < il.size (); i++)
 	{
 	    final AbstractInsnNode ins = il.get (i - 1);
 	    if (ins instanceof JumpInsnNode)

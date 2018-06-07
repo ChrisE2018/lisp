@@ -57,29 +57,22 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	// (define foo (a b) (or a b))
 	// Fall through to implicit true
 	final CompileResultSet result = new CompileResultSet ();
-	final LabelNodeSet lTrue = new LabelNodeSet (); // Implicit true
-	// final LabelNodeSet lFalse = new LabelNodeSet (); // Implicit false
+	final LabelNode lTrue = new LabelNode (); // Implicit true
 	final LabelNode lPopTrue = new LabelNode (); // pop true
+	final LabelNode lexit = new LabelNode ();
 
 	boolean lTrueUsed = false;
-	// final boolean lFalseUsed = false;
-	boolean lPopTrueUsed = false;
+	final boolean lPopTrueUsed = false;
 
 	boolean stackOccupied = false;
 	for (int i = 1; i < e.size () - 1; i++)
 	{
-	    if (stackOccupied)
-	    {
-		context.add (new InsnNode (POP));
-	    }
 	    // Jump here to check next conjunct
-	    final LabelNodeSet lNext = new LabelNodeSet ();
+	    final LabelNode lNext = new LabelNode ();
 	    final CompileResultSet r = context.compile (e.get (i), true);
 	    final List<CompileResult> crl = r.getResults ();
 	    for (int j = 0; j < crl.size (); j++)
 	    {
-		final boolean lastCrl = j == crl.size () - 1;
-		// Should dynamically rearrange the crls to merge cases
 		final CompileResult cr = crl.get (j);
 		context.add (cr.getLabel ());
 		if (cr instanceof ImplicitCompileResult)
@@ -87,12 +80,12 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 		    final ImplicitCompileResult icr = ((ImplicitCompileResult)cr);
 		    if (icr.getValue ().equals (Boolean.FALSE))
 		    {
-			lNext.add (icr.getLabel ());
+			context.add (new JumpInsnNode (GOTO, lNext));
 		    }
 		    else
 		    {
 			lTrueUsed = true;
-			lTrue.add (icr.getLabel ());
+			context.add (new JumpInsnNode (GOTO, lTrue));
 		    }
 		}
 		else
@@ -124,32 +117,34 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 		    }
 		    else if (long.class.equals (resultClass) || double.class.equals (resultClass))
 		    {
-			// Need to handle primitive long and double differently to keep stack size
-			// right
+			// Handle primitive long and double differently to keep stack size right
 			context.add (new InsnNode (POP2));
 			context.add (new JumpInsnNode (GOTO, lNext));
 		    }
 		    else
 		    {
-			stackOccupied = true; // What size object?
+			stackOccupied = true;
 			context.add (new InsnNode (DUP));
 			context.add (new TypeInsnNode (INSTANCEOF, "java/lang/Boolean"));
-			// Not a Boolean means true result
-			context.add (new JumpInsnNode (IFEQ, lPopTrue));
+			// Not a Boolean should be returned immediately
+			context.add (new JumpInsnNode (IFEQ, lexit));
 			context.add (new InsnNode (DUP));
 			context.add (new TypeInsnNode (CHECKCAST, "java/lang/Boolean"));
 			context.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
-			lPopTrueUsed = true;
-			context.add (new JumpInsnNode (IFNE, lPopTrue));
+			context.add (new JumpInsnNode (IFNE, lexit));
+			result.addExplicitCompileResult (null, resultClass);
 			context.add (new JumpInsnNode (GOTO, lNext));
 		    }
 		}
 	    }
 	    context.add (lNext);
+	    if (stackOccupied)
+	    {
+		context.add (new InsnNode (POP));
+	    }
 	}
 	// If we get here, just return the value
-	LabelNode lexit = null;
-	final CompileResultSet r = context.compile (e.last (), true);
+	final CompileResultSet r = context.compile (e.last (), resultDesired);
 	final List<CompileResult> crl = r.getResults ();
 	for (int j = 0; j < crl.size () - 1; j++)
 	{
@@ -160,7 +155,6 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    }
 	    else
 	    {
-		lexit = new LabelNode ();
 		context.add (new JumpInsnNode (GOTO, lexit));
 	    }
 	}
@@ -171,10 +165,6 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	{
 	    if (lPopTrueUsed)
 	    {
-		if (lexit == null)
-		{
-		    lexit = new LabelNode ();
-		}
 		context.add (new JumpInsnNode (GOTO, lexit));
 	    }
 	}
@@ -190,10 +180,6 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	{
 	    result.addImplicitCompileResult (lTrue, true);
 	}
-	// if (lFalseUsed)
-	// {
-	// result.addImplicitCompileResult (lFalse, false);
-	// }
 	context.add (lexit);
 	return result;
     }

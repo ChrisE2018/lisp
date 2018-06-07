@@ -20,11 +20,23 @@ public class ImplicitCompileResult extends CompileResult
 	return value;
     }
 
+    @Override
     public Class<?> getResultClass ()
     {
 	final Class<?> ec = value.getClass ();
 	final Class<?> p = boxer.getUnboxedClass (ec);
 	return p == null ? ec : p;
+    }
+
+    @Override
+    public boolean equals (final Object o)
+    {
+	if (o instanceof ImplicitCompileResult)
+	{
+	    final ImplicitCompileResult icr = (ImplicitCompileResult)o;
+	    return icr.getLabel () == getLabel () && icr.value.equals (value);
+	}
+	return false;
     }
 
     @Override
@@ -40,9 +52,11 @@ public class ImplicitCompileResult extends CompileResult
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
-	buffer.append (System.identityHashCode (this));
+	buffer.append (value.getClass ().getSimpleName ());
 	buffer.append (" ");
 	buffer.append (value);
+	buffer.append (" ");
+	buffer.append (getLabel ());
 	buffer.append (">");
 	return buffer.toString ();
     }

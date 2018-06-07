@@ -168,13 +168,13 @@ public class TreeCompilerContext implements Opcodes
 	    {
 		final ImplicitCompileResult icr = (ImplicitCompileResult)cr;
 		final Class<?> fc = icr.getResultClass ();
-		il.add (new LdcInsnNode (icr.getValue ()));
+		add (new LdcInsnNode (icr.getValue ()));
 		converter.convert (il, fc, toClass, allowNarrowing, liberalTruth);
 	    }
 	    // Jump to exit label if required
 	    if (results.size () > 1 && i + 1 < results.size ())
 	    {
-		il.add (new JumpInsnNode (GOTO, l));
+		add (new JumpInsnNode (GOTO, l));
 	    }
 	}
 	if (results.size () > 1)

@@ -261,6 +261,8 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	// (define double:foo (int:n) 1 2 n)
 	for (final CompileResult resultKind : resultClass.getResults ())
 	{
+	    // [TODO] This should collect crs of the same class and make them jump to the same place
+	    // instead of duplicating code
 	    final LabelNode label = resultKind.getLabel ();
 	    context.add (label);
 	    if (resultKind instanceof ExplicitCompileResult)

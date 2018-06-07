@@ -3,13 +3,14 @@ package lisp.special;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.cc.*;
-import lisp.cc4.LispTreeWalker;
-import lisp.symbol.*;
+import lisp.cc4.*;
+import lisp.symbol.LispVisitor;
 
-public class IfFunction implements LispCCFunction, Opcodes, LispTreeWalker
+public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
@@ -31,6 +32,74 @@ public class IfFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	    // May return a default value
 	}
 	visitor.visitEnd (expression);
+    }
+
+    @Override
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	if (expression.size () == 3)
+	{
+	    // (define foo (boolean:x) (if x 3))
+	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	    final LabelNodeSet lFalse = new LabelNodeSet ();// This label means we return false
+	    context.convertIfFalse (testResultSet, false, true, lFalse);
+	    final CompileResultSet result = context.compile (expression.last (), true);
+	    result.addImplicitCompileResult (lFalse, false);
+	    return result;
+	}
+	else
+	{
+	    // (define foo (boolean:x) (if x 3 4))
+	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	    final LabelNodeSet lFalse = new LabelNodeSet ();// This label means we return false
+	    context.convertIfFalse (testResultSet, false, true, lFalse);
+
+	    final CompileResultSet result = new CompileResultSet ();
+
+	    final CompileResultSet tresult = context.compile (expression.get (2), true);
+	    for (final CompileResult cr : tresult.getResults ())
+	    {
+		final LabelNode label = cr.getLabel ();
+		if (label == null)
+		{
+		    final LabelNode lTrue = new LabelNode ();
+		    // context.add (new InsnNode (NOP));
+		    context.add (new JumpInsnNode (GOTO, lTrue));
+		    result.add (cr.getJumpTo (lTrue));
+		}
+		else
+		{
+		    result.add (cr);
+		}
+	    }
+
+	    // false case
+	    context.add (lFalse);
+	    // context.add (new LineNumberNode (76, lFalse));
+	    for (int i = 3; i < expression.size () - 1; i++)
+	    {
+		final CompileResultSet r = context.compile (expression.get (i), false);
+		// Do something with r to throw away garbage if required
+		context.convert (r, void.class, false, false);
+	    }
+	    final CompileResultSet fresult = context.compile (expression.last (), true);
+	    for (final CompileResult cr : fresult.getResults ())
+	    {
+		final Class<?> cls = cr.getClass ();
+		final CompileResult conflictCr = result.getCompileResult (cls);
+		if (cr.getLabel () == null)
+		{
+		    final LabelNode ff = new LabelNode ();
+		    context.add (new JumpInsnNode (GOTO, ff));
+		    result.add (cr.getJumpTo (ff));
+		}
+		else
+		{
+		    throw new Error (conflictCr + " huh " + cr);
+		}
+	    }
+	    return result;
+	}
     }
 
     @Override

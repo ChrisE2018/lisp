@@ -22,6 +22,8 @@ public abstract class CompileResult
 	return l == null;
     }
 
+    abstract public Class<?> getResultClass ();
+
     abstract public CompileResult getJumpTo (LabelNode ll);
 
     @Override

@@ -26,17 +26,38 @@ public class CompileResultSet
 
     public void addImplicitCompileResult (final LabelNode l1, final Object value)
     {
-	results.add (new ImplicitCompileResult (l1, value));
+	add (new ImplicitCompileResult (l1, value));
     }
 
-    public void addExplictCompileResult (final LabelNode l1, final Class<?> kind)
+    public void addExplicitCompileResult (final LabelNode l1, final Class<?> kind)
     {
-	results.add (new ExplicitCompileResult (l1, kind));
+	add (new ExplicitCompileResult (l1, kind));
+    }
+
+    public void add (final CompileResult cr)
+    {
+	// Don't add duplicates
+	if (!results.contains (cr))
+	{
+	    results.add (cr);
+	}
     }
 
     public List<CompileResult> getResults ()
     {
 	return results;
+    }
+
+    public CompileResult getCompileResult (final Class<?> cls)
+    {
+	for (final CompileResult cr : results)
+	{
+	    if (cr.getClass ().equals (cls))
+	    {
+		return cr;
+	    }
+	}
+	return null;
     }
 
     @Override
@@ -45,8 +66,11 @@ public class CompileResultSet
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (System.identityHashCode (this));
+	for (final CompileResult cr : results)
+	{
+	    buffer.append (" ");
+	    buffer.append (cr);
+	}
 	buffer.append (">");
 	return buffer.toString ();
     }

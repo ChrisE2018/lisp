@@ -26,7 +26,7 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 	for (int i = 0; i < bindings.size (); i++)
 	{
 	    final LispList clause = (LispList)bindings.get (i);
-	    final Symbol var = bindings.head ();
+	    // varSpec = clause.get (0)
 	    visitor.visitValue (clause.get (1));
 	}
 	for (int i = 2; i < expression.size () - 1; i++)
