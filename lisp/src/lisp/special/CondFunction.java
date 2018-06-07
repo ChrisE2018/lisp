@@ -45,6 +45,7 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     @Override
     public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
+	// (define foo () (cond))
 	// (define boolean:foo (boolean:x) (cond (x true)))
 	final CompileResultSet result = new CompileResultSet ();
 	for (int i = 1; i < expression.size (); i++)
@@ -96,12 +97,12 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 		// context.add (new JumpInsnNode (GOTO, lNext));
 	    }
 	    context.add (lNext);
-	    context.add (new LineNumberNode (97, lNext));
+	    // context.add (new LineNumberNode (97, lNext));
 	}
-	// Fall through is false
-	final LabelNode lFalse = new LabelNode ();
-	context.add (new JumpInsnNode (GOTO, lFalse));
-	result.addImplicitCompileResult (lFalse, false);
+	// Fall through is null
+	final LabelNode lNull = new LabelNode ();
+	context.add (new JumpInsnNode (GOTO, lNull));
+	result.addImplicitCompileResult (lNull, null);
 	return result;
     }
 

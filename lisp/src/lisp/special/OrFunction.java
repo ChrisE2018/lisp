@@ -132,7 +132,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 			context.add (new TypeInsnNode (CHECKCAST, "java/lang/Boolean"));
 			context.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
 			context.add (new JumpInsnNode (IFNE, lexit));
-			result.addExplicitCompileResult (null, resultClass);
+			result.addExplicitCompileResult (resultClass);
 			context.add (new JumpInsnNode (GOTO, lNext));
 		    }
 		}

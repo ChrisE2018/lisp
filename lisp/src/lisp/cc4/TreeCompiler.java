@@ -282,6 +282,10 @@ public class TreeCompiler extends ClassNode implements Opcodes
 		    final Class<?> p = boxer.getUnboxedClass (ec);
 		    context.convert (p != null ? p : ec, methodReturnClass, false, false);
 		}
+		else if (x == null)
+		{
+		    il.add (new InsnNode (ACONST_NULL));
+		}
 		else
 		{
 		    final Symbol s = addQuotedConstant (x);

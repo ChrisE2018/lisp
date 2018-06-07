@@ -48,6 +48,11 @@ public class ImplicitCompileResult extends CompileResult
 	if (o instanceof ImplicitCompileResult)
 	{
 	    final ImplicitCompileResult icr = (ImplicitCompileResult)o;
+
+	    if (icr.value == null)
+	    {
+		return value == null;
+	    }
 	    return icr.value.equals (value);
 	}
 	return false;

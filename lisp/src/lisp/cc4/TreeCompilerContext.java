@@ -325,8 +325,7 @@ public class TreeCompilerContext implements Opcodes
 	// Assume the function will still be defined when we execute this code.
 	il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;",
 	        false));
-	// return new Object[][] {{null, Object.class}};
-	return new CompileResultSet (new ExplicitCompileResult (null, Object.class));
+	return new CompileResultSet (new ExplicitCompileResult (Object.class));
     }
 
     /**
@@ -372,7 +371,7 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new FieldInsnNode (GETFIELD, classInternalName, treeCompiler.createJavaSymbolName (symbol), "Llisp/Symbol;"));
 	    il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false));
 	    // return new Object[][] {{null, Object.class}};
-	    return new CompileResultSet (new ExplicitCompileResult (null, Object.class));
+	    return new CompileResultSet (new ExplicitCompileResult (Object.class));
 	}
     }
 
