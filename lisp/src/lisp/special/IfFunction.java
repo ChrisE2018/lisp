@@ -41,7 +41,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	{
 	    // (define foo (boolean:x) (if x 3))
 	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
-	    final LabelNodeSet lFalse = new LabelNodeSet ();// This label means we return false
+	    final LabelNode lFalse = new LabelNode ();// This label means we return false
 	    context.convertIfFalse (testResultSet, false, true, lFalse);
 	    final CompileResultSet result = context.compile (expression.last (), true);
 	    result.addImplicitCompileResult (lFalse, false);
@@ -51,7 +51,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	{
 	    // (define foo (boolean:x) (if x 3 4))
 	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
-	    final LabelNodeSet lFalse = new LabelNodeSet ();// This label means we return false
+	    final LabelNode lFalse = new LabelNode ();// This label means we return false
 	    context.convertIfFalse (testResultSet, false, true, lFalse);
 
 	    final CompileResultSet result = new CompileResultSet ();

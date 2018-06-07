@@ -3,6 +3,7 @@ package lisp.special;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.LabelNode;
 
 import lisp.LispList;
 import lisp.cc.*;
@@ -34,8 +35,7 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
 	// call. Any result that is not boolean can just be wired to goto l2.
 	// Any result that is a constant true or false can go directly to l1 or l2.
 
-	// [TODO] Need a special converter to boolean that returns result information.
-	final LabelNodeSet lFalse = new LabelNodeSet ();// This label means we return false
+	final LabelNode lFalse = new LabelNode ();// This label means we return false
 	context.convertIfFalse (testResultSet, false, true, lFalse);
 
 	for (int i = 2; i < expression.size () - 1; i++)

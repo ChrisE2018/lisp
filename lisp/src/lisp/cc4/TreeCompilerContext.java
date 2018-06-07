@@ -111,31 +111,25 @@ public class TreeCompilerContext implements Opcodes
 	}
     }
 
-    /**
-     * When a LabelNodeSet is added, we add all the component labels too. A later phase should
-     * optimize all but one of these labels out.
-     *
-     * @param labels
-     */
-    public void add (final LabelNodeSet labels)
-    {
-	il.add (labels);
-	for (final LabelNode ln : labels.getLabels ())
-	{
-	    add (ln);
-	}
-    }
-
     public void convertIfTrue (final CompileResultSet testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
-            final LabelNodeSet lTrue)
+            final LabelNode lTrue)
     {
 	converter.convertIfTrue (il, testResultSet, allowNarrowing, liberalTruth, lTrue);
     }
 
     public void convertIfFalse (final CompileResultSet testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
-            final LabelNodeSet lFalse)
+            final LabelNode lFalse)
     {
 	converter.convertIfFalse (il, testResultSet, allowNarrowing, liberalTruth, lFalse);
+    }
+
+    /**
+     * Fall through if false. Otherwise leave value on the stack and jump to one of the lTrue
+     * labels.
+     */
+    public CompileResultSet convert2true (final CompileResultSet testResultSet, final LabelNode lTrue)
+    {
+	return converter.convert2true (il, testResultSet);
     }
 
     public void convert (final Class<?> fromClass, final Class<?> toClass, final boolean allowNarrowing,

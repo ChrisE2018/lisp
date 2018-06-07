@@ -119,7 +119,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 		    {
 			// Handle primitive long and double differently to keep stack size right
 			context.add (new InsnNode (POP2));
-			context.add (new JumpInsnNode (GOTO, lNext));
+			context.add (new JumpInsnNode (GOTO, lTrue));
 		    }
 		    else
 		    {

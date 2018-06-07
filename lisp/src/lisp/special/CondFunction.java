@@ -5,15 +5,16 @@ import java.util.*;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.*;
 
 import lisp.*;
 import lisp.Package;
 import lisp.Symbol;
 import lisp.cc.*;
-import lisp.cc4.LispTreeWalker;
-import lisp.symbol.*;
+import lisp.cc4.*;
+import lisp.symbol.LispVisitor;
 
-public class CondFunction implements LispCCFunction, Opcodes, LispTreeWalker
+public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
@@ -22,7 +23,7 @@ public class CondFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	visitor.visitStart (expression);
 	for (int i = 1; i < expression.size (); i++)
 	{
-	    final LispList clause = (LispList)expression.get (i);
+	    final LispList clause = expression.getSublist (i);
 	    if (clause.size () == 1)
 	    {
 		visitor.visitBooleanValue (clause.get (0));
@@ -39,6 +40,38 @@ public class CondFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	}
 	visitor.visitEnd (expression);
 	// May return a default value
+    }
+
+    @Override
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	final CompileResultSet result = new CompileResultSet ();
+	final LabelNode lTrue = new LabelNode ();
+	for (int i = 1; i < expression.size (); i++)
+	{
+	    final LabelNode lNext = new LabelNode ();
+	    final LispList clause = expression.getSublist (i);
+	    if (clause.size () == 1)
+	    {
+		final CompileResultSet bvr = context.compile (clause.car (), true);
+		context.convert2true (bvr, lTrue);
+		context.add (new JumpInsnNode (GOTO, lNext));
+	    }
+	    else
+	    {
+		final CompileResultSet bv = context.compile (clause.car (), true);
+		context.convertIfFalse (bv, false, true, lNext);
+		for (int j = 1; j < clause.size () - 1; j++)
+		{
+		    final CompileResultSet ignore = context.compile (clause.get (j), false);
+		    context.convert (ignore, void.class, false, false);
+		}
+		final CompileResultSet v = context.compile (clause.last (), true);
+	    }
+	    context.add (lNext);
+	}
+	context.add (lTrue);
+	return result;
     }
 
     @Override

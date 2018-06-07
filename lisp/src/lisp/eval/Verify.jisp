@@ -3,6 +3,7 @@
 
 (resetTestStatistics)
 (showBytecode f)
+(stopAtFirstFailure t)
 
 (verify 1 1)
 (verify 2 2)
@@ -49,25 +50,35 @@
 (verify (foo false) true)
 (verify (foo 2) false)
 
-(define foo (a b) (and))
-(verify (foo 1 2) true)
-(define foo (a b) (and a b))
-(verify (foo true true) true)
-(verify (foo true false) false)
-(verify (foo false true) false)
-(verify (foo false false) false)
-(verify (foo 1 true) true)
-(verify (foo true 2) 2)
-(verify (foo false 2) false)
+(verification compileNot
+	(define foo (x) (not x))
+	(verify (foo true) false)
+	(verify (foo false) true)
+	(verify (foo 2) false))
 
-(define alpha (x)
-   (+ a x 4))
+(verification emptyAnd
+	(define foo (a b) (and))
+	(verify (foo 1 2) true))
 
-(verify a 5)
-(verify (alpha 3) 12)
+(verification compiledAnd
+	(define foo (a b) (and a b))
+	(verify (foo true true) true)
+	(verify (foo true false) false)
+	(verify (foo false true) false)
+	(verify (foo false false) false)
+	(verify (foo 1 true) true)
+	(verify (foo true 2) 2)
+	(verify (foo false 2) false))
 
-(setq a 6) 
-(verify (alpha 3) 13) 
+(verification compiledPlus
+	(define alpha (x)
+   		(+ a x 4))
+
+	(verify a 5)
+	(verify (alpha 3) 12)
+
+	(setq a 6) 
+	(verify (alpha 3) 13))
 
 (define foo (x)
 	(setq a x))

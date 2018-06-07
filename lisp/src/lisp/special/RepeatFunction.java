@@ -33,8 +33,8 @@ public class RepeatFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	// (define foo () (repeat 10 (printf "foo")))
 	// (define foo () (repeat 3 (printf "foo")))
 
-	final LabelNodeSet l0 = new LabelNodeSet ();
-	final LabelNodeSet l1 = new LabelNodeSet ();
+	final LabelNode l0 = new LabelNode ();
+	final LabelNode l1 = new LabelNode ();
 
 	final CompileResultSet repeatCount = context.compile (expression.get (1), true);
 	context.convert (repeatCount, int.class, false, false);

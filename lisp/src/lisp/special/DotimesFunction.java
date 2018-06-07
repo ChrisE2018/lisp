@@ -37,8 +37,8 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	// (define foo () (dotimes (i 10) (printf "foo")))
 	// (define foo (int:n) (dotimes (i n) (printf "foo %s%n" i)))
 
-	final LabelNodeSet l0 = new LabelNodeSet ();
-	final LabelNodeSet l1 = new LabelNodeSet ();
+	final LabelNode l0 = new LabelNode ();
+	final LabelNode l1 = new LabelNode ();
 
 	final LispList control = expression.getSublist (1);
 	final Symbol var = control.head (); // always an int, not need to declare

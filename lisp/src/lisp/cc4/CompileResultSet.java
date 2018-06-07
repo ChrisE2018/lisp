@@ -34,6 +34,27 @@ public class CompileResultSet
 	add (new ExplicitCompileResult (l1, kind));
     }
 
+    // public void add (final ImplicitCompileResult cr)
+    // {
+    // // for (final CompileResult r : results)
+    // // {
+    // // if (r instanceof ImplicitCompileResult)
+    // // {
+    // // final ImplicitCompileResult icr = (ImplicitCompileResult)r;
+    // // if (icr.getValue ().equals (cr.getValue ()))
+    // // {
+    // // // Is duplicate, discard.
+    // // icr.addLabel (cr.getLabel ());
+    // // return;
+    // // }
+    // // }
+    // // }
+    // if (!results.contains (cr))
+    // {
+    // results.add (cr);
+    // }
+    // }
+
     public void add (final CompileResult cr)
     {
 	// Don't add duplicates

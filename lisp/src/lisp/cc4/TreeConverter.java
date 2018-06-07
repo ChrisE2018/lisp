@@ -24,20 +24,20 @@ public class TreeConverter implements Opcodes
 	}
     }
 
-    /**
-     * When a LabelNodeSet is added, we add all the component labels too. A later phase should
-     * optimize all but one of these labels out.
-     *
-     * @param labels
-     */
-    public void add (final InsnList il, final LabelNodeSet labels)
-    {
-	il.add (labels);
-	for (final LabelNode ln : labels.getLabels ())
-	{
-	    add (il, ln);
-	}
-    }
+    // /**
+    // * When a LabelNodeSet is added, we add all the component labels too. A later phase should
+    // * optimize all but one of these labels out.
+    // *
+    // * @param labels
+    // */
+    // public void add (final InsnList il, final LabelNodeSet labels)
+    // {
+    // il.add (labels);
+    // for (final LabelNode ln : labels.getLabels ())
+    // {
+    // add (il, ln);
+    // }
+    // }
 
     /**
      * Push a default value of a specified class onto the stack.
@@ -92,25 +92,25 @@ public class TreeConverter implements Opcodes
 
     /**
      * Convert to boolean and jump to label if true and fall through if false. Nothing is left on
-     * the stack. (untested)
+     * the stack.
      */
     public void convertIfTrue (final InsnList il, final CompileResultSet fromClass, final boolean allowNarrowing,
-            final boolean liberalTruth, final LabelNodeSet lTrue)
+            final boolean liberalTruth, final LabelNode lTrue)
     {
 	if (fromClass == null)
 	{
 	    throw new Error ("Compiler error: can't convert void to boolean");
 	}
-	final LabelNodeSet lExit = new LabelNodeSet ();
+	final LabelNode lExit = new LabelNode ();
 	final List<CompileResult> results = fromClass.getResults ();
 	for (int i = 0; i < results.size (); i++)
 	{
 	    final CompileResult cr = results.get (i);
 	    if (cr instanceof ExplicitCompileResult)
 	    {
+		add (il, cr.getLabel ());
 		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
 		final Class<?> fc = ecr.getResultClass ();
-		add (il, cr.getLabel ());
 		convert (il, fc, boolean.class, allowNarrowing, liberalTruth);
 		il.add (new JumpInsnNode (IFNE, lTrue));
 		il.add (new JumpInsnNode (GOTO, lExit));
@@ -121,11 +121,11 @@ public class TreeConverter implements Opcodes
 		final Object value = icr.getValue ();
 		if (value instanceof Boolean && (Boolean)value)
 		{
-		    lTrue.add (cr.getLabel ());
+		    il.add (new JumpInsnNode (GOTO, lTrue));
 		}
 		else
 		{
-		    lExit.add (cr.getLabel ());
+		    il.add (new JumpInsnNode (GOTO, lExit));
 		}
 	    }
 	}
@@ -137,22 +137,22 @@ public class TreeConverter implements Opcodes
      * the stack.
      */
     public void convertIfFalse (final InsnList il, final CompileResultSet fromClass, final boolean allowNarrowing,
-            final boolean liberalTruth, final LabelNodeSet lFalse)
+            final boolean liberalTruth, final LabelNode lFalse)
     {
 	if (fromClass == null)
 	{
 	    throw new Error ("Compiler error: can't convert void to boolean");
 	}
-	final LabelNodeSet lExit = new LabelNodeSet ();
+	final LabelNode lExit = new LabelNode ();
 	final List<CompileResult> results = fromClass.getResults ();
 	for (int i = 0; i < results.size (); i++)
 	{
 	    final CompileResult cr = results.get (i);
+	    add (il, cr.getLabel ());
 	    if (cr instanceof ExplicitCompileResult)
 	    {
 		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
 		final Class<?> fc = ecr.getResultClass ();
-		add (il, cr.getLabel ());
 		convert (il, fc, boolean.class, allowNarrowing, liberalTruth);
 		il.add (new JumpInsnNode (IFEQ, lFalse));
 		il.add (new JumpInsnNode (GOTO, lExit));
@@ -163,15 +163,100 @@ public class TreeConverter implements Opcodes
 		final Object value = icr.getValue ();
 		if (value instanceof Boolean && (Boolean)value)
 		{
-		    lExit.add (cr.getLabel ());
+		    il.add (new JumpInsnNode (GOTO, lExit));
 		}
 		else
 		{
-		    lFalse.add (cr.getLabel ());
+		    il.add (new JumpInsnNode (GOTO, lFalse));
 		}
 	    }
 	}
 	add (il, lExit);
+    }
+
+    /**
+     * Fall through if false. Otherwise leave value on the stack and jump to one of the lTrue
+     * labels.
+     */
+    public CompileResultSet convert2true (final InsnList il, final CompileResultSet r)
+    {
+	final CompileResultSet result = new CompileResultSet ();
+	final LabelNode lFalse = new LabelNode ();
+	final LabelNode lTrueImplicit = new LabelNode ();
+	// final LabelNode lTrueExplictBoolean = new LabelNode ();
+	final List<CompileResult> crl = r.getResults ();
+	for (int j = 0; j < crl.size (); j++)
+	{
+	    final CompileResult cr = crl.get (j);
+	    il.add (cr.getLabel ());
+	    if (cr instanceof ImplicitCompileResult)
+	    {
+		final ImplicitCompileResult icr = ((ImplicitCompileResult)cr);
+		if (icr.getValue ().equals (Boolean.FALSE))
+		{
+		    il.add (new JumpInsnNode (GOTO, lFalse));
+		}
+		else
+		{
+		    result.add (icr);
+		}
+	    }
+	    else
+	    {
+		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
+		final Class<?> resultClass = ecr.getResultClass ();
+		if (boolean.class.equals (resultClass))
+		{
+		    result.addImplicitCompileResult (lTrueImplicit, true);
+		    il.add (new JumpInsnNode (IFNE, lTrueImplicit));
+		    il.add (new JumpInsnNode (GOTO, lFalse));
+		}
+		else if (Boolean.class.equals (resultClass))
+		{
+		    il.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
+		    result.addImplicitCompileResult (lTrueImplicit, true);
+		    il.add (new JumpInsnNode (IFNE, lTrueImplicit));
+		    il.add (new JumpInsnNode (GOTO, lFalse));
+		}
+		else if (Boolean.class.isAssignableFrom (resultClass))
+		{
+		    il.add (new InsnNode (DUP));
+		    il.add (new TypeInsnNode (CHECKCAST, "java/lang/Boolean"));
+		    il.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
+		    final LabelNode ll = new LabelNode ();
+		    result.addExplicitCompileResult (ll, resultClass);
+		    il.add (new JumpInsnNode (IFNE, ll));
+		    il.add (new InsnNode (POP));
+		    il.add (new JumpInsnNode (GOTO, lFalse));
+		}
+		else if (byte.class.equals (resultClass) || char.class.equals (resultClass) || short.class.equals (resultClass)
+		         || int.class.equals (resultClass) || long.class.equals (resultClass) || float.class.equals (resultClass)
+		         || double.class.equals (resultClass))
+		{
+		    // Handle primitive long and double differently to keep stack size right
+		    final LabelNode ll = new LabelNode ();
+		    result.addExplicitCompileResult (ll, resultClass);
+		    il.add (new JumpInsnNode (GOTO, ll));
+		}
+		else
+		{
+		    // Can't handle long or double here
+		    il.add (new InsnNode (DUP));
+		    il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Boolean"));
+		    // Not a Boolean should be returned immediately
+		    final LabelNode ll = new LabelNode ();
+		    result.addExplicitCompileResult (ll, resultClass);
+		    il.add (new JumpInsnNode (IFEQ, ll));
+		    il.add (new TypeInsnNode (CHECKCAST, "java/lang/Boolean"));
+		    il.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
+		    result.addImplicitCompileResult (lTrueImplicit, true);
+		    il.add (new JumpInsnNode (IFNE, lTrueImplicit));
+		    il.add (new JumpInsnNode (GOTO, lFalse));
+		}
+	    }
+	}
+	il.add (lFalse);
+	return result;
     }
 
     /**
@@ -265,38 +350,38 @@ public class TreeConverter implements Opcodes
 
 	    case Type.CHAR:
 	    {
-		convert2char (il, fromClass, toClass, allowNarrowing);
+		convert2char (il, fromClass, allowNarrowing);
 		return;
 	    }
 	    case Type.BYTE:
 	    {
-		convert2byte (il, fromClass, toClass, allowNarrowing);
+		convert2byte (il, fromClass, allowNarrowing);
 
 		return;
 	    }
 	    case Type.SHORT:
 	    {
-		convert2short (il, fromClass, toClass, allowNarrowing);
+		convert2short (il, fromClass, allowNarrowing);
 		return;
 	    }
 	    case Type.INT:
 	    {
-		convert2int (il, fromClass, toClass, allowNarrowing);
+		convert2int (il, fromClass, allowNarrowing);
 		return;
 	    }
 	    case Type.LONG:
 	    {
-		convert2long (il, fromClass, toClass, allowNarrowing);
+		convert2long (il, fromClass, allowNarrowing);
 		return;
 	    }
 	    case Type.FLOAT:
 	    {
-		convert2float (il, fromClass, toClass, allowNarrowing);
+		convert2float (il, fromClass, allowNarrowing);
 		return;
 	    }
 	    case Type.DOUBLE:
 	    {
-		convert2double (il, fromClass, toClass);
+		convert2double (il, fromClass);
 		return;
 	    }
 	    case Type.OBJECT:
@@ -721,10 +806,10 @@ public class TreeConverter implements Opcodes
 	}
     }
 
-    private void convert2char (final InsnList il, final Class<?> fromClass, final Class<?> toClass, final boolean allowNarrowing)
+    private void convert2char (final InsnList il, final Class<?> fromClass, final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
-	final Type toType = Type.getType (toClass);
+	final Type toType = Type.getType (char.class);
 	final int fromSort = fromType.getSort ();
 	if (fromSort == Type.CHAR || fromSort == Type.BYTE)
 	{
@@ -766,15 +851,15 @@ public class TreeConverter implements Opcodes
 	convertChar2int (il, l2);
 	il.add (new JumpInsnNode (GOTO, l0));
 	il.add (l2);
-	throwException (il, "java/lang/IllegalArgumentException", "Can't convert to %s", toClass);
+	throwException (il, "java/lang/IllegalArgumentException", "Can't convert to char");
 	il.add (l0);
 	// Succeed
     }
 
-    private void convert2byte (final InsnList il, final Class<?> fromClass, final Class<?> toClass, final boolean allowNarrowing)
+    private void convert2byte (final InsnList il, final Class<?> fromClass, final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
-	final Type toType = Type.getType (toClass);
+	final Type toType = Type.getType (byte.class);
 	final int fromSort = fromType.getSort ();
 	if (fromSort == Type.CHAR || fromSort == Type.BYTE)
 	{
@@ -846,7 +931,7 @@ public class TreeConverter implements Opcodes
 	// Succeed
     }
 
-    private void convert2short (final InsnList il, final Class<?> fromClass, final Class<?> toClass, final boolean allowNarrowing)
+    private void convert2short (final InsnList il, final Class<?> fromClass, final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	final int fromSort = fromType.getSort ();
@@ -946,7 +1031,7 @@ public class TreeConverter implements Opcodes
 	il.add (l0);
     }
 
-    private void convert2int (final InsnList il, final Class<?> fromClass, final Class<?> toClass, final boolean allowNarrowing)
+    private void convert2int (final InsnList il, final Class<?> fromClass, final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	final int fromSort = fromType.getSort ();
@@ -1038,10 +1123,10 @@ public class TreeConverter implements Opcodes
 	il.add (l0);
     }
 
-    private void convert2long (final InsnList il, final Class<?> fromClass, final Class<?> toClass, final boolean allowNarrowing)
+    private void convert2long (final InsnList il, final Class<?> fromClass, final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
-	final Type toType = Type.getType (toClass);
+	final Type toType = Type.getType (long.class);
 	final int fromSort = fromType.getSort ();
 	if (fromSort == Type.LONG)
 	{
@@ -1135,7 +1220,7 @@ public class TreeConverter implements Opcodes
 	il.add (l00);
     }
 
-    private void convert2float (final InsnList il, final Class<?> fromClass, final Class<?> toClass, final boolean allowNarrowing)
+    private void convert2float (final InsnList il, final Class<?> fromClass, final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	// final Type toType = Type.getType (toClass);
@@ -1228,10 +1313,10 @@ public class TreeConverter implements Opcodes
 	il.add (l00);
     }
 
-    private void convert2double (final InsnList il, final Class<?> fromClass, final Class<?> toClass)
+    private void convert2double (final InsnList il, final Class<?> fromClass)
     {
 	final Type fromType = Type.getType (fromClass);
-	final Type toType = Type.getType (toClass);
+	final Type toType = Type.getType (double.class);
 	final int fromSort = fromType.getSort ();
 	if (fromSort == Type.DOUBLE)
 	{
@@ -1313,7 +1398,7 @@ public class TreeConverter implements Opcodes
 	il.add (new JumpInsnNode (GOTO, ldouble));
 	il.add (l7);
 
-	throwException (il, "java/lang/IllegalArgumentException", "Can't convert to %s", toClass);
+	throwException (il, "java/lang/IllegalArgumentException", "Can't convert to double");
 
 	il.add (lint);
 	il.add (new InsnNode (I2D));

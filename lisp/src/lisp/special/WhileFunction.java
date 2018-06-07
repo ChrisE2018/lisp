@@ -3,7 +3,7 @@ package lisp.special;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.cc.*;
@@ -31,8 +31,8 @@ public class WhileFunction implements LispCCFunction, LispTreeFunction, Opcodes,
     {
 	// (define foo () (while true (printf "foo")))
 
-	final LabelNodeSet l0 = new LabelNodeSet ();
-	final LabelNodeSet l1 = new LabelNodeSet ();
+	final LabelNode l0 = new LabelNode ();
+	final LabelNode l1 = new LabelNode ();
 
 	context.add (l1);
 	final CompileResultSet testResultSet = context.compile (expression.get (1), true);
@@ -51,7 +51,6 @@ public class WhileFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 	return new CompileResultSet (new ImplicitCompileResult (null, false));
     }
 
-    // [TODO] This should be changed to always return false like the above definition
     @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
             final boolean allowNarrowing, final boolean liberalTruth)
