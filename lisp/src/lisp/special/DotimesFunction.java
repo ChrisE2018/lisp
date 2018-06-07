@@ -87,16 +87,10 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	// Compute repeat count
 	final List<?> control = (List<?>)e.get (1);
 	final Object count = control.get (1);
-	// [TODO] Currently always compiles for Object result. Need to analyze the body and
-	// determine if the value is actually referenced.
 	generator.compileExpression (mv, count, Object.class /* TODO */, false, false);
 	mv.visitTypeInsn (CHECKCAST, "java/lang/Integer");
 	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
 	// Leave repeat count on the stack
-
-	// Push default return value onto the stack
-	generator.pushDefaultValue (mv, valueType, true);
-	// Stack [returnValue], repeatCount
 
 	// Put iteration number into local variable
 	final Map<Symbol, LocalBinding> savedLocalVariableMap = generator.getLocalBindingContext ();
@@ -121,19 +115,11 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	// Start of iteration body
 	final Label l2 = new Label ();
 	mv.visitLabel (l2);
-	// Stack repeatCount, [returnValue]
-	if (valueType != null)
-	{
-	    mv.visitInsn (SWAP); // Save repeat count
-	}
+	// Stack repeatCount
 	// <body code goes here>
 	for (int i = 2; i < e.size (); i++)
 	{
-	    if (valueType != null)
-	    {
-		mv.visitInsn (POP);
-	    }
-	    generator.compileExpression (mv, e.get (i), valueType, false, false);
+	    generator.compileExpression (mv, e.get (i), null, false, false);
 	}
 
 	// Loop increment
@@ -146,26 +132,21 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 
 	// // Termination test
 	mv.visitLabel (l1);
-	// Stack [returnValue], repeatCount
+	// Stack repeatCount
 
-	if (valueType != null) // ***ADDED
-	{
-	    mv.visitInsn (SWAP);
-	}
-	// Stack repeatCount, [returnValue]
 	mv.visitInsn (DUP); // Dup count
-	// Stack repeatCount, repeatCount, [returnValue]
+	// Stack repeatCount, repeatCount
 	mv.visitVarInsn (ALOAD, iterationRef);
-	// Stack iteration, repeatCount, repeatCount, [returnValue]
+	// Stack iteration, repeatCount, repeatCount
 	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
 	mv.visitJumpInsn (IF_ICMPGT, l2);
-	// Stack repeatCount, [returnValue]
+	// Stack repeatCount
 
 	mv.visitInsn (POP); // Remove repeat count
-	// coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
-	// Return last body value
 	generator.setLocalBindingContext (savedLocalVariableMap);
-	// localVariableMap = savedLocalVariableMap;
+	// Return false
+	mv.visitInsn (ICONST_0);
+	generator.convert (mv, boolean.class, valueType, allowNarrowing, liberalTruth);
     }
 
     @Override
