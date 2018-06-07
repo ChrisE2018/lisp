@@ -1,25 +1,51 @@
 
 package lisp.cc4;
 
+import java.util.*;
+
 import org.objectweb.asm.tree.LabelNode;
 
 public abstract class CompileResult
 {
-    private final LabelNode l;
+    private final List<LabelNode> labels;
 
-    public CompileResult (final LabelNode l)
+    public CompileResult ()
     {
-	this.l = l;
+	labels = new ArrayList<LabelNode> ();
     }
 
-    public LabelNode getLabel ()
+    public CompileResult (final LabelNode label)
     {
-	return l;
+	labels = new ArrayList<LabelNode> ();
+	labels.add (label);
+	if (label == null)
+	{
+	    throw new Error ("yiuck");
+	}
+    }
+
+    public CompileResult (final List<LabelNode> labels)
+    {
+	this.labels = labels;
+    }
+
+    public List<LabelNode> getLabels ()
+    {
+	return labels;
+    }
+
+    public void addLabels (final List<LabelNode> more)
+    {
+	if (labels.isEmpty ())
+	{
+	    throw new Error ("Compiler error, can't convert default result to jump");
+	}
+	labels.addAll (more);
     }
 
     public boolean isDefault ()
     {
-	return l == null;
+	return labels.isEmpty ();
     }
 
     abstract public Class<?> getResultClass ();

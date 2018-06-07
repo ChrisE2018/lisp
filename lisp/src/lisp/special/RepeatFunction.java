@@ -56,7 +56,7 @@ public class RepeatFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	context.add (l0);
 	context.add (new InsnNode (POP2));
 	// Always return false
-	return new CompileResultSet (new ImplicitCompileResult (null, false));
+	return new CompileResultSet (new ImplicitCompileResult (false));
     }
 
     @Override

@@ -1,6 +1,8 @@
 
 package lisp.cc4;
 
+import java.util.List;
+
 import org.objectweb.asm.tree.LabelNode;
 
 public class ImplicitCompileResult extends CompileResult
@@ -9,9 +11,21 @@ public class ImplicitCompileResult extends CompileResult
 
     private final Object value;
 
+    public ImplicitCompileResult (final Object value)
+    {
+	super ();
+	this.value = value;
+    }
+
     public ImplicitCompileResult (final LabelNode l, final Object value)
     {
 	super (l);
+	this.value = value;
+    }
+
+    public ImplicitCompileResult (final List<LabelNode> labels, final Object value)
+    {
+	super (labels);
 	this.value = value;
     }
 
@@ -34,7 +48,7 @@ public class ImplicitCompileResult extends CompileResult
 	if (o instanceof ImplicitCompileResult)
 	{
 	    final ImplicitCompileResult icr = (ImplicitCompileResult)o;
-	    return icr.getLabel () == getLabel () && icr.value.equals (value);
+	    return icr.value.equals (value);
 	}
 	return false;
     }
@@ -55,8 +69,11 @@ public class ImplicitCompileResult extends CompileResult
 	buffer.append (value.getClass ().getSimpleName ());
 	buffer.append (" ");
 	buffer.append (value);
-	buffer.append (" ");
-	buffer.append (getLabel ());
+	for (final LabelNode label : getLabels ())
+	{
+	    buffer.append (" @");
+	    buffer.append (label);
+	}
 	buffer.append (">");
 	return buffer.toString ();
     }

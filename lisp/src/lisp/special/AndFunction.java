@@ -38,7 +38,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	else if (expression.size () == 1)
 	{
 	    // case (and)
-	    return new CompileResultSet (new ImplicitCompileResult (null, true));
+	    return new CompileResultSet (new ImplicitCompileResult (true));
 	}
 	else if (expression.size () == 2)
 	{
@@ -73,7 +73,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	    for (int j = 0; j < crl.size (); j++)
 	    {
 		final CompileResult cr = crl.get (j);
-		context.add (cr.getLabel ());
+		context.add (cr.getLabels ());
 		if (cr instanceof ImplicitCompileResult)
 		{
 		    final ImplicitCompileResult icr = ((ImplicitCompileResult)cr);
@@ -147,7 +147,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	for (int j = 0; j < crl.size () - 1; j++)
 	{
 	    final CompileResult cr = crl.get (j);
-	    if (cr.getLabel () != null)
+	    if (!cr.isDefault ())
 	    {
 		result.getResults ().add (cr);
 	    }
@@ -162,10 +162,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	final CompileResult last = crl.get (crl.size () - 1);
 	result.getResults ().add (last);
 	final LabelNode lexit = new LabelNode ();
-	if (last.getLabel () == null)
-	{
-	    context.add (new JumpInsnNode (GOTO, lexit));
-	}
+	context.add (new JumpInsnNode (GOTO, lexit));
 
 	if (lPopFalseUsed)
 	{

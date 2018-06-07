@@ -71,7 +71,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	context.add (l0);
 	context.add (new InsnNode (POP));
 	// Always return false
-	return new CompileResultSet (new ImplicitCompileResult (null, false));
+	return new CompileResultSet (new ImplicitCompileResult (false));
     }
 
     @Override

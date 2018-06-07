@@ -27,7 +27,7 @@ public class PlusOneFunction implements Opcodes, LispTreeWalker, LispTreeFunctio
 	// null result case must be first
 	for (final CompileResult compileResult : rs.getResults ())
 	{
-	    final LabelNode l0 = compileResult.getLabel ();
+	    final List<LabelNode> l0 = compileResult.getLabels ();
 	    final LabelNode l1 = (compileResult.isDefault ()) ? null : new LabelNode ();
 
 	    if (compileResult instanceof ExplicitCompileResult)

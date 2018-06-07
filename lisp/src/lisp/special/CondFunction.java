@@ -45,8 +45,8 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     @Override
     public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
+	// (define boolean:foo (boolean:x) (cond (x true)))
 	final CompileResultSet result = new CompileResultSet ();
-	final LabelNode lTrue = new LabelNode ();
 	for (int i = 1; i < expression.size (); i++)
 	{
 	    final LabelNode lNext = new LabelNode ();
@@ -54,7 +54,14 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    if (clause.size () == 1)
 	    {
 		final CompileResultSet bvr = context.compile (clause.car (), true);
-		context.convert2true (bvr, lTrue);
+		final CompileResultSet rr = context.convert2true (bvr);
+		for (final CompileResult r : rr.getResults ())
+		{
+		    if (!r.isDefault ())
+		    {
+			result.add (r);
+		    }
+		}
 		context.add (new JumpInsnNode (GOTO, lNext));
 	    }
 	    else
@@ -66,11 +73,35 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 		    final CompileResultSet ignore = context.compile (clause.get (j), false);
 		    context.convert (ignore, void.class, false, false);
 		}
-		final CompileResultSet v = context.compile (clause.last (), true);
+		final CompileResultSet rr = context.compile (clause.last (), true);
+		for (final CompileResult r : rr.getResults ())
+		{
+		    if (!r.isDefault ())
+		    {
+			result.add (r);
+		    }
+		    else if (r instanceof ExplicitCompileResult)
+		    {
+			final LabelNode ll = new LabelNode ();
+			result.addExplicitCompileResult (ll, r.getResultClass ());
+			context.add (new JumpInsnNode (GOTO, ll));
+		    }
+		    else
+		    {
+			final LabelNode ll = new LabelNode ();
+			result.addImplicitCompileResult (ll, ((ImplicitCompileResult)r).getValue ());
+			context.add (new JumpInsnNode (GOTO, ll));
+		    }
+		}
+		// context.add (new JumpInsnNode (GOTO, lNext));
 	    }
 	    context.add (lNext);
+	    context.add (new LineNumberNode (97, lNext));
 	}
-	context.add (lTrue);
+	// Fall through is false
+	final LabelNode lFalse = new LabelNode ();
+	context.add (new JumpInsnNode (GOTO, lFalse));
+	result.addImplicitCompileResult (lFalse, false);
 	return result;
     }
 

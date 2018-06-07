@@ -24,9 +24,19 @@ public class CompileResultSet
 	}
     }
 
+    public void addImplicitCompileResult (final Object value)
+    {
+	add (new ImplicitCompileResult (value));
+    }
+
     public void addImplicitCompileResult (final LabelNode l1, final Object value)
     {
 	add (new ImplicitCompileResult (l1, value));
+    }
+
+    public void addExplicitCompileResult (final Class<?> kind)
+    {
+	add (new ExplicitCompileResult (kind));
     }
 
     public void addExplicitCompileResult (final LabelNode l1, final Class<?> kind)
@@ -34,34 +44,17 @@ public class CompileResultSet
 	add (new ExplicitCompileResult (l1, kind));
     }
 
-    // public void add (final ImplicitCompileResult cr)
-    // {
-    // // for (final CompileResult r : results)
-    // // {
-    // // if (r instanceof ImplicitCompileResult)
-    // // {
-    // // final ImplicitCompileResult icr = (ImplicitCompileResult)r;
-    // // if (icr.getValue ().equals (cr.getValue ()))
-    // // {
-    // // // Is duplicate, discard.
-    // // icr.addLabel (cr.getLabel ());
-    // // return;
-    // // }
-    // // }
-    // // }
-    // if (!results.contains (cr))
-    // {
-    // results.add (cr);
-    // }
-    // }
-
     public void add (final CompileResult cr)
     {
 	// Don't add duplicates
-	if (!results.contains (cr))
+	for (final CompileResult r : results)
 	{
-	    results.add (cr);
+	    if (r.equals (cr))
+	    {
+		r.addLabels (cr.getLabels ());
+	    }
 	}
+	results.add (cr);
     }
 
     public List<CompileResult> getResults ()

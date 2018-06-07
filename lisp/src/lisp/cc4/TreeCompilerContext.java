@@ -111,6 +111,17 @@ public class TreeCompilerContext implements Opcodes
 	}
     }
 
+    public void add (final List<LabelNode> nodes)
+    {
+	for (final AbstractInsnNode node : nodes)
+	{
+	    if (node != null)
+	    {
+		il.add (node);
+	    }
+	}
+    }
+
     public void convertIfTrue (final CompileResultSet testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
             final LabelNode lTrue)
     {
@@ -127,7 +138,7 @@ public class TreeCompilerContext implements Opcodes
      * Fall through if false. Otherwise leave value on the stack and jump to one of the lTrue
      * labels.
      */
-    public CompileResultSet convert2true (final CompileResultSet testResultSet, final LabelNode lTrue)
+    public CompileResultSet convert2true (final CompileResultSet testResultSet)
     {
 	return converter.convert2true (il, testResultSet);
     }
@@ -152,7 +163,10 @@ public class TreeCompilerContext implements Opcodes
 	for (int i = 0; i < results.size (); i++)
 	{
 	    final CompileResult cr = results.get (i);
-	    add (cr.getLabel ());
+	    for (final LabelNode label : cr.getLabels ())
+	    {
+		add (label);
+	    }
 	    if (cr instanceof ExplicitCompileResult)
 	    {
 		final Class<?> fc = (((ExplicitCompileResult)cr).getResultClass ());
@@ -192,13 +206,11 @@ public class TreeCompilerContext implements Opcodes
 	    }
 	    else
 	    {
-		// Constant expression
-		// il.add (new LdcInsnNode (expr));
 		// Top result class is the same as the expr, perhaps converted to a primitive type.
 		final Class<?> ec = expr.getClass ();
 		final Class<?> p = boxer.getUnboxedClass (ec);
 		// return p != null ? p : ec;
-		return new CompileResultSet (new ImplicitCompileResult (null, expr));
+		return new CompileResultSet (new ImplicitCompileResult (expr));
 	    }
 	}
 	return null;
@@ -337,23 +349,15 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new VarInsnNode (varType.getOpcode (ILOAD), localRef));
 	    final Class<?> fromClass = lb.getVariableClass ();
 	    // return new Object[][] {{null, fromClass}};
-	    return new CompileResultSet (new ExplicitCompileResult (null, fromClass));
+	    return new CompileResultSet (new ExplicitCompileResult (fromClass));
 	}
 	else if (symbol.is ("true"))
 	{
-	    // Special case for global symbol "true"
-	    // il.add (new LdcInsnNode (true));
-	    // return boolean.class;
-	    // return new Object[][] {{null, true}};
-	    return new CompileResultSet (new ImplicitCompileResult (null, true));
+	    return new CompileResultSet (new ImplicitCompileResult (true));
 	}
 	else if (symbol.is ("false"))
 	{
-	    // Special case for global symbol "false"
-	    // il.add (new LdcInsnNode (false));
-	    // return boolean.class;
-	    // return new Object[][] {{null, false}};
-	    return new CompileResultSet (new ImplicitCompileResult (null, false));
+	    return new CompileResultSet (new ImplicitCompileResult (false));
 	}
 	else
 	{

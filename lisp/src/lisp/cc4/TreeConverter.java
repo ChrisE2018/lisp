@@ -24,20 +24,16 @@ public class TreeConverter implements Opcodes
 	}
     }
 
-    // /**
-    // * When a LabelNodeSet is added, we add all the component labels too. A later phase should
-    // * optimize all but one of these labels out.
-    // *
-    // * @param labels
-    // */
-    // public void add (final InsnList il, final LabelNodeSet labels)
-    // {
-    // il.add (labels);
-    // for (final LabelNode ln : labels.getLabels ())
-    // {
-    // add (il, ln);
-    // }
-    // }
+    public void add (final InsnList il, final List<? extends AbstractInsnNode> nodes)
+    {
+	for (final AbstractInsnNode node : nodes)
+	{
+	    if (node != null)
+	    {
+		il.add (node);
+	    }
+	}
+    }
 
     /**
      * Push a default value of a specified class onto the stack.
@@ -108,7 +104,7 @@ public class TreeConverter implements Opcodes
 	    final CompileResult cr = results.get (i);
 	    if (cr instanceof ExplicitCompileResult)
 	    {
-		add (il, cr.getLabel ());
+		add (il, cr.getLabels ());
 		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
 		final Class<?> fc = ecr.getResultClass ();
 		convert (il, fc, boolean.class, allowNarrowing, liberalTruth);
@@ -148,7 +144,7 @@ public class TreeConverter implements Opcodes
 	for (int i = 0; i < results.size (); i++)
 	{
 	    final CompileResult cr = results.get (i);
-	    add (il, cr.getLabel ());
+	    add (il, cr.getLabels ());
 	    if (cr instanceof ExplicitCompileResult)
 	    {
 		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
@@ -188,7 +184,7 @@ public class TreeConverter implements Opcodes
 	for (int j = 0; j < crl.size (); j++)
 	{
 	    final CompileResult cr = crl.get (j);
-	    il.add (cr.getLabel ());
+	    add (il, cr.getLabels ());
 	    if (cr instanceof ImplicitCompileResult)
 	    {
 		final ImplicitCompileResult icr = ((ImplicitCompileResult)cr);

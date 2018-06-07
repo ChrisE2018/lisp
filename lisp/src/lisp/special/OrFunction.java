@@ -38,7 +38,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	else if (expression.size () == 1)
 	{
 	    // case (or)
-	    return new CompileResultSet (new ImplicitCompileResult (null, false));
+	    return new CompileResultSet (new ImplicitCompileResult (false));
 	}
 	else if (expression.size () == 2)
 	{
@@ -74,7 +74,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    for (int j = 0; j < crl.size (); j++)
 	    {
 		final CompileResult cr = crl.get (j);
-		context.add (cr.getLabel ());
+		context.add (cr.getLabels ());
 		if (cr instanceof ImplicitCompileResult)
 		{
 		    final ImplicitCompileResult icr = ((ImplicitCompileResult)cr);
@@ -149,7 +149,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	for (int j = 0; j < crl.size () - 1; j++)
 	{
 	    final CompileResult cr = crl.get (j);
-	    if (cr.getLabel () != null)
+	    if (!cr.isDefault ())
 	    {
 		result.getResults ().add (cr);
 	    }
@@ -161,13 +161,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	// Put the last one in
 	final CompileResult last = crl.get (crl.size () - 1);
 	result.getResults ().add (last);
-	if (last.getLabel () == null)
-	{
-	    if (lPopTrueUsed)
-	    {
-		context.add (new JumpInsnNode (GOTO, lexit));
-	    }
-	}
+	context.add (new JumpInsnNode (GOTO, lexit));
 
 	if (lPopTrueUsed)
 	{

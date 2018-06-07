@@ -48,7 +48,7 @@ public class WhileFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 
 	context.add (l0);
 	// Always return false
-	return new CompileResultSet (new ImplicitCompileResult (null, false));
+	return new CompileResultSet (new ImplicitCompileResult (false));
     }
 
     @Override

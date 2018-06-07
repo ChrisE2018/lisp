@@ -243,6 +243,8 @@ public class Optimizer extends ClassNode implements Opcodes
 			removals++;
 		    }
 		}
+		// If instruction is not a GOTO, change to a POP
+		// Implement LOAD/POP deletion
 	    }
 	}
     }

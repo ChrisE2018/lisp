@@ -7,6 +7,11 @@ public class ExplicitCompileResult extends CompileResult
 {
     private final Class<?> resultClass;
 
+    public ExplicitCompileResult (final Class<?> resultClass)
+    {
+	this.resultClass = resultClass;
+    }
+
     public ExplicitCompileResult (final LabelNode l, final Class<?> resultClass)
     {
 	super (l);
@@ -31,7 +36,7 @@ public class ExplicitCompileResult extends CompileResult
 	if (o instanceof ExplicitCompileResult)
 	{
 	    final ExplicitCompileResult ecr = (ExplicitCompileResult)o;
-	    return ecr.getLabel () == getLabel () && ecr.resultClass.equals (resultClass);
+	    return ecr.resultClass.equals (resultClass);
 	}
 	return false;
     }
@@ -46,6 +51,11 @@ public class ExplicitCompileResult extends CompileResult
 	buffer.append (System.identityHashCode (this));
 	buffer.append (" ");
 	buffer.append (resultClass);
+	for (final LabelNode label : getLabels ())
+	{
+	    buffer.append (" @");
+	    buffer.append (label);
+	}
 	buffer.append (">");
 	return buffer.toString ();
     }

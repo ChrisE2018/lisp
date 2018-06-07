@@ -27,7 +27,7 @@ public class QuoteFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 	if (resultDesired)
 	{
 	    final Object value = expression.get (1);
-	    return new CompileResultSet (new ImplicitCompileResult (null, value));
+	    return new CompileResultSet (new ImplicitCompileResult (value));
 	}
 	return null;
     }

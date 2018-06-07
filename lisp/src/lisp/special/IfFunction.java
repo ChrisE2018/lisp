@@ -59,11 +59,9 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    final CompileResultSet tresult = context.compile (expression.get (2), true);
 	    for (final CompileResult cr : tresult.getResults ())
 	    {
-		final LabelNode label = cr.getLabel ();
-		if (label == null)
+		if (cr.isDefault ())
 		{
 		    final LabelNode lTrue = new LabelNode ();
-		    // context.add (new InsnNode (NOP));
 		    context.add (new JumpInsnNode (GOTO, lTrue));
 		    result.add (cr.getJumpTo (lTrue));
 		}
@@ -87,7 +85,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    {
 		final Class<?> cls = cr.getClass ();
 		final CompileResult conflictCr = result.getCompileResult (cls);
-		if (cr.getLabel () == null)
+		if (cr.isDefault ())
 		{
 		    final LabelNode ff = new LabelNode ();
 		    context.add (new JumpInsnNode (GOTO, ff));
