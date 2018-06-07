@@ -105,10 +105,12 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	else if (generator.isMethodArg (symbol))
 	{
 	    // Parameter reference
+	    LOGGER.finer (new LogString ("Setq parameter %s (%d)", symbol, lb));
 	    compileArgSetq (generator, mv, symbol, expr.get (2), valueClass, allowNarrowing, liberalTruth);
 	}
 	else
 	{
+	    LOGGER.finer (new LogString ("Setq global %s (%d)", symbol, lb));
 	    compileGlobalSetq (generator, mv, symbol, expr.get (2), valueClass, allowNarrowing, liberalTruth);
 	}
     }
@@ -129,7 +131,6 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    mv.visitInsn (DUP);
 	    mv.storeLocal (localRef);
-	    // generator.coerceRequiredX (mv, valueClass);
 	    generator.convert (mv, varClass, valueClass, allowNarrowing, liberalTruth);
 	}
     }
@@ -141,7 +142,6 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	// [TODO] If we can determine the type, use that information.
 	final int localRef = generator.getMethodArgIndex (symbol);
 	final Class<?> varClass = generator.getMethodArgClass (symbol);
-	LOGGER.finer (new LogString ("Setq parameter %s (%d)", symbol, localRef));
 	if (valueClass == null)
 	{
 	    generator.compileExpression (mv, expr, varClass, false, false);
@@ -152,8 +152,6 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    mv.visitInsn (DUP);
 	    mv.storeArg (localRef);
-	    // [TODO] Use convert.convert here instead
-	    // generator.coerceRequiredX (mv, valueClass);
 	    generator.convert (mv, varClass, valueClass, allowNarrowing, liberalTruth);
 	}
     }
@@ -162,7 +160,6 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
             final Object valueExpr, final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	generator.addSymbolReference (symbol);
-	LOGGER.finer (new LogString ("Symbol assignment to %s", symbol));
 	// [TODO] If the symbol valueCell is constant, use the current value.
 	// [TODO] If the valueCell is a TypedValueCell, use the type information.
 	mv.visitVarInsn (ALOAD, 0);
@@ -178,11 +175,10 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "setValue", "(Ljava/lang/Object;)V", false);
 	// Return the expression value
 	generator.addGlobalReference (symbol);
-	// if (valueClass != null)
-	// {
-	// generator.coerceRequiredX (mv, valueClass);
-	// }
-	generator.convert (mv, Object.class, valueClass, allowNarrowing, liberalTruth);
+	if (valueClass != null)
+	{
+	    generator.convert (mv, Object.class, valueClass, allowNarrowing, liberalTruth);
+	}
     }
 
     @Override

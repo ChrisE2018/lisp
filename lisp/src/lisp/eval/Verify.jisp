@@ -2,6 +2,7 @@
 ;; (loadFile "src/lisp/eval/Verify.jisp")
 
 (resetTestStatistics)
+(showBytecode f)
 
 (verify 1 1)
 (verify 2 2)
@@ -131,7 +132,7 @@
 (verify a 5)
 
 (define foo () (dotimes (i 3) 0))
-(verify (foo) 0)
+(verify (foo) false)
 
 (define foo () (dotimes (i 3) 0) 5)
 

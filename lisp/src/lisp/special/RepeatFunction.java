@@ -78,16 +78,14 @@ public class RepeatFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	// (define foo (x) (repeat x (printf "foo")) 5)
 	// (define int:foo () (repeat 1000 3))
 
-	// Make a local variable for repeat count
-	final int countRef = mv.newLocal (Type.getType (int.class));
-
 	// Compute repeat count
 	generator.compileExpression (mv, e.get (1), int.class, false, false);
-	// Put repeat count number into local variable
+	// Make a local variable for repeat count
+	final int countRef = mv.newLocal (Type.getType (int.class));
 	mv.visitVarInsn (ISTORE, countRef);
 
 	// Push default return value onto the stack
-	generator.pushDefaultValue (mv, valueType, false);
+	// generator.pushDefaultValue (mv, valueType, false);
 
 	// Push iteration number onto the stack
 	mv.visitInsn (ICONST_0);
@@ -99,48 +97,35 @@ public class RepeatFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	// Start of iteration body
 	final Label l2 = new Label ();
 	mv.visitLabel (l2);
-	// Stack: iteration, value
+	// Stack: iteration
 
 	// <body code goes here>
-	if (valueType != null)
+	// Stack: iteration
+	for (int i = 2; i < e.size (); i++)
 	{
-	    mv.visitInsn (SWAP);
-	}
-	// Stack: value, iteration
-	if (e.size () > 2)
-	{
-	    if (valueType != null)
-	    {
-		mv.visitInsn (POP);
-	    }
-	    for (int i = 2; i < e.size () - 1; i++)
-	    {
-		generator.compileExpression (mv, e.get (i), null, false, false);
-	    }
-	    generator.compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
-	}
-	if (valueType != null)
-	{
-	    mv.visitInsn (SWAP);
+	    generator.compileExpression (mv, e.get (i), null, false, false);
 	}
 
 	// Loop increment
-	// Stack: iteration, value
+	// Stack: iteration
 	mv.visitInsn (ICONST_1);
 	mv.visitInsn (IADD);
 
 	// Termination test
-	// Stack: iteration, value
+	// Stack: iteration
 	mv.visitLabel (l1);
-
 	mv.visitInsn (DUP);
 	mv.visitVarInsn (ILOAD, countRef);
-	// Stack: count, iteration, iteration, value
+	// Stack: count, iteration, iteration
 	mv.visitJumpInsn (IF_ICMPLT, l2);
-	// Stack: iteration, value
+	// Stack: iteration
+
+	// Return final value
 	// Remove iteration count
 	mv.visitInsn (POP);
-	// coerceRequired (mv, valueType, allowNarrowing, liberalTruth);
+	// Always return false
+	mv.visitInsn (ICONST_0);
+	generator.convert (mv, boolean.class, valueType, allowNarrowing, liberalTruth);
     }
 
     @Override
