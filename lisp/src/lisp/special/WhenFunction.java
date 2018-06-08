@@ -3,7 +3,7 @@ package lisp.special;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.cc.*;
@@ -48,6 +48,7 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
 	}
 	final CompileResultSet result = context.compile (expression.last (), true);
 	// Changing null to false fixes the problem with collectPrimes
+	context.add (new JumpInsnNode (GOTO, lNull));
 	result.addImplicitCompileResult (lNull, null);
 	return result;
     }
