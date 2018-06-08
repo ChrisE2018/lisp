@@ -102,9 +102,9 @@ public class TreeConverter implements Opcodes
 	for (int i = 0; i < results.size (); i++)
 	{
 	    final CompileResult cr = results.get (i);
+	    add (il, cr.getLabels ());
 	    if (cr instanceof ExplicitCompileResult)
 	    {
-		add (il, cr.getLabels ());
 		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
 		final Class<?> fc = ecr.getResultClass ();
 		convert (il, fc, boolean.class, allowNarrowing, liberalTruth);
@@ -182,6 +182,7 @@ public class TreeConverter implements Opcodes
 	    }
 	}
 	add (il, lExit);
+	il.add (new LineNumberNode (185, lExit));
     }
 
     /**
