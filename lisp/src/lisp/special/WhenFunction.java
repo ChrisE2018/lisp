@@ -32,25 +32,46 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
 	// (define foo (boolean:x) (when x 3))
 	// (define foo () (when 'x (printf "foo")))
 	// (define foo () (when (not 'x) 3)))
-	final CompileResultSet testResultSet = context.compile (expression.get (1), true);
 	// At this point we can optimize handling of information returned from the compiler.compile
 	// call. Any result that is not boolean can just be wired to goto l2.
 	// Any result that is a constant true or false can go directly to l1 or l2.
 
-	final LabelNode lNull = new LabelNode ();// This label means we return null
-	context.convertIfFalse (testResultSet, false, true, lNull);
-
-	for (int i = 2; i < expression.size () - 1; i++)
+	if (resultDesired)
 	{
-	    final CompileResultSet r = context.compile (expression.get (i), false);
-	    // Do something with r to throw away garbage if required
-	    context.convert (r, void.class, false, false);
+	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	    final LabelNode lNull = new LabelNode ();// This label means we return null
+	    context.convertIfFalse (testResultSet, false, true, lNull);
+	    // Evaluate and discard body forms except the last one
+	    for (int i = 2; i < expression.size () - 1; i++)
+	    {
+		final CompileResultSet r = context.compile (expression.get (i), false);
+		// Do something with r to throw away garbage if required
+		context.convert (r, void.class, false, false);
+	    }
+	    final CompileResultSet result = context.compile (expression.last (), resultDesired);
+	    // Changing null to false fixes the problem with collectPrimes
+
+	    context.add (lNull);
+	    final LabelNode ll = new LabelNode ();
+	    context.add (new JumpInsnNode (GOTO, ll));
+	    result.addImplicitCompileResult (ll, null);
+	    return result;
 	}
-	final CompileResultSet result = context.compile (expression.last (), true);
-	// Changing null to false fixes the problem with collectPrimes
-	context.add (new JumpInsnNode (GOTO, lNull));
-	result.addImplicitCompileResult (lNull, null);
-	return result;
+	else
+	{
+	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	    final LabelNode lNull = new LabelNode ();// This label means we return null
+	    context.convertIfFalse (testResultSet, false, true, lNull);
+	    // Evaluate and discard all body forms
+	    for (int i = 2; i < expression.size (); i++)
+	    {
+		final CompileResultSet r = context.compile (expression.get (i), false);
+		// Do something with r to throw away garbage if required
+		context.convert (r, void.class, false, false);
+	    }
+	    context.add (lNull);
+	    return new CompileResultSet ();
+	}
     }
 
     // @Override
