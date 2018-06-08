@@ -421,6 +421,196 @@
 (verify (foo 3) 3)
 (verify (foo 5) 5)
 
+
+(verifyPhase primesCompileBug)
+
+(verification isPrimeAgain
+ (define isprime (a)
+  (let ((b 2)
+  		(result true))
+    (while (and (<= (* b b) a) result)
+      (if (zerop (rem a b))
+      	  (setq result false)
+      	  (setq b (1+ b))))
+    result))
+    ;; Test cases
+    (verify (isprime 5) true)
+    (verify (isprime 11) true)
+    (verify (isprime 37) true)
+    (verify (isprime 81) false)
+    (verify (isprime 256) false))
+
+(verification collectPrimesAgain
+	(define ccc (n)
+    (let ((i 2) (result (list)))
+      (while (<= (size result) n)
+        (when (isprime i) (add result i))
+        (setq i (1+ i)))
+      result))
+	(verify (ccc 4) '(2 3 5 7 11))
+	(verify (ccc 1) '(2 3))
+	(verify (ccc 6) '(2 3 5 7 11 13 17)))
+
+
+(verification collectPrimesUsingIf
+	(define ccc (n)
+    (let ((i 2) (result (list)))
+      (while (<= (size result) n)
+        (if (isprime i) (add result i))	; if instead of when here
+        (setq i (1+ i)))
+      result))
+	(verify (ccc 4) '(2 3 5 7 11))
+	(verify (ccc 1) '(2 3))
+	(verify (ccc 6) '(2 3 5 7 11 13 17)))
+
+(verification collectPrimesUsingUnlessNot
+  (define ccc (n)
+    (let ((i 2) (result (list)))
+      (while (<= (size result) n)
+        (unless (not (isprime i)) (add result i))
+        (setq i (1+ i)))
+      result))
+	(verify (ccc 4) '(2 3 5 7 11))
+	(verify (ccc 1) '(2 3))
+	(verify (ccc 6) '(2 3 5 7 11 13 17)))
+
+;(define ccc (n)
+;	(when (isprime n)
+;		(printf "prime"))) 
+
+
+(define collectPrimes (n); bad
+;; This is an infinite loop
+    (let ((i 2) (result (list)))
+      (while (<= (size result) n)
+        (when (not true) ;(isprime i) 
+        	(add result i)
+        	)
+        (setq i (1+ i))
+        )
+      result))
+
+(define collectPrimes (n); bad
+ ;; Reference to undefined function
+    (let ((i 2) (result (list)))
+      (while (<= (size result) n)
+        (when (bahbab true) ;(isprime i) 
+        	(add result i)
+        	)
+        (setq i (1+ i))
+        )
+      result))
+  
+(define collectPrimes (n); bad
+ ;; Reference to undefined function
+    (let ((i 2) (result (list)))
+      (progn (<= (size result) n)
+        (when (bahbab true) ;(isprime i) 
+        	(add result i)
+        	)
+        (setq i (1+ i))
+        )
+      result))
+      
+(define collectPrimes (n); bad
+ ;; Reference to undefined function
+    (let ((i 2) (result (list)))
+      (<= (size result) n)
+      (when (bahbab true) ;(isprime i) 
+        	(add result i)
+        	)
+      (setq i (1+ i))
+      result))
+
+(define collectPrimes (n); bad
+ ;; Reference to undefined function
+    (let ((i 2) (result (list)))
+      (<= (size result) n)
+      (when (bahbab true) ;(isprime i) 
+        	(add result i)
+        	)
+      ;(setq i (1+ i))
+      result))
+
+(define collectPrimes (n); bad
+ ;; Reference to undefined function
+    (let ((i 2) (result (list)))
+      (when (bahbab true) ;(isprime i) 
+        	(add result i)
+        	)
+      result))
+
+(define collectPrimes (n); bad
+ ;; Reference to undefined function
+    (let* ((i 2) (result (list)))
+      (when (bahbab true) 
+        	(add result i)
+        	)
+      result))
+
+ (define collectPrimes (n); bad
+ ;; Reference to undefined function
+    (let* ((i 2) (result (list)))
+      (when (bahbab true) 
+        	3
+        	)
+      result))
+
+(define collectPrimes (n); bad
+ ;; Reference to undefined function
+    (let ((i 2) 
+    	  ;(result (list))
+    	 )
+      (when (bahbab true) 
+        	3
+        	)
+      4))
+
+(define collectPrimes (n); bad
+ ;; Reference to undefined function
+    (let ((i 2) 
+    	 )
+      (when (bahbab true) 
+        	3
+        	)
+      4))
+
+(define collectPrimes (n); bad
+ ;; Reference to undefined function
+      (when (bahbab true) 
+        	3
+        	)
+      4)
+(define collectPrimes (n); bad
+ ;; Reference to undefined variable
+      (when jjsajas 
+        	3
+        	)
+      4)
+
+(define collectPrimes (n); ok
+      (when false 
+        	3
+        	)
+      4)
+
+(define collectPrimes (n); ok
+      (when true 
+        	3
+        	)
+      4)
+      
+(define collectPrimes (n); ok
+      (when 44 
+        	3
+        	)
+      4)
+
+(define collectPrimes (n); OK
+    (when (bahbab true) 
+        	3
+        	))
+
 (sleep 0.2)
 (printTestStatistics)
 

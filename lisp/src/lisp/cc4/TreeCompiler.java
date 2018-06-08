@@ -246,7 +246,6 @@ public class TreeCompiler extends ClassNode implements Opcodes
     private MethodNode getCompiledMethod ()
     {
 	final MethodNode mn = new MethodNode (ACC_PUBLIC, methodName, getMethodSignature (), null, null);
-	final InsnList il = mn.instructions;
 	final Map<Symbol, LocalBinding> locals = new LinkedHashMap<Symbol, LocalBinding> ();
 	for (int i = 0; i < methodArgs.size (); i++)
 	{
@@ -267,10 +266,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	{
 	    // [TODO] This should collect crs of the same class and make them jump to the same place
 	    // instead of duplicating code
-	    for (final LabelNode label : resultKind.getLabels ())
-	    {
-		context.add (label);
-	    }
+	    context.add (resultKind.getLabels ());
 	    if (resultKind instanceof ExplicitCompileResult)
 	    {
 		context.convert (((ExplicitCompileResult)resultKind).getResultClass (), methodReturnClass, false, false);
@@ -280,7 +276,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 		final ImplicitCompileResult icr = (ImplicitCompileResult)resultKind;
 		context.add (icr);
 	    }
-	    il.add (new InsnNode (returnType.getOpcode (IRETURN)));
+	    context.add (new InsnNode (returnType.getOpcode (IRETURN)));
 	}
 	// Better not get here
 	mn.maxStack = 0;

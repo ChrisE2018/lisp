@@ -160,15 +160,12 @@ public class TreeCompilerContext implements Opcodes
 	    return;
 	}
 	// [TODO] If toClass is void (or null) then collapse all cases of the same size
-	final LabelNode l = new LabelNode ();
+	final LabelNode lExit = new LabelNode ();
 	final List<CompileResult> results = fromClass.getResults ();
 	for (int i = 0; i < results.size (); i++)
 	{
 	    final CompileResult cr = results.get (i);
-	    for (final LabelNode label : cr.getLabels ())
-	    {
-		add (label);
-	    }
+	    add (cr.getLabels ());
 	    if (cr instanceof ExplicitCompileResult)
 	    {
 		final Class<?> fc = (((ExplicitCompileResult)cr).getResultClass ());
@@ -199,16 +196,10 @@ public class TreeCompilerContext implements Opcodes
 		    convert (quotedClass, treeCompiler.getMethodReturnClass (), false, false);
 		}
 	    }
-	    // Jump to exit label if required
-	    if (results.size () > 1 && i + 1 < results.size ())
-	    {
-		add (new JumpInsnNode (GOTO, l));
-	    }
+	    // Jump to exit label
+	    add (new JumpInsnNode (GOTO, lExit));
 	}
-	if (results.size () > 1)
-	{
-	    add (l);
-	}
+	add (lExit);
     }
 
     public void add (final ImplicitCompileResult icr)

@@ -74,6 +74,10 @@ public class CompilerFactory
 	    {
 		final Type classType = Type.getType ("Llisp/cc/Foobar;");
 		final CompileLoader result = new CompileLoader ();
+		// set class visitor to null to disable actual bytecode generation. Sometimes this
+		// allows the bytecode to be printed before an error that would otherwise be
+		// difficult to debug.
+		// result.setClassVisitor (null);
 		result.setClassReader (null);
 		result.setClassType (classType);
 		ClassVisitor cv = result.getClassVisitor ();
