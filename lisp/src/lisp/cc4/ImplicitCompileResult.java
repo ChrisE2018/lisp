@@ -17,7 +17,7 @@ public class ImplicitCompileResult extends CompileResult
 	this.value = value;
     }
 
-    public ImplicitCompileResult (final List<LabelNode> labels, final Object value)
+    public ImplicitCompileResult (final List<org.objectweb.asm.tree.LabelNode> labels, final Object value)
     {
 	super (labels);
 	this.value = value;
@@ -89,7 +89,7 @@ public class ImplicitCompileResult extends CompileResult
 	    buffer.append (" ");
 	    buffer.append (value);
 	}
-	final List<LabelNode> labels = getLabels ();
+	final List<org.objectweb.asm.tree.LabelNode> labels = getLabels ();
 	if (labels != null)
 	{
 	    for (final LabelNode label : labels)

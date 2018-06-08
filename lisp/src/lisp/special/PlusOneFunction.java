@@ -4,9 +4,9 @@ package lisp.special;
 import java.util.*;
 
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
+import lisp.asm.instructions.*;
 import lisp.cc4.*;
 import lisp.symbol.LispVisitor;
 
@@ -27,7 +27,7 @@ public class PlusOneFunction implements Opcodes, LispTreeWalker, LispTreeFunctio
 	// null result case must be first
 	for (final CompileResult compileResult : rs.getResults ())
 	{
-	    final List<LabelNode> l0 = compileResult.getLabels ();
+	    final List<org.objectweb.asm.tree.LabelNode> l0 = compileResult.getLabels ();
 	    final LabelNode l1 = new LabelNode ();
 
 	    if (compileResult instanceof ExplicitCompileResult)

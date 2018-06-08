@@ -12,6 +12,12 @@ public class InsnNode extends org.objectweb.asm.tree.InsnNode
 	this.opcode = opcode;
     }
 
+    public InsnNode (final int opcode)
+    {
+	super (opcode);
+	this.opcode = InsnCode.find (opcode);
+    }
+
     @Override
     public String toString ()
     {

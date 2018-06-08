@@ -13,6 +13,13 @@ public class MethodInsnNode extends org.objectweb.asm.tree.MethodInsnNode
 	this.opcode = opcode;
     }
 
+    public MethodInsnNode (final int opcode, final String owner, final String name, final String descriptor,
+            final boolean isInterface)
+    {
+	super (opcode, owner, name, descriptor, isInterface);
+	this.opcode = InsnCode.find (opcode);
+    }
+
     @Override
     public String toString ()
     {

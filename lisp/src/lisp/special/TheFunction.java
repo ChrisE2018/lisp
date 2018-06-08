@@ -7,7 +7,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.*;
 import lisp.cc.*;
 import lisp.cc4.LispTreeWalker;
-import lisp.symbol.*;
+import lisp.symbol.LispVisitor;
 
 public class TheFunction implements LispCCFunction, Opcodes, LispTreeWalker
 {

@@ -10,6 +10,12 @@ import org.objectweb.asm.tree.*;
 
 import lisp.*;
 import lisp.Symbol;
+import lisp.asm.instructions.FieldInsnNode;
+import lisp.asm.instructions.InsnNode;
+import lisp.asm.instructions.LdcInsnNode;
+import lisp.asm.instructions.MethodInsnNode;
+import lisp.asm.instructions.TypeInsnNode;
+import lisp.asm.instructions.VarInsnNode;
 import lisp.cc.*;
 import lisp.util.LogString;
 

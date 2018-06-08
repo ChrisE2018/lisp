@@ -14,6 +14,12 @@ public class FieldInsnNode extends org.objectweb.asm.tree.FieldInsnNode implemen
 	this.opcode = opcode;
     }
 
+    public FieldInsnNode (final int opcode, final String owner, final String name, final String descriptor)
+    {
+	super (opcode, owner, name, descriptor);
+	this.opcode = InsnCode.find (opcode);
+    }
+
     @Override
     public String toString ()
     {

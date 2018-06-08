@@ -6,6 +6,13 @@ import java.util.List;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
+import lisp.asm.instructions.InsnNode;
+import lisp.asm.instructions.JumpInsnNode;
+import lisp.asm.instructions.LabelNode;
+import lisp.asm.instructions.LdcInsnNode;
+import lisp.asm.instructions.LineNumberNode;
+import lisp.asm.instructions.MethodInsnNode;
+import lisp.asm.instructions.TypeInsnNode;
 import lisp.cc.Boxer;
 
 /**
@@ -91,7 +98,7 @@ public class TreeConverter implements Opcodes
      * the stack.
      */
     public void convertIfTrue (final InsnList il, final CompileResultSet fromClass, final boolean allowNarrowing,
-            final boolean liberalTruth, final LabelNode lTrue)
+            final boolean liberalTruth, final org.objectweb.asm.tree.LabelNode lTrue)
     {
 	if (fromClass == null)
 	{
@@ -140,7 +147,7 @@ public class TreeConverter implements Opcodes
      * the stack.
      */
     public void convertIfFalse (final InsnList il, final CompileResultSet fromClass, final boolean allowNarrowing,
-            final boolean liberalTruth, final LabelNode lFalse)
+            final boolean liberalTruth, final org.objectweb.asm.tree.LabelNode lFalse)
     {
 	if (fromClass == null)
 	{
@@ -482,7 +489,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Byte.
      */
-    private void convertByte2int (final InsnList il, final LabelNode otherwise)
+    private void convertByte2int (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Byte"));
@@ -498,7 +505,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Character.
      */
-    private void convertChar2int (final InsnList il, final LabelNode otherwise)
+    private void convertChar2int (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Character"));
@@ -514,7 +521,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Short.
      */
-    private void convertShort2int (final InsnList il, final LabelNode otherwise)
+    private void convertShort2int (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Short"));
@@ -530,7 +537,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Integer.
      */
-    private void convertInt2int (final InsnList il, final LabelNode otherwise)
+    private void convertInt2int (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Integer"));
@@ -546,7 +553,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Long.
      */
-    private void convertLong2int (final InsnList il, final LabelNode otherwise)
+    private void convertLong2int (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Long"));
@@ -563,7 +570,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Float.
      */
-    private void convertFloat2int (final InsnList il, final LabelNode otherwise)
+    private void convertFloat2int (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Float"));
@@ -580,7 +587,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Double.
      */
-    private void convertDouble2int (final InsnList il, final LabelNode otherwise)
+    private void convertDouble2int (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Double"));
@@ -597,7 +604,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Long.
      */
-    private void convertLong2long (final InsnList il, final LabelNode otherwise)
+    private void convertLong2long (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Long"));
@@ -613,7 +620,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Float.
      */
-    private void convertFloat2long (final InsnList il, final LabelNode otherwise)
+    private void convertFloat2long (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Float"));
@@ -630,7 +637,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Double.
      */
-    private void convertDouble2long (final InsnList il, final LabelNode otherwise)
+    private void convertDouble2long (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Double"));
@@ -647,7 +654,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Byte.
      */
-    private void convertByte2float (final InsnList il, final LabelNode otherwise)
+    private void convertByte2float (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Byte"));
@@ -664,7 +671,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Character.
      */
-    private void convertCharacter2float (final InsnList il, final LabelNode otherwise)
+    private void convertCharacter2float (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Character"));
@@ -681,7 +688,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Short.
      */
-    private void convertShort2float (final InsnList il, final LabelNode otherwise)
+    private void convertShort2float (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Short"));
@@ -698,7 +705,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Integer.
      */
-    private void convertInteger2float (final InsnList il, final LabelNode otherwise)
+    private void convertInteger2float (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Integer"));
@@ -715,7 +722,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Float.
      */
-    private void convertFloat2float (final InsnList il, final LabelNode otherwise)
+    private void convertFloat2float (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Float"));
@@ -731,7 +738,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Long.
      */
-    private void convertLong2float (final InsnList il, final LabelNode otherwise)
+    private void convertLong2float (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Long"));
@@ -748,7 +755,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Double.
      */
-    private void convertDouble2float (final InsnList il, final LabelNode otherwise)
+    private void convertDouble2float (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Double"));
@@ -765,7 +772,8 @@ public class TreeConverter implements Opcodes
     // * @param il Instruction list to contain the code.
     // * @param otherwise Label to jump to if the stack does not have a Float.
     // */
-    // private void convertFloat2double (final InsnList il, final LabelNode otherwise)
+    // private void convertFloat2double (final InsnList il, final org.objectweb.asm.tree.LabelNode
+    // otherwise)
     // {
     // il.add (new InsnNode (DUP));
     // il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Float"));
@@ -782,7 +790,7 @@ public class TreeConverter implements Opcodes
      * @param il Instruction list to contain the code.
      * @param otherwise Label to jump to if the stack does not have a Double.
      */
-    private void convertDouble2double (final InsnList il, final LabelNode otherwise)
+    private void convertDouble2double (final InsnList il, final org.objectweb.asm.tree.LabelNode otherwise)
     {
 	il.add (new InsnNode (DUP));
 	il.add (new TypeInsnNode (INSTANCEOF, "java/lang/Double"));

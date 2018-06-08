@@ -14,6 +14,12 @@ public class JumpInsnNode extends org.objectweb.asm.tree.JumpInsnNode
 	this.opcode = opcode;
     }
 
+    public JumpInsnNode (final int opcode, final LabelNode label)
+    {
+	super (opcode, label);
+	this.opcode = InsnCode.find (opcode);
+    }
+
     @Override
     public String toString ()
     {

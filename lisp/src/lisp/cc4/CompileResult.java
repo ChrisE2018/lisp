@@ -7,11 +7,11 @@ import org.objectweb.asm.tree.LabelNode;
 
 public abstract class CompileResult
 {
-    private final List<LabelNode> labels;
+    private final List<org.objectweb.asm.tree.LabelNode> labels;
 
-    public CompileResult (final LabelNode label)
+    public CompileResult (final org.objectweb.asm.tree.LabelNode label)
     {
-	labels = new ArrayList<LabelNode> ();
+	labels = new ArrayList<org.objectweb.asm.tree.LabelNode> ();
 	labels.add (label);
 	if (label == null)
 	{
@@ -19,17 +19,17 @@ public abstract class CompileResult
 	}
     }
 
-    public CompileResult (final List<LabelNode> labels)
+    public CompileResult (final List<org.objectweb.asm.tree.LabelNode> labels)
     {
 	this.labels = labels;
     }
 
-    public List<LabelNode> getLabels ()
+    public List<org.objectweb.asm.tree.LabelNode> getLabels ()
     {
 	return labels;
     }
 
-    public void addLabels (final List<LabelNode> more)
+    public void addLabels (final List<? extends org.objectweb.asm.tree.LabelNode> more)
     {
 	if (labels.isEmpty ())
 	{

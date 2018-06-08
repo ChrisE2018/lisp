@@ -1,6 +1,22 @@
 
 package lisp.asm.instructions;
 
+// Put these imports into the source file where they are needed to shadow the asm definitions.
+//import lisp.asm.instructions.FieldInsnNode;
+//import lisp.asm.instructions.IincInsnNode;
+//import lisp.asm.instructions.InsnNode;
+//import lisp.asm.instructions.IntInsnNode;
+//import lisp.asm.instructions.InvokeDynamicInsnNode;
+//import lisp.asm.instructions.JumpInsnNode;
+//import lisp.asm.instructions.LabelNode;
+//import lisp.asm.instructions.LdcInsnNode;
+//import lisp.asm.instructions.LineNumberNode;
+//import lisp.asm.instructions.LookupSwitchInsnNode;
+//import lisp.asm.instructions.MethodInsnNode;
+//import lisp.asm.instructions.MultiANewArrayInsnNode;
+//import lisp.asm.instructions.TypeInsnNode;
+//import lisp.asm.instructions.VarInsnNode;
+
 public enum AccessKeywords
 {
     // From asm Opcodes.java

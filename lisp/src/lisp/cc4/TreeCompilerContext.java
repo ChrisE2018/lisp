@@ -12,6 +12,14 @@ import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.Symbol;
+import lisp.asm.instructions.FieldInsnNode;
+import lisp.asm.instructions.InsnNode;
+import lisp.asm.instructions.JumpInsnNode;
+import lisp.asm.instructions.LabelNode;
+import lisp.asm.instructions.LdcInsnNode;
+import lisp.asm.instructions.MethodInsnNode;
+import lisp.asm.instructions.TypeInsnNode;
+import lisp.asm.instructions.VarInsnNode;
 import lisp.cc.LocalBinding;
 import lisp.symbol.*;
 import lisp.util.LogString;
@@ -113,7 +121,7 @@ public class TreeCompilerContext implements Opcodes
 	}
     }
 
-    public void add (final List<LabelNode> nodes)
+    public void add (final List<? extends org.objectweb.asm.tree.LabelNode> nodes)
     {
 	for (final AbstractInsnNode node : nodes)
 	{
@@ -126,13 +134,13 @@ public class TreeCompilerContext implements Opcodes
     }
 
     public void convertIfTrue (final CompileResultSet testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
-            final LabelNode lTrue)
+            final org.objectweb.asm.tree.LabelNode lTrue)
     {
 	converter.convertIfTrue (il, testResultSet, allowNarrowing, liberalTruth, lTrue);
     }
 
     public void convertIfFalse (final CompileResultSet testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
-            final LabelNode lFalse)
+            final org.objectweb.asm.tree.LabelNode lFalse)
     {
 	converter.convertIfFalse (il, testResultSet, allowNarrowing, liberalTruth, lFalse);
     }

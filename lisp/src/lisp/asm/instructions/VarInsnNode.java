@@ -12,6 +12,12 @@ public class VarInsnNode extends org.objectweb.asm.tree.VarInsnNode
 	this.opcode = opcode;
     }
 
+    public VarInsnNode (final int opcode, final int var)
+    {
+	super (opcode, var);
+	this.opcode = InsnCode.find (opcode);
+    }
+
     @Override
     public String toString ()
     {

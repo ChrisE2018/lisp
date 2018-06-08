@@ -173,4 +173,16 @@ public enum InsnCode
     {
 	return instructionCode;
     }
+
+    public static InsnCode find (final int opcode)
+    {
+	for (final InsnCode ic : InsnCode.values ())
+	{
+	    if (ic.instructionCode == opcode)
+	    {
+		return ic;
+	    }
+	}
+	throw new Error ("There is no InsnCode for value " + opcode);
+    }
 }

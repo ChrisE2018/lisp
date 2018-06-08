@@ -3,7 +3,6 @@ package lisp.asm.instructions;
 
 public class MultiANewArrayInsnNode extends org.objectweb.asm.tree.MultiANewArrayInsnNode
 {
-
     public MultiANewArrayInsnNode (final String descriptor, final int numDimensions)
     {
 	super (descriptor, numDimensions);
