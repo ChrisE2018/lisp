@@ -9,15 +9,15 @@ public abstract class CompileResult
 {
     private final List<LabelNode> labels;
 
-    /**
-     * @return
-     * @Deprecated Always insert a goto a let optimizer deal with it.
-     */
-    @Deprecated
-    public CompileResult ()
-    {
-	labels = new ArrayList<LabelNode> ();
-    }
+    // /**
+    // * @return
+    // * @Deprecated Always insert a goto a let optimizer deal with it.
+    // */
+    // @Deprecated
+    // public CompileResult ()
+    // {
+    // labels = new ArrayList<LabelNode> ();
+    // }
 
     public CompileResult (final LabelNode label)
     {
@@ -48,15 +48,15 @@ public abstract class CompileResult
 	labels.addAll (more);
     }
 
-    /**
-     * @return
-     * @Deprecated Always insert a goto a let optimizer deal with it.
-     */
-    @Deprecated
-    public boolean isDefault ()
-    {
-	return labels.isEmpty ();
-    }
+    // /**
+    // * @return
+    // * @Deprecated Always insert a goto a let optimizer deal with it.
+    // */
+    // @Deprecated
+    // public boolean isDefault ()
+    // {
+    // return labels.isEmpty ();
+    // }
 
     abstract public Class<?> getResultClass ();
 

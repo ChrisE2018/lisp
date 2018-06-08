@@ -58,10 +58,7 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 		final CompileResultSet rr = context.convert2true (bvr);
 		for (final CompileResult r : rr.getResults ())
 		{
-		    if (!r.isDefault ())
-		    {
-			result.add (r);
-		    }
+		    result.add (r);
 		}
 		context.add (new JumpInsnNode (GOTO, lNext));
 	    }
@@ -77,27 +74,10 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 		final CompileResultSet rr = context.compile (clause.last (), true);
 		for (final CompileResult r : rr.getResults ())
 		{
-		    if (!r.isDefault ())
-		    {
-			result.add (r);
-		    }
-		    else if (r instanceof ExplicitCompileResult)
-		    {
-			final LabelNode ll = new LabelNode ();
-			result.addExplicitCompileResult (ll, r.getResultClass ());
-			context.add (new JumpInsnNode (GOTO, ll));
-		    }
-		    else
-		    {
-			final LabelNode ll = new LabelNode ();
-			result.addImplicitCompileResult (ll, ((ImplicitCompileResult)r).getValue ());
-			context.add (new JumpInsnNode (GOTO, ll));
-		    }
+		    result.add (r);
 		}
-		// context.add (new JumpInsnNode (GOTO, lNext));
 	    }
 	    context.add (lNext);
-	    // context.add (new LineNumberNode (97, lNext));
 	}
 	// Fall through is null
 	final LabelNode lNull = new LabelNode ();

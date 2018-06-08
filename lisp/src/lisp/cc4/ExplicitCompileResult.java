@@ -9,16 +9,6 @@ public class ExplicitCompileResult extends CompileResult
 {
     private final Class<?> resultClass;
 
-    // /**
-    // * @return
-    // * @Deprecated Always insert a goto a let optimizer deal with it.
-    // */
-    // @Deprecated
-    // public ExplicitCompileResult (final Class<?> resultClass)
-    // {
-    // this.resultClass = resultClass;
-    // }
-
     public ExplicitCompileResult (final LabelNode l, final Class<?> resultClass)
     {
 	super (l);

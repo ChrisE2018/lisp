@@ -149,16 +149,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	for (int j = 0; j < crl.size () - 1; j++)
 	{
 	    final CompileResult cr = crl.get (j);
-	    if (!cr.isDefault ())
-	    {
-		result.getResults ().add (cr);
-	    }
-	    else
-	    {
-		final LabelNode ll = new LabelNode ();
-		context.add (new JumpInsnNode (GOTO, ll));
-		result.getResults ().add (cr.getJumpTo (ll));
-	    }
+	    result.getResults ().add (cr);
 	}
 	// Put the last one in
 	final CompileResult last = crl.get (crl.size () - 1);

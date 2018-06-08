@@ -3,7 +3,7 @@ package lisp.special;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.LabelNode;
 
 import lisp.LispList;
 import lisp.cc.*;
@@ -60,13 +60,13 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    final CompileResultSet tresult = context.compile (expression.get (2), true);
 	    for (final CompileResult cr : tresult.getResults ())
 	    {
-		if (cr.isDefault ())
-		{
-		    final LabelNode lTrue = new LabelNode ();
-		    context.add (new JumpInsnNode (GOTO, lTrue));
-		    result.add (cr.getJumpTo (lTrue));
-		}
-		else
+		// if (cr.isDefault ())
+		// {
+		// final LabelNode lTrue = new LabelNode ();
+		// context.add (new JumpInsnNode (GOTO, lTrue));
+		// result.add (cr.getJumpTo (lTrue));
+		// }
+		// else
 		{
 		    result.add (cr);
 		}
@@ -86,13 +86,13 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    {
 		final Class<?> cls = cr.getClass ();
 		final CompileResult conflictCr = result.getCompileResult (cls);
-		if (cr.isDefault ())
-		{
-		    final LabelNode ff = new LabelNode ();
-		    context.add (new JumpInsnNode (GOTO, ff));
-		    result.add (cr.getJumpTo (ff));
-		}
-		else
+		// if (cr.isDefault ())
+		// {
+		// final LabelNode ff = new LabelNode ();
+		// context.add (new JumpInsnNode (GOTO, ff));
+		// result.add (cr.getJumpTo (ff));
+		// }
+		// else
 		{
 		    result.add (cr);
 		    // throw new Error (conflictCr + " huh " + cr);

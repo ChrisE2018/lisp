@@ -153,14 +153,14 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	for (int j = 0; j < crl.size () - 1; j++)
 	{
 	    final CompileResult cr = crl.get (j);
-	    if (!cr.isDefault ())
-	    {
-		result.getResults ().add (cr);
-	    }
-	    else
-	    {
-		context.add (new JumpInsnNode (GOTO, lexit));
-	    }
+	    // if (!cr.isDefault ())
+	    // {
+	    result.getResults ().add (cr);
+	    // }
+	    // else
+	    // {
+	    // context.add (new JumpInsnNode (GOTO, lexit));
+	    // }
 	}
 	// Put the last one in
 	final CompileResult last = crl.get (crl.size () - 1);

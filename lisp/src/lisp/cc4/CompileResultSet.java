@@ -24,20 +24,10 @@ public class CompileResultSet
 	}
     }
 
-    // public void addImplicitCompileResult (final Object value)
-    // {
-    // add (new ImplicitCompileResult (value));
-    // }
-
     public void addImplicitCompileResult (final LabelNode l1, final Object value)
     {
 	add (new ImplicitCompileResult (l1, value));
     }
-
-    // public void addExplicitCompileResult (final Class<?> kind)
-    // {
-    // add (new ExplicitCompileResult (kind));
-    // }
 
     public void addExplicitCompileResult (final LabelNode l1, final Class<?> kind)
     {
