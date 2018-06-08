@@ -11,17 +11,6 @@ public class ImplicitCompileResult extends CompileResult
 
     private final Object value;
 
-    /**
-     * @return
-     * @Deprecated Always insert a goto a let optimizer deal with it. //
-     */
-    // @Deprecated
-    // public ImplicitCompileResult (final Object value)
-    // {
-    // super ();
-    // this.value = value;
-    // }
-
     public ImplicitCompileResult (final LabelNode l, final Object value)
     {
 	super (l);
