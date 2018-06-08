@@ -88,6 +88,21 @@
 (verify a 5) 
 
 (verifyPhase logic)
+(define foo (a b) -99)
+(verify (foo 1 2) -99)
+
+(define foo (a b) (when (and a b) 3))
+(verify (foo true true) 3)
+(verify (foo false true) null)
+(verify (foo true false) null)
+(verify (foo false false) null)
+
+(define int:foo (boolean:a boolean:b) (if (and a b) 8 9))
+(verify (foo true true) 8)
+(verify (foo false true) 9)
+(verify (foo true false) 9)
+(verify (foo false false) 9)
+
 
 (define foo (a b) (if (and a b) 1 2))
 (verify (foo true true) 1)
@@ -126,6 +141,10 @@
 (verification whenConstantSymbol
 	(define foo () (when 'not 1 2))
 	(verify (foo) 2))
+
+(verification unlessNumber
+	(define foo () (unless 1 2))
+	(verify (foo) null))
 
 (verification unlessConstantSymbol
 	(define foo () (unless 'not 1 2))
@@ -348,9 +367,16 @@
 	(rem a b))
 
 (verify (foo 11 4) 3)
+
+(verification dummyIsprime
+	(define isprime (a) 99)
+	(verify (isprime 2) 99))
+
+(verification dummyCollectPrimes
+	(define collectPrimes (a) 93)
+	(verify (collectPrimes 2) 93))
 	
 (verifyPhase primes)
-
 ; Now do it compiled
 (define isprime (a)
   (let ((b 2)
