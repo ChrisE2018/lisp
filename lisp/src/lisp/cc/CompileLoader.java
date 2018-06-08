@@ -20,6 +20,8 @@ public class CompileLoader extends ClassLoader implements Compiler
      * [TODO] Maybe use a gensym in the defineClass call to allow ClassLoader re-use?
      */
     private static final String SHELL_CLASS_DESCRIPTOR = "Llisp/cc/CompiledShell;";
+
+    /** The ASM type of the class enclosing the function currently being compiled. */
     private Type classType = Type.getType (SHELL_CLASS_DESCRIPTOR);
 
     /**
@@ -43,6 +45,7 @@ public class CompileLoader extends ClassLoader implements Compiler
 	cr = new ClassReader (is);
     }
 
+    /** The ASM type of the class enclosing the function currently being compiled. */
     public Type getClassType ()
     {
 	return classType;

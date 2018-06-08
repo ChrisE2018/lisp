@@ -56,11 +56,23 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	}
     }
 
+    /** The number of arguments to the function currently being compiled. */
+    public int getArgCount ()
+    {
+	return methodArgs.size ();
+    }
+
+    /**
+     * The return value class of the function currently being compiled.
+     *
+     * @return The class of the function return value.
+     */
     public Class<?> getMethodReturnClass ()
     {
 	return methodReturnClass;
     }
 
+    /** The ASM type of the class enclosing the function currently being compiled. */
     public Type getClassType ()
     {
 	return compileLoader.getClassType ();
@@ -88,21 +100,28 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	}
     }
 
+    /**
+     * Arrange for a field to be added to the compilation class containing quoted data.
+     *
+     * @param reference The symbol that will name the data field.
+     * @param quoted The quoted data to be stored.
+     */
     public void addQuotedConstant (final Symbol reference, final Object quoted)
     {
 	quotedReferences.put (reference.getName (), quoted);
     }
 
+    /**
+     * Arrange for a field to be added to the compilation class containing quoted data.
+     *
+     * @param quoted The quoted data to be stored.
+     * @return The symbol that will name the data field. This is a generated unique symbol.
+     */
     public Symbol addQuotedConstant (final Object quoted)
     {
 	final Symbol reference = QUOTE_SYMBOL.gensym ();
 	quotedReferences.put (reference.getName (), quoted);
 	return reference;
-    }
-
-    public int getArgCount ()
-    {
-	return methodArgs.size ();
     }
 
     @Override
@@ -299,6 +318,14 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	return buffer.toString ();
     }
 
+    /**
+     * Convert a lisp symbol name into a valid Java identifier String. The same symbol will always
+     * convert to the same Java name. Symbols of the same name in different packages may produce
+     * conflicts.
+     *
+     * @param symbol The symbol to extract a name from.
+     * @return A valid Java identifier corresponding to the symbol.
+     */
     public String createJavaSymbolName (final Symbol symbol)
     {
 	final StringBuilder buffer = new StringBuilder ();
