@@ -3,7 +3,7 @@ package lisp.special;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.cc.*;
@@ -35,7 +35,6 @@ public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	// call. Any result that is not boolean can just be wired to goto l2.
 	// Any result that is a constant true or false can go directly to l1 or l2.
 
-	// [TODO] Need a special converter to boolean that returns result information.
 	final LabelNode lNull = new LabelNode ();// This label means we return null
 	context.convertIfTrue (testResultSet, false, true, lNull);
 
@@ -47,6 +46,7 @@ public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	}
 	final CompileResultSet result = context.compile (expression.last (), true);
 	result.addImplicitCompileResult (lNull, null);
+	context.add (new JumpInsnNode (GOTO, lNull));
 	return result;
     }
 
