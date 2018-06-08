@@ -103,11 +103,12 @@ public class TreeCompilerContext implements Opcodes
 	return locals;
     }
 
-    public void add (final AbstractInsnNode insnNode)
+    public void add (final AbstractInsnNode node)
     {
-	if (insnNode != null)
+	if (node != null)
 	{
-	    il.add (insnNode);
+	    il.add (node);
+	    LOGGER.finer (il.size () + " Instr: " + node);
 	}
     }
 
@@ -118,6 +119,7 @@ public class TreeCompilerContext implements Opcodes
 	    if (node != null)
 	    {
 		il.add (node);
+		LOGGER.finer (il.size () + " Instr: " + node);
 	    }
 	}
     }
@@ -181,11 +183,21 @@ public class TreeCompilerContext implements Opcodes
 		{
 		    add (new InsnNode (ACONST_NULL));
 		}
-		else
+		else if (validLdcInsnParam (x))
 		{
 		    add (new LdcInsnNode (icr.getValue ()));
+		    converter.convert (il, fc, toClass, allowNarrowing, liberalTruth);
 		}
-		converter.convert (il, fc, toClass, allowNarrowing, liberalTruth);
+		else
+		{
+		    final Symbol s = treeCompiler.addQuotedConstant (x);
+		    final Class<?> quotedClass = x.getClass ();
+		    final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
+		    il.add (new VarInsnNode (ALOAD, 0));
+		    final String classInternalName = treeCompiler.getClassType ().getInternalName ();
+		    il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
+		    convert (quotedClass, treeCompiler.getMethodReturnClass (), false, false);
+		}
 	    }
 	    // Jump to exit label if required
 	    if (results.size () > 1 && i + 1 < results.size ())
@@ -197,6 +209,42 @@ public class TreeCompilerContext implements Opcodes
 	{
 	    add (l);
 	}
+    }
+
+    public void add (final ImplicitCompileResult icr)
+    {
+	final Object x = icr.getValue ();
+	if (x == null)
+	{
+	    il.add (new InsnNode (ACONST_NULL));
+	}
+	else if (validLdcInsnParam (x))
+	{
+	    il.add (new LdcInsnNode (x));
+	    final Class<?> ec = x.getClass ();
+	    final Class<?> p = boxer.getUnboxedClass (ec);
+	    convert (p != null ? p : ec, treeCompiler.getMethodReturnClass (), false, false);
+	}
+	else
+	{
+	    final Symbol s = treeCompiler.addQuotedConstant (x);
+	    final Class<?> quotedClass = x.getClass ();
+	    final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
+	    il.add (new VarInsnNode (ALOAD, 0));
+	    final String classInternalName = treeCompiler.getClassType ().getInternalName ();
+	    il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
+	    convert (quotedClass, treeCompiler.getMethodReturnClass (), false, false);
+	}
+    }
+
+    /**
+     * Test for {@link Integer}, a {@link Float}, a {@link Long}, a {@link Double} or a
+     * {@link String}. {@link Boolean} also works.
+     */
+    private boolean validLdcInsnParam (final Object x)
+    {
+	return x instanceof Boolean || x instanceof Integer || x instanceof Float || x instanceof Long || x instanceof Double
+	       || x instanceof String;
     }
 
     public CompileResultSet compile (final Object expr, final boolean resultDesired)
@@ -214,10 +262,6 @@ public class TreeCompilerContext implements Opcodes
 	    }
 	    else
 	    {
-		// Top result class is the same as the expr, perhaps converted to a primitive type.
-		final Class<?> ec = expr.getClass ();
-		final Class<?> p = boxer.getUnboxedClass (ec);
-		// return p != null ? p : ec;
 		final LabelNode ll = new LabelNode ();
 		add (new JumpInsnNode (GOTO, ll));
 		return new CompileResultSet (new ImplicitCompileResult (ll, expr));

@@ -16,7 +16,6 @@ import lisp.util.LogString;
 public class TreeCompiler extends ClassNode implements Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (TreeCompiler.class.getName ());
-    private static final TreeBoxer boxer = new TreeBoxer ();
     private static Symbol QUOTE_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("quote");
     private final CompileLoader compileLoader;
     private final Type returnType;
@@ -55,6 +54,11 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	    methodArgClasses.add (varClass);
 	    methodArgTypes.add (varType);
 	}
+    }
+
+    public Class<?> getMethodReturnClass ()
+    {
+	return methodReturnClass;
     }
 
     public Type getClassType ()
@@ -274,28 +278,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	    else
 	    {
 		final ImplicitCompileResult icr = (ImplicitCompileResult)resultKind;
-		final Object x = icr.getValue ();
-		if (x == null)
-		{
-		    il.add (new InsnNode (ACONST_NULL));
-		}
-		else if (validLdcInsnParam (x))
-		{
-		    il.add (new LdcInsnNode (x));
-		    final Class<?> ec = x.getClass ();
-		    final Class<?> p = boxer.getUnboxedClass (ec);
-		    context.convert (p != null ? p : ec, methodReturnClass, false, false);
-		}
-		else
-		{
-		    final Symbol s = addQuotedConstant (x);
-		    final Class<?> quotedClass = x.getClass ();
-		    final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
-		    il.add (new VarInsnNode (ALOAD, 0));
-		    final String classInternalName = getClassType ().getInternalName ();
-		    il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
-		    context.convert (quotedClass, methodReturnClass, false, false);
-		}
+		context.add (icr);
 	    }
 	    il.add (new InsnNode (returnType.getOpcode (IRETURN)));
 	}
@@ -303,16 +286,6 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	mn.maxStack = 0;
 	mn.maxLocals = 0;
 	return mn;
-    }
-
-    /**
-     * Test for {@link Integer}, a {@link Float}, a {@link Long}, a {@link Double} or a
-     * {@link String}. {@link Boolean} also works.
-     */
-    private boolean validLdcInsnParam (final Object x)
-    {
-	return x instanceof Boolean || x instanceof Integer || x instanceof Float || x instanceof Long || x instanceof Double
-	       || x instanceof String;
     }
 
     private String getMethodSignature ()
