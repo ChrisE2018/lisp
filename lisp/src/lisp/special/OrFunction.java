@@ -38,7 +38,9 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	else if (expression.size () == 1)
 	{
 	    // case (or)
-	    return new CompileResultSet (new ImplicitCompileResult (false));
+	    final LabelNode ll = new LabelNode ();
+	    context.add (new JumpInsnNode (GOTO, ll));
+	    return new CompileResultSet (new ImplicitCompileResult (ll, false));
 	}
 	else if (expression.size () == 2)
 	{
@@ -132,8 +134,10 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 			context.add (new TypeInsnNode (CHECKCAST, "java/lang/Boolean"));
 			context.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
 			context.add (new JumpInsnNode (IFNE, lexit));
-			result.addExplicitCompileResult (resultClass);
 			context.add (new JumpInsnNode (GOTO, lNext));
+			// final LabelNode ll = new LabelNode ();
+			// context.add (new JumpInsnNode (GOTO, ll));
+			// result.addExplicitCompileResult (resultClass);
 		    }
 		}
 	    }

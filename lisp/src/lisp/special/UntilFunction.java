@@ -48,7 +48,9 @@ public class UntilFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 
 	context.add (l0);
 	// Always return false
-	return new CompileResultSet (new ImplicitCompileResult (false));
+	final LabelNode ll = new LabelNode ();
+	context.add (new JumpInsnNode (GOTO, ll));
+	return new CompileResultSet (new ImplicitCompileResult (ll, false));
     }
 
     // [TODO] This should be changed to always return false like the above definition

@@ -81,7 +81,7 @@ public class TreeConverter implements Opcodes
 	    }
 	    else
 	    {
-		il.add (new LdcInsnNode (ACONST_NULL));
+		il.add (new InsnNode (ACONST_NULL));
 	    }
 	}
     }
@@ -115,13 +115,20 @@ public class TreeConverter implements Opcodes
 	    {
 		final ImplicitCompileResult icr = (ImplicitCompileResult)cr;
 		final Object value = icr.getValue ();
-		if (value instanceof Boolean && (Boolean)value)
+		if (value instanceof Boolean)
 		{
-		    il.add (new JumpInsnNode (GOTO, lTrue));
+		    if ((Boolean)value)
+		    {
+			il.add (new JumpInsnNode (GOTO, lTrue));
+		    }
+		    else
+		    {
+			il.add (new JumpInsnNode (GOTO, lExit));
+		    }
 		}
 		else
 		{
-		    il.add (new JumpInsnNode (GOTO, lExit));
+		    il.add (new JumpInsnNode (GOTO, lTrue));
 		}
 	    }
 	}
@@ -157,13 +164,20 @@ public class TreeConverter implements Opcodes
 	    {
 		final ImplicitCompileResult icr = (ImplicitCompileResult)cr;
 		final Object value = icr.getValue ();
-		if (value instanceof Boolean && (Boolean)value)
+		if (value instanceof Boolean)
 		{
-		    il.add (new JumpInsnNode (GOTO, lExit));
+		    if ((Boolean)value)
+		    {
+			il.add (new JumpInsnNode (GOTO, lExit));
+		    }
+		    else
+		    {
+			il.add (new JumpInsnNode (GOTO, lFalse));
+		    }
 		}
 		else
 		{
-		    il.add (new JumpInsnNode (GOTO, lFalse));
+		    il.add (new JumpInsnNode (GOTO, lExit));
 		}
 	    }
 	}
@@ -418,7 +432,7 @@ public class TreeConverter implements Opcodes
 	    il.add (new JumpInsnNode (GOTO, l2));
 	    il.add (l1);
 	    il.add (new TypeInsnNode (CHECKCAST, "java/lang/Boolean"));
-	    boxer.unbox (il, Type.BOOLEAN_TYPE);
+	    il.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
 	    il.add (l2);
 	}
 	else

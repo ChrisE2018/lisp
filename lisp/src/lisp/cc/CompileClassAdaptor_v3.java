@@ -549,6 +549,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	}
     }
 
+    /** Determine if a function call should be optimized. */
     private boolean optimizeFunctionCall (final LispList expression)
     {
 	// [TODO] If we are compiling for speed and can assume that the current definition won't
@@ -560,15 +561,19 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	final FunctionCell function = symbol.getFunction ();
 	if (function != null)
 	{
-	    final ObjectMethod objectMethod = function.selectMethod (argCount);
-	    if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
+	    if (!(function instanceof DefaultFunctionCell))
 	    {
-		// Only methods with Object parameters work right now.
-		// coerceRequired will need to be improved before general method parameters are ok.
-		if (// objectMethod.isObjectOnly () &&
-		!objectMethod.isVarArgs ())
+		final ObjectMethod objectMethod = function.selectMethod (argCount);
+		if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
 		{
-		    return Symbol.test ("optimize", true);
+		    // Only methods with Object parameters work right now.
+		    // coerceRequired will need to be improved before general method parameters are
+		    // ok.
+		    if (// objectMethod.isObjectOnly () &&
+		    !objectMethod.isVarArgs ())
+		    {
+			return Symbol.test ("optimizeFunctionCalls", true);
+		    }
 		}
 	    }
 	}

@@ -45,7 +45,8 @@ public class ArithmeticPrimitives extends Definer
 	return a % b;
     }
 
-    @DefineLisp (name = "1+", classname = "lisp.special.PlusOneFunction")
+    @DefineLisp (name = "1+"// , classname = "lisp.special.PlusOneFunction"
+    )
     public Number addOne (final Number x)
     {
 	if (x instanceof Integer)

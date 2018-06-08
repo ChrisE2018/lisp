@@ -11,11 +11,16 @@ public class ImplicitCompileResult extends CompileResult
 
     private final Object value;
 
-    public ImplicitCompileResult (final Object value)
-    {
-	super ();
-	this.value = value;
-    }
+    /**
+     * @return
+     * @Deprecated Always insert a goto a let optimizer deal with it. //
+     */
+    // @Deprecated
+    // public ImplicitCompileResult (final Object value)
+    // {
+    // super ();
+    // this.value = value;
+    // }
 
     public ImplicitCompileResult (final LabelNode l, final Object value)
     {
@@ -37,6 +42,10 @@ public class ImplicitCompileResult extends CompileResult
     @Override
     public Class<?> getResultClass ()
     {
+	if (value == null)
+	{
+	    return void.class;
+	}
 	final Class<?> ec = value.getClass ();
 	final Class<?> p = boxer.getUnboxedClass (ec);
 	return p == null ? ec : p;
@@ -59,6 +68,16 @@ public class ImplicitCompileResult extends CompileResult
     }
 
     @Override
+    public int hashCode ()
+    {
+	if (value == null)
+	{
+	    return 0;
+	}
+	return value.hashCode ();
+    }
+
+    @Override
     public CompileResult getJumpTo (final LabelNode ll)
     {
 	return new ImplicitCompileResult (ll, value);
@@ -74,10 +93,14 @@ public class ImplicitCompileResult extends CompileResult
 	buffer.append (value.getClass ().getSimpleName ());
 	buffer.append (" ");
 	buffer.append (value);
-	for (final LabelNode label : getLabels ())
+	final List<LabelNode> labels = getLabels ();
+	if (labels != null)
 	{
-	    buffer.append (" @");
-	    buffer.append (label);
+	    for (final LabelNode label : labels)
+	    {
+		buffer.append (" @");
+		buffer.append (label);
+	    }
 	}
 	buffer.append (">");
 	return buffer.toString ();

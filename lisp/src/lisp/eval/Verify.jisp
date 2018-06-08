@@ -3,7 +3,7 @@
 
 (resetTestStatistics)
 (showBytecode f)
-(stopAtFirstFailure t)
+(stopAtFirstFailure f)
 
 (verify 1 1)
 (verify 2 2)
@@ -118,6 +118,22 @@
 (verify (foo false true) 2)
 (verify (foo true false) 2)
 (verify (foo false false) 2)
+
+(verification ifConstantSymbol
+	(define foo () (if 'not 1 2))
+	(verify (foo) 1))
+
+(verification whenConstantSymbol
+	(define foo () (when 'not 1 2))
+	(verify (foo) 2))
+
+(verification unlessConstantSymbol
+	(define foo () (unless 'not 1 2))
+	(verify (foo) null))
+
+(verification whenNotConstantSymbol
+	(define foo () (when (not 'x) 3))
+	(verify (foo) null))
 
 (verifyPhase loops)
 
@@ -314,6 +330,13 @@
 	(setq b (1+ b))
 	b))
 (verify (foo) 6)
+
+(define foo (n)
+ (let ((i 2) (result (list)))
+	(while (< (size result) n)
+   		(add result i))
+	result))
+(verify (foo 4) '(2 2 2 2))
 
 (verifyPhase optimizeInteger)
 

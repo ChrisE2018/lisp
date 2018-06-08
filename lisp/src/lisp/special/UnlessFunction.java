@@ -36,8 +36,8 @@ public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	// Any result that is a constant true or false can go directly to l1 or l2.
 
 	// [TODO] Need a special converter to boolean that returns result information.
-	final LabelNode lTrue = new LabelNode ();// This label means we return true
-	context.convertIfTrue (testResultSet, false, true, lTrue);
+	final LabelNode lNull = new LabelNode ();// This label means we return null
+	context.convertIfTrue (testResultSet, false, true, lNull);
 
 	for (int i = 2; i < expression.size () - 1; i++)
 	{
@@ -46,7 +46,7 @@ public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	    context.convert (r, void.class, false, false);
 	}
 	final CompileResultSet result = context.compile (expression.last (), true);
-	result.addImplicitCompileResult (lTrue, false);
+	result.addImplicitCompileResult (lNull, null);
 	return result;
     }
 

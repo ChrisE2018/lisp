@@ -50,6 +50,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	else
 	{
 	    // (define foo (boolean:x) (if x 3 4))
+	    // (define foo () (if 'bar 3 4))
 	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
 	    final LabelNode lFalse = new LabelNode ();// This label means we return false
 	    context.convertIfFalse (testResultSet, false, true, lFalse);
@@ -93,7 +94,8 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 		}
 		else
 		{
-		    throw new Error (conflictCr + " huh " + cr);
+		    result.add (cr);
+		    // throw new Error (conflictCr + " huh " + cr);
 		}
 	    }
 	    return result;

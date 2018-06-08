@@ -38,7 +38,9 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	else if (expression.size () == 1)
 	{
 	    // case (and)
-	    return new CompileResultSet (new ImplicitCompileResult (true));
+	    final LabelNode ll = new LabelNode ();
+	    context.add (new JumpInsnNode (GOTO, ll));
+	    return new CompileResultSet (new ImplicitCompileResult (ll, true));
 	}
 	else if (expression.size () == 2)
 	{

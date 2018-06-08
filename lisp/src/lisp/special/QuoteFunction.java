@@ -3,6 +3,7 @@ package lisp.special;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.Symbol;
@@ -27,7 +28,9 @@ public class QuoteFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 	if (resultDesired)
 	{
 	    final Object value = expression.get (1);
-	    return new CompileResultSet (new ImplicitCompileResult (value));
+	    final LabelNode ll = new LabelNode ();
+	    context.add (new JumpInsnNode (GOTO, ll));
+	    return new CompileResultSet (new ImplicitCompileResult (ll, value));
 	}
 	return null;
     }

@@ -60,7 +60,9 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 		}
 	    }
 	    context.add (new VarInsnNode (varType.getOpcode (ISTORE), localRef));
-	    return new CompileResultSet (new ExplicitCompileResult (resultDesired ? varClass : void.class));
+	    final LabelNode ll = new LabelNode ();
+	    context.add (new JumpInsnNode (GOTO, ll));
+	    return new CompileResultSet (new ExplicitCompileResult (ll, resultDesired ? varClass : void.class));
 	}
 	else
 	{
@@ -83,7 +85,9 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 		context.add (new InsnNode (DUP_X1));
 	    }
 	    context.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Symbol", "setValue", "(Ljava/lang/Object;)V", false));
-	    return new CompileResultSet (new ExplicitCompileResult (resultDesired ? Object.class : void.class));
+	    final LabelNode ll = new LabelNode ();
+	    context.add (new JumpInsnNode (GOTO, ll));
+	    return new CompileResultSet (new ExplicitCompileResult (ll, resultDesired ? Object.class : void.class));
 	}
     }
 

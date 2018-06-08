@@ -2,7 +2,7 @@
 package lisp.cc4;
 
 import java.util.*;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
@@ -80,6 +80,13 @@ public class Optimizer extends ClassNode implements Opcodes
 	    }
 	}
 	LOGGER.fine (new LogString ("Optimization of %s removed %s of %s instructions", name, removals, initialCount));
+	if (LOGGER.isLoggable (Level.FINEST))
+	{
+	    for (final MethodNode method : methods)
+	    {
+		printMethod (method);
+	    }
+	}
 	accept (cv);
     }
 
@@ -299,6 +306,17 @@ public class Optimizer extends ClassNode implements Opcodes
 		    removals++;
 		}
 	    }
+	}
+    }
+
+    private void printMethod (final MethodNode method)
+    {
+	final InsnList il = method.instructions;
+	// Ignore references from LocalVariableNodes. They are not really here.
+	for (int i = 0; i < il.size (); i++)
+	{
+	    final AbstractInsnNode ins = il.get (i);
+	    System.out.printf ("[%d] %s %n", i, ins);
 	}
     }
 

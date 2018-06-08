@@ -30,13 +30,15 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
     public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo (boolean:x) (when x 3))
+	// (define foo () (when 'x (printf "foo")))
+	// (define foo () (when (not 'x) 3)))
 	final CompileResultSet testResultSet = context.compile (expression.get (1), true);
 	// At this point we can optimize handling of information returned from the compiler.compile
 	// call. Any result that is not boolean can just be wired to goto l2.
 	// Any result that is a constant true or false can go directly to l1 or l2.
 
-	final LabelNode lFalse = new LabelNode ();// This label means we return false
-	context.convertIfFalse (testResultSet, false, true, lFalse);
+	final LabelNode lNull = new LabelNode ();// This label means we return null
+	context.convertIfFalse (testResultSet, false, true, lNull);
 
 	for (int i = 2; i < expression.size () - 1; i++)
 	{
@@ -45,7 +47,8 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
 	    context.convert (r, void.class, false, false);
 	}
 	final CompileResultSet result = context.compile (expression.last (), true);
-	result.addImplicitCompileResult (lFalse, false);
+	// Changing null to false fixes the problem with collectPrimes
+	result.addImplicitCompileResult (lNull, null);
 	return result;
     }
 

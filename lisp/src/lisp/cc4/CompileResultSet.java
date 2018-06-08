@@ -24,20 +24,20 @@ public class CompileResultSet
 	}
     }
 
-    public void addImplicitCompileResult (final Object value)
-    {
-	add (new ImplicitCompileResult (value));
-    }
+    // public void addImplicitCompileResult (final Object value)
+    // {
+    // add (new ImplicitCompileResult (value));
+    // }
 
     public void addImplicitCompileResult (final LabelNode l1, final Object value)
     {
 	add (new ImplicitCompileResult (l1, value));
     }
 
-    public void addExplicitCompileResult (final Class<?> kind)
-    {
-	add (new ExplicitCompileResult (kind));
-    }
+    // public void addExplicitCompileResult (final Class<?> kind)
+    // {
+    // add (new ExplicitCompileResult (kind));
+    // }
 
     public void addExplicitCompileResult (final LabelNode l1, final Class<?> kind)
     {
@@ -80,10 +80,13 @@ public class CompileResultSet
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
-	for (final CompileResult cr : results)
+	if (results != null)
 	{
-	    buffer.append (" ");
-	    buffer.append (cr);
+	    for (final CompileResult cr : results)
+	    {
+		buffer.append (" ");
+		buffer.append (cr);
+	    }
 	}
 	buffer.append (">");
 	return buffer.toString ();

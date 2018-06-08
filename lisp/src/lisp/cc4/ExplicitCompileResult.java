@@ -1,16 +1,23 @@
 
 package lisp.cc4;
 
+import java.util.List;
+
 import org.objectweb.asm.tree.LabelNode;
 
 public class ExplicitCompileResult extends CompileResult
 {
     private final Class<?> resultClass;
 
-    public ExplicitCompileResult (final Class<?> resultClass)
-    {
-	this.resultClass = resultClass;
-    }
+    // /**
+    // * @return
+    // * @Deprecated Always insert a goto a let optimizer deal with it.
+    // */
+    // @Deprecated
+    // public ExplicitCompileResult (final Class<?> resultClass)
+    // {
+    // this.resultClass = resultClass;
+    // }
 
     public ExplicitCompileResult (final LabelNode l, final Class<?> resultClass)
     {
@@ -42,6 +49,12 @@ public class ExplicitCompileResult extends CompileResult
     }
 
     @Override
+    public int hashCode ()
+    {
+	return resultClass.hashCode ();
+    }
+
+    @Override
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
@@ -51,10 +64,14 @@ public class ExplicitCompileResult extends CompileResult
 	buffer.append (System.identityHashCode (this));
 	buffer.append (" ");
 	buffer.append (resultClass);
-	for (final LabelNode label : getLabels ())
+	final List<LabelNode> labels = getLabels ();
+	if (labels != null)
 	{
-	    buffer.append (" @");
-	    buffer.append (label);
+	    for (final LabelNode label : labels)
+	    {
+		buffer.append (" @");
+		buffer.append (label);
+	    }
 	}
 	buffer.append (">");
 	return buffer.toString ();

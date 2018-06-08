@@ -275,16 +275,16 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	    {
 		final ImplicitCompileResult icr = (ImplicitCompileResult)resultKind;
 		final Object x = icr.getValue ();
-		if (validLdcInsnParam (x))
+		if (x == null)
+		{
+		    il.add (new InsnNode (ACONST_NULL));
+		}
+		else if (validLdcInsnParam (x))
 		{
 		    il.add (new LdcInsnNode (x));
 		    final Class<?> ec = x.getClass ();
 		    final Class<?> p = boxer.getUnboxedClass (ec);
 		    context.convert (p != null ? p : ec, methodReturnClass, false, false);
-		}
-		else if (x == null)
-		{
-		    il.add (new InsnNode (ACONST_NULL));
 		}
 		else
 		{
