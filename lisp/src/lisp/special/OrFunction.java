@@ -135,9 +135,6 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 			context.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false));
 			context.add (new JumpInsnNode (IFNE, lexit));
 			context.add (new JumpInsnNode (GOTO, lNext));
-			// final LabelNode ll = new LabelNode ();
-			// context.add (new JumpInsnNode (GOTO, ll));
-			// result.addExplicitCompileResult (resultClass);
 		    }
 		}
 	    }
@@ -153,18 +150,11 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	for (int j = 0; j < crl.size () - 1; j++)
 	{
 	    final CompileResult cr = crl.get (j);
-	    // if (!cr.isDefault ())
-	    // {
-	    result.getResults ().add (cr);
-	    // }
-	    // else
-	    // {
-	    // context.add (new JumpInsnNode (GOTO, lexit));
-	    // }
+	    result.add (cr);
 	}
 	// Put the last one in
 	final CompileResult last = crl.get (crl.size () - 1);
-	result.getResults ().add (last);
+	result.add (last);
 	context.add (new JumpInsnNode (GOTO, lexit));
 
 	if (lPopTrueUsed)
