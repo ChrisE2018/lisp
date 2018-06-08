@@ -1,12 +1,13 @@
 
 package lisp.cc4;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
@@ -316,14 +317,80 @@ public class TreeCompilerContext implements Opcodes
 	return null;
     }
 
+    /** Determine if a function call should be optimized. */
     private boolean optimizeFunctionCall (final LispList expression)
     {
+	// [TODO] If we are compiling for speed and can assume that the current definition won't
+	// change, then compile a direct call to the current function method.
+	// [TODO] If we know argument types of the function we are about to call we can try to
+	// compile the expression more efficiently.
+	final int argCount = expression.size () - 1;
+	final Symbol symbol = expression.head ();
+	final FunctionCell function = symbol.getFunction ();
+	if (function != null)
+	{
+	    if (!(function instanceof DefaultFunctionCell))
+	    {
+		final ObjectMethod objectMethod = function.selectMethod (argCount);
+		if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
+		{
+		    // Only methods with Object parameters work right now.
+		    // coerceRequired will need to be improved before general method parameters are
+		    // ok.
+		    if (// objectMethod.isObjectOnly () &&
+		    !objectMethod.isVarArgs ())
+		    {
+			return Symbol.test ("optimizeFunctionCalls", true);
+		    }
+		}
+	    }
+	}
 	return false;
     }
 
     private CompileResultSet compileDirectFunctionCall (final LispList expression, final boolean resultDesired)
     {
-	return null;
+	// (setq showBytecode t)
+	// (define foo () (getDefaultPackage))
+	// (define foo (x) (1+ x))
+	// (define foo (x) (not x))
+	// (define foo (a b) (rem a b))
+	final Symbol symbol = expression.head ();
+	final Label l1 = new Label ();
+	add (new LabelNode (l1));
+	final FunctionCell function = symbol.getFunction ();
+	final int argCount = expression.size () - 1;
+	final ObjectMethod objectMethod = function.selectMethod (argCount);
+	final Object target = objectMethod.getObject ();
+	final Method method = objectMethod.getMethod ();
+
+	LOGGER.fine ("Direct call to " + symbol);
+	final Symbol reference = symbol.gensym ();
+	final String methodSignature = objectMethod.getSignature ();
+	final Type objectType = Type.getType (target.getClass ());
+	final String objectClassInternalName = objectType.getInternalName ();
+	treeCompiler.addQuotedConstant (reference, target);
+	add (new VarInsnNode (ALOAD, 0));
+	final String classInternalName = treeCompiler.getClassType ().getInternalName ();
+	add (new FieldInsnNode (GETFIELD, classInternalName, reference.getName (), objectType.getDescriptor ()));
+	// Compile arguments here
+	final Class<?>[] params = method.getParameterTypes ();
+	for (int i = 0; i < params.length; i++)
+	{
+	    // (define f (x) (incr x))
+	    final Object arg = expression.get (i + 1);
+	    final Class<?> argType = params[i];
+	    // System.out.printf ("%s (%s : %s) %s %n", symbol, i, arg, argType);
+	    final CompileResultSet rs = compile (arg, true);
+	    convert (rs, argType, false, false);
+	}
+	add (new MethodInsnNode (INVOKEVIRTUAL, objectClassInternalName, method.getName (), methodSignature, false));
+	final Class<?> methodValueClass = method.getReturnType ();
+	final CompileResultSet result = new CompileResultSet ();
+	final LabelNode ll = new LabelNode ();
+	result.addExplicitCompileResult (ll, methodValueClass);
+	add (new JumpInsnNode (GOTO, ll));
+	return result;
     }
 
     /**
