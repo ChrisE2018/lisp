@@ -90,9 +90,16 @@ public class ImplicitCompileResult extends CompileResult
 	buffer.append ("#<");
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
-	buffer.append (value.getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (value);
+	if (value == null)
+	{
+	    buffer.append ("null");
+	}
+	else
+	{
+	    buffer.append (value.getClass ().getSimpleName ());
+	    buffer.append (" ");
+	    buffer.append (value);
+	}
 	final List<LabelNode> labels = getLabels ();
 	if (labels != null)
 	{
