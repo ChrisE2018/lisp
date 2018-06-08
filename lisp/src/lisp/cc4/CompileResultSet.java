@@ -42,6 +42,7 @@ public class CompileResultSet
 	    if (r.equals (cr))
 	    {
 		r.addLabels (cr.getLabels ());
+		return;
 	    }
 	}
 	results.add (cr);
@@ -49,7 +50,7 @@ public class CompileResultSet
 
     public List<CompileResult> getResults ()
     {
-	return results;
+	return Collections.unmodifiableList (results);
     }
 
     public CompileResult getCompileResult (final Class<?> cls)
