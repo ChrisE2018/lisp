@@ -144,18 +144,15 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	    }
 	}
 	// If we get here, just return the value
+	final LabelNode lExit = new LabelNode ();
 	final CompileResultSet r = context.compile (e.last (), resultDesired);
 	final List<CompileResult> crl = r.getResults ();
-	for (int j = 0; j < crl.size () - 1; j++)
+	for (int j = 0; j < crl.size (); j++)
 	{
 	    final CompileResult cr = crl.get (j);
-	    result.getResults ().add (cr);
+	    result.add (cr);
 	}
-	// Put the last one in
-	final CompileResult last = crl.get (crl.size () - 1);
-	result.getResults ().add (last);
-	final LabelNode lexit = new LabelNode ();
-	context.add (new JumpInsnNode (GOTO, lexit));
+	context.add (new JumpInsnNode (GOTO, lExit));
 
 	if (lPopFalseUsed)
 	{
@@ -168,7 +165,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	{
 	    result.addImplicitCompileResult (lFalse, false);
 	}
-	context.add (lexit);
+	context.add (lExit);
 	return result;
     }
 
