@@ -165,12 +165,12 @@ public class Convert implements Opcodes
 	    }
 	    case Type.SHORT:
 	    {
-		convert2short (mv, fromClass, toClass, allowNarrowing);
+		convert2short (mv, fromClass, allowNarrowing);
 		return;
 	    }
 	    case Type.INT:
 	    {
-		convert2int (mv, fromClass, toClass, allowNarrowing);
+		convert2int (mv, fromClass, allowNarrowing);
 		return;
 	    }
 	    case Type.LONG:
@@ -180,7 +180,7 @@ public class Convert implements Opcodes
 	    }
 	    case Type.FLOAT:
 	    {
-		convert2float (mv, fromClass, toClass, allowNarrowing);
+		convert2float (mv, fromClass, allowNarrowing);
 		return;
 	    }
 	    case Type.DOUBLE:
@@ -715,8 +715,7 @@ public class Convert implements Opcodes
 	// Succeed
     }
 
-    private void convert2short (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
-            final boolean allowNarrowing)
+    private void convert2short (final GeneratorAdapter mv, final Class<?> fromClass, final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	final int fromSort = fromType.getSort ();
@@ -816,8 +815,7 @@ public class Convert implements Opcodes
 	mv.visitLabel (l0);
     }
 
-    private void convert2int (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
-            final boolean allowNarrowing)
+    private void convert2int (final GeneratorAdapter mv, final Class<?> fromClass, final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	final int fromSort = fromType.getSort ();
@@ -1008,8 +1006,7 @@ public class Convert implements Opcodes
 	mv.visitLabel (l00);
     }
 
-    private void convert2float (final GeneratorAdapter mv, final Class<?> fromClass, final Class<?> toClass,
-            final boolean allowNarrowing)
+    private void convert2float (final GeneratorAdapter mv, final Class<?> fromClass, final boolean allowNarrowing)
     {
 	final Type fromType = Type.getType (fromClass);
 	// final Type toType = Type.getType (toClass);
