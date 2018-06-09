@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.*;
 import lisp.*;
 import lisp.Package;
 import lisp.eval.*;
+import lisp.util.MultiMap;
 
 public class DescribePrimitives extends Definer
 {
@@ -83,26 +84,29 @@ public class DescribePrimitives extends Definer
     {
 	final Package pkg = PackageFactory.getDefaultPackage ();
 	int index = 0;
-	final Map<String, Object> description = d.getDescriberValues (arg);
-	for (final Entry<String, Object> entry : description.entrySet ())
+	final MultiMap<String, Object> description = d.getDescriberValues (arg);
+	for (final Entry<String, Collection<Object>> entry : description.entrySet ())
 	{
 	    // Make a symbol using the index value, i.e., d001
-	    ++index;
 	    final String key = entry.getKey ();
-	    final Object value = entry.getValue ();
-	    final Describer valueDescriber = getDescriber (value);
-	    final String valueString = (valueDescriber == null) ? value.toString () : valueDescriber.getDescriberString (value);
-	    final String doc = d.getDescriberDocumentation (arg, key);
-	    final Symbol symbol = pkg.internSymbol (String.format ("d%d", index));
-	    symbol.setValue (value);
-	    final String type = value == null ? "" : "(" + value.getClass ().getSimpleName () + ") ";
-	    if (doc != null)
+	    for (final Object value : entry.getValue ())
 	    {
-		System.out.printf ("%3s %30s: %-25s %s\n", symbol, type + key, valueString, doc);
-	    }
-	    else
-	    {
-		System.out.printf ("%3s %30s: %-25s\n", symbol, type + key, valueString);
+		++index;
+		final Describer valueDescriber = getDescriber (value);
+		final String valueString =
+		    (valueDescriber == null) ? value.toString () : valueDescriber.getDescriberString (value);
+		final String doc = d.getDescriberDocumentation (arg, key);
+		final Symbol symbol = pkg.internSymbol (String.format ("d%d", index));
+		symbol.setValue (value);
+		final String type = value == null ? "" : "(" + value.getClass ().getSimpleName () + ") ";
+		if (doc != null)
+		{
+		    System.out.printf ("%3s %30s: %-25s %s\n", symbol, type + key, valueString, doc);
+		}
+		else
+		{
+		    System.out.printf ("%3s %30s: %-25s\n", symbol, type + key, valueString);
+		}
 	    }
 	}
     }

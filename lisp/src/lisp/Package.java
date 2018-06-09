@@ -5,6 +5,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
+import lisp.util.MultiMap;
+
 /**
  * Packages contain symbols and help the reader function. Symbols can be internal (private) or
  * external (public). A symbol lookup in the current (default) package will create a private symbol.
@@ -99,15 +101,15 @@ public class Package implements Describer
     }
 
     @Override
-    public Map<String, Object> getDescriberValues (final Object target)
+    public MultiMap<String, Object> getDescriberValues (final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	final MultiMap<String, Object> result = new MultiMap<String, Object> ();
 	getSymbolDescriptions (result, packageSymbols, "Public", 5);
 	return result;
     }
 
-    private void getSymbolDescriptions (final Map<String, Object> result, final Map<String, Symbol> symbols, final String prefix,
-            final int limit)
+    private void getSymbolDescriptions (final MultiMap<String, Object> result, final Map<String, Symbol> symbols,
+            final String prefix, final int limit)
     {
 	int count = 0;
 	for (final Entry<String, Symbol> entry : symbols.entrySet ())

@@ -2,9 +2,9 @@
 package lisp.describe;
 
 import java.lang.reflect.Array;
-import java.util.Map;
 
 import lisp.Describer;
+import lisp.util.MultiMap;
 
 public class ArrayDescriber implements Describer
 {
@@ -41,7 +41,7 @@ public class ArrayDescriber implements Describer
      * @param result The map to add entries to.
      * @param target The object to describe.
      */
-    public void getDescriberValues (final Map<String, Object> result, final Object array)
+    public void getDescriberValues (final MultiMap<String, Object> result, final Object array)
     {
 	final int length = Array.getLength (array);
 	for (int i = 0; i < length; i++)

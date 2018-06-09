@@ -1,7 +1,7 @@
 
 package lisp;
 
-import java.util.*;
+import lisp.util.MultiMap;
 
 public interface Describer
 {
@@ -12,9 +12,9 @@ public interface Describer
      * @param target The object to describe.
      * @return The map containing key value pairs for describe.
      */
-    default public Map<String, Object> getDescriberValues (final Object target)
+    default public MultiMap<String, Object> getDescriberValues (final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	final MultiMap<String, Object> result = new MultiMap<String, Object> ();
 	getDescriberValues (result, target);
 	return result;
     }
@@ -26,7 +26,7 @@ public interface Describer
      * @param result The map to add entries to.
      * @param target The object to describe.
      */
-    default public void getDescriberValues (final Map<String, Object> result, final Object target)
+    default public void getDescriberValues (final MultiMap<String, Object> result, final Object target)
     {
 	result.put ("Class", target.getClass ());
     }

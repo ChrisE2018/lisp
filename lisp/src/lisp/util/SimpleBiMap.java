@@ -1,5 +1,5 @@
 
-package lisp;
+package lisp.util;
 
 import java.util.*;
 

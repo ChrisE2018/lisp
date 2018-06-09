@@ -3,6 +3,8 @@ package lisp;
 
 import java.util.*;
 
+import lisp.util.MultiMap;
+
 /** Extended List with nice external representation. */
 public class LispList extends ArrayList<Object> implements Describer
 {
@@ -189,11 +191,11 @@ public class LispList extends ArrayList<Object> implements Describer
     }
 
     @Override
-    public Map<String, Object> getDescriberValues (final Object target)
+    public MultiMap<String, Object> getDescriberValues (final Object target)
     {
 	@SuppressWarnings ("unchecked")
 	final List<Object> t = (List<Object>)target;
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	final MultiMap<String, Object> result = new MultiMap<String, Object> ();
 	for (int i = 0; i < t.size (); i++)
 	{
 	    result.put ("element" + i, t.get (i));

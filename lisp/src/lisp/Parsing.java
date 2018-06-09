@@ -3,6 +3,8 @@ package lisp;
 
 import java.io.IOException;
 
+import lisp.util.SimpleBiMap;
+
 /**
  * Control over parsing syntax is collected into the Parsing object. Various constants in this class
  * could be made customizable to modify the parsing behavior. That is a project for another day.
@@ -21,6 +23,7 @@ public class Parsing
     private static final char CLOSE_BRACKET = ']';
 
     private static final char COLON = ':';
+    private static final char DOT = '.';
 
     /**
      * Map from list type to concrete class. Don't use angle brackets so they are available for
@@ -170,6 +173,11 @@ public class Parsing
     public char getTheMarker ()
     {
 	return COLON;
+    }
+
+    public char getDotMarker ()
+    {
+	return DOT;
     }
 
     @Override

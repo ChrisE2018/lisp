@@ -7,6 +7,7 @@ import javax.lang.model.type.NullType;
 
 import lisp.eval.UnboundVariableError;
 import lisp.symbol.*;
+import lisp.util.MultiMap;
 
 /** Unique named structure associated with a package. */
 public class Symbol implements Describer
@@ -383,9 +384,9 @@ public class Symbol implements Describer
     }
 
     @Override
-    public Map<String, Object> getDescriberValues (final Object target)
+    public MultiMap<String, Object> getDescriberValues (final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	final MultiMap<String, Object> result = new MultiMap<String, Object> ();
 	result.put ("Package", symbolPackage);
 	// result.put ("Public", symbolPackage.isPublic (this));
 	if (symbolValue != null)

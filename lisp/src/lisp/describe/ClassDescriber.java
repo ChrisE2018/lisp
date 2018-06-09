@@ -3,9 +3,9 @@ package lisp.describe;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.Map;
 
 import lisp.Describer;
+import lisp.util.MultiMap;
 
 public class ClassDescriber implements Describer
 {
@@ -16,7 +16,7 @@ public class ClassDescriber implements Describer
      * @param result The map to add entries to.
      * @param target The object to describe.
      */
-    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    public void getDescriberValues (final MultiMap<String, Object> result, final Object target)
     {
 	final Class<?> cls = (Class<?>)target;
 	result.put ("Class", cls.getCanonicalName ());

@@ -2,12 +2,12 @@
 package lisp.symbol;
 
 import java.lang.reflect.Method;
-import java.util.*;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import lisp.Describer;
+import lisp.util.MultiMap;
 
 public class ObjectMethod implements Describer
 {
@@ -108,9 +108,9 @@ public class ObjectMethod implements Describer
     }
 
     @Override
-    public Map<String, Object> getDescriberValues (final Object target)
+    public MultiMap<String, Object> getDescriberValues (final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	final MultiMap<String, Object> result = new MultiMap<String, Object> ();
 	result.put ("Object", object);
 	result.put ("Method", method);
 	if (documentation != null && !documentation.isEmpty ())

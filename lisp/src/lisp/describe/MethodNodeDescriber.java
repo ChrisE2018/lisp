@@ -1,12 +1,13 @@
 
 package lisp.describe;
 
-import java.util.*;
+import java.util.List;
 
 import org.objectweb.asm.tree.*;
 
 import lisp.Describer;
 import lisp.asm.instructions.AccessKeywords;
+import lisp.util.MultiMap;
 
 public class MethodNodeDescriber implements Describer
 {
@@ -31,7 +32,7 @@ public class MethodNodeDescriber implements Describer
      * @param result The map to add entries to.
      * @param target The object to describe.
      */
-    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    public void getDescriberValues (final MultiMap<String, Object> result, final Object target)
     {
 	final MethodNode mn = (MethodNode)target;
 	result.put ("Access", AccessKeywords.find (mn.access));

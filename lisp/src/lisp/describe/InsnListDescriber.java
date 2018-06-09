@@ -1,11 +1,10 @@
 
 package lisp.describe;
 
-import java.util.Map;
-
 import org.objectweb.asm.tree.*;
 
 import lisp.Describer;
+import lisp.util.MultiMap;
 
 public class InsnListDescriber implements Describer
 {
@@ -29,7 +28,7 @@ public class InsnListDescriber implements Describer
      * @param result The map to add entries to.
      * @param target The object to describe.
      */
-    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    public void getDescriberValues (final MultiMap<String, Object> result, final Object target)
     {
 	final InsnList il = (InsnList)target;
 	for (int i = 0; i < il.size (); i++)

@@ -50,12 +50,14 @@ public class LispReader
     private Package currentPackage;
 
     private final Symbol theSymbol;
+    private final Symbol dotSymbol;
 
     public LispReader ()
     {
 	importPackage (PackageFactory.getSystemPackage ());
 	currentPackage = PackageFactory.getDefaultPackage ();
 	theSymbol = PackageFactory.getSystemPackage ().internSymbol ("the");
+	dotSymbol = PackageFactory.getSystemPackage ().internSymbol ("dot");
     }
 
     public void importSymbol (final Symbol symbol)
@@ -135,6 +137,15 @@ public class LispReader
 	    final Object form = read (in, pkg);
 	    wrapper.add (form);
 	    return wrapper;
+	}
+	if (chr == parsing.getDotMarker ())
+	{
+	    final LispList dotForm = new LispList ();
+	    in.read (chr); // Discard dot character
+	    dotForm.add (dotSymbol);
+	    final Object form = read (in, pkg);
+	    dotForm.add (form);
+	    return dotForm;
 	}
 	if (in.eof ())
 	{
@@ -327,23 +338,25 @@ public class LispReader
 	return pkg.internSymbol (name);
     }
 
-    private java.lang.Package findJavaPackage (final String name)
+    /** Lookup a name to determine if it represents an imported symbol. */
+    public Symbol findImportedSymbol (final String name)
     {
-	java.lang.Package result = null;
-	final String[] parts = name.split ("\\.");
-	final StringBuilder buffer = new StringBuilder ();
-	for (int i = 0; i < parts.length; i++)
+	for (final Symbol symbol : importedSymbols)
 	{
-	    buffer.append (parts[i]);
-	    final java.lang.Package pp = java.lang.Package.getPackage (buffer.toString ());
-	    if (pp != null)
+	    if (symbol.is (name))
 	    {
-		result = pp;
+		return symbol;
 	    }
-	    buffer.append ('.');
 	}
-
-	return result;
+	for (final Package p : importedPackages)
+	{
+	    final Symbol result = p.findSymbol (name);
+	    if (result != null)
+	    {
+		return result;
+	    }
+	}
+	return null;
     }
 
     private Object readJavaSymbol (final String name)
@@ -388,28 +401,26 @@ public class LispReader
 	    }
 	}
 
-	return null;
+	throw new Error ("Could not read " + name + " as a Java class or method reference");
     }
 
-    /** Lookup a name to determine if it represents an imported symbol. */
-    public Symbol findImportedSymbol (final String name)
+    private java.lang.Package findJavaPackage (final String name)
     {
-	for (final Symbol symbol : importedSymbols)
+	java.lang.Package result = null;
+	final String[] parts = name.split ("\\.");
+	final StringBuilder buffer = new StringBuilder ();
+	for (int i = 0; i < parts.length; i++)
 	{
-	    if (symbol.is (name))
+	    buffer.append (parts[i]);
+	    final java.lang.Package pp = java.lang.Package.getPackage (buffer.toString ());
+	    if (pp != null)
 	    {
-		return symbol;
+		result = pp;
 	    }
+	    buffer.append ('.');
 	}
-	for (final Package p : importedPackages)
-	{
-	    final Symbol result = p.findSymbol (name);
-	    if (result != null)
-	    {
-		return result;
-	    }
-	}
-	return null;
+
+	return result;
     }
 
     @Override
