@@ -6,7 +6,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.logging.Logger;
 
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
 
 import lisp.*;
 import lisp.eval.*;
@@ -164,7 +164,6 @@ public class CompilerPrimitives extends Definer
 	FunctionCell function = symbol.getFunction ();
 	final LispList source = new LispList ();
 	final ClassNode cn = cl.getClassNode ();
-	final MethodNode mn = cl.getMethodNode ();
 	source.add (Symbol.named ("system", "define"));
 	source.add (symbol);
 	source.add (args);

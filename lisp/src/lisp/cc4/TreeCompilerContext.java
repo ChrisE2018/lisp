@@ -303,9 +303,11 @@ public class TreeCompilerContext implements Opcodes
 	    }
 	    if (optimizeFunctionCall (expression))
 	    {
-		return compileDirectFunctionCall (expression, resultDesired);
+		// Function call always returns a value whether we want it or not
+		return compileDirectFunctionCall (expression);
 	    }
 	}
+	// Function call always returns a value whether we want it or not
 	return compileDefaultFunctionCall (expression);
     }
 
@@ -356,7 +358,7 @@ public class TreeCompilerContext implements Opcodes
 	return false;
     }
 
-    private CompileResultSet compileDirectFunctionCall (final LispList expression, final boolean resultDesired)
+    private CompileResultSet compileDirectFunctionCall (final LispList expression)
     {
 	// (setq showBytecode t)
 	// (define foo () (getDefaultPackage))

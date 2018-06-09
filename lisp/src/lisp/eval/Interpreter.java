@@ -265,7 +265,6 @@ public class Interpreter extends Definer
 
     public Object evalString (final String expression) throws Exception
     {
-	final Package pkg = PackageFactory.getDefaultPackage ();
 	final LexicalContext context = new LexicalContext (this);
 	final LispStream stream = new LispStream (expression);
 	final LispReader lispReader = new LispReader ();

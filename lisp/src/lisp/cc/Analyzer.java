@@ -12,6 +12,7 @@ public class Analyzer
 
     private class Local
     {
+	@SuppressWarnings ("unused")
 	private final Symbol varName;
 	private final Class<?> varType;
 
@@ -25,6 +26,7 @@ public class Analyzer
     private final String className;
     private final Class<?> returnType;
     private final Symbol methodName;
+    @SuppressWarnings ("unused")
     private final LispList methodArgs;
     private final List<Symbol> methodArgNames = new ArrayList<Symbol> ();
     private final LispList methodBody;
