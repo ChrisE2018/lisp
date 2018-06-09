@@ -57,6 +57,19 @@ public class Interpreter extends Definer
 		    }
 		    return javaMethodCall (null, method.getDeclaringClass (), method.getName (), arguments);
 		}
+		else
+		{
+		    // (java.lang.String.length "foobar")
+		    final List<Object> arguments = new LispList ();
+		    final Object target = eval (context, list.get (1));
+		    arguments.add (target);
+		    arguments.add (method);
+		    for (int i = 2; i < list.size (); i++)
+		    {
+			arguments.add (eval (context, list.get (i)));
+		    }
+		    return javaMethodCall (target, method.getDeclaringClass (), method.getName (), arguments);
+		}
 	    }
 	    if (fn instanceof Symbol)
 	    {
