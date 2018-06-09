@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import lisp.Symbol;
 import lisp.eval.LexicalContext;
+import lisp.util.MultiMap;
 
 public class StandardFunctionCell extends FunctionCell
 {
@@ -34,14 +35,6 @@ public class StandardFunctionCell extends FunctionCell
 	methods = new ObjectMethod[] {new ObjectMethod (obj, method, documentation, source, cn)};
 	makeOverloadMap (methods);
     }
-
-    // @Override
-    // public void overload (final Object obj, final Method method, final String documentation,
-    // final LispList source,
-    // final MethodNode mn)
-    // {
-    // overload (obj, method, documentation, source, mn);
-    // }
 
     @Override
     public void overload (final Object obj, final Method method, final String documentation, final Object source,
@@ -155,7 +148,7 @@ public class StandardFunctionCell extends FunctionCell
      * @param target The object to describe.
      */
     @Override
-    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    public void getDescriberValues (final MultiMap<String, Object> result, final Object target)
     {
 	super.getDescriberValues (result, target);
 	for (int i = 0; i < methods.length; i++)

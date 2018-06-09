@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import lisp.*;
 import lisp.eval.LexicalContext;
+import lisp.util.MultiMap;
 
 /** Base class of all function cells. */
 public abstract class FunctionCell implements Describer
@@ -210,7 +211,7 @@ public abstract class FunctionCell implements Describer
      * @param result The map to add entries to.
      * @param target The object to describe.
      */
-    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    public void getDescriberValues (final MultiMap<String, Object> result, final Object target)
     {
 	result.put ("Symbol", symbol);
 	result.put ("AllowRedefinition", allowRedefinition);

@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import lisp.Symbol;
 import lisp.eval.LexicalContext;
+import lisp.util.MultiMap;
 
 public class SpecialFunctionCell extends FunctionCell
 {
@@ -111,7 +112,7 @@ public class SpecialFunctionCell extends FunctionCell
      * @param target The object to describe.
      */
     @Override
-    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    public void getDescriberValues (final MultiMap<String, Object> result, final Object target)
     {
 	super.getDescriberValues (result, target);
 	for (final ObjectMethod method : methods)

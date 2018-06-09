@@ -2,12 +2,13 @@
 package lisp.symbol;
 
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.List;
 
 import org.objectweb.asm.tree.ClassNode;
 
 import lisp.Symbol;
 import lisp.eval.LexicalContext;
+import lisp.util.MultiMap;
 
 /**
  * Function cell that processes the original form and returns an expanded form for further
@@ -54,7 +55,7 @@ public class MacroFunctionCell extends FunctionCell
      * @param target The object to describe.
      */
     @Override
-    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    public void getDescriberValues (final MultiMap<String, Object> result, final Object target)
     {
 	super.getDescriberValues (result, target);
 	result.put ("Object", object);

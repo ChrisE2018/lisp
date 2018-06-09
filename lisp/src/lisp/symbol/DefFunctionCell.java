@@ -2,12 +2,13 @@
 package lisp.symbol;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.List;
 
 import org.objectweb.asm.tree.ClassNode;
 
 import lisp.Symbol;
 import lisp.eval.LexicalContext;
+import lisp.util.MultiMap;
 
 /** Function cell for a function definition of a named function that binds arguments to values. */
 public class DefFunctionCell extends FunctionCell
@@ -80,7 +81,7 @@ public class DefFunctionCell extends FunctionCell
      * @param target The object to describe.
      */
     @Override
-    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    public void getDescriberValues (final MultiMap<String, Object> result, final Object target)
     {
 	super.getDescriberValues (result, target);
 	result.put ("name", name);
