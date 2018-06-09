@@ -29,9 +29,10 @@
 ;; These lisp primitives contain only simple functions that do not need special compiler support.
 ;; Some of them will benefit if they are given special compiler support to produce better code.
 
+(new "lisp.describe.DescribePrimitives")
+
 (new "lisp.eval.ArithmeticPrimitives")
 (new "lisp.eval.ControlPrimitives")
-(new "lisp.eval.DescribePrimitives")
 (new "lisp.eval.FunctionPrimitives")
 (new "lisp.eval.IOPrimitives")
 (new "lisp.eval.ListPrimitives")
