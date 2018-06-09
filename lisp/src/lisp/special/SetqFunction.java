@@ -66,8 +66,8 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	}
 	else
 	{
-	    // [TODO] If the symbol valueCell is constant, use the current value.
-	    // [TODO] If the valueCell is a TypedValueCell, use the type information.
+	    // TODO If the symbol valueCell is constant, use the current value.
+	    // TODO If the valueCell is a TypedValueCell, use the type information.
 	    // global
 	    final TreeCompiler compiler = context.getTreeCompiler ();
 	    compiler.addSymbolReference (symbol);
@@ -143,7 +143,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     private void compileArgSetq (final CompilerGenerator generator, final GeneratorAdapter mv, final Symbol symbol,
             final Object expr, final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
-	// [TODO] If we can determine the type, use that information.
+	// TODO If we can determine the type, use that information.
 	final int localRef = generator.getMethodArgIndex (symbol);
 	final Class<?> varClass = generator.getMethodArgClass (symbol);
 	if (valueClass == null)
@@ -164,12 +164,12 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
             final Object valueExpr, final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	generator.addSymbolReference (symbol);
-	// [TODO] If the symbol valueCell is constant, use the current value.
-	// [TODO] If the valueCell is a TypedValueCell, use the type information.
+	// TODO If the symbol valueCell is constant, use the current value.
+	// TODO If the valueCell is a TypedValueCell, use the type information.
 	mv.visitVarInsn (ALOAD, 0);
 	final String classInternalName = generator.getClassType ().getInternalName ();
 	mv.visitFieldInsn (GETFIELD, classInternalName, generator.createJavaSymbolName (symbol), "Llisp/Symbol;");
-	generator.compileExpression (mv, valueExpr, Object.class /* TODO */, false, false);
+	generator.compileExpression (mv, valueExpr, Object.class, false, false);
 	if (valueClass != null)
 	{
 	    // Copy the expression value so it becomes the return value

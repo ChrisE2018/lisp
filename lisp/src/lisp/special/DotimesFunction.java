@@ -21,7 +21,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
     {
 	visitor.visitStart (expression);
 	final LispList clause = (LispList)expression.get (1);
-	// [TODO] visit variable binding
+	// TODO visit variable binding
 	visitor.visitInteger (clause.get (1));
 	for (int i = 2; i < expression.size () - 1; i++)
 	{
@@ -89,7 +89,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	// Compute repeat count
 	final List<?> control = (List<?>)e.get (1);
 	final Object count = control.get (1);
-	generator.compileExpression (mv, count, Object.class /* TODO */, false, false);
+	generator.compileExpression (mv, count, Object.class, false, false);
 	mv.visitTypeInsn (CHECKCAST, "java/lang/Integer");
 	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
 	// Leave repeat count on the stack

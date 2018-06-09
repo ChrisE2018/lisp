@@ -7,7 +7,7 @@ public interface ValueCell
     public Object getValue ();
 
     /**
-     * Change the current stored value. [TODO] Should this return the previous value?
+     * Change the current stored value. TODO Should this return the previous value?
      */
     public void setValue (Object value);
 

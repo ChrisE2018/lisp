@@ -197,8 +197,8 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
      */
     private void compileExpression (final MethodVisitor mv, final Object e, final Class<?> valueType)
     {
-	// [TOOD] valueType is ignored for now except when it is null or boolean.class
-	// [TODO] valueType should be supported for all primitive types
+	// valueType is ignored for now except when it is null or boolean.class
+	// valueType should be supported for all primitive types
 	if (e == null)
 	{
 	    throw new Error ("Null is an illegal expression");
@@ -224,7 +224,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	if (methodArgs.contains (symbol))
 	{
 	    // Parameter reference
-	    // [TODO] If we can determine the type, use that information.
+	    // If we can determine the type, use that information.
 	    if (valueType != null)
 	    {
 		final int argRef = methodArgs.indexOf (symbol) + 1;
@@ -264,8 +264,8 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 		    symbolReferences.add (symbol);
 		}
 		LOGGER.finer (new LogString ("Symbol reference to %s", symbol));
-		// [TODO] If the symbol valueCell is constant, use the current value.
-		// [TODO] If the valueCell is a TypedValueCell, use the type information.
+		// If the symbol valueCell is constant, use the current value.
+		// If the valueCell is a TypedValueCell, use the type information.
 
 		mv.visitVarInsn (ALOAD, 0);
 		final String classInternalName = shellClassType.getInternalName ();
@@ -298,7 +298,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    }
 	}
 	// Compile constant expressions
-	// [TODO] All of these box the constant in a class wrapper. If we can use the primitive
+	// All of these box the constant in a class wrapper. If we can use the primitive
 	// type instead, that is more efficient.
 	else if (e instanceof Boolean)
 	{
@@ -359,7 +359,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	{
 	    throw new IllegalArgumentException ("Function is not a symbol " + head);
 	}
-	// [TODO] Consider alternatives of pushing this code into the compiled function
+	// Consider alternatives of pushing this code into the compiled function
 	// vs making these choices at compile time. The compile time choice will produce
 	// faster code, but it won't be able to change behavior of the called function
 	// is changed. This whole block of functionality could be a private method in
@@ -405,7 +405,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
             final Class<?> valueType)
     {
 	// Save the symbol in a class field.
-	// [TODO] If we are compiling for speed and can assume that the current definition won't
+	// If we are compiling for speed and can assume that the current definition won't
 	// change, then compile a direct call to the current function method.
 
 	if (!symbolReferences.contains (symbol))
@@ -427,16 +427,16 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	mv.visitTypeInsn (ANEWARRAY, "java/lang/Object");
 	for (int i = 0; i < argCount; i++)
 	{
-	    // [TODO] If we know argument types of the function we are about to call we can try to
+	    // If we know argument types of the function we are about to call we can try to
 	    // compile the expression more efficiently.
 	    mv.visitInsn (DUP);
 	    ldcGeneral (mv, i);
-	    compileExpression (mv, e.get (i + 1), Object.class /* TODO */);
+	    compileExpression (mv, e.get (i + 1), Object.class);
 	    mv.visitInsn (AASTORE);
 	}
 	// Call invoke on the method.
 	// Assume the function will still be defined when we execute this code.
-	// [TODO] Could define an applyVoid method to return no value.
+	// Could define an applyVoid method to return no value.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
 	if (valueType == null)
 	{
@@ -457,8 +457,8 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	// [done] Calls to Java methods
 	// Defmacro
 	// &optional, &key, &rest
-	// [TODO] Hookup definition of special function calls to DefineLisp annotation.
-	// [TODO] Optimization
+	// Hookup definition of special function calls to DefineLisp annotation.
+	// Optimization
 	if (symbol.is ("quote"))
 	{
 	    compileQuote (mv, e, valueType);
@@ -660,7 +660,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	for (int i = 1; i < e.size (); i++)
 	{
 	    mv.visitInsn (POP);
-	    compileExpression (mv, e.get (i), Object.class /* TODO */);
+	    compileExpression (mv, e.get (i), Object.class);
 	    mv.visitInsn (DUP);
 	    final Label l3 = new Label ();
 	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
@@ -704,7 +704,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	for (int i = 1; i < e.size (); i++)
 	{
 	    mv.visitInsn (POP);
-	    compileExpression (mv, e.get (i), Object.class /* TODO */);
+	    compileExpression (mv, e.get (i), Object.class);
 	    mv.visitInsn (DUP);
 	    mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
 	    mv.visitJumpInsn (IFEQ, l1);
@@ -813,7 +813,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	if (methodArgs.contains (symbol))
 	{
 	    // Parameter reference
-	    // [TODO] If we can determine the type, use that information.
+	    // If we can determine the type, use that information.
 	    final int argRef = methodArgs.indexOf (symbol) + 1;
 	    LOGGER.finer (new LogString ("Setq parameter %s (%d)", symbol, argRef));
 	    compileLocalSetq (mv, argRef, e.get (2), valueType);
@@ -831,12 +831,12 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 		symbolReferences.add (symbol);
 	    }
 	    LOGGER.finer (new LogString ("Symbol assignment to %s", symbol));
-	    // [TODO] If the symbol valueCell is constant, use the current value.
-	    // [TODO] If the valueCell is a TypedValueCell, use the type information.
+	    // If the symbol valueCell is constant, use the current value.
+	    // If the valueCell is a TypedValueCell, use the type information.
 	    mv.visitVarInsn (ALOAD, 0);
 	    final String classInternalName = shellClassType.getInternalName ();
 	    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
-	    compileExpression (mv, e.get (2), Object.class /* TODO */);
+	    compileExpression (mv, e.get (2), Object.class);
 	    if (valueType != null)
 	    {
 		// Copy the expression value so it becomes the return value
@@ -861,19 +861,19 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
     {
 	if (valueType == null)
 	{
-	    compileExpression (mv, expr, Object.class /* TODO */);
+	    compileExpression (mv, expr, Object.class);
 	    mv.visitVarInsn (ASTORE, localRef);
 	}
 	else if (boolean.class.equals (valueType))
 	{
-	    compileExpression (mv, expr, Object.class /* TODO */);
+	    compileExpression (mv, expr, Object.class);
 	    mv.visitInsn (DUP);
 	    mv.visitVarInsn (ASTORE, localRef);
 	    coerceBoolean (mv);
 	}
 	else
 	{
-	    compileExpression (mv, expr, Object.class /* TODO */);
+	    compileExpression (mv, expr, Object.class);
 	    mv.visitInsn (DUP);
 	    mv.visitVarInsn (ASTORE, localRef);
 	}
@@ -897,7 +897,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	final int countRef = lvs.newLocal (Type.getType (int.class));
 
 	// Compute repeat count
-	compileExpression (mv, e.get (1), Object.class /* TODO */);
+	compileExpression (mv, e.get (1), Object.class);
 	mv.visitTypeInsn (CHECKCAST, "java/lang/Integer");
 	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
 	// Put repeat count number into local variable
@@ -973,7 +973,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	// Compute repeat count
 	final List<?> control = (List<?>)e.get (1);
 	final Object count = control.get (1);
-	compileExpression (mv, count, Object.class /* TODO */);
+	compileExpression (mv, count, Object.class);
 	mv.visitTypeInsn (CHECKCAST, "java/lang/Integer");
 	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
 	// Leave repeat count on the stack
@@ -1147,7 +1147,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	for (final Object clause : args)
 	{
 	    final LispList c = (LispList)clause;
-	    compileExpression (mv, c.get (1), Object.class /* TODO */);
+	    compileExpression (mv, c.get (1), Object.class);
 	}
 
 	// Now bind the variables in reverse order
@@ -1164,13 +1164,13 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	}
 
 	// Evaluate first (required) body form
-	compileExpression (mv, e.get (2), Object.class /* TODO */);
+	compileExpression (mv, e.get (2), Object.class);
 	// Evaluate remaining (optional) body forms
 	for (int i = 3; i < e.size (); i++)
 	{
 	    // Get rid of previous value
 	    mv.visitInsn (POP);
-	    compileExpression (mv, e.get (i), Object.class /* TODO */);
+	    compileExpression (mv, e.get (i), Object.class);
 	}
 	// Restore original local variables map
 	localVariableMap = savedLocalVariableMap;
@@ -1202,20 +1202,20 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	{
 	    final LispList c = (LispList)clause;
 	    final Symbol var = (Symbol)c.get (0);
-	    compileExpression (mv, c.get (1), Object.class /* TODO */);
+	    compileExpression (mv, c.get (1), Object.class);
 	    final int localRef = lvs.newLocal (Type.getType (Object.class));
 	    mv.visitVarInsn (ASTORE, localRef);
 	    localVariableMap.put (var, localRef);
 	}
 
 	// Evaluate first (required) body form
-	compileExpression (mv, e.get (2), Object.class /* TODO */);
+	compileExpression (mv, e.get (2), Object.class);
 	// Evaluate remaining (optional) body forms
 	for (int i = 3; i < e.size (); i++)
 	{
 	    // Get rid of previous value
 	    mv.visitInsn (POP);
-	    compileExpression (mv, e.get (i), Object.class /* TODO */);
+	    compileExpression (mv, e.get (i), Object.class);
 	}
 	// Restore original local variables map
 	localVariableMap = savedLocalVariableMap;

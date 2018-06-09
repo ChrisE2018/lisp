@@ -29,7 +29,7 @@ public class ConstantExpression implements Opcodes
 	    throw new IllegalArgumentException ("Constant " + e + " is not a boolean");
 	}
 	// Compile constant expressions
-	// [TODO] All of these box the constant in a class wrapper. If we can use the primitive
+	// All of these box the constant in a class wrapper. If we can use the primitive
 	// type instead, that is more efficient.
 	else if (e instanceof Boolean)
 	{
@@ -169,7 +169,7 @@ public class ConstantExpression implements Opcodes
 		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
 	    }
 	}
-	// [TODO] Continue the same code pattern...
+	// TODO Continue the same code pattern...
 	else if (e instanceof Float)
 	{
 	    final Float f = (Float)e;

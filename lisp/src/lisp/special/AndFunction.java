@@ -21,7 +21,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	visitor.visitStart (expression);
 	for (int i = 1; i < expression.size (); i++)
 	{
-	    // [TODO] If the expression always returns non-false, ignore it.
+	    // TODO If the expression always returns non-false, ignore it.
 	    visitor.visitValue (expression.get (i));
 	}
 	visitor.visitEnd (expression);

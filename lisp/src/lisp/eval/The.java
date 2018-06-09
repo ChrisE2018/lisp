@@ -31,7 +31,7 @@ public class The extends Definer
 	    }
 	    if (t.is ("char"))
 	    {
-		// [TODO] Is this right?
+		// TODO Is this right?
 		return (char)((Number)arg).intValue ();
 	    }
 	    if (t.is ("short"))

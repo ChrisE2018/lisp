@@ -78,7 +78,7 @@ public class Parsing
     }
 
     /**
-     * Test for atom characters. [TODO] Make a syntax table.
+     * Test for atom characters. TODO Make a syntax table.
      *
      * @param chr
      * @return

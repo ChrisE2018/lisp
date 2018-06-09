@@ -188,7 +188,7 @@ public class Analyzer
     private List<Class<?>> analyzeValueExpression (final int level, final Object expression,
             final Map<Symbol, Local> localVariables, final Class<?> valueType)
     {
-	// [TODO] This should return a list of expression value types that can be produced.
+	// TODO This should return a list of expression value types that can be produced.
 	if (expression == null)
 	{
 	    msg (level, "Null is an illegal expression");
@@ -358,7 +358,7 @@ public class Analyzer
 	final List<Class<?>> result = new ArrayList<Class<?>> ();
 	final Symbol fn = (Symbol)expression.get (0);
 	final FunctionCell fc = fn.getFunction ();
-	// [TODO] The potential types of the function arguments should be determined and a prototype
+	// TODO The potential types of the function arguments should be determined and a prototype
 	// selected to produce the best method overload.
 	if (fc == null)
 	{
@@ -378,7 +378,7 @@ public class Analyzer
 		msg (level, "Undefined function %s called for %s value", fn, valueType);
 		for (int i = 1; i < expression.size (); i++)
 		{
-		    // [TODO] The Object.class valueType is forcing the chooseFunction method to
+		    // TODO The Object.class valueType is forcing the chooseFunction method to
 		    // select a prototype that returns an Object and not allowing primitive data
 		    // types that could be converted to Object. This needs to be fixed.
 		    analyzeValueExpression (level + 1, expression.get (i), localVariables, Object.class);
@@ -568,7 +568,7 @@ public class Analyzer
 	else if (fn.is ("setq"))
 	{
 	    msg (level, "Setq expression %s ignored", expression);
-	    // [TODO] Determine type of variable
+	    // TODO Determine type of variable
 	    analyzeValueExpression (level + 1, expression.get (2), localVariables, Object.class);
 	}
 	else if (fn.is ("repeat"))
@@ -732,7 +732,7 @@ public class Analyzer
 	else if (fn.is ("setq"))
 	{
 	    msg (level, "Setq expression %s => %s", expression, valueType);
-	    // [TODO] Determine type of variable
+	    // TODO Determine type of variable
 	    analyzeValueExpression (level + 1, expression.get (2), localVariables, Object.class);
 	}
 	else if (fn.is ("repeat"))

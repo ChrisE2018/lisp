@@ -52,7 +52,7 @@ public class TreeCompilerContext implements Opcodes
     /** Setup the binding for a new local variable. */
     public TreeCompilerContext bindVariable (final Symbol var, final Class<?> varClass)
     {
-	// [TODO] Can we use mn.locals instead of our own structure?
+	// TODO Can we use mn.locals instead of our own structure?
 	final Type varType = Type.getType (varClass);
 	final List<LocalVariableNode> lvl = mn.localVariables;
 	final String name = var.getName ();
@@ -71,7 +71,7 @@ public class TreeCompilerContext implements Opcodes
     /** Setup the bindings for several new local variables. */
     public TreeCompilerContext bindVariables (final Map<Symbol, Class<?>> bindings)
     {
-	// [TODO] Can we use mn.locals instead of our own structure?
+	// TODO Can we use mn.locals instead of our own structure?
 	final List<LocalVariableNode> lvl = mn.localVariables;
 	final Map<Symbol, LocalBinding> newLocals = new HashMap<Symbol, LocalBinding> (locals);
 	for (final Entry<Symbol, Class<?>> entry : bindings.entrySet ())
@@ -168,7 +168,7 @@ public class TreeCompilerContext implements Opcodes
 	    converter.convert (il, void.class, toClass, allowNarrowing, liberalTruth);
 	    return;
 	}
-	// [TODO] If toClass is void (or null) then collapse all cases of the same size
+	// TODO If toClass is void (or null) then collapse all cases of the same size
 	final LabelNode lExit = new LabelNode ();
 	final List<CompileResult> results = fromClass.getResults ();
 	for (int i = 0; i < results.size (); i++)
@@ -328,9 +328,9 @@ public class TreeCompilerContext implements Opcodes
     /** Determine if a function call should be optimized. */
     private boolean optimizeFunctionCall (final LispList expression)
     {
-	// [TODO] If we are compiling for speed and can assume that the current definition won't
+	// TODO If we are compiling for speed and can assume that the current definition won't
 	// change, then compile a direct call to the current function method.
-	// [TODO] If we know argument types of the function we are about to call we can try to
+	// TODO If we know argument types of the function we are about to call we can try to
 	// compile the expression more efficiently.
 	final int argCount = expression.size () - 1;
 	final Symbol symbol = expression.head ();
@@ -404,8 +404,8 @@ public class TreeCompilerContext implements Opcodes
     /**
      * Compile a function call and add it to the instruction list. This creates a generic function
      * call to any normal function. <br/>
-     * [TODO] Special forms and macros need to be handled. <br/>
-     * [TODO] Optimized calls to known functions should also be produced.
+     * TODO Special forms and macros need to be handled. <br/>
+     * TODO Optimized calls to known functions should also be produced.
      *
      * @param il The instruction list.
      * @param locals Local variable binding information.
@@ -453,7 +453,7 @@ public class TreeCompilerContext implements Opcodes
     /**
      * Compile an expression to calculate the value of a symbol. This determines if the symbol is an
      * argument, local variable or global symbol and calculates the correct value. <br/>
-     * [TODO] Constants and typed variables should be handled specially.
+     * TODO Constants and typed variables should be handled specially.
      *
      * @param mv The bytecode generator.
      * @param symbol The symbol value to calculate.
@@ -490,8 +490,8 @@ public class TreeCompilerContext implements Opcodes
 	    // Reference to a global variable
 	    treeCompiler.addGlobalReference (symbol); // Log message
 	    treeCompiler.addSymbolReference (symbol); // Make symbol available at execution time
-	    // [TODO] If the symbol valueCell is constant, use the current value.
-	    // [TODO] If the valueCell is a TypedValueCell, use the type information.
+	    // TODO If the symbol valueCell is constant, use the current value.
+	    // TODO If the valueCell is a TypedValueCell, use the type information.
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    final Type classType = treeCompiler.getClassType ();
 	    final String classInternalName = classType.getInternalName ();

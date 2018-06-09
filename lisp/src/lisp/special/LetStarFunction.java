@@ -22,7 +22,7 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
     {
 	visitor.visitStart (expression);
 	final LispList bindings = (LispList)expression.get (1);
-	// [TODO] visit variable binding
+	// TODO visit variable binding
 	for (int i = 0; i < bindings.size (); i++)
 	{
 	    final LispList clause = (LispList)bindings.get (i);

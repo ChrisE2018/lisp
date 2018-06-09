@@ -148,7 +148,7 @@ public class Interpreter extends Definer
 		return arg;
 	    }
 	}
-	// [TODO] Handle char, long, short etc.
+	// TODO Handle char, long, short etc.
 	if (p == int.class || p == Integer.class)
 	{
 	    // Handle int from Lisp int

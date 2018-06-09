@@ -27,18 +27,18 @@ import lisp.eval.*;
 public class Interactor extends JTextPane implements DocumentListener, Runnable, MouseListener, MouseMotionListener
 {
     // High priority:
-    // [TODO] Indent current form on enter key
-    // [TODO] Show balancing paren on entry
+    // TODO Indent current form on enter key
+    // TODO Show balancing paren on entry
     // [skip] Buttons to halt long computations
-    // [TODO] User defined buttons bound to forms
+    // TODO User defined buttons bound to forms
     // [done] Set form/value to variables like repl
     // [done] Print error backtrace into the window.
     // [done] User defined menus bound to forms
     // [done] Not get confused if text before current entry point is deleted
-    // [TODO] Graphic Inspector embedded or as separate window
-    // [TODO] A window or split pane that shows variables (or forms) and values updated each cycle
+    // TODO Graphic Inspector embedded or as separate window
+    // TODO A window or split pane that shows variables (or forms) and values updated each cycle
     // [done] Hyperlinks in Interactor output
-    // [TODO] Make hyperlinks easier to use in client code and better appearance
+    // TODO Make hyperlinks easier to use in client code and better appearance
     // Note: editable text won't normally process hyperlinks. @see
     // http://java-sl.com/tip_links_in_editable.html
     // [done] Make System.out print to the interactor
@@ -47,11 +47,11 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
     // [skip] Save/reload window size & position
     // [skip] Menu or lisp function to control styles.
     // [skip] Bind the Interactor to a Lisp variable
-    // [TODO] Save interactor text to a file
+    // TODO Save interactor text to a file
     // [skip] Find/Replace window
-    // [TODO] File editor window for source code
+    // TODO File editor window for source code
     // [skip] Help system with hypertext for all functions
-    // [TODO] Make this an RCP split window type application?
+    // TODO Make this an RCP split window type application?
     // [done] Make prompt into a variable
     // [done] Styles should have different fonts/styles
 
@@ -321,7 +321,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 		    {
 			final Symbol valueSymbol = pkg.internSymbol ("v").gensym ();
 			final String valueText = value.toString ();
-			// [TODO] Scan the valueText for format markup and hyperlinks.
+			// TODO Scan the valueText for format markup and hyperlinks.
 			final int p1 = doc.getLength ();
 			log (outputStyle, "%n[%s] =>%s", valueSymbol, valueText);
 			final int p2 = doc.getLength ();

@@ -104,7 +104,7 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
     // // {l1, boolean.class, Boolean.FALSE},
     // // {l2, result}};
     // // return resultx;
-    // // [TODO] Another idea(s): (1) attach instructions to the TreeCompilerContext (make it keep
+    // // TODO Another idea(s): (1) attach instructions to the TreeCompilerContext (make it keep
     // // straight where they go). (2) Add our own new "meta" instructions to do higher level
     // // things like convert Object to int or boolean. Follow with another pass to make these
     // // concrete.

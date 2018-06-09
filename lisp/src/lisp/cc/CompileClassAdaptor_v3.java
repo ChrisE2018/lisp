@@ -432,7 +432,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	else if (localVariableMap.containsKey (symbol))
 	{
 	    // Reference to a local lexical variable
-	    // [TODO] If we can determine the type, use that information.
+	    // TODO If we can determine the type, use that information.
 	    final LocalBinding lb = localVariableMap.get (symbol);
 	    final int localRef = lb.getLocalRef ();
 	    mv.loadLocal (localRef);
@@ -455,8 +455,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    // Reference to a global variable
 	    addGlobalReference (symbol); // Log message
 	    addSymbolReference (symbol); // Make symbol available at execution time
-	    // [TODO] If the symbol valueCell is constant, use the current value.
-	    // [TODO] If the valueCell is a TypedValueCell, use the type information.
+	    // TODO If the symbol valueCell is constant, use the current value.
+	    // TODO If the valueCell is a TypedValueCell, use the type information.
 	    mv.visitVarInsn (ALOAD, 0);
 	    final String classInternalName = shellClassType.getInternalName ();
 	    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
@@ -474,7 +474,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	{
 	    throw new Error ("Mal-formed function call");
 	}
-	// [TODO] Consider alternatives of pushing this code into the compiled function
+	// TODO Consider alternatives of pushing this code into the compiled function
 	// vs making these choices at compile time. The compile time choice will produce
 	// faster code, but it won't be able to change behavior of the called function
 	// is changed. This whole block of functionality could be a private method in
@@ -552,9 +552,9 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     /** Determine if a function call should be optimized. */
     private boolean optimizeFunctionCall (final LispList expression)
     {
-	// [TODO] If we are compiling for speed and can assume that the current definition won't
+	// TODO If we are compiling for speed and can assume that the current definition won't
 	// change, then compile a direct call to the current function method.
-	// [TODO] If we know argument types of the function we are about to call we can try to
+	// TODO If we know argument types of the function we are about to call we can try to
 	// compile the expression more efficiently.
 	final int argCount = expression.size () - 1;
 	final Symbol symbol = expression.head ();
@@ -656,7 +656,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 
 	// Call invoke on the method retrieved from the FunctionCell of the function symbol.
 	// Assume the function will still be defined when we execute this code.
-	// [TODO] Could define an applyVoid method to return no value.
+	// TODO Could define an applyVoid method to return no value.
 	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/symbol/FunctionCell", "apply", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
 	convert.convert (mv, Object.class, valueClass, allowNarrowing, liberalTruth);
     }

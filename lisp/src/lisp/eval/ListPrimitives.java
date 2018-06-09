@@ -21,7 +21,7 @@ import lisp.LispList;
  */
 public class ListPrimitives extends Definer
 {
-    // [TODO] Maps, sets,
+    // TODO Maps, sets,
     // [done] union, intersection, difference
 
     @DefineLisp

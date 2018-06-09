@@ -21,13 +21,13 @@ public class CompileLoader_v1 extends ClassLoader implements Compiler
      * Predefined shell class structure with support methods. To create a compiled function we load
      * this shell class and inject our new method. Each compile requires a new instance of this
      * ClassLoaded so we get a distinct class as a result. <br/>
-     * [TODO] Maybe use a gensym in the defineClass call to allow ClassLoader re-use?
+     * TODO Maybe use a gensym in the defineClass call to allow ClassLoader re-use?
      */
     private static final String SHELL_CLASS = "lisp.cc.CompiledShell";
 
     /**
      * Flag to control display of bytecode after compile. <br/>
-     * [TODO] Should use logger configuration instead of hard-coded flags.
+     * TODO Should use logger configuration instead of hard-coded flags.
      */
     private static final String SHOW_BYTECODE = "showBytecode";
 

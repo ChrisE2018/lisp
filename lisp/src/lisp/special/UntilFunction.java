@@ -53,7 +53,7 @@ public class UntilFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 	return new CompileResultSet (new ImplicitCompileResult (ll, false));
     }
 
-    // [TODO] This should be changed to always return false like the above definition
+    // TODO This should be changed to always return false like the above definition
     @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
             final boolean allowNarrowing, final boolean liberalTruth)

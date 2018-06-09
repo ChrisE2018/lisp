@@ -9,12 +9,12 @@ package lisp.eval;
  */
 public class ArithmeticPrimitives extends Definer
 {
-    // [TODO] Inverse trig (asin, acos, atan)
-    // [TODO] Exponentials, log
-    // [TODO] Consider using bigdecimal
-    // [TODO] Random
-    // [TODO] Statistical
-    // [TODO] Case for 'long' needed everywhere
+    // TODO Inverse trig (asin, acos, atan)
+    // TODO Exponentials, log
+    // TODO Consider using bigdecimal
+    // TODO Random
+    // TODO Statistical
+    // TODO Case for 'long' needed everywhere
 
     @DefineLisp
     public Object not (final Object arg)

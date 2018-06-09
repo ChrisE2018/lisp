@@ -29,7 +29,7 @@
 // {
 // // (setq system.showBytecode t)
 // // (define foo () byte:3)
-// // [TODO] Need to allow narrowing conversions here
+// // TODO Need to allow narrowing conversions here
 // if (type instanceof Symbol)
 // {
 // final Symbol t = (Symbol)type;

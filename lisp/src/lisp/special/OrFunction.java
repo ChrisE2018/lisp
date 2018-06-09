@@ -21,7 +21,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	visitor.visitStart (expression);
 	for (int i = 1; i < expression.size (); i++)
 	{
-	    // [TODO] If the expression always returns false, ignore it.
+	    // TODO If the expression always returns false, ignore it.
 	    visitor.visitValue (expression.get (i));
 	}
 	visitor.visitEnd (expression);

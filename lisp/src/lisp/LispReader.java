@@ -434,7 +434,7 @@ public class LispReader
 	if (element instanceof String)
 	{
 	    buffer.append ('"');
-	    // [TODO] Slashify
+	    // TODO Slashify
 	    buffer.append (element);
 	    buffer.append ('"');
 	}

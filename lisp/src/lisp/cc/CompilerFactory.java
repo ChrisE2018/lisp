@@ -27,7 +27,7 @@ public class CompilerFactory
     private final Package systemPackage = PackageFactory.getSystemPackage ();
     /**
      * Flag to control display of bytecode after compile. <br/>
-     * [TODO] Should use logger configuration instead of hard-coded flags.
+     * TODO Should use logger configuration instead of hard-coded flags.
      */
     private final Symbol showBytecodeSymbol = systemPackage.internSymbol ("showBytecode");
     private final Symbol compilerVersionSymbol = systemPackage.internSymbol ("compilerVersion");

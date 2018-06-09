@@ -35,6 +35,10 @@ public class DescribePrimitives extends Definer
 
     private Describer getDescriber (final Object arg)
     {
+	if (arg == null)
+	{
+	    return new ObjectDescriber ();
+	}
 	if (arg instanceof Describer)
 	{
 	    return (Describer)arg;
@@ -63,10 +67,17 @@ public class DescribePrimitives extends Definer
 	{
 	    return new AbstractInsnNodeDescriber ();
 	}
-	// [TODO] Java bean describer
 	else
 	{
-	    return new ObjectDescriber ();
+	    final Class<?> cls = arg.getClass ();
+	    if (cls.isArray ())
+	    {
+		return new ArrayDescriber ();
+	    }
+	    else
+	    {
+		return new ObjectDescriber ();
+	    }
 	}
     }
 
@@ -86,14 +97,14 @@ public class DescribePrimitives extends Definer
 	    final String doc = d.getDescriberDocumentation (arg, key);
 	    final Symbol symbol = pkg.internSymbol (String.format ("d%d", index));
 	    symbol.setValue (value);
-	    final String type = value == null ? "" : value.getClass ().getSimpleName ();
+	    final String type = value == null ? "" : "(" + value.getClass ().getSimpleName () + ") ";
 	    if (doc != null)
 	    {
-		System.out.printf ("%3s %30s: %-25s %s\n", symbol, type + " " + key, valueString, doc);
+		System.out.printf ("%3s %30s: %-25s %s\n", symbol, type + key, valueString, doc);
 	    }
 	    else
 	    {
-		System.out.printf ("%3s %30s: %-25s\n", symbol, type + " " + key, valueString);
+		System.out.printf ("%3s %30s: %-25s\n", symbol, type + key, valueString);
 	    }
 	}
     }
@@ -122,8 +133,41 @@ class ObjectDescriber implements Describer
      */
     public void getDescriberValues (final Map<String, Object> result, final Object target)
     {
-	result.put ("Class", target.getClass ());
+	final Class<?> cls = target.getClass ();
+	result.put ("Class", cls);
 	result.put ("Hashcode", target.hashCode ());
+	final Method[] methods = cls.getMethods ();
+	for (final Method method : methods)
+	{
+	    if (method.getParameterTypes ().length == 0)
+	    {
+		final String methodName = method.getName ();
+		if (methodName.startsWith ("get"))
+		{
+		    try
+		    {
+			final Object value = method.invoke (target);
+			result.put (methodName.substring (3), value);
+		    }
+		    catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
+		    {
+			e.printStackTrace ();
+		    }
+		}
+		if (methodName.startsWith ("is"))
+		{
+		    try
+		    {
+			final Object value = method.invoke (target);
+			result.put (methodName.substring (2), value);
+		    }
+		    catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
+		    {
+			e.printStackTrace ();
+		    }
+		}
+	    }
+	}
     }
 }
 
@@ -204,6 +248,52 @@ class ClassDescriber implements Describer
 	for (final Method method : cls.getDeclaredMethods ())
 	{
 	    result.put ("Declared Method", method);
+	}
+    }
+}
+
+class ArrayDescriber implements Describer
+{
+    /** Convert an object to a string for printing. */
+    public String getDescriberString (final Object target)
+    {
+	return "[" + getArrayString (target, 50) + "]";
+    }
+
+    private String getArrayString (final Object array, final int maxLength)
+    {
+	final StringBuilder buffer = new StringBuilder ();
+	final int length = Array.getLength (array);
+	for (int i = 0; i < length; i++)
+	{
+	    if (i > 0)
+	    {
+		buffer.append (", ");
+	    }
+	    if (buffer.length () > maxLength)
+	    {
+		buffer.append ("...");
+		return buffer.toString ();
+	    }
+	    buffer.append (Array.get (array, i));
+	}
+	return buffer.toString ();
+    }
+
+    /**
+     * Append to a map describing an object. The return value is intended to be used by a debugger
+     * to print an object decomposition.
+     *
+     * @param result The map to add entries to.
+     * @param target The object to describe.
+     */
+    public void getDescriberValues (final Map<String, Object> result, final Object array)
+    {
+	final int length = Array.getLength (array);
+	for (int i = 0; i < length; i++)
+	{
+	    final Object element = Array.get (array, i);
+	    result.put (String.valueOf (i), element);
 	}
     }
 }
