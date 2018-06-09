@@ -363,6 +363,7 @@ public class Interpreter extends Definer
     @DefineLisp (name = "try", special = true)
     public Object tryCatch (final LexicalContext context, final Object form, final Object... catchClauses) throws Exception
     {
+	// FIXME Implement tryCatch compiler.
 	Object result = null;
 	try
 	{
