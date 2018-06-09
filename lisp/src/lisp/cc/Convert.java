@@ -190,7 +190,7 @@ public class Convert implements Opcodes
 	    }
 	    case Type.OBJECT:
 	    {
-		// TODO Special case for String, Symbol?
+		// CONSIDER Special case for String, Symbol?
 		convert2Object (mv, fromClass, toClass);
 		return;
 	    }

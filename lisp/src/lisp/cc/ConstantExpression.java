@@ -12,7 +12,7 @@ public class ConstantExpression implements Opcodes
     private static final Logger LOGGER = Logger.getLogger (ConstantExpression.class.getName ());
 
     public void compileConstantExpression (final MethodVisitor mv, final Object e, final Class<?> valueClass,
-            final boolean allowNarrowing, final boolean liberalTruth)
+            @SuppressWarnings ("unused") final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (valueClass.equals (boolean.class))
 	{
@@ -169,7 +169,7 @@ public class ConstantExpression implements Opcodes
 		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
 	    }
 	}
-	// TODO Continue the same code pattern...
+	// CONSIDER Continue the same code pattern...
 	else if (e instanceof Float)
 	{
 	    final Float f = (Float)e;

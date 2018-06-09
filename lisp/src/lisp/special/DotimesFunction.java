@@ -21,7 +21,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
     {
 	visitor.visitStart (expression);
 	final LispList clause = (LispList)expression.get (1);
-	// TODO visit variable binding
+	// CONSIDER visit variable binding
 	visitor.visitInteger (clause.get (1));
 	for (int i = 2; i < expression.size () - 1; i++)
 	{

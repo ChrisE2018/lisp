@@ -52,7 +52,7 @@ public class TreeCompilerContext implements Opcodes
     /** Setup the binding for a new local variable. */
     public TreeCompilerContext bindVariable (final Symbol var, final Class<?> varClass)
     {
-	// TODO Can we use mn.locals instead of our own structure?
+	// CONSIDER Can we use mn.locals instead of our own structure?
 	final Type varType = Type.getType (varClass);
 	final List<LocalVariableNode> lvl = mn.localVariables;
 	final String name = var.getName ();
@@ -71,7 +71,7 @@ public class TreeCompilerContext implements Opcodes
     /** Setup the bindings for several new local variables. */
     public TreeCompilerContext bindVariables (final Map<Symbol, Class<?>> bindings)
     {
-	// TODO Can we use mn.locals instead of our own structure?
+	// CONSIDER Can we use mn.locals instead of our own structure?
 	final List<LocalVariableNode> lvl = mn.localVariables;
 	final Map<Symbol, LocalBinding> newLocals = new HashMap<Symbol, LocalBinding> (locals);
 	for (final Entry<Symbol, Class<?>> entry : bindings.entrySet ())

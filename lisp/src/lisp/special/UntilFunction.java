@@ -50,10 +50,9 @@ public class UntilFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 	// Always return false
 	final LabelNode ll = new LabelNode ();
 	context.add (new JumpInsnNode (GOTO, ll));
-	return new CompileResultSet (new ImplicitCompileResult (ll, false));
+	return new CompileResultSet (new ImplicitCompileResult (ll, NULL));
     }
 
-    // TODO This should be changed to always return false like the above definition
     @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
             final boolean allowNarrowing, final boolean liberalTruth)
@@ -61,7 +60,7 @@ public class UntilFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 	// (define foo (x) (setq a 0) (until (> a x) (printf "A: %s%n" a) (setq a (+ a 1))))
 
 	// Load default value
-	generator.pushDefaultValue (mv, valueType, true);
+	// generator.pushDefaultValue (mv, valueType, true);
 
 	// Perform iteration test
 	final Label l1 = new Label ();
@@ -84,6 +83,7 @@ public class UntilFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 	mv.visitJumpInsn (GOTO, l1);
 
 	mv.visitLabel (l2);
+	mv.visitInsn (ACONST_NULL);
     }
 
     @Override

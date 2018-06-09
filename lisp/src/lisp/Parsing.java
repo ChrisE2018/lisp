@@ -26,18 +26,13 @@ public class Parsing
      * Map from list type to concrete class. Don't use angle brackets so they are available for
      * comparison operators.
      */
-    private static final Character[][] LIST_DELIMITERS =
-	{
-	 {OPEN_PAREN, CLOSE_PAREN},
-	 {OPEN_BRACE, CLOSE_BRACE},
-	 {OPEN_BRACKET, CLOSE_BRACKET}};
+    private static final Character[][] LIST_DELIMITERS = {{OPEN_PAREN, CLOSE_PAREN}, {OPEN_BRACE, CLOSE_BRACE},
+                                                          {OPEN_BRACKET, CLOSE_BRACKET}};
 
     private static final Package SYSTEM_PACKAGE = PackageFactory.getSystemPackage ();
 
-    private static final Object[][] WRAPPER_SYMBOLS =
-	{
-	 {SINGLE_QUOTE, SYSTEM_PACKAGE.internSymbol ("quote")},
-	 {EXCLAMATION, SYSTEM_PACKAGE.internSymbol ("not")}};
+    private static final Object[][] WRAPPER_SYMBOLS = {{SINGLE_QUOTE, SYSTEM_PACKAGE.internSymbol ("quote")},
+                                                       {EXCLAMATION, SYSTEM_PACKAGE.internSymbol ("not")}};
 
     private static Parsing DEFAULT_PARSING = null;
 
@@ -78,7 +73,7 @@ public class Parsing
     }
 
     /**
-     * Test for atom characters. TODO Make a syntax table.
+     * Test for atom characters. CONSIDER Make a syntax table.
      *
      * @param chr
      * @return

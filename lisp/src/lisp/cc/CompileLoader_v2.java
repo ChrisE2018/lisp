@@ -19,7 +19,7 @@ public class CompileLoader_v2 extends ClassLoader implements Compiler
      * Predefined shell class structure with support methods. To create a compiled function we load
      * this shell class and inject our new method. Each compile requires a new instance of this
      * ClassLoaded so we get a distinct class as a result. <br/>
-     * TODO Maybe use a gensym in the defineClass call to allow ClassLoader re-use?
+     * Maybe use a gensym in the defineClass call to allow ClassLoader re-use?
      */
     private static final String SHELL_CLASS_DESCRIPTOR = "Llisp/cc/CompiledShell;";
     private final Type classType = Type.getType (SHELL_CLASS_DESCRIPTOR);

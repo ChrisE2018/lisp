@@ -30,13 +30,13 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
     // TODO Indent current form on enter key
     // TODO Show balancing paren on entry
     // [skip] Buttons to halt long computations
-    // TODO User defined buttons bound to forms
+    // CONSIDER User defined buttons bound to forms
     // [done] Set form/value to variables like repl
     // [done] Print error backtrace into the window.
     // [done] User defined menus bound to forms
     // [done] Not get confused if text before current entry point is deleted
-    // TODO Graphic Inspector embedded or as separate window
-    // TODO A window or split pane that shows variables (or forms) and values updated each cycle
+    // CONSIDER Graphic Inspector embedded or as separate window
+    // CONSIDER A window or split pane that shows variables (or forms) and values updated each cycle
     // [done] Hyperlinks in Interactor output
     // TODO Make hyperlinks easier to use in client code and better appearance
     // Note: editable text won't normally process hyperlinks. @see
@@ -47,11 +47,11 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
     // [skip] Save/reload window size & position
     // [skip] Menu or lisp function to control styles.
     // [skip] Bind the Interactor to a Lisp variable
-    // TODO Save interactor text to a file
+    // CONSIDER Save interactor text to a file
     // [skip] Find/Replace window
     // TODO File editor window for source code
     // [skip] Help system with hypertext for all functions
-    // TODO Make this an RCP split window type application?
+    // CONSIDER Make this an RCP split window type application?
     // [done] Make prompt into a variable
     // [done] Styles should have different fonts/styles
 
@@ -77,8 +77,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 
     private static final String PROMPT = ": ";
 
-    private final String[] initString =
-	{"Welcome to Jisp!"};
+    private final String[] initString = {"Welcome to Jisp!"};
 
     private final Style rootStyle;
     private final Style noticeStyle;

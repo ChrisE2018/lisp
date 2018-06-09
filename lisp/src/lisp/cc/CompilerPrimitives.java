@@ -101,7 +101,8 @@ public class CompilerPrimitives extends Definer
 	    // that returns the corresponding Java type. Declarations associated with the function
 	    // definition should determine if a compiled call will strongly depend on the current
 	    // definition.
-	    // TODO Function calls should not create new argument arrays. Use exception handling
+	    // TODO Function calls should not create new argument arrays.
+	    // TODO Use exception handling
 	    // to detect the case where a function definition changes since it was compiled.
 	    final LispList body = new LispList ();
 	    for (final Object f : forms)

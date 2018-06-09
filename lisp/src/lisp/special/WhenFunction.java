@@ -74,48 +74,10 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
 	}
     }
 
-    // @Override
-    // public Class<?> compile (final TreeCompiler compiler, final InsnList il, final Map<Symbol,
-    // LocalBinding> locals,
-    // final LispList expression, final boolean resultDesired)
-    // {
-    // final Class<?> testClass = compiler.compile (il, locals, expression.get (1), true);
-    // // At this point we can optimize handling of information returned from the compiler.compile
-    // // call. Any result that is not boolean can just be wired to goto l2.
-    // // Any result that is a constant true or false can go directly to l1 or l2.
-    // compiler.convert (il, testClass, boolean.class, false, true);
-    //
-    // final LabelNode l1 = new LabelNode ();// This label means we return false
-    // final LabelNode l2 = new LabelNode ();
-    // il.add (new JumpInsnNode (IFEQ, l1));
-    //
-    // for (int i = 2; i < expression.size () - 1; i++)
-    // {
-    // final Class<?> r = compiler.compile (il, locals, expression.get (i), false);
-    // // Do something with r to throw away garbage if required
-    // compiler.convert (il, r, void.class, false, false);
-    // }
-    // final Class<?> result = compiler.compile (il, locals, expression.last (), true);
-    // il.add (new JumpInsnNode (GOTO, l2));
-    // // This label means we return the result of the last nested form. The caller should place
-    // // these labels in the best location and try to keep the Boolean.FALSE value implicit.
-    // // final Object[][] resultx =
-    // // {
-    // // {l1, boolean.class, Boolean.FALSE},
-    // // {l2, result}};
-    // // return resultx;
-    // // TODO Another idea(s): (1) attach instructions to the TreeCompilerContext (make it keep
-    // // straight where they go). (2) Add our own new "meta" instructions to do higher level
-    // // things like convert Object to int or boolean. Follow with another pass to make these
-    // // concrete.
-    // il.add (l1);
-    // if (resultDesired)
-    // {
-    // il.add (new LdcInsnNode (false));
-    // }
-    // il.add (l2);
-    // return result;
-    // }
+    // CONSIDER Another idea(s): (1) attach instructions to the TreeCompilerContext (make it keep
+    // straight where they go). (2) Add our own new "meta" instructions to do higher level
+    // things like convert Object to int or boolean. Follow with another pass to make these
+    // concrete.
 
     @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
