@@ -65,26 +65,36 @@ public class ClassDescriber implements Describer
 	{
 	    result.put ("Public Field", field);
 	}
-	for (final Field field : cls.getDeclaredFields ())
-	{
-	    result.put ("Declared Field", field);
-	}
+	// for (final Field field : cls.getDeclaredFields ())
+	// {
+	// result.put ("Declared Field", field);
+	// }
 	for (final Constructor<?> method : cls.getConstructors ())
 	{
 	    result.put ("Public Constructor", method);
 	}
-	for (final Constructor<?> method : cls.getDeclaredConstructors ())
+	// for (final Constructor<?> method : cls.getDeclaredConstructors ())
+	// {
+	// result.put ("Declared Constructor", method);
+	// }
+	for (final Method method : cls.getMethods ())
 	{
-	    result.put ("Declared Constructor", method);
+	    if (Modifier.isStatic (method.getModifiers ()))
+	    {
+		result.put ("Public Static Method", method);
+	    }
 	}
 	for (final Method method : cls.getMethods ())
 	{
-	    result.put ("Public Method", method);
+	    if (!Modifier.isStatic (method.getModifiers ()))
+	    {
+		result.put ("Public Method", method);
+	    }
 	}
-	for (final Method method : cls.getDeclaredMethods ())
-	{
-	    result.put ("Declared Method", method);
-	}
+	// for (final Method method : cls.getDeclaredMethods ())
+	// {
+	// result.put ("Declared Method", method);
+	// }
     }
 
     @Override

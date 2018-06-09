@@ -39,38 +39,60 @@ public class Interpreter extends Definer
 		return form;
 	    }
 	    final Object fn = list.get (0);
-	    if (!(fn instanceof Symbol))
+	    if (fn instanceof java.lang.reflect.Method)
 	    {
-		throw new IllegalArgumentException ("Function is not a symbol " + fn);
-	    }
-	    final Symbol f = (Symbol)fn;
-	    final FunctionCell function = f.getFunction ();
-	    if (function != null)
-	    {
-		return function.eval (context, list);
-	    }
-	    else if (list.size () > 1)
-	    {
-		// Handle unbound functions as calls to native Java methods
-		final Object target = eval (context, list.get (1));
-		final String method = coerceString (f, true);
-		if (target == null)
+		// (java.lang.System.getenv "USER")
+		final java.lang.reflect.Method method = (java.lang.reflect.Method)fn;
+		if (Modifier.isStatic (method.getModifiers ()))
 		{
-		    throw new NullPointerException ("Can't apply " + method + " to null");
+		    // If the method comes from the Lisp reader it may not be the correct overload.
+		    // We ignore the method and use the name to select one that fits the actual
+		    // parameters.
+		    final List<Object> arguments = new LispList ();
+		    arguments.add (null);
+		    arguments.add (method);
+		    for (int i = 1; i < list.size (); i++)
+		    {
+			arguments.add (eval (context, list.get (i)));
+		    }
+		    return javaMethodCall (null, method.getDeclaringClass (), method.getName (), arguments);
 		}
-		final Class<?> cls = target.getClass ();
-		final List<Object> arguments = new LispList ();
-		arguments.add (target);
-		arguments.add (method);
-		for (int i = 2; i < list.size (); i++)
+	    }
+	    if (fn instanceof Symbol)
+	    {
+		final Symbol f = (Symbol)fn;
+		final FunctionCell function = f.getFunction ();
+		if (function != null)
 		{
-		    arguments.add (eval (context, list.get (i)));
+		    return function.eval (context, list);
 		}
-		return javaMethodCall (target, cls, method, arguments);
+		else if (list.size () > 1)
+		{
+		    // Handle unbound functions as calls to native Java methods
+		    final Object target = eval (context, list.get (1));
+		    final String method = coerceString (f, true);
+		    if (target == null)
+		    {
+			throw new NullPointerException ("Can't apply " + method + " to null");
+		    }
+		    final Class<?> cls = target.getClass ();
+		    final List<Object> arguments = new LispList ();
+		    arguments.add (target);
+		    arguments.add (method);
+		    for (int i = 2; i < list.size (); i++)
+		    {
+			arguments.add (eval (context, list.get (i)));
+		    }
+		    return javaMethodCall (target, cls, method, arguments);
+		}
+		else
+		{
+		    throw new IllegalArgumentException ("Undefined function " + fn);
+		}
 	    }
 	    else
 	    {
-		throw new IllegalArgumentException ("Undefined function " + fn);
+		throw new IllegalArgumentException ("Function is not a symbol " + fn);
 	    }
 	}
 	return form;

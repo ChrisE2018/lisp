@@ -361,6 +361,7 @@ public class LispReader
 
     private Object readJavaSymbol (final String name)
     {
+	// (java.lang.System.currentTimeMillis)
 	final java.lang.Package pkg = findJavaPackage (name);
 	if (pkg != null)
 	{
@@ -381,18 +382,25 @@ public class LispReader
 		    {
 			return cls;
 		    }
-		    else
+		    final String memberName = words[2];
+		    try
 		    {
-			return cls.getField (words[2]);
+			return cls.getField (memberName);
+		    }
+		    catch (final NoSuchFieldException e)
+		    {
+		    }
+		    try
+		    {
+			return cls.getMethod (memberName);
+		    }
+		    catch (final NoSuchMethodException e)
+		    {
 		    }
 		}
 		catch (final ClassNotFoundException e)
 		{
 		    throw new Error ("Error reading symbol (" + name + ") " + e);
-		}
-		catch (final NoSuchFieldException e)
-		{
-		    e.printStackTrace ();
 		}
 		catch (final SecurityException e)
 		{
