@@ -159,6 +159,10 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	}
 	methods.add (userMethod);
 
+	/** May want to save the whole ClassNode instead. */
+	compileLoader.setClassNode (this);
+	compileLoader.setMethodNode (userMethod);
+
 	// Chain transformation
 	accept (cv);
     }

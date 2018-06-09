@@ -1,11 +1,16 @@
 
 package lisp.eval;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.objectweb.asm.tree.*;
+
 import lisp.*;
 import lisp.Package;
+import lisp.asm.instructions.AccessKeywords;
 
 public class DescribePrimitives extends Definer
 {
@@ -38,8 +43,31 @@ public class DescribePrimitives extends Definer
 	{
 	    return new LispList ();
 	}
+	if (arg instanceof Class)
+	{
+	    return new ClassDescriber ();
+	}
+	else if (arg instanceof ClassNode)
+	{
+	    return new ClassNodeDescriber ();
+	}
+	else if (arg instanceof MethodNode)
+	{
+	    return new MethodNodeDescriber ();
+	}
+	else if (arg instanceof InsnList)
+	{
+	    return new InsnListDescriber ();
+	}
+	else if (arg instanceof AbstractInsnNode)
+	{
+	    return new AbstractInsnNodeDescriber ();
+	}
 	// [TODO] Java bean describer
-	return null;
+	else
+	{
+	    return new ObjectDescriber ();
+	}
     }
 
     private void describe (final Describer d, final Object arg)
@@ -53,17 +81,19 @@ public class DescribePrimitives extends Definer
 	    ++index;
 	    final String key = entry.getKey ();
 	    final Object value = entry.getValue ();
+	    final Describer valueDescriber = getDescriber (value);
+	    final String valueString = (valueDescriber == null) ? value.toString () : valueDescriber.getDescriberString (value);
 	    final String doc = d.getDescriberDocumentation (arg, key);
 	    final Symbol symbol = pkg.internSymbol (String.format ("d%d", index));
 	    symbol.setValue (value);
+	    final String type = value == null ? "" : value.getClass ().getSimpleName ();
 	    if (doc != null)
 	    {
-		System.out.printf ("[%5s] %s: %s %s\n", symbol, key, value, doc);
+		System.out.printf ("%3s %30s: %-25s %s\n", symbol, type + " " + key, valueString, doc);
 	    }
 	    else
 	    {
-		final String type = value == null ? "null" : value.getClass ().getSimpleName ();
-		System.out.printf ("[%5s] %s: %s (%s)\n", symbol, key, value, type);
+		System.out.printf ("%3s %30s: %-25s\n", symbol, type + " " + key, valueString);
 	    }
 	}
     }
@@ -78,5 +108,233 @@ public class DescribePrimitives extends Definer
 	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
+    }
+}
+
+class ObjectDescriber implements Describer
+{
+    /**
+     * Append to a map describing an object. The return value is intended to be used by a debugger
+     * to print an object decomposition.
+     *
+     * @param result The map to add entries to.
+     * @param target The object to describe.
+     */
+    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    {
+	result.put ("Class", target.getClass ());
+	result.put ("Hashcode", target.hashCode ());
+    }
+}
+
+class ClassDescriber implements Describer
+{
+    /**
+     * Append to a map describing an object. The return value is intended to be used by a debugger
+     * to print an object decomposition.
+     *
+     * @param result The map to add entries to.
+     * @param target The object to describe.
+     */
+    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    {
+	final Class<?> cls = (Class<?>)target;
+	result.put ("Class", cls.getCanonicalName ());
+	result.put ("Loader", cls.getClassLoader ());
+	result.put ("Package", cls.getPackage ());
+	if (cls.isInterface ())
+	{
+	    result.put ("Interface", true);
+	}
+	if (cls.isArray ())
+	{
+	    result.put ("Array", true);
+	    result.put ("Component Type", cls.getComponentType ());
+	}
+	if (cls.isPrimitive ())
+	{
+	    result.put ("Primitive", true);
+	}
+	if (cls.isAnnotation ())
+	{
+	    result.put ("Annotation", true);
+	}
+	if (cls.isSynthetic ())
+	{
+	    result.put ("Synthetic", true);
+	}
+	if (cls.isEnum ())
+	{
+	    result.put ("Enum", true);
+	    final Object[] vals = cls.getEnumConstants ();
+	    for (int i = 0; i < vals.length; i++)
+	    {
+		result.put (String.valueOf (i), vals[i]);
+	    }
+	}
+	result.put ("Extends", cls.getSuperclass ());
+	for (final Class<?> intf : cls.getInterfaces ())
+	{
+	    result.put ("Interface", intf);
+	}
+	for (final Annotation a : cls.getAnnotations ())
+	{
+	    result.put ("Annotation", a);
+	}
+	for (final Field field : cls.getFields ())
+	{
+	    result.put ("Public Field", field);
+	}
+	for (final Field field : cls.getDeclaredFields ())
+	{
+	    result.put ("Declared Field", field);
+	}
+	for (final Constructor<?> method : cls.getConstructors ())
+	{
+	    result.put ("Public Constructor", method);
+	}
+	for (final Constructor<?> method : cls.getDeclaredConstructors ())
+	{
+	    result.put ("Declared Constructor", method);
+	}
+	for (final Method method : cls.getMethods ())
+	{
+	    result.put ("Public Method", method);
+	}
+	for (final Method method : cls.getDeclaredMethods ())
+	{
+	    result.put ("Declared Method", method);
+	}
+    }
+}
+
+class ClassNodeDescriber implements Describer
+{
+    /**
+     * Append to a map describing an object. The return value is intended to be used by a debugger
+     * to print an object decomposition.
+     *
+     * @param result The map to add entries to.
+     * @param target The object to describe.
+     */
+    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    {
+	final ClassNode cn = (ClassNode)target;
+	result.put ("Version", cn.version);
+	result.put ("Access", AccessKeywords.find (cn.access));
+	result.put ("Name", cn.name);
+	result.put ("Signature", cn.signature);
+	for (final FieldNode field : cn.fields)
+	{
+	    result.put ("Field", field);
+	}
+	final List<MethodNode> methods = cn.methods;
+	for (final MethodNode method : methods)
+	{
+	    result.put ("Method", method);
+	}
+    }
+}
+
+class MethodNodeDescriber implements Describer
+{
+
+    /** Convert an object to a string for printing. */
+    public String getDescriberString (final Object target)
+    {
+	if (target instanceof MethodNode)
+	{
+	    final MethodNode mn = (MethodNode)target;
+	    return AccessKeywords.find (mn.access) + " method " + mn.name;
+	}
+	else
+	{
+	    return target.toString ();
+	}
+    }
+
+    /**
+     * Append to a map describing an object. The return value is intended to be used by a debugger
+     * to print an object decomposition.
+     *
+     * @param result The map to add entries to.
+     * @param target The object to describe.
+     */
+    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    {
+	final MethodNode mn = (MethodNode)target;
+	result.put ("Access", AccessKeywords.find (mn.access));
+	result.put ("Name", mn.name);
+	result.put ("Description", mn.desc);
+	if (mn.signature != null)
+	{
+	    result.put ("Signature", mn.signature);
+	}
+	result.put ("Exceptions", mn.exceptions);
+	final StringBuilder buffer = new StringBuilder ();
+	final List<ParameterNode> parameters = mn.parameters;
+	if (parameters != null)
+	{
+	    for (final ParameterNode p : mn.parameters)
+	    {
+		if (buffer.length () == 0)
+		{
+		    buffer.append (", ");
+		}
+		buffer.append (p.name);
+	    }
+	    result.put ("Parameters", buffer.toString ());
+	}
+	result.put ("Instructions", mn.instructions);
+    }
+}
+
+class InsnListDescriber implements Describer
+{
+    /** Convert an object to a string for printing. */
+    public String getDescriberString (final Object target)
+    {
+	if (target instanceof InsnList)
+	{
+	    return ((InsnList)target).size () + " instructions";
+	}
+	else
+	{
+	    return target.toString ();
+	}
+    }
+
+    /**
+     * Append to a map describing an object. The return value is intended to be used by a debugger
+     * to print an object decomposition.
+     *
+     * @param result The map to add entries to.
+     * @param target The object to describe.
+     */
+    public void getDescriberValues (final Map<String, Object> result, final Object target)
+    {
+	final InsnList il = (InsnList)target;
+	for (int i = 0; i < il.size (); i++)
+	{
+	    final AbstractInsnNode instruction = il.get (i);
+	    result.put (String.valueOf (i), instruction);
+	}
+    }
+}
+
+class AbstractInsnNodeDescriber implements Describer
+{
+    /** Convert an object to a string for printing. */
+    public String getDescriberString (final Object target)
+    {
+	if (target instanceof LabelNode)
+	{
+	    return target.toString ();
+	}
+	if (target instanceof AbstractInsnNode)
+	{
+	    return "      " + target.toString ();
+	}
+	return target.toString ();
     }
 }

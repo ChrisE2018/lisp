@@ -5,6 +5,8 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.objectweb.asm.tree.ClassNode;
+
 import lisp.*;
 import lisp.eval.LexicalContext;
 
@@ -23,7 +25,7 @@ public abstract class FunctionCell implements Describer
 
     abstract public Object eval (final LexicalContext context, final List<?> form) throws Exception;
 
-    abstract public void overload (Object obj, Method method, String documentation);
+    abstract public void overload (Object obj, Method method, String documentation, Object source, ClassNode cn);
 
     FunctionCell (final Symbol symbol, final boolean allowRedefinition)
     {

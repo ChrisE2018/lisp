@@ -4,6 +4,8 @@ package lisp.symbol;
 import java.lang.reflect.*;
 import java.util.*;
 
+import org.objectweb.asm.tree.ClassNode;
+
 import lisp.Symbol;
 import lisp.eval.LexicalContext;
 
@@ -67,8 +69,10 @@ public class DefaultFunctionCell extends FunctionCell
     }
 
     @Override
-    public void overload (final Object obj, final Method method, final String documentation)
+    public void overload (final Object obj, final Method method, final String documentation, final Object source,
+            final ClassNode cn)
     {
+	throw new UnsupportedOperationException ("Can't overload default function definitions");
     }
 
     @Override

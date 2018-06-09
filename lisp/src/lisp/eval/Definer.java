@@ -110,7 +110,7 @@ public class Definer
 		    symbol.setFunction (function);
 		}
 	    }
-	    function.overload (object, method, documentation);
+	    function.overload (object, method, documentation, null, null);
 	}
 
 	if (!className.isEmpty ())

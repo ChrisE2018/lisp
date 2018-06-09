@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
+import org.objectweb.asm.tree.*;
 // @see https://www.beyondjava.net/blog/quick-guide-writing-byte-code-asm/
 import org.objectweb.asm.util.*;
 
@@ -92,6 +93,18 @@ public class CompileLoader_v1 extends ClassLoader implements Compiler
 	final byte[] b = cw.toByteArray ();
 	final Class<?> c = defineClass (className, b, 0, b.length);
 	return c;
+    }
+
+    /** Provide access to ASM internals if possible. */
+    public ClassNode getClassNode ()
+    {
+	return null;
+    }
+
+    /** Provide access to ASM internals if possible. */
+    public MethodNode getMethodNode ()
+    {
+	return null;
     }
 
     // private void checkCreatedClass (final Class<?> c) throws InstantiationException,

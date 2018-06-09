@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
+import org.objectweb.asm.tree.*;
 
 import lisp.util.LogString;
 
@@ -36,6 +37,10 @@ public class CompileLoader extends ClassLoader implements Compiler
     private ClassReader cr;
     private ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
     private ClassVisitor cv = cw;
+
+    /** Save output here. */
+    private ClassNode classNode = null;
+    private MethodNode methodNode = null;
 
     public CompileLoader () throws IOException
     {
@@ -107,6 +112,28 @@ public class CompileLoader extends ClassLoader implements Compiler
 	final String className = classType.getClassName ();
 	final Class<?> c = defineClass (className, b, 0, b.length);
 	return c;
+    }
+
+    /** Provide access to ASM internals if possible. */
+    public ClassNode getClassNode ()
+    {
+	return classNode;
+    }
+
+    public void setClassNode (final ClassNode classNode)
+    {
+	this.classNode = classNode;
+    }
+
+    /** Provide access to ASM internals if possible. */
+    public MethodNode getMethodNode ()
+    {
+	return methodNode;
+    }
+
+    public void setMethodNode (final MethodNode methodNode)
+    {
+	this.methodNode = methodNode;
     }
 
     /**

@@ -56,4 +56,16 @@ public enum AccessKeywords
     {
 	return accessCode;
     }
+
+    public static AccessKeywords find (final int accessCode)
+    {
+	for (final AccessKeywords ic : AccessKeywords.values ())
+	{
+	    if (ic.accessCode == accessCode)
+	    {
+		return ic;
+	    }
+	}
+	throw new Error ("There is no AccessKeywords for value " + accessCode);
+    }
 }

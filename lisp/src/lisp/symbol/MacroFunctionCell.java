@@ -4,6 +4,8 @@ package lisp.symbol;
 import java.lang.reflect.*;
 import java.util.*;
 
+import org.objectweb.asm.tree.ClassNode;
+
 import lisp.Symbol;
 import lisp.eval.LexicalContext;
 
@@ -26,7 +28,7 @@ public class MacroFunctionCell extends FunctionCell
     }
 
     @Override
-    public void overload (final Object obj, final Method m, final String doc)
+    public void overload (final Object obj, final Method m, final String doc, final Object source, final ClassNode cn)
     {
 	throw new UnsupportedOperationException ("Can't overload macro functions");
     }

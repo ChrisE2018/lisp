@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.*;
 
 import lisp.Describer;
 
@@ -14,11 +15,34 @@ public class ObjectMethod implements Describer
     final Method method;
     final String documentation;
 
+    /** Place to store the lisp source, if available. */
+    final Object source;
+
+    /** Place to store the ASM bytecode, if available. */
+    final ClassNode cn;
+
+    /**
+     * If this method overload is replaced, set this to false. Compiled code can be setup to check
+     * this flag and repair a compiled call to this method if it changes.
+     */
+    boolean valid = true;
+
+    ObjectMethod (final Object object, final Method method, final String documentation, final Object source, final ClassNode cn)
+    {
+	this.object = object;
+	this.method = method;
+	this.documentation = documentation;
+	this.source = source;
+	this.cn = cn;
+    }
+
     ObjectMethod (final Object object, final Method method, final String documentation)
     {
 	this.object = object;
 	this.method = method;
 	this.documentation = documentation;
+	source = null;
+	cn = null;
     }
 
     public Object getObject ()
@@ -89,9 +113,25 @@ public class ObjectMethod implements Describer
 	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
 	result.put ("Object", object);
 	result.put ("Method", method);
-	if (documentation != null)
+	if (documentation != null && !documentation.isEmpty ())
 	{
 	    result.put ("Documentation", documentation);
+	}
+	if (source != null)
+	{
+	    result.put ("Source", source);
+	}
+	if (cn != null)
+	{
+	    result.put ("Class node", cn);
+	    for (final MethodNode mn : cn.methods)
+	    {
+		if (mn.name.equals (method.getName ()))
+		{
+
+		    result.put ("Method node", mn);
+		}
+	    }
 	}
 	return result;
     }

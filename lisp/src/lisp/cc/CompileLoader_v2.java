@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
+import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
 import lisp.util.LogString;
@@ -74,6 +75,18 @@ public class CompileLoader_v2 extends ClassLoader implements Compiler
 	final String className = classType.getClassName ();
 	final Class<?> c = defineClass (className, b, 0, b.length);
 	return c;
+    }
+
+    /** Provide access to ASM internals if possible. */
+    public ClassNode getClassNode ()
+    {
+	return null;
+    }
+
+    /** Provide access to ASM internals if possible. */
+    public MethodNode getMethodNode ()
+    {
+	return null;
     }
 
     /**

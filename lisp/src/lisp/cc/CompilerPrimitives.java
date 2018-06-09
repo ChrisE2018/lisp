@@ -6,6 +6,8 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.logging.Logger;
 
+import org.objectweb.asm.tree.*;
+
 import lisp.*;
 import lisp.eval.*;
 import lisp.symbol.*;
@@ -160,14 +162,24 @@ public class CompilerPrimitives extends Definer
 	}
 	final Method method = cls.getDeclaredMethod (methodName, parameterTypes);
 	FunctionCell function = symbol.getFunction ();
+	final LispList source = new LispList ();
+	final ClassNode cn = cl.getClassNode ();
+	final MethodNode mn = cl.getMethodNode ();
+	source.add (Symbol.named ("system", "define"));
+	source.add (symbol);
+	source.add (args);
+	for (final Object form : body)
+	{
+	    source.add (form);
+	}
 	// Overloading requires adding the method to an existing function cell
 	if (function != null && !(function instanceof DefFunctionCell))
 	{
-	    function.overload (instance, method, documentation);
+	    function.overload (instance, method, documentation, source, cn);
 	}
 	else
 	{
-	    function = new StandardFunctionCell (symbol, instance, method, documentation);
+	    function = new StandardFunctionCell (symbol, instance, method, documentation, source, cn);
 	    symbol.setFunction (function);
 	}
 	return cls;

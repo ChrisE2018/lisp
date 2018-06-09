@@ -4,6 +4,8 @@ package lisp.symbol;
 import java.lang.reflect.*;
 import java.util.*;
 
+import org.objectweb.asm.tree.ClassNode;
+
 import lisp.Symbol;
 import lisp.eval.LexicalContext;
 
@@ -21,13 +23,29 @@ public class StandardFunctionCell extends FunctionCell
     public StandardFunctionCell (final Symbol symbol, final Object obj, final Method method, final String documentation)
     {
 	super (symbol, false);
-	methods = new ObjectMethod[]
-	    {new ObjectMethod (obj, method, documentation)};
+	methods = new ObjectMethod[] {new ObjectMethod (obj, method, documentation)};
 	makeOverloadMap (methods);
     }
 
+    public StandardFunctionCell (final Symbol symbol, final Object obj, final Method method, final String documentation,
+            final Object source, final ClassNode cn)
+    {
+	super (symbol, false);
+	methods = new ObjectMethod[] {new ObjectMethod (obj, method, documentation, source, cn)};
+	makeOverloadMap (methods);
+    }
+
+    // @Override
+    // public void overload (final Object obj, final Method method, final String documentation,
+    // final LispList source,
+    // final MethodNode mn)
+    // {
+    // overload (obj, method, documentation, source, mn);
+    // }
+
     @Override
-    public void overload (final Object obj, final Method method, final String documentation)
+    public void overload (final Object obj, final Method method, final String documentation, final Object source,
+            final ClassNode cn)
     {
 	final int c = getMethodSelectorCount (method);
 	final ObjectMethod previousDefinition = getOverload (c);
@@ -46,7 +64,7 @@ public class StandardFunctionCell extends FunctionCell
 	    return;
 	}
 	final ObjectMethod[] newMethods = Arrays.copyOf (methods, methods.length + 1, ObjectMethod[].class);
-	newMethods[methods.length] = new ObjectMethod (obj, method, documentation);
+	newMethods[methods.length] = new ObjectMethod (obj, method, documentation, source, cn);
 	// Scan methods and determine if there are possible ambiguous ones
 	makeOverloadMap (newMethods);
 	methods = newMethods;
@@ -145,7 +163,6 @@ public class StandardFunctionCell extends FunctionCell
 	    final ObjectMethod m = methods[i];
 	    result.put ("Method", m);
 	}
-	super.getDescriberValues (target);
     }
 
     @Override

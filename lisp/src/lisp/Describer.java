@@ -22,12 +22,26 @@ public interface Describer
     /**
      * Append to a map describing an object. The return value is intended to be used by a debugger
      * to print an object decomposition.
-     * 
+     *
      * @param result The map to add entries to.
      * @param target The object to describe.
      */
     default public void getDescriberValues (final Map<String, Object> result, final Object target)
     {
+	result.put ("Class", target.getClass ());
+    }
+
+    /** Convert an object to a string for printing. */
+    public default String getDescriberString (final Object target)
+    {
+	if (target == null)
+	{
+	    return "null";
+	}
+	else
+	{
+	    return target.toString ();
+	}
     }
 
     /**

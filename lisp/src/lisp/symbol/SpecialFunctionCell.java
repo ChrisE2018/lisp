@@ -4,6 +4,8 @@ package lisp.symbol;
 import java.lang.reflect.*;
 import java.util.*;
 
+import org.objectweb.asm.tree.ClassNode;
+
 import lisp.Symbol;
 import lisp.eval.LexicalContext;
 
@@ -21,16 +23,16 @@ public class SpecialFunctionCell extends FunctionCell
     public SpecialFunctionCell (final Symbol symbol, final Object obj, final Method method, final String documentation)
     {
 	super (symbol, false);
-	methods = new ObjectMethod[]
-	    {new ObjectMethod (obj, method, documentation)};
+	methods = new ObjectMethod[] {new ObjectMethod (obj, method, documentation)};
 	makeOverloadMap (methods);
     }
 
     @Override
-    public void overload (final Object obj, final Method method, final String documentation)
+    public void overload (final Object obj, final Method method, final String documentation, final Object source,
+            final ClassNode cn)
     {
 	final ObjectMethod[] newMethods = Arrays.copyOf (methods, methods.length + 1, ObjectMethod[].class);
-	newMethods[methods.length] = new ObjectMethod (obj, method, documentation);
+	newMethods[methods.length] = new ObjectMethod (obj, method, documentation, source, cn);
 	// Scan methods and determine if there are possible ambiguous ones
 	makeOverloadMap (newMethods);
 	methods = newMethods;
