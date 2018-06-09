@@ -21,6 +21,8 @@ public class TheFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	visitor.visitEnd (expression);
     }
 
+    // FIXME Define LispTreeFunction for the
+
     @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
@@ -36,7 +38,7 @@ public class TheFunction implements LispCCFunction, Opcodes, LispTreeWalker
     {
 	// (setq system.showBytecode t)
 	// (define foo () byte:3)
-	// TODO Need to allow narrowing conversions here
+	// Need to allow narrowing conversions here
 	if (type instanceof Symbol)
 	{
 	    final Symbol t = (Symbol)type;

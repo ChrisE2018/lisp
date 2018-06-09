@@ -103,6 +103,7 @@ public class CompilerPrimitives extends Definer
 	    // definition.
 	    // TODO Function calls should not create new argument arrays.
 	    // TODO Use exception handling
+	    // FIXME Implement proper method overloading based on argument types
 	    // to detect the case where a function definition changes since it was compiled.
 	    final LispList body = new LispList ();
 	    for (final Object f : forms)

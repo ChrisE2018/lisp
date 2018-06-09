@@ -168,7 +168,7 @@ public class TreeCompilerContext implements Opcodes
 	    converter.convert (il, void.class, toClass, allowNarrowing, liberalTruth);
 	    return;
 	}
-	// TODO If toClass is void (or null) then collapse all cases of the same size
+	// FIXME If toClass is void (or null) then collapse all cases of the same size
 	final LabelNode lExit = new LabelNode ();
 	final List<CompileResult> results = fromClass.getResults ();
 	for (int i = 0; i < results.size (); i++)
@@ -293,6 +293,7 @@ public class TreeCompilerContext implements Opcodes
 		final MacroFunctionCell macro = (MacroFunctionCell)function;
 		try
 		{
+		    // FIXME Test macros
 		    final Object replacement = macro.expand (expression);
 		    return compile (replacement, resultDesired);
 		}
@@ -330,10 +331,6 @@ public class TreeCompilerContext implements Opcodes
     /** Determine if a function call should be optimized. */
     private boolean optimizeFunctionCall (final LispList expression)
     {
-	// TODO If we are compiling for speed and can assume that the current definition won't
-	// change, then compile a direct call to the current function method.
-	// TODO If we know argument types of the function we are about to call we can try to
-	// compile the expression more efficiently.
 	final int argCount = expression.size () - 1;
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
@@ -348,6 +345,7 @@ public class TreeCompilerContext implements Opcodes
 		    // coerceRequired will need to be improved before general method parameters are
 		    // ok.
 		    if (// objectMethod.isObjectOnly () &&
+		        // FIXME Handle var args too
 		    !objectMethod.isVarArgs ())
 		    {
 			return Symbol.test ("optimizeFunctionCalls", true);
@@ -365,11 +363,17 @@ public class TreeCompilerContext implements Opcodes
 	// (define foo (x) (1+ x))
 	// (define foo (x) (not x))
 	// (define foo (a b) (rem a b))
+
+	// If we are compiling for speed and can assume that the current definition won't
+	// change, then compile a direct call to the current function method.
+	// TODO If we know argument types of the function we are about to call we can try to
+	// compile the expression more efficiently.
 	final Symbol symbol = expression.head ();
 	final Label l1 = new Label ();
 	add (new LabelNode (l1));
 	final FunctionCell function = symbol.getFunction ();
 	final int argCount = expression.size () - 1;
+	// FIXME Proper overload selection based on argument types
 	final ObjectMethod objectMethod = function.selectMethod (argCount);
 	final Object target = objectMethod.getObject ();
 	final Method method = objectMethod.getMethod ();
@@ -405,9 +409,7 @@ public class TreeCompilerContext implements Opcodes
 
     /**
      * Compile a function call and add it to the instruction list. This creates a generic function
-     * call to any normal function. <br/>
-     * TODO Special forms and macros need to be handled. <br/>
-     * TODO Optimized calls to known functions should also be produced.
+     * call to any normal function.
      *
      * @param il The instruction list.
      * @param locals Local variable binding information.
@@ -455,7 +457,7 @@ public class TreeCompilerContext implements Opcodes
     /**
      * Compile an expression to calculate the value of a symbol. This determines if the symbol is an
      * argument, local variable or global symbol and calculates the correct value. <br/>
-     * TODO Constants and typed variables should be handled specially.
+     * FIXME Constants and typed variables should be handled specially.
      *
      * @param mv The bytecode generator.
      * @param symbol The symbol value to calculate.
@@ -492,8 +494,8 @@ public class TreeCompilerContext implements Opcodes
 	    // Reference to a global variable
 	    treeCompiler.addGlobalReference (symbol); // Log message
 	    treeCompiler.addSymbolReference (symbol); // Make symbol available at execution time
-	    // TODO If the symbol valueCell is constant, use the current value.
-	    // TODO If the valueCell is a TypedValueCell, use the type information.
+	    // FIXME If the symbol valueCell is constant, use the current value.
+	    // FIXME If the valueCell is a TypedValueCell, use the type information.
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    final Type classType = treeCompiler.getClassType ();
 	    final String classInternalName = classType.getInternalName ();

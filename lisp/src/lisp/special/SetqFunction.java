@@ -66,7 +66,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	}
 	else
 	{
-	    // TODO If the symbol valueCell is constant, use the current value.
+	    // FIXME If the symbol valueCell is constant, use the current value.
 	    // TODO If the valueCell is a TypedValueCell, use the type information.
 	    // global
 	    final TreeCompiler compiler = context.getTreeCompiler ();
