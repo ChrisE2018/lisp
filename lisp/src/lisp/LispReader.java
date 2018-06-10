@@ -48,6 +48,11 @@ public class LispReader
 
     private final List<Symbol> importedSymbols = new ArrayList<Symbol> ();
     private final List<Package> importedPackages = new ArrayList<Package> ();
+    // FIXME Generalize the importedPackages to a new interface for Resolver.
+    // Give each resolver a chance to handle an an atom and return a result.
+    // First resolver to produce a result wins.
+    // Resolvers can correspond with Lisp Package or Java Package or with a map from String to
+    // imported Objects.
     private Package currentPackage;
 
     private final Symbol theSymbol;
@@ -141,12 +146,13 @@ public class LispReader
 	}
 	if (chr == parsing.getDotMarker ())
 	{
-	    final LispList dotForm = new LispList ();
+	    // Nothing fancy, let interpreter/compiler figure it out.
+	    // final LispList dotForm = new LispList ();
 	    in.read (chr); // Discard dot character
-	    dotForm.add (dotSymbol);
-	    final Object form = read (in, pkg);
-	    dotForm.add (form);
-	    return dotForm;
+	    // dotForm.add (dotSymbol);
+	    // final Object form = read (in, pkg);
+	    // dotForm.add (form);
+	    return dotSymbol;
 	}
 	if (in.eof ())
 	{
@@ -332,6 +338,7 @@ public class LispReader
 	    }
 	    return null;
 	}
+	// FIXME Eliminate above here and let interpreter/compiler handle dot forms
 	final Symbol result = findImportedSymbol (name);
 	if (result != null)
 	{

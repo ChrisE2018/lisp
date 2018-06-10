@@ -99,6 +99,7 @@ public class Parsing
 	    case CLOSE_BRACKET:
 	    case COMMA:
 	    case COLON:
+	    // case DOT:
 	    {
 		return false;
 	    }
