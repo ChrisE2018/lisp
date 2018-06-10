@@ -146,12 +146,27 @@ public class LispReader
 	}
 	if (chr == parsing.getDotMarker ())
 	{
-	    // Nothing fancy, let interpreter/compiler figure it out.
-	    // final LispList dotForm = new LispList ();
+	    // Handling dots is difficult. As currently implemented dots inside atoms get processed
+	    // below and turn into complex read-time references to Java packages, classes and
+	    // fields. The field values are resolved at read time, which is not correct but works
+	    // for System.out, mostly.
+	    // Consider:
+	    // (java.lang.System.printf "Foo %s" 47)
+	    // If the dot is made not to be an atom char, then dot expressions come out like:
+	    // (java dot lang dot System dot printf "Foo %s" 47)
+	    // This could be resolved by the interpreter (but currently is not). However, if the
+	    // reader imports java.lang there is a problem. Returning (System dot printf "Foo %s"
+	    // 47) won't work because the interpreter does not know what packages the reader
+	    // imports, so the reader really has to resolve the reference.
+	    // Another problem is what to do about spaces inside dotted notation:
+	    // (java.lang.System .printf "Foo %s" 47)
+	    // Currently java.lang.System will resolve to the class, but .printf will fail.
+	    // Also consider when the atom is at the top level:
+	    // java.lang.System.printf - can't be read as a list.
+	    // java.lang.System .printf - read returns after "System" unless we know we are reading
+	    // to the end of a line.
 	    in.read (chr); // Discard dot character
-	    // dotForm.add (dotSymbol);
-	    // final Object form = read (in, pkg);
-	    // dotForm.add (form);
+	    // Nothing fancy, let interpreter/compiler figure it out.
 	    return dotSymbol;
 	}
 	if (in.eof ())
