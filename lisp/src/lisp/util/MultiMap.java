@@ -155,26 +155,26 @@ public class MultiMap<K, V>
     }
 }
 
-class MapUtils
-{
-    // Multimap implementation in Java
-    public static void main (final String[] args)
-    {
-	// create a Multimap from past US presidents list
-	final MultiMap<String, String> multimap = new MultiMap ();
-
-	multimap.put ("Zachary", "Taylor");
-	multimap.put ("John", "Adams");
-	multimap.put ("John", "Tyler");
-	multimap.put ("John", "Kennedy");
-	multimap.put ("George", "Washington");
-	multimap.put ("George", "Bush");
-	multimap.put ("Grover", "Cleveland");
-
-	System.out.println ("--------Printing Multimap using keySet ----------\n");
-	for (final String lastName : multimap.keySet ())
-	{
-	    System.out.println (lastName + ": " + multimap.get (lastName));
-	}
-    }
-}
+// class MapUtils
+// {
+// // Multimap implementation in Java
+// public static void main (final String[] args)
+// {
+// // create a Multimap from past US presidents list
+// final MultiMap<String, String> multimap = new MultiMap<String, String> ();
+//
+// multimap.put ("Zachary", "Taylor");
+// multimap.put ("John", "Adams");
+// multimap.put ("John", "Tyler");
+// multimap.put ("John", "Kennedy");
+// multimap.put ("George", "Washington");
+// multimap.put ("George", "Bush");
+// multimap.put ("Grover", "Cleveland");
+//
+// System.out.println ("--------Printing Multimap using keySet ----------\n");
+// for (final String lastName : multimap.keySet ())
+// {
+// System.out.println (lastName + ": " + multimap.get (lastName));
+// }
+// }
+// }

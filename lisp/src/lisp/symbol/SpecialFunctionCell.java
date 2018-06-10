@@ -1,7 +1,7 @@
 
 package lisp.symbol;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import org.objectweb.asm.tree.ClassNode;
@@ -12,97 +12,110 @@ import lisp.util.MultiMap;
 
 public class SpecialFunctionCell extends FunctionCell
 {
-    private ObjectMethod[] methods;
+    // private ObjectMethod[] methods;
 
     public SpecialFunctionCell (final Symbol symbol)
     {
 	super (symbol, false);
-	methods = new ObjectMethod[] {};
-	makeOverloadMap (methods);
+	// methods = new ObjectMethod[] {};
+	// makeOverloadMap (methods);
     }
 
-    public SpecialFunctionCell (final Symbol symbol, final Object obj, final Method method, final String documentation)
-    {
-	super (symbol, false);
-	methods = new ObjectMethod[] {new ObjectMethod (obj, method, documentation)};
-	makeOverloadMap (methods);
-    }
+    // public SpecialFunctionCell (final Symbol symbol, final Object obj, final Method method, final
+    // String documentation)
+    // {
+    // super (symbol, false);
+    // methods = new ObjectMethod[] {new ObjectMethod (obj, method, documentation)};
+    // makeOverloadMap (methods);
+    // }
 
     @Override
     public void overload (final Object obj, final Method method, final String documentation, final Object source,
             final ClassNode cn)
     {
-	final ObjectMethod[] newMethods = Arrays.copyOf (methods, methods.length + 1, ObjectMethod[].class);
-	newMethods[methods.length] = new ObjectMethod (obj, method, documentation, source, cn);
-	// Scan methods and determine if there are possible ambiguous ones
-	makeOverloadMap (newMethods);
-	methods = newMethods;
+	super.overload (obj, method, documentation, source, cn);
+	// final ObjectMethod[] newMethods = Arrays.copyOf (methods, methods.length + 1,
+	// ObjectMethod[].class);
+	// newMethods[methods.length] = new ObjectMethod (obj, method, documentation, source, cn);
+	// // Scan methods and determine if there are possible ambiguous ones
+	// makeOverloadMap (newMethods);
+	// methods = newMethods;
     }
 
     @Override
-    public Object eval (final LexicalContext context, final List<?> form) throws Exception
+    public Object eval (final LexicalContext context, final List<? extends Object> form) throws Exception
     {
 	// Form size is one extra due to the function name &
 	// Number of arguments is one extra due to the interpreter argument.
-	final ObjectMethod method = selectMethod (form.size ());
-	if (method.isVarArgs ())
+	// final ObjectMethod method = selectMethod (form.size ());
+	// final ObjectMethod method = selectMethod ();
+	final List<Object> actuals = new ArrayList<Object> ();
+	actuals.add (context);
+	for (int i = 1; i < form.size (); i++)
 	{
-	    return applyVarArgs (context, method, form);
+	    actuals.add (form.get (i));
 	}
-	else
-	{
-	    return applyFixedArgs (context, method, form);
-	}
+	return apply (actuals);
+	// if (method.isVarArgs ())
+	// {
+	// return applyVarArgs (context, method, form);
+	// }
+	// else
+	// {
+	// return applyFixedArgs (context, method, form);
+	// }
     }
 
-    private Object applyVarArgs (final LexicalContext context, final ObjectMethod method, final List<?> form)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
-    {
-	final Class<?>[] parameters = method.getParameterTypes ();
-	// Number of parameters excluding the interpreter
-	final int paramsLengthActual = parameters.length - 1;
-	final Object[] arguments = new Object[parameters.length];
-	arguments[0] = context;
-	for (int i = 1; i < paramsLengthActual; i++)
-	{
-	    arguments[i] = form.get (i);
-	}
-	final int count = form.size () - paramsLengthActual;
-	final Object[] args = new Object[count];
-	for (int i = 0; i < count; i++)
-	{
-	    args[i] = form.get (paramsLengthActual + i);
-	}
-	arguments[parameters.length - 1] = args;
-	return method.method.invoke (method.object, arguments);
-    }
+    // private Object applyVarArgs (final LexicalContext context, final ObjectMethod method, final
+    // List<?> form)
+    // throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    // {
+    // final Class<?>[] parameters = method.getParameterTypes ();
+    // // Number of parameters excluding the interpreter
+    // final int paramsLengthActual = parameters.length - 1;
+    // final Object[] arguments = new Object[parameters.length];
+    // arguments[0] = context;
+    // for (int i = 1; i < paramsLengthActual; i++)
+    // {
+    // arguments[i] = form.get (i);
+    // }
+    // final int count = form.size () - paramsLengthActual;
+    // final Object[] args = new Object[count];
+    // for (int i = 0; i < count; i++)
+    // {
+    // args[i] = form.get (paramsLengthActual + i);
+    // }
+    // arguments[parameters.length - 1] = args;
+    // return method.method.invoke (method.object, arguments);
+    // }
 
-    private Object applyFixedArgs (final LexicalContext context, final ObjectMethod method, final List<?> form)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
-    {
-	final Class<?>[] parameters = method.getParameterTypes ();
-	// Form includes an extra element for the function name
-	// parameters includes an extra element for the interpreter
-	final Object[] arguments = new Object[parameters.length];
-	arguments[0] = context;
-	for (int i = 1; i < parameters.length; i++)
-	{
-	    arguments[i] = form.get (i);
-	    if (!parameters[i].isAssignableFrom (arguments[i].getClass ()))
-	    {
-		final StringBuilder buffer = new StringBuilder ();
-		buffer.append ("Can't bind ");
-		buffer.append (parameters[i]);
-		buffer.append (" = ");
-		buffer.append (arguments[i]);
-		buffer.append (" (");
-		buffer.append (arguments[i].getClass ());
-		buffer.append (")");
-		throw new IllegalArgumentException (buffer.toString ());
-	    }
-	}
-	return method.method.invoke (method.object, arguments);
-    }
+    // private Object applyFixedArgs (final LexicalContext context, final ObjectMethod method, final
+    // List<?> form)
+    // throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    // {
+    // final Class<?>[] parameters = method.getParameterTypes ();
+    // // Form includes an extra element for the function name
+    // // parameters includes an extra element for the interpreter
+    // final Object[] arguments = new Object[parameters.length];
+    // arguments[0] = context;
+    // for (int i = 1; i < parameters.length; i++)
+    // {
+    // arguments[i] = form.get (i);
+    // if (!parameters[i].isAssignableFrom (arguments[i].getClass ()))
+    // {
+    // final StringBuilder buffer = new StringBuilder ();
+    // buffer.append ("Can't bind ");
+    // buffer.append (parameters[i]);
+    // buffer.append (" = ");
+    // buffer.append (arguments[i]);
+    // buffer.append (" (");
+    // buffer.append (arguments[i].getClass ());
+    // buffer.append (")");
+    // throw new IllegalArgumentException (buffer.toString ());
+    // }
+    // }
+    // return method.method.invoke (method.object, arguments);
+    // }
 
     /**
      * Append to a map describing an object. The return value is intended to be used by a debugger
@@ -115,10 +128,10 @@ public class SpecialFunctionCell extends FunctionCell
     public void getDescriberValues (final MultiMap<String, Object> result, final Object target)
     {
 	super.getDescriberValues (result, target);
-	for (final ObjectMethod method : methods)
-	{
-	    result.put ("Method", method);
-	}
+	// for (final ObjectMethod method : methods)
+	// {
+	// result.put ("Method", method);
+	// }
     }
 
     @Override
@@ -129,11 +142,11 @@ public class SpecialFunctionCell extends FunctionCell
 	buffer.append (getClass ().getSimpleName ());
 	buffer.append (" ");
 	buffer.append (getFunctionName ());
-	for (final ObjectMethod m : methods)
-	{
-	    buffer.append (" ");
-	    buffer.append (m);
-	}
+	// for (final ObjectMethod m : methods)
+	// {
+	// buffer.append (" ");
+	// buffer.append (m);
+	// }
 	buffer.append (">");
 	return buffer.toString ();
     }

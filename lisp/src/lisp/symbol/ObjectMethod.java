@@ -93,6 +93,15 @@ public class ObjectMethod implements Describer
 	return method.getReturnType ().equals (Object.class);
     }
 
+    /**
+     * In the Java programming language, a method signature is the method name and the number, type
+     * and order of its parameters. Return types and thrown exceptions are not considered to be a
+     * part of the method signature. Type signature - Wikipedia
+     *
+     * @see https://en.wikipedia.org/wiki/Type_signature
+     * @Deprecated Not a proper signature
+     */
+    @Deprecated
     public String getSignature ()
     {
 	final StringBuilder buffer = new StringBuilder ();
@@ -105,6 +114,25 @@ public class ObjectMethod implements Describer
 	buffer.append (')');
 	buffer.append (Type.getType (method.getReturnType ()).getDescriptor ());
 	return buffer.toString ();
+    }
+
+    public String getProperSignature ()
+    {
+	final StringBuilder buffer = new StringBuilder ();
+	buffer.append (method.getName ());
+	buffer.append ('(');
+	for (final Class<?> param : method.getParameterTypes ())
+	{
+	    final Type type = Type.getType (param);
+	    buffer.append (type.getDescriptor ());
+	}
+	buffer.append (')');
+	return buffer.toString ();
+    }
+
+    public boolean matches (final ObjectMethod other)
+    {
+	return getProperSignature ().equals (other.getProperSignature ());
     }
 
     @Override

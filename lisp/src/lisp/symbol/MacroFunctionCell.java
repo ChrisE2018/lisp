@@ -35,7 +35,7 @@ public class MacroFunctionCell extends FunctionCell
     }
 
     @Override
-    public Object eval (final LexicalContext context, final List<?> form) throws Exception
+    public Object eval (final LexicalContext context, final List<? extends Object> form) throws Exception
     {
 	final Object expanded = method.invoke (object, form);
 	final Object result = context.eval (expanded);

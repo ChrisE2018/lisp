@@ -180,8 +180,9 @@ public class CompilerPrimitives extends Definer
 	}
 	else
 	{
-	    function = new StandardFunctionCell (symbol, instance, method, documentation, source, cn);
+	    function = new StandardFunctionCell (symbol);
 	    symbol.setFunction (function);
+	    function.overload (instance, method, documentation, source, cn);
 	}
 	return cls;
     }

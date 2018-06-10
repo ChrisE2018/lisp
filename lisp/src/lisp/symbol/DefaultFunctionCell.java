@@ -2,7 +2,7 @@
 package lisp.symbol;
 
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.List;
 
 import org.objectweb.asm.tree.ClassNode;
 
@@ -18,31 +18,37 @@ public class DefaultFunctionCell extends FunctionCell
     }
 
     @Override
-    public Object eval (final LexicalContext context, final List<?> form) throws Exception
+    public Object eval (final LexicalContext context, final List<? extends Object> form) throws Exception
     {
 	return null;
     }
 
     @Override
-    public Object apply (final Object... arguments)
+    public Object apply (final List<Object> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-	final Object target = arguments[0];
+	final Object target = arguments.get (0);
 	final String name = getFunctionName ().getName ();
 	return apply (target, name, arguments);
     }
 
-    private Object apply (final Object target, final String name, final Object[] arguments)
+    private Object apply (final Object target, final String name, final List<Object> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-	final Object[] args = Arrays.copyOfRange (arguments, 1, arguments.length);
+	final int argCount = arguments.size () - 1;
+	final Object[] args = new Object[argCount];
+	for (int i = 0; i < args.length; i++)
+	{
+	    args[i] = arguments.get (i + 1);
+	}
+	// final Object[] args = Arrays.copyOfRange (arguments, 1, arguments.length);
 	for (Class<?> cls = target.getClass (); cls != null; cls = cls.getSuperclass ())
 	{
 	    for (final Method method : cls.getDeclaredMethods ())
 	    {
 		if (method.getName ().equals (name))
 		{
-		    if (method.getParameterCount () == arguments.length - 1)
+		    if (method.getParameterCount () == argCount)
 		    {
 			if (canInvoke (method, args))
 			{

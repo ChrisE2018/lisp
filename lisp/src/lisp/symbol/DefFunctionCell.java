@@ -33,7 +33,7 @@ public class DefFunctionCell extends FunctionCell
     }
 
     @Override
-    public Object eval (final LexicalContext context, final List<?> form) throws Exception
+    public Object eval (final LexicalContext context, final List<? extends Object> form) throws Exception
     {
 	if (form.size () != arglist.size () + 1)
 	{
@@ -55,23 +55,24 @@ public class DefFunctionCell extends FunctionCell
 	return result;
     }
 
-    @Override
-    public Object apply (final Object... arguments) throws Exception
-    {
-	final LexicalContext context = new LexicalContext (LexicalContext.getCurrentThreadLexicalContext ());
-	for (int i = 0; i < arguments.length; i++)
-	{
-	    final Symbol var = arglist.get (i);
-	    context.bind (var, arguments[i]);
-	}
-	Object result = null;
-	// Evaluate the method body
-	for (final Object f : body)
-	{
-	    result = context.eval (f);
-	}
-	return result;
-    }
+    // @Override
+    // public Object apply (final Object... arguments) throws Exception
+    // {
+    // final LexicalContext context = new LexicalContext
+    // (LexicalContext.getCurrentThreadLexicalContext ());
+    // for (int i = 0; i < arguments.length; i++)
+    // {
+    // final Symbol var = arglist.get (i);
+    // context.bind (var, arguments[i]);
+    // }
+    // Object result = null;
+    // // Evaluate the method body
+    // for (final Object f : body)
+    // {
+    // result = context.eval (f);
+    // }
+    // return result;
+    // }
 
     /**
      * Append to a map describing an object. The return value is intended to be used by a debugger
