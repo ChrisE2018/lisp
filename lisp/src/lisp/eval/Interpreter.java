@@ -45,12 +45,10 @@ public class Interpreter extends Definer
 		final java.lang.reflect.Method method = (java.lang.reflect.Method)fn;
 		if (Modifier.isStatic (method.getModifiers ()))
 		{
-		    // If the method comes from the Lisp reader it may not be the correct overload.
-		    // We ignore the method and use the name to select one that fits the actual
+		    // If the method comes from the Lisp reader it may not be the correct overload,
+		    // so we ignore the method and use the name to select one that fits the actual
 		    // parameters.
 		    final List<Object> arguments = new LispList ();
-		    arguments.add (null);
-		    arguments.add (method);
 		    for (int i = 1; i < list.size (); i++)
 		    {
 			arguments.add (eval (context, list.get (i)));
@@ -62,14 +60,29 @@ public class Interpreter extends Definer
 		    // (java.lang.String.length "foobar")
 		    final List<Object> arguments = new LispList ();
 		    final Object target = eval (context, list.get (1));
-		    arguments.add (target);
-		    arguments.add (method);
 		    for (int i = 2; i < list.size (); i++)
 		    {
 			arguments.add (eval (context, list.get (i)));
 		    }
 		    return javaMethodCall (target, method.getDeclaringClass (), method.getName (), arguments);
 		}
+	    }
+	    if (fn instanceof List)
+	    {
+		final List<?> dotForm = (List<?>)fn;
+		// Handle fn like (dot object method)
+		// (java.lang.System.out.println)
+		// (java.lang.System.out.print "This is output")
+		// (java.lang.System.out.println "This is output")
+		// (java.lang.System.out.printf "foo %s %n" 172)
+		final List<Object> arguments = new LispList ();
+		final Object target = dotForm.get (1);
+		final Method method = (Method)dotForm.get (2);
+		for (int i = 1; i < list.size (); i++)
+		{
+		    arguments.add (eval (context, list.get (i)));
+		}
+		return javaMethodCall (target, method.getDeclaringClass (), method.getName (), arguments);
 	    }
 	    if (fn instanceof Symbol)
 	    {
@@ -82,6 +95,7 @@ public class Interpreter extends Definer
 		else if (list.size () > 1)
 		{
 		    // Handle unbound functions as calls to native Java methods
+		    // (length "foobar")
 		    final Object target = eval (context, list.get (1));
 		    final String method = coerceString (f, true);
 		    if (target == null)
@@ -90,8 +104,6 @@ public class Interpreter extends Definer
 		    }
 		    final Class<?> cls = target.getClass ();
 		    final List<Object> arguments = new LispList ();
-		    arguments.add (target);
-		    arguments.add (method);
 		    for (int i = 2; i < list.size (); i++)
 		    {
 			arguments.add (eval (context, list.get (i)));
@@ -112,8 +124,16 @@ public class Interpreter extends Definer
     }
 
     /**
-     * Recursive method to perform a java method call. Actual arguments start at argument 2.
+     * Recursive method to perform a java method call. Actual arguments start at argument 0. This
+     * attempts to select a method that matches the parameter types, but because of dynamic
+     * conversion from objects there are ambiguous cases. In other words, without actual type
+     * declarations for the arguments, it is not possible to completely match Java method
+     * overloading semantics.
      *
+     * @param target The object to invoke the method on.
+     * @param cls The class of the target object.
+     * @param methodName The name of the method to invoke.
+     * @param arguments The fully evaluated arguments to apply.
      * @throws InvocationTargetException
      * @throws IllegalArgumentException
      * @throws IllegalAccessException
@@ -127,7 +147,22 @@ public class Interpreter extends Definer
 	{
 	    if (method.getName ().equals (methodName))
 	    {
-		if (method.getParameterCount () == arguments.size () - 2)
+		// Need to handle VarArgs here.
+		if (method.isVarArgs ())
+		{
+		    if (method.getParameterCount () >= arguments.size ())
+		    {
+			try
+			{
+			    return invokeVarArgsMethod (target, method, arguments);
+			}
+			catch (final CoerceError e)
+			{
+
+			}
+		    }
+		}
+		else if (method.getParameterCount () == arguments.size ())
 		{
 		    try
 		    {
@@ -148,6 +183,48 @@ public class Interpreter extends Definer
 	return javaMethodCall (target, parentClass, methodName, arguments);
     }
 
+    /**
+     * Invoke a VarArgs method on computed arguments.
+     *
+     * @param target
+     * @param method
+     * @param arguments
+     * @return
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
+     * @throws InvocationTargetException
+     */
+    private Object invokeVarArgsMethod (final Object target, final Method method, final List<Object> arguments)
+            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    {
+	final Class<?>[] parameters = method.getParameterTypes ();
+	final Object[] actuals = new Object[parameters.length];
+	final int count = parameters.length;
+	final int fixed = count - 1;
+	for (int i = 0; i < fixed; i++)
+	{
+	    // Scan arguments and try to coerce to valid types.
+	    // If all args can be coerced, then call the method.
+	    final Object arg = arguments.get (i);
+	    final Object actual = coerceToParameter (parameters[i], arg);
+	    actuals[i] = actual;
+	}
+	final Object[] tail = new Object[arguments.size () - fixed];
+	// All remaining parameters must be of the tailClass
+	final Class<?> tailClass = parameters[fixed].getComponentType ();
+	for (int i = 0; i < tail.length; i++)
+	{
+	    // Scan arguments and try to coerce to valid types.
+	    // If all args can be coerced, then call the method.
+	    final int ii = i + fixed;
+	    final Object arg = arguments.get (ii);
+	    final Object actual = coerceToParameter (tailClass, arg);
+	    tail[i] = actual;
+	}
+	actuals[fixed] = tail;
+	return method.invoke (target, actuals);
+    }
+
     private Object invokeMethod (final Object target, final Method method, final List<Object> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
@@ -157,7 +234,7 @@ public class Interpreter extends Definer
 	{
 	    // Scan arguments and try to coerce to valid types.
 	    // If all args can be coerced, then call the method.
-	    final Object arg = arguments.get (i + 2);
+	    final Object arg = arguments.get (i);
 	    final Object actual = coerceToParameter (parameters[i], arg);
 	    actuals[i] = actual;
 	}
@@ -166,44 +243,86 @@ public class Interpreter extends Definer
 
     private Object coerceToParameter (final Class<?> p, final Object arg)
     {
+	if (p.equals (Object.class))
+	{
+	    return arg;
+	}
 	final Class<?> argClass = arg.getClass ();
+	if (p == argClass)
+	{
+	    return arg;
+	}
 	if (p.isAssignableFrom (argClass))
 	{
 	    return arg;
 	}
 	if (p == String.class)
 	{
-	    // Handle String from Symbol or String
+	    // Handle String from Symbol
 	    if (arg instanceof Symbol)
 	    {
 		return ((Symbol)arg).getName ();
 	    }
-	    if (arg instanceof String)
-	    {
-		return arg;
-	    }
 	}
-	// TODO Handle char, long, short etc.
-	if (p == int.class || p == Integer.class)
+	if (p.isPrimitive ())
 	{
-	    // Handle int from Lisp int
-	    if (arg instanceof Integer)
+	    // No simple solution:
+	    // https://stackoverflow.com/questions/1704634/simple-way-to-get-wrapper-class-type-in-java
+	    if (p == int.class)
 	    {
-		return arg;
+		if (argClass == Integer.class)
+		{
+		    return arg;
+		}
 	    }
-	}
-	if (p == double.class || p == Double.class)
-	{
-	    if (arg instanceof Double)
+	    else if (p == boolean.class)
 	    {
-		return arg;
+		if (argClass == Boolean.class)
+		{
+		    return arg;
+		}
 	    }
-	}
-	if (p == boolean.class || p == Boolean.class)
-	{
-	    if (arg instanceof Boolean)
+	    else if (p == double.class)
 	    {
-		return arg;
+		if (argClass == Double.class)
+		{
+		    return arg;
+		}
+	    }
+	    else if (p == long.class)
+	    {
+		if (argClass == Long.class)
+		{
+		    return arg;
+		}
+	    }
+	    else if (p == char.class)
+	    {
+		if (argClass == Character.class)
+		{
+		    return arg;
+		}
+	    }
+	    else if (p == byte.class)
+	    {
+		if (argClass == Byte.class)
+		{
+		    return arg;
+		}
+	    }
+	    else if (p == short.class)
+	    {
+		if (argClass == Short.class)
+		{
+		    return arg;
+		}
+	    }
+	    else if (p == float.class)
+	    {
+		if (argClass == Float.class)
+		{
+		    return arg;
+		}
 	    }
 	}
 	throw new CoerceError ("Can't coerce %s to %s", arg, p);
@@ -229,12 +348,6 @@ public class Interpreter extends Definer
 	final Object value = eval (context, expression);
 	return value;
     }
-
-    // @DefineLisp (special = true)
-    // public Interpreter getInterpreter (final Interpreter result)
-    // {
-    // return result;
-    // }
 
     /** Return a class for a name. This is required so the init file can load the primitives. */
     @DefineLisp
@@ -398,7 +511,7 @@ public class Interpreter extends Definer
     @DefineLisp (name = "try", special = true)
     public Object tryCatch (final LexicalContext context, final Object form, final Object... catchClauses) throws Exception
     {
-	// FIXME Implement tryCatch compiler.
+	// FIXME Implement TryCatch compiler.
 	Object result = null;
 	try
 	{

@@ -2,6 +2,7 @@
 package lisp;
 
 import java.io.IOException;
+import java.lang.reflect.*;
 import java.util.*;
 
 import lisp.util.ThrowingSupplier;
@@ -266,9 +267,10 @@ public class LispReader
     }
 
     /**
-     * Read a number or symbol.
-     *
-     * @throws ClassNotFoundException
+     * Read a number or symbol. In most cases this returns an Object. However, in the case of a
+     * method reference (like java.lang.System.out.println) it will return a list: (dot object
+     * method) that represents a method call on following arguments. The compiler and interpreter
+     * need to recognize this for specially.
      */
     private Object readAtom (final LispStream in, final Package pkg) throws IOException
     {
@@ -382,21 +384,30 @@ public class LispReader
 		    {
 			return cls;
 		    }
-		    final String memberName = words[2];
-		    try
+		    if (words.length == 3)
 		    {
-			return cls.getField (memberName);
+			// Look for a field or method called memberName
+			final String memberName = words[2];
+			try
+			{
+			    final Field field = cls.getField (memberName);
+			    final Object object = field.get (cls);
+			    return object;
+			}
+			catch (final IllegalArgumentException | IllegalAccessException | NoSuchFieldException e)
+			{
+			}
+			final Method method = getAnyMethodNamed (cls, memberName);
+			if (Modifier.isStatic (method.getModifiers ()))
+			{
+			    return new LispList (dotSymbol, cls, method);
+			}
+			else
+			{
+			    return method;
+			}
 		    }
-		    catch (final NoSuchFieldException e)
-		    {
-		    }
-		    try
-		    {
-			return cls.getMethod (memberName);
-		    }
-		    catch (final NoSuchMethodException e)
-		    {
-		    }
+		    return followFieldChain (cls, words, 2);
 		}
 		catch (final ClassNotFoundException e)
 		{
@@ -408,8 +419,54 @@ public class LispReader
 		}
 	    }
 	}
-
 	throw new Error ("Could not read " + name + " as a Java class or method reference");
+    }
+
+    private Object followFieldChain (final Class<?> cls, final String[] words, final int p)
+    {
+	// (java.lang.System.out.printf "Foo %s" 44)
+	Object object = cls;
+	Class<?> c = cls;
+	int pos = p;
+	try
+	{
+	    while (pos < words.length)
+	    {
+		final Field field = c.getField (words[pos]);
+		object = field.get (object);
+		c = object.getClass ();
+		pos++;
+	    }
+	}
+	catch (final NoSuchFieldException | IllegalArgumentException | IllegalAccessException e)
+	{
+	}
+	if (pos < words.length)
+	{
+	    final Method method = getAnyMethodNamed (c, words[pos]);
+	    if (method == null)
+	    {
+		throw new Error ("Could not access method from " + c + " . " + words[pos]);
+	    }
+	    return new LispList (dotSymbol, object, method);
+	}
+	if (pos < words.length)
+	{
+	    throw new Error ("Could not access field " + object + " . " + words[pos]);
+	}
+	return object;
+    }
+
+    private Method getAnyMethodNamed (final Class<?> cls, final String methodName)
+    {
+	for (final Method method : cls.getMethods ())
+	{
+	    if (method.getName ().equals (methodName))
+	    {
+		return method;
+	    }
+	}
+	return null;
     }
 
     private java.lang.Package findJavaPackage (final String name)
