@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.*;
 
 import lisp.*;
 import lisp.eval.Invoke;
-import lisp.util.MultiMap;
+import lisp.util.*;
 
 /**
  * Combination of Object and Method that can be called as an overloaded function. This should be
@@ -20,6 +20,7 @@ import lisp.util.MultiMap;
 public class ObjectMethod implements Describer
 {
     private static Invoke invoke = new Invoke ();
+    private static Boxing boxing = new Boxing ();
 
     final Object object;
     final Method method;
@@ -88,26 +89,6 @@ public class ObjectMethod implements Describer
     public Class<?>[] getParameterTypes ()
     {
 	return method.getParameterTypes ();
-    }
-
-    /**
-     * Direct calls to methods produce bad results when there are non-object parameters. Use this
-     * method to filter out those cases until it is debugged.
-     *
-     * @return True if this is a simple method call that only involves objects.
-     * @Deprecated This is a temporary hack.
-     */
-    @Deprecated
-    public boolean isObjectOnly ()
-    {
-	for (final Class<?> type : method.getParameterTypes ())
-	{
-	    if (!type.equals (Object.class))
-	    {
-		return false;
-	    }
-	}
-	return method.getReturnType ().equals (Object.class);
     }
 
     /**
@@ -250,95 +231,79 @@ public class ObjectMethod implements Describer
 	}
 	if (toClass.isPrimitive ())
 	{
-	    // No simple solution:
-	    // https://stackoverflow.com/questions/1704634/simple-way-to-get-wrapper-class-type-in-java
-	    if (toClass == int.class)
+	    if (fromClass.isPrimitive ())
 	    {
-		if (fromClass == int.class || fromClass == short.class || fromClass == byte.class)
-		{
-		    return true;
-		}
-		if (fromClass == Integer.class || fromClass == Short.class || fromClass == Byte.class)
-		{
-		    return true;
-		}
+		return isPrimitiveAssignableFrom (toClass, fromClass);
 	    }
-	    else if (toClass == boolean.class)
+	    return boxing.boxedClass (toClass).isAssignableFrom (fromClass);
+	}
+	if (fromClass.isPrimitive ())
+	{
+	    return toClass.isAssignableFrom (boxing.boxedClass (fromClass));
+	}
+	return false;
+    }
+
+    private boolean isPrimitiveAssignableFrom (final Class<?> toClass, final Class<?> fromClass)
+    {
+	// No simple solution:
+	// https://stackoverflow.com/questions/1704634/simple-way-to-get-wrapper-class-type-in-java
+	if (toClass == int.class)
+	{
+	    if (fromClass == int.class || fromClass == short.class || fromClass == byte.class)
 	    {
-		if (fromClass == boolean.class || fromClass == Boolean.class)
-		{
-		    return true;
-		}
+		return true;
 	    }
-	    else if (toClass == double.class)
+	}
+	else if (toClass == boolean.class)
+	{
+	    if (fromClass == boolean.class)
 	    {
-		if (fromClass == double.class || fromClass == int.class || fromClass == short.class || fromClass == byte.class
-		    || fromClass == float.class || fromClass == long.class)
-		{
-		    return true;
-		}
-		if (fromClass == Double.class || fromClass == Integer.class || fromClass == Short.class || fromClass == Byte.class
-		    || fromClass == Float.class || fromClass == Long.class)
-		{
-		    return true;
-		}
+		return true;
 	    }
-	    else if (toClass == long.class)
+	}
+	else if (toClass == double.class)
+	{
+	    if (fromClass == double.class || fromClass == int.class || fromClass == short.class || fromClass == byte.class
+	        || fromClass == float.class || fromClass == long.class)
 	    {
-		if (fromClass == long.class || fromClass == int.class || fromClass == short.class || fromClass == byte.class)
-		{
-		    return true;
-		}
-		if (fromClass == Long.class || fromClass == Integer.class || fromClass == Short.class || fromClass == Byte.class)
-		{
-		    return true;
-		}
+		return true;
 	    }
-	    else if (toClass == char.class)
+	}
+	else if (toClass == long.class)
+	{
+	    if (fromClass == long.class || fromClass == int.class || fromClass == short.class || fromClass == byte.class)
 	    {
-		if (fromClass == char.class)
-		{
-		    return true;
-		}
-		if (fromClass == Character.class)
-		{
-		    return true;
-		}
+		return true;
 	    }
-	    else if (toClass == byte.class)
+	}
+	else if (toClass == char.class)
+	{
+	    if (fromClass == char.class)
 	    {
-		if (fromClass == byte.class)
-		{
-		    return true;
-		}
-		if (fromClass == Byte.class)
-		{
-		    return true;
-		}
+		return true;
 	    }
-	    else if (toClass == short.class)
+	}
+	else if (toClass == byte.class)
+	{
+	    if (fromClass == byte.class)
 	    {
-		if (fromClass == short.class || fromClass == byte.class)
-		{
-		    return true;
-		}
-		if (fromClass == Short.class || fromClass == Byte.class)
-		{
-		    return true;
-		}
+		return true;
 	    }
-	    else if (toClass == float.class)
+	}
+	else if (toClass == short.class)
+	{
+	    if (fromClass == short.class || fromClass == byte.class)
 	    {
-		if (fromClass == float.class || fromClass == int.class || fromClass == short.class || fromClass == byte.class
-		    || fromClass == float.class || fromClass == long.class)
-		{
-		    return true;
-		}
-		if (fromClass == Float.class || fromClass == Integer.class || fromClass == Short.class || fromClass == Byte.class
-		    || fromClass == Float.class || fromClass == Long.class)
-		{
-		    return true;
-		}
+		return true;
+	    }
+	}
+	else if (toClass == float.class)
+	{
+	    if (fromClass == float.class || fromClass == int.class || fromClass == short.class || fromClass == byte.class
+	        || fromClass == float.class || fromClass == long.class)
+	    {
+		return true;
 	    }
 	}
 	return false;

@@ -32,11 +32,11 @@ public class Symbol implements Describer
     /** Symbol properties with lazy initialization. */
     private Map<Symbol, Object> symbolPlist = null;
 
-    public Symbol (final String name)
-    {
-	symbolPackage = null;
-	symbolName = name;
-    }
+    // public Symbol (final String name)
+    // {
+    // symbolPackage = null;
+    // symbolName = name;
+    // }
 
     public Symbol (final Package pkg, final String name)
     {
@@ -251,6 +251,15 @@ public class Symbol implements Describer
 	    symbolFunction = new DefaultFunctionCell (this, true);
 	}
 	return symbolFunction;
+    }
+
+    public void undefine (final boolean force)
+    {
+	if (force)
+	{
+	    symbolFunction = null;
+	}
+	setFunction (null);
     }
 
     /** The global function definition for a symbol. */

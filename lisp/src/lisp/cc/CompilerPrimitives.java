@@ -87,6 +87,18 @@ public class CompilerPrimitives extends Definer
 	return spec;
     }
 
+    @DefineLisp
+    public void undefine (final Symbol fn)
+    {
+	fn.setFunction (null);
+    }
+
+    @DefineLisp
+    public void undefine (final Symbol fn, final boolean force)
+    {
+	fn.undefine (force);
+    }
+
     // (define foo (x) alpha)
     // (define foo (a b) (+ 3 4))
     @DefineLisp (special = true, name = "define")

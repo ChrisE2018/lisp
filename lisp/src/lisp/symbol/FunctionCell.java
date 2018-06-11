@@ -122,14 +122,27 @@ public abstract class FunctionCell implements Describer
 		{
 		    selectedMethod = method;
 		}
+		else if (selectedMethod.isBetterThan (method))
+		{
+		    // Ignore
+		}
 		else if (method.isBetterThan (selectedMethod))
 		{
 		    selectedMethod = method;
 		}
 		else
 		{
-		    // Warning: ambiguous method selection
-		    return null;
+		    final StringBuilder buffer = new StringBuilder ();
+		    buffer.append ("Ambiguous ");
+		    buffer.append (symbol);
+		    buffer.append (" method selection for ");
+		    buffer.append (arguments);
+		    buffer.append (". Both ");
+		    buffer.append (selectedMethod.getArgumentSignature ());
+		    buffer.append (" and ");
+		    buffer.append (method.getArgumentSignature ());
+		    buffer.append (" apply.");
+		    throw new IllegalArgumentException (buffer.toString ());
 		}
 	    }
 	}
@@ -256,11 +269,17 @@ public abstract class FunctionCell implements Describer
 		{
 		    selectedMethod = method;
 		}
+		else if (selectedMethod.isBetterThan (method))
+		{
+		    // Ignore. Test this first so method definition order is secondary key.
+		}
 		else if (method.isBetterThan (selectedMethod))
 		{
+		    // (define foo (int:a double:b) 'alpha)
+		    // (define foo (double:a int:b) 'beta)
 		    selectedMethod = method;
 		}
-		else if (!selectedMethod.isBetterThan (method))
+		else
 		{
 		    final StringBuilder buffer = new StringBuilder ();
 		    buffer.append ("Ambiguous ");
