@@ -31,16 +31,16 @@
 
 (new "lisp.describe.DescribePrimitives")
 
-(new "lisp.eval.ArithmeticPrimitives")
-(new "lisp.eval.ControlPrimitives")
-(new "lisp.eval.FunctionPrimitives")
-(new "lisp.eval.IOPrimitives")
-(new "lisp.eval.ListPrimitives")
-(new "lisp.eval.LoggerPrimitives")
-(new "lisp.eval.NetPrimitives")
-(new "lisp.eval.PackagePrimitives")
+(new "lisp.primitives.ArithmeticPrimitives")
+(new "lisp.primitives.ControlPrimitives")
+(new "lisp.primitives.FunctionPrimitives")
+(new "lisp.primitives.IOPrimitives")
+(new "lisp.primitives.ListPrimitives")
+(new "lisp.primitives.LoggerPrimitives")
+(new "lisp.primitives.NetPrimitives")
+(new "lisp.primitives.PackagePrimitives")
 
-(new "lisp.eval.SandboxPrimitives")
+(new "lisp.primitives.SandboxPrimitives")
 
 (new "lisp.cc.CompilerPrimitives")
 
