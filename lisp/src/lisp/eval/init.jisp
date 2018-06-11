@@ -56,13 +56,13 @@
 ;; Menus for Interactor gui
 
 (setq *menus* '(("File" 
-					("foo" (printf "foo hit"))
+					("foo" (printf "foo hit%n"))
 					("exit" (static "java.lang.System" "exit" 0))
 					)
 			    ("Edit" "bar")
 			    ("Lisp" 
-			    	("Show Bytecode" (setq system.showBytecode true))
-			    	("Hide Bytecode" (setq system.showBytecode false))
+			    	("Show Bytecode" (showBytecode true))
+			    	("Hide Bytecode" (showBytecode false))
 			    	)
 			    ))
 

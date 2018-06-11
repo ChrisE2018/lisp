@@ -43,6 +43,14 @@
 (verify (sign 2.5) 1)
 (verify (sign -2.5) -1)
 
+(verify (+) 0)
+(verify (*) 1)
+
+(verify (+ 99) 99)
+(verify (* 101) 101)
+(verify (- 67) -67)
+(verify (/ 2) 0.5)
+
 (verifyPhase compile)
 
 (define foo (x) (not x))

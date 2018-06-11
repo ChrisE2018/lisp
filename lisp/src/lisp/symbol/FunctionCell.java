@@ -8,14 +8,13 @@ import java.util.function.Predicate;
 import org.objectweb.asm.tree.ClassNode;
 
 import lisp.*;
-import lisp.eval.*;
+import lisp.cc.LocalBinding;
+import lisp.eval.LexicalContext;
 import lisp.util.MultiMap;
 
 /** Base class of all function cells. */
 public abstract class FunctionCell implements Describer
 {
-    private static Invoke invoke = new Invoke ();
-
     /** The symbol this function cell is attached to. */
     private final Symbol symbol;
 
@@ -29,56 +28,44 @@ public abstract class FunctionCell implements Describer
     abstract public Object eval (final LexicalContext context, final List<? extends Object> list) throws Exception;
 
     /**
-     * Old Method
+     * Add an overloaded definition to this function cell. The documentation and ASM class node will
+     * be attached for reference.
      *
-     * @param n
-     * @return
+     * @param obj The object that is used to invoke the method.
+     * @param method The method to use when calling this FunctionCell.
+     * @param documentation Documentation string for display.
+     * @param source The Lisp source object.
+     * @param cn An ASM ClassNode containing the bytecode.
      */
-    public ObjectMethod selectMethod (final int n)
-    {
-	for (final ObjectMethod omethod : overloads)
-	{
-	    final Method method = omethod.getMethod ();
-	    if (method.isVarArgs ())
-	    {
-		if (method.getParameterCount () - 1 <= n)
-		{
-		    return omethod;
-		}
-	    }
-	    else
-	    {
-		if (method.getParameterCount () == n)
-		{
-		    return omethod;
-		}
-	    }
-	}
-	return null;
-    }
-
     public void overload (final Object obj, final Method method, final String documentation, final Object source,
             final ClassNode cn)
     {
 	final ObjectMethod newOverload = new ObjectMethod (obj, method, documentation, source, cn);
-	final String signature = newOverload.getProperSignature ();
-	final int count = newOverload.getParameterTypes ().length;
-	// overloads.removeIf (new Predicate<ObjectMethod> ()
-	// {
-	// @Override
-	// public boolean test (final ObjectMethod t)
-	// {
-	// return t.getProperSignature ().equals (signature);
-	// }
-	// });
+	final String signature = newOverload.getArgumentSignature ();
 	overloads.removeIf (new Predicate<ObjectMethod> ()
 	{
 	    @Override
 	    public boolean test (final ObjectMethod t)
 	    {
-		return t.getParameterTypes ().length == count;
+		final boolean result = t.getArgumentSignature ().equals (signature);
+		if (result)
+		{
+		    // Invalidate the overload that is about to be removed.
+		    t.valid = false;
+		}
+		return result;
 	    }
 	});
+	// Want to remove this block of code and rely on the above:
+	// final int count = newOverload.getParameterTypes ().length;
+	// overloads.removeIf (new Predicate<ObjectMethod> ()
+	// {
+	// @Override
+	// public boolean test (final ObjectMethod t)
+	// {
+	// return t.getParameterTypes ().length == count;
+	// }
+	// });
 	overloads.add (newOverload);
     }
 
@@ -98,154 +85,139 @@ public abstract class FunctionCell implements Describer
 	return allowRedefinition;
     }
 
+    /** Optional support object with compiler and analyzer. */
     public LispFunction getLispFunction ()
     {
 	return lispFunction;
     }
 
+    /** Optional support object with compiler and analyzer. */
     public void setLispFunction (final LispFunction lispFunction)
     {
 	this.lispFunction = lispFunction;
     }
 
-    // /**
-    // * Get the fixed arg method to apply to n arguments. Do not use this for varArgs functions.
-    // *
-    // * @param n
-    // * @return
-    // */
-    // ObjectMethod getOverload (final int n)
-    // {
-    // if (overloads.length > n)
-    // {
-    // return overloads[n];
-    // }
-    // return null;
-    // }
+    /**
+     * Determine the overload used when this function is called on an expression. FIXME Special
+     * functions need to implement their own version of this.
+     *
+     * @param locals The current binding context.
+     * @param expression The expression that will be evaluated.
+     */
+    public ObjectMethod selectMethod (final Map<Symbol, LocalBinding> locals, final LispList expression)
+    {
+	final List<Class<?>> arguments = new ArrayList<Class<?>> ();
+	for (int i = 1; i < expression.size (); i++)
+	{
+	    final Object arg = expression.get (i);
+	    final Class<?> argClass = predictResultClass (locals, arg);
+	    arguments.add (argClass);
+	}
+	ObjectMethod selectedMethod = null;
+	for (final ObjectMethod method : overloads)
+	{
+	    if (method.isSelectable (arguments))
+	    {
+		if (selectedMethod == null)
+		{
+		    selectedMethod = method;
+		}
+		else if (method.isBetterThan (selectedMethod))
+		{
+		    selectedMethod = method;
+		}
+		else
+		{
+		    // Warning: ambiguous method selection
+		    return null;
+		}
+	    }
+	}
+	return selectedMethod;
+    }
 
-    // /**
-    // * Check an array of overloaded methods for ambiguity. Create an array to retrieve the correct
-    // * method based on the number of arguments in the call.
-    // */
-    // void makeOverloadMap (final ObjectMethod[] methods)
-    // {
-    // final Map<Integer, ObjectMethod> selector = getOverloadSelector (methods);
-    // int count = 0;
-    // for (final int key : selector.keySet ())
-    // {
-    // if (key > count)
-    // {
-    // count = key;
-    // }
-    // }
-    // final ObjectMethod[] result = new ObjectMethod[count + 1];
-    // for (final Entry<Integer, ObjectMethod> entry : selector.entrySet ())
-    // {
-    // result[entry.getKey ()] = entry.getValue ();
-    // }
-    // overloads = result;
-    // }
+    /**
+     * Determine the return class of an expression. @param locals The current binding context.
+     *
+     * @param expression The expression that will be evaluated.
+     */
+    private Class<?> predictResultClass (final Map<Symbol, LocalBinding> locals, final Object expression)
+    {
+	if (expression instanceof List)
+	{
+	    final LispList expr = (LispList)expression;
+	    final Symbol fn = expr.head ();
+	    final FunctionCell function = fn.getFunction ();
+	    if (function != null)
+	    {
+		final Class<?> result = function.getResultClass (locals, expr);
+		if (result != null)
+		{
+		    return result;
+		}
+	    }
+	    // Function call always returns a value whether we want it or not
+	    return Object.class;
+	}
+	if (expression instanceof Symbol)
+	{
+	    // Variable reference
+	    final Symbol var = (Symbol)expression;
+	    if (locals.containsKey (var))
+	    {
+		// Reference to a local lexical variable
+		final LocalBinding lb = locals.get (var);
+		return lb.getVariableClass ();
+	    }
+	    else if (var.is ("true") || var.is ("t") || var.is ("false") || var.is ("f"))
+	    {
+		return Boolean.class;
+	    }
+	    else
+	    {
+		// Reference to a global variable
+		final Object value = var.getValue (null);
+		if (value instanceof TypedValueCell)
+		{
+		    final TypedValueCell tvc = (TypedValueCell)value;
+		    return tvc.getValueType ();
+		}
+		return Object.class;
+	    }
+	}
+	else if (expression == null)
+	{
+	    return void.class;
+	}
+	else
+	{
+	    return expression.getClass ();
+	}
+    }
 
-    // Map<Integer, ObjectMethod> getOverloadSelector (final ObjectMethod[] methods)
-    // {
-    // final Map<Integer, ObjectMethod> selector = new HashMap<Integer, ObjectMethod> ();
-    // for (final ObjectMethod method : methods)
-    // {
-    // final int c = getMethodSelectorCount (method.method);
-    // if (method.isVarArgs ())
-    // {
-    // for (final int key : selector.keySet ())
-    // {
-    // if (key >= c)
-    // {
-    // throw new IllegalArgumentException (
-    // "Overloaded " + symbol + " method is ambiguous with " + c + " or more arguments");
-    //
-    // }
-    // }
-    // }
-    // if (selector.containsKey (c))
-    // {
-    // throw new IllegalArgumentException (
-    // "Overloaded method " + method.getMethodName () + " is ambiguous with " + c + " arguments");
-    // }
-    // selector.put (c, method);
-    // }
-    // return selector;
-    // }
+    /**
+     * Determine the result class when this function is called on an expression.
+     *
+     * @param locals The current binding context.
+     * @param expression The expression that will be evaluated.
+     */
+    private Class<?> getResultClass (final Map<Symbol, LocalBinding> locals, final LispList expression)
+    {
+	if (overloads.size () > 0)
+	{
+	    final ObjectMethod result = selectMethod (locals, expression);
+	    if (result != null)
+	    {
+		return result.getMethod ().getReturnType ();
+	    }
+	}
+	return Object.class;
+    }
 
-    // int getMethodSelectorCount (final Method method)
-    // {
-    // final Class<?>[] parameters = method.getParameterTypes ();
-    // if (method.isVarArgs ())
-    // {
-    // final int c = parameters.length - 1;
-    // return c;
-    // }
-    // else
-    // {
-    // final int c = parameters.length;
-    // return c;
-    // }
-    // }
-
-    // /**
-    // * Select a method that is application for a call.
-    // *
-    // * @param methods The set of overloaded methods.
-    // * @param argCount The argument count of this call.
-    // * @return The selected method.
-    // */
-    // Method selectMethod (final Method[] methods, final int argCount)
-    // {
-    // for (final Method method : methods)
-    // {
-    // final Class<?>[] parameters = method.getParameterTypes ();
-    // if (method.isVarArgs ())
-    // {
-    // if (argCount >= parameters.length - 1)
-    // {
-    // return method;
-    // }
-    // }
-    // else if (argCount == parameters.length)
-    // {
-    // return method;
-    // }
-    // }
-    // throw new IllegalArgumentException ("No applicable method");
-    // }
-
-    // /** Select a method using the overloads table. */
-    // public ObjectMethod selectMethod (final int argCount)
-    // {
-    // ObjectMethod result = null;
-    // if (argCount < overloads.length)
-    // {
-    // result = overloads[argCount];
-    // }
-    // else if (overloads.length == 0)
-    // {
-    // throw new IllegalArgumentException ("No defined methods for " + symbol);
-    // }
-    // else
-    // {
-    // final int n = overloads.length - 1;
-    // result = overloads[n];
-    // if (!result.isVarArgs ())
-    // {
-    // result = null;
-    // }
-    // }
-    // if (result == null)
-    // {
-    // throw new IllegalArgumentException ("No applicable method calling " + symbol + " with " +
-    // argCount + " arguments");
-    // }
-    // return result;
-    // }
-
-    /** This is called from compiled code and translates to the list form now implemented. */
+    /**
+     * This is called from compiled code and translates to the list form now implemented. This
+     * should probably be Deprecated and eliminated.
+     */
     public Object apply (final Object[] arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
@@ -257,63 +229,59 @@ public abstract class FunctionCell implements Describer
 	return apply (actuals);
     }
 
+    /**
+     * Apply this FunctionCell to a specific set of arguments. If several overloads can apply, the
+     * first one wins. This might not be the expected result. For example, if there are two one
+     * parameter overloads and one takes a double value and the second takes an int, then the result
+     * is dependent on the order they are defined. The double value version can steal calls to the
+     * int value version.
+     *
+     * @param arguments Arguments to pass to the method. These have already been evaluated. An
+     *            applicable overload is selected or IllegalArgumentException is thrown if no
+     *            overload can be used.
+     * @return The result of the method call.
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
+     * @throws InvocationTargetException
+     */
     public Object apply (final List<Object> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-	for (final ObjectMethod omethod : overloads)
+	ObjectMethod selectedMethod = null;
+	for (final ObjectMethod method : overloads)
 	{
-	    final Method method = omethod.getMethod ();
-	    final Object target = omethod.getObject ();
-	    if (invoke.applicable (method, target, arguments))
+	    if (method.applicable (arguments))
 	    {
-		return invoke.apply (method, target, arguments);
+		if (selectedMethod == null)
+		{
+		    selectedMethod = method;
+		}
+		else if (method.isBetterThan (selectedMethod))
+		{
+		    selectedMethod = method;
+		}
+		else if (!selectedMethod.isBetterThan (method))
+		{
+		    final StringBuilder buffer = new StringBuilder ();
+		    buffer.append ("Ambiguous ");
+		    buffer.append (symbol);
+		    buffer.append (" method selection for ");
+		    buffer.append (arguments);
+		    buffer.append (". Both ");
+		    buffer.append (selectedMethod.getArgumentSignature ());
+		    buffer.append (" and ");
+		    buffer.append (method.getArgumentSignature ());
+		    buffer.append (" apply.");
+		    throw new IllegalArgumentException (buffer.toString ());
+		}
 	    }
+	}
+	if (selectedMethod != null)
+	{
+	    return selectedMethod.apply (arguments);
 	}
 	throw new IllegalArgumentException ("No applicable " + symbol + " method for " + arguments);
     }
-
-    // /**
-    // * @param arguments
-    // * @throws InvocationTargetException
-    // * @throws IllegalArgumentException
-    // * @throws IllegalAccessException
-    // * @throws Exception
-    // */
-    // public Object apply (final LexicalContext context, final List<?> arguments)
-    // throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
-    // {
-    // final ObjectMethod method = selectMethod (arguments);
-    // if (method.isVarArgs ())
-    // {
-    // final Method m = method.method;
-    // final int argCount = m.getParameterTypes ().length;
-    // final Object[] args = new Object[argCount];
-    // for (int i = 0; i < argCount - 1; i++)
-    // {
-    // args[i] = arguments.get (i);
-    // }
-    // final Object[] vargs = new Object[arguments.size () + 1 - argCount];
-    // for (int i = 0; i < vargs.length; i++)
-    // {
-    // vargs[i] = arguments.get (i + argCount - 1);
-    // }
-    // args[argCount - 1] = vargs;
-    // return method.method.invoke (method.object, args);
-    // }
-    // else
-    // {
-    // return method.method.invoke (method.object, arguments);
-    // }
-    // }
-
-    // private ObjectMethod selectMethod (final List<?> arguments)
-    // {
-    // for (final ObjectMethod omethod : overloads)
-    // {
-    // final Method method = omethod.getMethod ();
-    // }
-    // return null;
-    // }
 
     /**
      * Append to a map describing an object. The return value is intended to be used by a debugger

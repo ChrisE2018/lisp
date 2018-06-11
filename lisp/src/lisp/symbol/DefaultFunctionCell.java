@@ -11,7 +11,6 @@ import lisp.eval.LexicalContext;
 
 public class DefaultFunctionCell extends FunctionCell
 {
-
     public DefaultFunctionCell (final Symbol symbol, final boolean allowRedefinition)
     {
 	super (symbol, allowRedefinition);
@@ -20,7 +19,7 @@ public class DefaultFunctionCell extends FunctionCell
     @Override
     public Object eval (final LexicalContext context, final List<? extends Object> form) throws Exception
     {
-	return null;
+	throw new UnsupportedOperationException ("Can't eval default function definitions");
     }
 
     @Override
@@ -48,6 +47,7 @@ public class DefaultFunctionCell extends FunctionCell
 	    {
 		if (method.getName ().equals (name))
 		{
+		    // FIXME handle VarArgs
 		    if (method.getParameterCount () == argCount)
 		    {
 			if (canInvoke (method, args))

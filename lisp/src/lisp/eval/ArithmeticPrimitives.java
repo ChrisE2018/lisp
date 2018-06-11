@@ -17,14 +17,20 @@ public class ArithmeticPrimitives extends Definer
     // CONSIDER Case for 'long' needed everywhere
 
     @DefineLisp
-    public Object not (final Object arg)
+    public boolean not (final Object arg)
     {
 	if (arg instanceof Boolean)
 	{
-	    final Boolean b = (Boolean)arg;
+	    final boolean b = (Boolean)arg;
 	    return !b;
 	}
-	return Boolean.FALSE;
+	return false;
+    }
+
+    @DefineLisp
+    public boolean not (final boolean arg)
+    {
+	return !arg;
     }
 
     @DefineLisp (name = "null")
@@ -34,15 +40,39 @@ public class ArithmeticPrimitives extends Definer
     }
 
     @DefineLisp
-    public Object zerop (final Integer a)
+    public Object zerop (final int a)
     {
 	return a == 0;
     }
 
     @DefineLisp
-    public Object rem (final Integer a, final Integer b)
+    public Object zerop (final long a)
+    {
+	return a == 0;
+    }
+
+    @DefineLisp
+    public Object rem (final int a, final int b)
     {
 	return a % b;
+    }
+
+    @DefineLisp
+    public Object rem (final long a, final long b)
+    {
+	return a % b;
+    }
+
+    @DefineLisp (name = "1+")
+    public int addOne (final int x)
+    {
+	return x + 1;
+    }
+
+    @DefineLisp (name = "1+")
+    public double addOne (final double x)
+    {
+	return x + 1;
     }
 
     @DefineLisp (name = "1+"// , classname = "lisp.special.PlusOneFunction"
@@ -71,8 +101,20 @@ public class ArithmeticPrimitives extends Definer
 	}
 	else
 	{
-	    throw new IllegalArgumentException ("Number required " + x);
+	    return (double)x + 1;
 	}
+    }
+
+    @DefineLisp (name = "1-")
+    public int subOne (final int x)
+    {
+	return x - 1;
+    }
+
+    @DefineLisp (name = "1-")
+    public double subOne (final double x)
+    {
+	return x - 1;
     }
 
     @DefineLisp (name = "1-")
@@ -216,10 +258,10 @@ public class ArithmeticPrimitives extends Definer
 	switch (arguments.length)
 	{
 	    case 0:
-		return 0;
+		throw new IllegalArgumentException ("Too few arguments supplied to minus function");
 
 	    case 1:
-		return arguments[0];
+		return minus (0, arguments[0]);
 
 	    default:
 		Object result = arguments[0];
@@ -432,10 +474,10 @@ public class ArithmeticPrimitives extends Definer
 	switch (arguments.length)
 	{
 	    case 0:
-		return 1;
+		throw new IllegalArgumentException ("Too few arguments supplied to quotient function");
 
 	    case 1:
-		return arguments[0];
+		return quotient (1.0, arguments[0]);
 
 	    default:
 		final Object numerator = arguments[0];

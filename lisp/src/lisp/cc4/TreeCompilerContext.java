@@ -247,24 +247,24 @@ public class TreeCompilerContext implements Opcodes
 	       || x instanceof String;
     }
 
-    public CompileResultSet compile (final Object expr, final boolean resultDesired)
+    public CompileResultSet compile (final Object expression, final boolean resultDesired)
     {
-	if (expr instanceof List)
+	if (expression instanceof List)
 	{
-	    return compileFunctionCall ((LispList)expr, resultDesired);
+	    return compileFunctionCall ((LispList)expression, resultDesired);
 	}
 	else if (resultDesired)
 	{
-	    if (expr instanceof Symbol)
+	    if (expression instanceof Symbol)
 	    {
 		// Variable reference
-		return compileSymbolReference ((Symbol)expr);
+		return compileSymbolReference ((Symbol)expression);
 	    }
 	    else
 	    {
 		final LabelNode ll = new LabelNode ();
 		add (new JumpInsnNode (GOTO, ll));
-		return new CompileResultSet (new ImplicitCompileResult (ll, expr));
+		return new CompileResultSet (new ImplicitCompileResult (ll, expression));
 	    }
 	}
 	return null;
@@ -302,10 +302,11 @@ public class TreeCompilerContext implements Opcodes
 		    throw new Error ("Error expanding macro " + symbol, e1);
 		}
 	    }
-	    if (optimizeFunctionCall (expression))
+	    final ObjectMethod objectMethod = optimizeFunctionCall (expression);
+	    if (objectMethod != null)
 	    {
 		// Function call always returns a value whether we want it or not
-		return compileDirectFunctionCall (expression);
+		return compileDirectFunctionCall (objectMethod, expression);
 	    }
 	}
 	// Function call always returns a value whether we want it or not
@@ -329,16 +330,16 @@ public class TreeCompilerContext implements Opcodes
     }
 
     /** Determine if a function call should be optimized. */
-    private boolean optimizeFunctionCall (final LispList expression)
+    private ObjectMethod optimizeFunctionCall (final LispList expression)
     {
-	final int argCount = expression.size () - 1;
+	// final int argCount = expression.size () - 1;
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
 	if (function != null)
 	{
 	    if (!(function instanceof DefaultFunctionCell))
 	    {
-		final ObjectMethod objectMethod = function.selectMethod (argCount);
+		final ObjectMethod objectMethod = function.selectMethod (locals, expression);
 		if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
 		{
 		    // Only methods with Object parameters work right now.
@@ -348,15 +349,18 @@ public class TreeCompilerContext implements Opcodes
 		        // FIXME Handle var args too
 		    !objectMethod.isVarArgs ())
 		    {
-			return Symbol.test ("optimizeFunctionCalls", true);
+			if (Symbol.test ("optimizeFunctionCalls", true))
+			{
+			    return objectMethod;
+			}
 		    }
 		}
 	    }
 	}
-	return false;
+	return null;
     }
 
-    private CompileResultSet compileDirectFunctionCall (final LispList expression)
+    private CompileResultSet compileDirectFunctionCall (final ObjectMethod objectMethod, final LispList expression)
     {
 	// (setq showBytecode t)
 	// (define foo () (getDefaultPackage))
@@ -364,21 +368,18 @@ public class TreeCompilerContext implements Opcodes
 	// (define foo (x) (not x))
 	// (define foo (a b) (rem a b))
 
+	final Symbol symbol = expression.head ();
+	LOGGER.info ("Optimized call to " + symbol + " using " + objectMethod);
+
 	// If we are compiling for speed and can assume that the current definition won't
 	// change, then compile a direct call to the current function method.
 	// TODO If we know argument types of the function we are about to call we can try to
 	// compile the expression more efficiently.
-	final Symbol symbol = expression.head ();
 	final Label l1 = new Label ();
 	add (new LabelNode (l1));
-	final FunctionCell function = symbol.getFunction ();
-	final int argCount = expression.size () - 1;
-	// FIXME Proper overload selection based on argument types
-	final ObjectMethod objectMethod = function.selectMethod (argCount);
 	final Object target = objectMethod.getObject ();
 	final Method method = objectMethod.getMethod ();
 
-	LOGGER.fine ("Direct call to " + symbol);
 	final Symbol reference = symbol.gensym ();
 	final String methodSignature = objectMethod.getSignature ();
 	final Type objectType = Type.getType (target.getClass ());

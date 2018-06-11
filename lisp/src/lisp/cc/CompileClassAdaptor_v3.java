@@ -1,13 +1,12 @@
 
 package lisp.cc;
 
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.LispList;
@@ -517,11 +516,11 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 		compileExpression (mv, replacement, valueClass, allowNarrowing, liberalTruth);
 		return;
 	    }
-	    if (optimizeFunctionCall (expression))
-	    {
-		compileDirectFunctionCall (mv, expression, valueClass, allowNarrowing, liberalTruth);
-		return;
-	    }
+	    // if (optimizeFunctionCall (expression))
+	    // {
+	    // compileDirectFunctionCall (mv, expression, valueClass, allowNarrowing, liberalTruth);
+	    // return;
+	    // }
 	}
 
 	// Produce a generic call to a standard function.
@@ -550,77 +549,80 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     }
 
     /** Determine if a function call should be optimized. */
-    private boolean optimizeFunctionCall (final LispList expression)
-    {
-	// If we are compiling for speed and can assume that the current definition won't
-	// change, then compile a direct call to the current function method.
-	// If we know argument types of the function we are about to call we can try to
-	// compile the expression more efficiently.
-	final int argCount = expression.size () - 1;
-	final Symbol symbol = expression.head ();
-	final FunctionCell function = symbol.getFunction ();
-	if (function != null)
-	{
-	    if (!(function instanceof DefaultFunctionCell))
-	    {
-		final ObjectMethod objectMethod = function.selectMethod (argCount);
-		if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
-		{
-		    // Only methods with Object parameters work right now.
-		    // coerceRequired will need to be improved before general method parameters are
-		    // ok.
-		    if (// objectMethod.isObjectOnly () &&
-		    !objectMethod.isVarArgs ())
-		    {
-			return Symbol.test ("optimizeFunctionCalls", true);
-		    }
-		}
-	    }
-	}
-	return false;
-    }
+    // private boolean optimizeFunctionCall (final LispList expression)
+    // {
+    // // If we are compiling for speed and can assume that the current definition won't
+    // // change, then compile a direct call to the current function method.
+    // // If we know argument types of the function we are about to call we can try to
+    // // compile the expression more efficiently.
+    // final int argCount = expression.size () - 1;
+    // final Symbol symbol = expression.head ();
+    // final FunctionCell function = symbol.getFunction ();
+    // if (function != null)
+    // {
+    // if (!(function instanceof DefaultFunctionCell))
+    // {
+    // final ObjectMethod objectMethod = function.selectMethod (argCount);
+    // if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
+    // {
+    // // Only methods with Object parameters work right now.
+    // // coerceRequired will need to be improved before general method parameters are
+    // // ok.
+    // if (// objectMethod.isObjectOnly () &&
+    // !objectMethod.isVarArgs ())
+    // {
+    // return Symbol.test ("optimizeFunctionCalls", true);
+    // }
+    // }
+    // }
+    // }
+    // return false;
+    // }
 
-    private void compileDirectFunctionCall (final GeneratorAdapter mv, final LispList expression, final Class<?> valueClass,
-            final boolean allowNarrowing, final boolean liberalTruth)
-    {
-	// (setq showBytecode t)
-	// (define foo () (getDefaultPackage))
-	// (define foo (x) (1+ x))
-	// (define foo (x) (not x))
-	// (define foo (a b) (rem a b))
-	final Symbol symbol = expression.head ();
-	final Label l1 = new Label ();
-	mv.visitLineNumber (617, l1);
-	mv.visitLabel (l1);
-	final FunctionCell function = symbol.getFunction ();
-	final int argCount = expression.size () - 1;
-	final ObjectMethod objectMethod = function.selectMethod (argCount);
-	final Object target = objectMethod.getObject ();
-	final Method method = objectMethod.getMethod ();
-
-	LOGGER.fine ("Direct call to " + symbol);
-	final Symbol reference = symbol.gensym ();
-	final String methodSignature = objectMethod.getSignature ();
-	final Type objectType = Type.getType (target.getClass ());
-	final String objectClassInternalName = objectType.getInternalName ();
-	addQuotedConstant (reference, target);
-	mv.visitVarInsn (ALOAD, 0);
-	final String classInternalName = shellClassType.getInternalName ();
-	mv.visitFieldInsn (GETFIELD, classInternalName, reference.getName (), objectType.getDescriptor ());
-	// Compile arguments here
-	final Class<?>[] params = method.getParameterTypes ();
-	for (int i = 0; i < params.length; i++)
-	{
-	    // (define f (x) (incr x))
-	    final Object arg = expression.get (i + 1);
-	    final Class<?> argType = params[i];
-	    // System.out.printf ("%s (%s : %s) %s %n", symbol, i, arg, argType);
-	    compileExpression (mv, arg, argType, false, false);
-	}
-	mv.visitMethodInsn (INVOKEVIRTUAL, objectClassInternalName, method.getName (), methodSignature, false);
-	final Class<?> methodValueClass = method.getReturnType ();
-	convert.convert (mv, methodValueClass, valueClass, allowNarrowing, liberalTruth);
-    }
+    // private void compileDirectFunctionCall (final GeneratorAdapter mv, final LispList expression,
+    // final Class<?> valueClass,
+    // final boolean allowNarrowing, final boolean liberalTruth)
+    // {
+    // // (setq showBytecode t)
+    // // (define foo () (getDefaultPackage))
+    // // (define foo (x) (1+ x))
+    // // (define foo (x) (not x))
+    // // (define foo (a b) (rem a b))
+    // final Symbol symbol = expression.head ();
+    // final Label l1 = new Label ();
+    // mv.visitLineNumber (617, l1);
+    // mv.visitLabel (l1);
+    // final FunctionCell function = symbol.getFunction ();
+    // final int argCount = expression.size () - 1;
+    // final ObjectMethod objectMethod = function.selectMethod (argCount);
+    // final Object target = objectMethod.getObject ();
+    // final Method method = objectMethod.getMethod ();
+    //
+    // LOGGER.fine ("Direct call to " + symbol);
+    // final Symbol reference = symbol.gensym ();
+    // final String methodSignature = objectMethod.getSignature ();
+    // final Type objectType = Type.getType (target.getClass ());
+    // final String objectClassInternalName = objectType.getInternalName ();
+    // addQuotedConstant (reference, target);
+    // mv.visitVarInsn (ALOAD, 0);
+    // final String classInternalName = shellClassType.getInternalName ();
+    // mv.visitFieldInsn (GETFIELD, classInternalName, reference.getName (),
+    // objectType.getDescriptor ());
+    // // Compile arguments here
+    // final Class<?>[] params = method.getParameterTypes ();
+    // for (int i = 0; i < params.length; i++)
+    // {
+    // // (define f (x) (incr x))
+    // final Object arg = expression.get (i + 1);
+    // final Class<?> argType = params[i];
+    // // System.out.printf ("%s (%s : %s) %s %n", symbol, i, arg, argType);
+    // compileExpression (mv, arg, argType, false, false);
+    // }
+    // mv.visitMethodInsn (INVOKEVIRTUAL, objectClassInternalName, method.getName (),
+    // methodSignature, false);
+    // final Class<?> methodValueClass = method.getReturnType ();
+    // convert.convert (mv, methodValueClass, valueClass, allowNarrowing, liberalTruth);
+    // }
 
     /**
      * @param allowNarrowing
