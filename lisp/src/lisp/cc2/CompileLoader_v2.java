@@ -1,5 +1,5 @@
 
-package lisp.cc;
+package lisp.cc2;
 
 import java.io.*;
 import java.util.*;
@@ -9,6 +9,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
 import lisp.LispList;
+import lisp.cc.Compiler;
 import lisp.util.LogString;
 
 public class CompileLoader_v2 extends ClassLoader implements Compiler

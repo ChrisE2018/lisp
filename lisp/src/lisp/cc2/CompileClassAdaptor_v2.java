@@ -1,5 +1,5 @@
 
-package lisp.cc;
+package lisp.cc2;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -12,14 +12,18 @@ import org.objectweb.asm.commons.LocalVariablesSorter;
 import lisp.*;
 import lisp.Package;
 import lisp.Symbol;
+import lisp.cc.*;
+import lisp.cc1.CompileLoader_v1;
 import lisp.symbol.*;
+import lisp.util.LogString;
 
-public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
+public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (CompileLoader_v1.class.getName ());
 
-    private final String className;
-    private final Class<?> returnType;
+    private final Type shellClassType;
+    private final Class<?> returnClass;
+    private final Type returnType;
     private final String methodName;
     private final LispList methodArgs;
     private final List<Object> methodBody;
@@ -35,17 +39,88 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 
     private Map<Symbol, Integer> localVariableMap = new LinkedHashMap<Symbol, Integer> ();
 
-    public CompileClassAdaptor_v1 (final ClassVisitor cv, final String className, final Class<?> returnType,
+    public CompileClassAdaptor_v2 (final ClassVisitor cv, final Type shellClassType, final Class<?> returnClass,
             final String methodName, final LispList methodArgs, final LispList methodBody,
             final Map<String, Object> quotedReferencesMap)
     {
 	super (Opcodes.ASM5, cv);
-	this.className = className;
-	this.returnType = returnType;
+	this.shellClassType = shellClassType;
+	this.returnClass = returnClass;
+	returnType = Type.getType (returnClass);
 	this.methodName = methodName;
 	this.methodArgs = methodArgs;
 	this.methodBody = methodBody;
 	this.quotedReferencesMap = quotedReferencesMap;
+    }
+
+    /**
+     * Finish the class visit. This method produces the fields for all references and an init method
+     * to set them up. (define foo (x) (+ x a))
+     */
+    @Override
+    public void visitEnd ()
+    {
+	compileDefinition ();
+
+	// Create field definitions for all entries in symbolReferences.
+	for (final Symbol symbol : symbolReferences)
+	{
+	    final String name = createJavaSymbolName (symbol);
+	    final String typeDescriptor = Type.getType (symbol.getClass ()).getDescriptor ();
+	    createField (ACC_PRIVATE, name, typeDescriptor);
+	    // LOGGER.finer (new LogString ("Field: private Symbol %s; [%s]", name, symbol));
+	}
+	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
+	{
+	    final Object quoted = entry.getKey ();
+	    final Symbol reference = entry.getValue ();
+	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
+	    // LOGGER.finer (new LogString ("Field: private Quoted %s; [%s]", reference, quoted));
+	    createField (ACC_PRIVATE, reference.getName (), typeDescriptor);
+	}
+	// Create init method as the very last step, so all requirements from other compilation
+	// steps are known
+	createInitI ();
+	cv.visitEnd ();
+    }
+
+    private void compileDefinition ()
+    {
+	final String signature = getMethodSignature ();
+	// With LocalVariablesSorter we can allocate new local variables.
+	// For example:
+	// int time = newLocal(Type.LONG_TYPE);
+	// creates a variable entry for a long that can be used like this:
+	// mv.visitVarInsn(LSTORE, time);
+	final LocalVariablesSorter mv =
+	    new LocalVariablesSorter (ACC_PUBLIC, signature, cv.visitMethod (ACC_PUBLIC, methodName, signature, null, null));
+	// Compile method body
+	final int bodyLimit = methodBody.size () - 1;
+	for (int i = 0; i < bodyLimit; i++)
+	{
+	    final Object e = methodBody.get (i);
+	    compileExpression (mv, e, null);
+	}
+	final Object e = methodBody.get (bodyLimit);
+	compileExpression (mv, e, returnClass);
+
+	mv.visitInsn (returnType.getOpcode (IRETURN));
+	mv.visitMaxs (0, 0);
+	mv.visitEnd ();
+    }
+
+    private String getMethodSignature ()
+    {
+	final String returnTypeDescriptor = returnType.getDescriptor ();
+	final StringBuilder buffer = new StringBuilder ();
+	buffer.append ("(");
+	for (int i = 0; i < methodArgs.size (); i++)
+	{
+	    buffer.append (NameSpec.getVariableDescriptor (methodArgs.get (i)));
+	}
+	buffer.append (")");
+	buffer.append (returnTypeDescriptor);
+	return buffer.toString ();
     }
 
     /**
@@ -56,20 +131,27 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
      */
     private void createInitI ()
     {
-	LOGGER.finer (String.format ("Creating <init>(int) method for %s", className));
+	final String classInternalName = shellClassType.getInternalName ();
+	final Type classLoaderType = Type.getType (CompileLoader_v2.class);
+	final String classLoaderInternalName = classLoaderType.getInternalName ();
+	final Type symbolType = Type.getType (Symbol.class);
+	final String symbolTypeDescriptor = symbolType.getDescriptor ();
+	final Type stringType = Type.getType (String.class);
+	final Type objectType = Type.getType (Object.class);
+	final Type classType = Type.getType (Class.class);
+	System.out.printf ("classLoaderInternalName %s %n", classLoaderInternalName);
+	LOGGER.finer (new LogString ("Creating <init>(int) method for %s", classInternalName));
 	final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, "<init>", "(I)V", null, null);
 	mv.visitCode ();
 
-	final Type classLoaderType = Type.getType (CompileLoader_v1.class);
-	final String classLoaderInternalName = classLoaderType.getInternalName ();
 	// Call super constructor.
 	mv.visitVarInsn (ALOAD, 0);
-	mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+	mv.visitMethodInsn (INVOKESPECIAL, objectType.getInternalName (), "<init>", "()V", false);
 
 	// Store the methodName in a field
 	mv.visitVarInsn (ALOAD, 0);
 	mv.visitLdcInsn (methodName);
-	mv.visitFieldInsn (PUTFIELD, className, "methodName", "Ljava/lang/String;");
+	mv.visitFieldInsn (PUTFIELD, classInternalName, "methodName", stringType.getDescriptor ());
 
 	// Create initialization code for all entries in symbolReferences.
 	for (final Symbol symbol : symbolReferences)
@@ -79,11 +161,11 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	    mv.visitVarInsn (ALOAD, 0);
 	    mv.visitLdcInsn (symbol.getPackage ().getName ());
 	    mv.visitLdcInsn (symbol.getName ());
-	    mv.visitMethodInsn (INVOKESPECIAL, className, "getSymbol", "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;",
-	            false);
-	    mv.visitFieldInsn (PUTFIELD, className, javaName, "Llisp/Symbol;");
+	    mv.visitMethodInsn (INVOKESPECIAL, classInternalName, "getSymbol",
+	            Type.getMethodDescriptor (symbolType, stringType, stringType), false);
+	    mv.visitFieldInsn (PUTFIELD, classInternalName, javaName, symbolTypeDescriptor);
 
-	    LOGGER.finer (String.format ("Init: private Symbol %s %s;", javaName, symbol));
+	    LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaName, symbol));
 	}
 	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
 	{
@@ -92,125 +174,33 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	    final Symbol reference = entry.getValue ();
 	    mv.visitVarInsn (ALOAD, 0);
 	    mv.visitInsn (DUP);
-	    mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
-	    mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
+	    mv.visitMethodInsn (INVOKEVIRTUAL, objectType.getInternalName (), "getClass", Type.getMethodDescriptor (classType),
+	            false);
+	    mv.visitMethodInsn (INVOKEVIRTUAL, classType.getInternalName (), "getClassLoader", "()Ljava/lang/ClassLoader;",
+	            false);
 	    mv.visitTypeInsn (CHECKCAST, classLoaderInternalName);
 	    mv.visitMethodInsn (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;", false);
 
 	    mv.visitLdcInsn (reference.getName ());
-	    mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
+	    mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", Type.getMethodDescriptor (objectType, objectType), true);
 	    final Type quotedType = Type.getType (quoted.getClass ());
 	    final String typeDescriptor = quotedType.getDescriptor ();
 	    mv.visitTypeInsn (CHECKCAST, quotedType.getInternalName ());
-	    mv.visitFieldInsn (PUTFIELD, className, reference.getName (), typeDescriptor);
+	    mv.visitFieldInsn (PUTFIELD, classInternalName, reference.getName (), typeDescriptor);
 	}
 	mv.visitInsn (RETURN);
 	mv.visitMaxs (0, 0);
 	mv.visitEnd ();
     }
 
-    private void createField (final int fieldAccess, final String fieldName, final String fieldDescriptor)
-    {
-	// Field initial value only applies to static fields
-	final FieldVisitor fv = cv.visitField (fieldAccess, fieldName, fieldDescriptor, null, null);
-	if (fv != null)
-	{
-	    fv.visitEnd ();
-	}
-    }
-
-    /** Load a constant using the quick version when value is small enough. */
-    private void ldcGeneral (final MethodVisitor mv, final int i)
-    {
-	if (i <= 5)
-	{
-	    mv.visitInsn (ICONST_0 + i);
-	}
-	else
-	{
-	    mv.visitLdcInsn (i);
-	}
-    }
-
-    // private void jumpIfFalse (final MethodVisitor mv, final Label l0)
-    // {
-    // // Assumes 'this' is on stack location before
-    // mv.visitMethodInsn (INVOKESPECIAL, className, "isFalse", "(Ljava/lang/Object;)Z", false);
-    // mv.visitJumpInsn (IFNE, l0);
-    // }
-    //
-    // private void jumpIfNotFalse (final MethodVisitor mv, final Label l0)
-    // {
-    // // Assumes 'this' is on stack location before
-    // mv.visitMethodInsn (INVOKESPECIAL, className, "isFalse", "(Ljava/lang/Object;)Z", false);
-    // mv.visitJumpInsn (IFEQ, l0);
-    // }
-    //
-    // private void jumpIfTrue (final MethodVisitor mv, final Label l0)
-    // {// Assumes 'this' is on stack location before
-    // mv.visitMethodInsn (INVOKESPECIAL, className, "isTrue", "(Ljava/lang/Object;)Z", false);
-    // mv.visitJumpInsn (IFNE, l0);
-    // }
-
-    private void coerceBoolean (final MethodVisitor mv)
-    {
-	// (define boolean:foo () true)
-	// (define boolean:foo (x) x)
-	mv.visitInsn (DUP);
-	final Label l1 = new Label ();
-	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
-	mv.visitJumpInsn (IFNE, l1);
-	mv.visitInsn (POP);
-	mv.visitLdcInsn (true);
-	final Label l2 = new Label ();
-	mv.visitJumpInsn (GOTO, l2);
-	mv.visitLabel (l1);
-	mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
-	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
-	mv.visitLabel (l2);
-    }
-
-    private void compileDefinition ()
-    {
-	// Define method header
-	final String returnTypeDescriptor = Type.getType (returnType).getDescriptor ();
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("(");
-	for (int i = 0; i < methodArgs.size (); i++)
-	{
-	    buffer.append (NameSpec.getVariableDescriptor (methodArgs.get (i)));
-	}
-	buffer.append (")");
-	buffer.append (returnTypeDescriptor);
-	final String signature = buffer.toString ();
-	final MethodVisitor mv = cv.visitMethod (ACC_PUBLIC, methodName, signature, null, null);
-	// With LocalVariablesSorter we can allocate new local variables.
-	// For example:
-	// int time = newLocal(Type.LONG_TYPE);
-	// creates a variable entry for a long that can be used like this:
-	// mv.visitVarInsn(LSTORE, time);
-	final LocalVariablesSorter mv2 = new LocalVariablesSorter (ACC_PUBLIC, signature, mv);
-	// Compile method body
-	final int bodyLimit = methodBody.size () - 1;
-	for (int i = 0; i < bodyLimit; i++)
-	{
-	    final Object e = methodBody.get (i);
-	    compileExpression (mv2, e, null);
-	}
-	final Object e = methodBody.get (bodyLimit);
-	compileExpression (mv2, e, returnType);
-
-	// Return and method coda
-
-	mv.visitInsn (Type.getType (returnType).getOpcode (IRETURN));
-	mv.visitMaxs (0, 0);
-	mv.visitEnd ();
-    }
-
-    /** Compile a single expression and leave the value on top of the stack. */
+    /**
+     * Compile a single expression and leave the value on top of the stack. This is the primary
+     * compilation operation and is used recursively to compile all expressions.
+     */
     private void compileExpression (final MethodVisitor mv, final Object e, final Class<?> valueType)
     {
-	// [TOOD] valueType is ignored for now except when it is null
+	// valueType is ignored for now except when it is null or boolean.class
+	// valueType should be supported for all primitive types
 	if (e == null)
 	{
 	    throw new Error ("Null is an illegal expression");
@@ -222,133 +212,146 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	else if (e instanceof Symbol)
 	{
 	    final Symbol symbol = (Symbol)e;
-	    if (methodArgs.contains (symbol))
-	    {
-		// Parameter reference
-		if (valueType != null)
-		{
-		    final int argRef = methodArgs.indexOf (symbol) + 1;
-		    mv.visitVarInsn (ALOAD, argRef);
-		    if (valueType.equals (boolean.class))
-		    {
-			coerceBoolean (mv);
-		    }
-		}
-	    }
-	    else if (localVariableMap.containsKey (symbol))
-	    {
-		if (valueType != null)
-		{
-		    final int localRef = localVariableMap.get (symbol);
-		    mv.visitVarInsn (ALOAD, localRef);
-		    if (valueType.equals (boolean.class))
-		    {
-			coerceBoolean (mv);
-		    }
-		}
-	    }
-	    else if (symbol.is ("true") && valueType.equals (boolean.class))
-	    {
-		mv.visitLdcInsn (true);
-	    }
-	    else if (symbol.is ("false") && valueType.equals (boolean.class))
-	    {
-		mv.visitLdcInsn (false);
-	    }
-	    else
-	    {
-		if (valueType != null)
-		{
-		    if (!symbolReferences.contains (symbol))
-		    {
-			symbolReferences.add (symbol);
-		    }
-		    LOGGER.finer (String.format ("Symbol reference to %s", symbol));
-		    // If the symbol valueCell is constant, use the current value.
-		    // If the valueCell is a TypedValueCell, use the type information.
+	    compileSymbolReference (mv, symbol, valueType);
 
-		    mv.visitVarInsn (ALOAD, 0);
-		    mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
-		    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
-		    if (valueType.equals (boolean.class))
-		    {
-			coerceBoolean (mv);
-		    }
-		    if (!globalReferences.contains (symbol))
-		    {
-			globalReferences.add (symbol);
-			LOGGER.finer (String.format ("Compiled global reference to %s", symbol));
-		    }
-		}
-	    }
 	}
 	else if (valueType != null)
 	{
-	    if (valueType.equals (boolean.class))
+	    compileConstantExpression (mv, e, valueType);
+	}
+    }
+
+    private void compileSymbolReference (final MethodVisitor mv, final Symbol symbol, final Class<?> valueType)
+    {
+	if (methodArgs.contains (symbol))
+	{
+	    // Parameter reference
+	    // If we can determine the type, use that information.
+	    if (valueType != null)
 	    {
-		if (e instanceof Boolean)
+		final int argRef = methodArgs.indexOf (symbol) + 1;
+		mv.visitVarInsn (ALOAD, argRef);
+		if (valueType.equals (boolean.class))
 		{
-		    mv.visitLdcInsn (e);
+		    coerceBoolean (mv);
 		}
-		else
+	    }
+	}
+	else if (localVariableMap.containsKey (symbol))
+	{
+	    if (valueType != null)
+	    {
+		final int localRef = localVariableMap.get (symbol);
+		mv.visitVarInsn (ALOAD, localRef);
+		if (valueType.equals (boolean.class))
 		{
-		    mv.visitLdcInsn (true);
+		    coerceBoolean (mv);
 		}
 	    }
-	    // Compile constant expressions
-	    // All of these box the constant in a class wrapper. If we can use the primitive
-	    // type instead, that is more efficient.
-	    else if (e instanceof Boolean)
+	}
+	else if (symbol.is ("true") && valueType.equals (boolean.class))
+	{
+	    mv.visitLdcInsn (true);
+	}
+	else if (symbol.is ("false") && valueType.equals (boolean.class))
+	{
+	    mv.visitLdcInsn (false);
+	}
+	else
+	{
+	    if (valueType != null)
 	    {
-		mv.visitLdcInsn (e);
-		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(B)Ljava/lang/Boolean;", false);
+		if (!symbolReferences.contains (symbol))
+		{
+		    symbolReferences.add (symbol);
+		}
+		LOGGER.finer (new LogString ("Symbol reference to %s", symbol));
+		// If the symbol valueCell is constant, use the current value.
+		// If the valueCell is a TypedValueCell, use the type information.
+
+		mv.visitVarInsn (ALOAD, 0);
+		final String classInternalName = shellClassType.getInternalName ();
+		mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
+		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
+		if (valueType.equals (boolean.class))
+		{
+		    coerceBoolean (mv);
+		}
+		if (!globalReferences.contains (symbol))
+		{
+		    globalReferences.add (symbol);
+		    LOGGER.finer (new LogString ("Compiled global reference to %s", symbol));
+		}
 	    }
-	    else if (e instanceof Byte)
-	    {
-		mv.visitLdcInsn (e);
-		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
-	    }
-	    else if (e instanceof Short)
-	    {
-		mv.visitLdcInsn (e);
-		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
-	    }
-	    else if (e instanceof Integer)
-	    {
-		mv.visitLdcInsn (e);
-		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-	    }
-	    else if (e instanceof Long)
-	    {
-		mv.visitLdcInsn (e);
-		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
-	    }
-	    else if (e instanceof Float)
-	    {
-		mv.visitLdcInsn (e);
-		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
-	    }
-	    else if (e instanceof Double)
-	    {
-		mv.visitLdcInsn (e);
-		mv.visitMethodInsn (INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
-	    }
-	    else if (e instanceof String)
+	}
+    }
+
+    private void compileConstantExpression (final MethodVisitor mv, final Object e, final Class<?> valueType)
+    {
+	if (valueType.equals (boolean.class))
+	{
+	    if (e instanceof Boolean)
 	    {
 		mv.visitLdcInsn (e);
 	    }
 	    else
 	    {
-		LOGGER.info (String.format ("Ignoring '%s' %s", e, e.getClass ()));
-		mv.visitInsn (ACONST_NULL);
+		mv.visitLdcInsn (true);
 	    }
+	}
+	// Compile constant expressions
+	// All of these box the constant in a class wrapper. If we can use the primitive
+	// type instead, that is more efficient.
+	else if (e instanceof Boolean)
+	{
+	    mv.visitLdcInsn (e);
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Boolean", "valueOf", "(B)Ljava/lang/Boolean;", false);
+	}
+	else if (e instanceof Byte)
+	{
+	    mv.visitLdcInsn (e);
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
+	}
+	else if (e instanceof Short)
+	{
+	    mv.visitLdcInsn (e);
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
+	}
+	else if (e instanceof Integer)
+	{
+	    mv.visitLdcInsn (e);
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+	}
+	else if (e instanceof Long)
+	{
+	    mv.visitLdcInsn (e);
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
+	}
+	else if (e instanceof Float)
+	{
+	    mv.visitLdcInsn (e);
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
+	}
+	else if (e instanceof Double)
+	{
+	    mv.visitLdcInsn (e);
+	    mv.visitMethodInsn (INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+	}
+	else if (e instanceof String)
+	{
+	    mv.visitLdcInsn (e);
+	}
+	else
+	{
+	    LOGGER.info (new LogString ("Ignoring '%s' %s", e, e.getClass ()));
+	    mv.visitInsn (ACONST_NULL);
 	}
     }
 
     private void compileFunctionCall (final MethodVisitor mv, final LispList e, final Class<?> valueType)
     {
 	// Need to be able to compile a call to an undefined function (i.e. recursive call)
-	LOGGER.finer (String.format ("Compile nested form %s", e));
+	LOGGER.finer (new LogString ("Compile nested form %s", e));
 	if (e.size () == 0)
 	{
 	    throw new Error ("No function in function call");
@@ -411,10 +414,11 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	{
 	    symbolReferences.add (symbol);
 	}
-	LOGGER.finer (String.format ("Function symbol reference to %s", symbol));
+	LOGGER.finer (new LogString ("Function symbol reference to %s", symbol));
 
 	mv.visitVarInsn (ALOAD, 0);
-	mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
+	final String classInternalName = shellClassType.getInternalName ();
+	mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 
 	// The call to getDefaultHandlerFunction will return a DefaultHandler that tries to invoke
 	// the java method on arg 1 if the function has not been given any other definition.
@@ -577,10 +581,10 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 		quotedReferencesMap.put (reference.getName (), quoted);
 	    }
 	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
-	    // LOGGER.finer (String.format ("Quoted reference to %s (%s)", typeDescriptor, quoted));
+	    // LOGGER.finer (new LogString ("Quoted reference to %s (%s)", typeDescriptor, quoted));
 	    mv.visitVarInsn (ALOAD, 0);
-	    mv.visitFieldInsn (GETFIELD, className, reference.getName (), typeDescriptor);
-
+	    final String classInternalName = shellClassType.getInternalName ();
+	    mv.visitFieldInsn (GETFIELD, classInternalName, reference.getName (), typeDescriptor);
 	}
     }
 
@@ -813,13 +817,13 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	    // Parameter reference
 	    // If we can determine the type, use that information.
 	    final int argRef = methodArgs.indexOf (symbol) + 1;
-	    LOGGER.finer (String.format ("Setq parameter %s (%d)", symbol, argRef));
+	    LOGGER.finer (new LogString ("Setq parameter %s (%d)", symbol, argRef));
 	    compileLocalSetq (mv, argRef, e.get (2), valueType);
 	}
 	else if (localVariableMap.containsKey (symbol))
 	{
 	    final int localRef = localVariableMap.get (symbol);
-	    LOGGER.finer (String.format ("Setq local %s (%d)", symbol, localRef));
+	    LOGGER.finer (new LogString ("Setq local %s (%d)", symbol, localRef));
 	    compileLocalSetq (mv, localRef, e.get (2), valueType);
 	}
 	else
@@ -828,11 +832,12 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	    {
 		symbolReferences.add (symbol);
 	    }
-	    LOGGER.finer (String.format ("Symbol assignment to %s", symbol));
+	    LOGGER.finer (new LogString ("Symbol assignment to %s", symbol));
 	    // If the symbol valueCell is constant, use the current value.
 	    // If the valueCell is a TypedValueCell, use the type information.
 	    mv.visitVarInsn (ALOAD, 0);
-	    mv.visitFieldInsn (GETFIELD, className, createJavaSymbolName (symbol), "Llisp/Symbol;");
+	    final String classInternalName = shellClassType.getInternalName ();
+	    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
 	    compileExpression (mv, e.get (2), Object.class);
 	    if (valueType != null)
 	    {
@@ -845,7 +850,7 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	    if (!globalReferences.contains (symbol))
 	    {
 		globalReferences.add (symbol);
-		LOGGER.finer (String.format ("Compiled global assignment to %s", symbol));
+		LOGGER.finer (new LogString ("Compiled global assignment to %s", symbol));
 	    }
 	    if (boolean.class.equals (valueType))
 	    {
@@ -1366,33 +1371,49 @@ public class CompileClassAdaptor_v1 extends ClassVisitor implements Opcodes
 	mv.visitLabel (l1);
     }
 
-    /**
-     * Finish the class visit. This method produces the fields for all references and an init method
-     * to set them up. (define foo (x) (+ x a))
-     */
-    @Override
-    public void visitEnd ()
+    private void createField (final int fieldAccess, final String fieldName, final String fieldDescriptor)
     {
-	compileDefinition ();
+	// Field initial value only applies to static fields
+	final FieldVisitor fv = cv.visitField (fieldAccess, fieldName, fieldDescriptor, null, null);
+	if (fv != null)
+	{
+	    fv.visitEnd ();
+	}
+    }
 
-	// Create field definitions for all entries in symbolReferences.
-	for (final Symbol symbol : symbolReferences)
+    /** Load a constant using the quick version when value is small enough. */
+    private void ldcGeneral (final MethodVisitor mv, final int i)
+    {
+	if (i <= 5)
 	{
-	    final String name = createJavaSymbolName (symbol);
-	    final String typeDescriptor = Type.getType (symbol.getClass ()).getDescriptor ();
-	    createField (ACC_PRIVATE, name, typeDescriptor);
-	    // LOGGER.finer (String.format ("Field: private Symbol %s; [%s]", name, symbol));
+	    mv.visitInsn (ICONST_0 + i);
 	}
-	for (final Entry<Object, Symbol> entry : quotedReferences.entrySet ())
+	else
 	{
-	    final Object quoted = entry.getKey ();
-	    final Symbol reference = entry.getValue ();
-	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
-	    // LOGGER.finer (String.format ("Field: private Quoted %s; [%s]", reference, quoted));
-	    createField (ACC_PRIVATE, reference.getName (), typeDescriptor);
+	    mv.visitLdcInsn (i);
 	}
-	createInitI ();
-	cv.visitEnd ();
+    }
+
+    /**
+     * Convert value on top of the stack from a Boolean to a boolean. This is used as a last resort
+     * when the return type must be boolean and there is no better way to get there.
+     */
+    private void coerceBoolean (final MethodVisitor mv)
+    {
+	// (define boolean:foo () true)
+	// (define boolean:foo (x) x)
+	mv.visitInsn (DUP);
+	final Label l1 = new Label ();
+	mv.visitTypeInsn (INSTANCEOF, "java/lang/Boolean");
+	mv.visitJumpInsn (IFNE, l1);
+	mv.visitInsn (POP);
+	mv.visitLdcInsn (true);
+	final Label l2 = new Label ();
+	mv.visitJumpInsn (GOTO, l2);
+	mv.visitLabel (l1);
+	mv.visitTypeInsn (CHECKCAST, "java/lang/Boolean");
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+	mv.visitLabel (l2);
     }
 
     /**

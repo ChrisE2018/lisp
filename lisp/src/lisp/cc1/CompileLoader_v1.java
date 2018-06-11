@@ -1,5 +1,5 @@
 
-package lisp.cc;
+package lisp.cc1;
 
 import java.io.*;
 import java.util.*;
@@ -12,6 +12,7 @@ import org.objectweb.asm.util.*;
 
 import lisp.*;
 import lisp.Symbol;
+import lisp.cc.Compiler;
 
 public class CompileLoader_v1 extends ClassLoader implements Compiler
 {

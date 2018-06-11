@@ -1,5 +1,5 @@
 
-package lisp.cc;
+package lisp.cc3;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -11,6 +11,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.LispList;
 import lisp.Symbol;
+import lisp.cc.*;
 import lisp.symbol.*;
 import lisp.util.LogString;
 

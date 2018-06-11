@@ -10,6 +10,9 @@ import org.objectweb.asm.*;
 import lisp.*;
 import lisp.Package;
 import lisp.Symbol;
+import lisp.cc1.CompileLoader_v1;
+import lisp.cc2.CompileLoader_v2;
+import lisp.cc3.CompileClassAdaptor_v3;
 import lisp.cc4.*;
 import lisp.util.LogString;
 
