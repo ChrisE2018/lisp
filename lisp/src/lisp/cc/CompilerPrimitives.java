@@ -10,6 +10,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import lisp.*;
 import lisp.eval.*;
+import lisp.primitives.The;
 import lisp.symbol.*;
 
 public class CompilerPrimitives extends Definer

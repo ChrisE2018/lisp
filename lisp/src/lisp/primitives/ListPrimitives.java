@@ -1,9 +1,10 @@
 
-package lisp.eval;
+package lisp.primitives;
 
 import java.util.*;
 
 import lisp.LispList;
+import lisp.eval.*;
 
 /**
  * Bind java functions to lisp symbols.

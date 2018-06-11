@@ -1,7 +1,9 @@
 
-package lisp.eval;
+package lisp.primitives;
 
 import java.util.logging.*;
+
+import lisp.eval.*;
 
 /**
  * Functions to get access to the logging system. These are wired to the limited standard logger.

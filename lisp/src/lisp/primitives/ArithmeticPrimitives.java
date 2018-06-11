@@ -1,5 +1,7 @@
 
-package lisp.eval;
+package lisp.primitives;
+
+import lisp.eval.*;
 
 /**
  * Implementation of basic arithmetic operators. Definitions of plus, minus, times, quotient, =,

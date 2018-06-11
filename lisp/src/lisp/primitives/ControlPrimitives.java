@@ -1,5 +1,7 @@
 
-package lisp.eval;
+package lisp.primitives;
+
+import lisp.eval.*;
 
 /** Control primitives that don't require special compiler support. */
 public class ControlPrimitives extends Definer

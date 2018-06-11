@@ -1,7 +1,8 @@
 
-package lisp.eval;
+package lisp.primitives;
 
 import lisp.Symbol;
+import lisp.eval.*;
 
 public class The extends Definer
 {

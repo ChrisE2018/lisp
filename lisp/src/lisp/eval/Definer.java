@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 
 import lisp.*;
 import lisp.Package;
+import lisp.exceptions.CoerceError;
 import lisp.symbol.*;
 
 /**

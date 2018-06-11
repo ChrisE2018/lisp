@@ -5,7 +5,7 @@ import java.util.*;
 
 import javax.lang.model.type.NullType;
 
-import lisp.eval.UnboundVariableError;
+import lisp.exceptions.UnboundVariableError;
 import lisp.symbol.*;
 import lisp.util.MultiMap;
 

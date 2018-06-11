@@ -1,7 +1,9 @@
 
-package lisp.eval;
+package lisp.primitives;
 
 import java.net.*;
+
+import lisp.eval.*;
 
 public class NetPrimitives extends Definer
 {

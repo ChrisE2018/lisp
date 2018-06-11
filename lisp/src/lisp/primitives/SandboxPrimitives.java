@@ -1,5 +1,7 @@
 
-package lisp.eval;
+package lisp.primitives;
+
+import lisp.eval.*;
 
 /** Experimental lisp primitives. */
 public class SandboxPrimitives extends Definer

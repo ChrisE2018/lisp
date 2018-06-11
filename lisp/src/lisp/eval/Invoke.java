@@ -5,6 +5,7 @@ import java.lang.reflect.*;
 import java.util.List;
 
 import lisp.Symbol;
+import lisp.exceptions.CoerceError;
 
 public class Invoke
 {

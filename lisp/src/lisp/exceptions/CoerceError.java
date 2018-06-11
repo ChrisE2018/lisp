@@ -1,5 +1,5 @@
 
-package lisp.eval;
+package lisp.exceptions;
 
 public class CoerceError extends Error
 {

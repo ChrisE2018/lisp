@@ -1,9 +1,10 @@
 
-package lisp.eval;
+package lisp.primitives;
 
 import java.util.*;
 
 import lisp.*;
+import lisp.eval.*;
 import lisp.symbol.DefFunctionCell;
 
 /**
