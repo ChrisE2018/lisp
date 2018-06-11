@@ -13,7 +13,7 @@ import lisp.asm.instructions.LdcInsnNode;
 import lisp.asm.instructions.LineNumberNode;
 import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.TypeInsnNode;
-import lisp.cc.Boxer;
+import lisp.cc3.Boxer;
 
 /**
  * Class to generate conversion code. There are only two public methods in this class:

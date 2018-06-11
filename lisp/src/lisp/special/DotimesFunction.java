@@ -10,6 +10,7 @@ import lisp.LispList;
 import lisp.Symbol;
 import lisp.asm.instructions.*;
 import lisp.cc.*;
+import lisp.cc3.*;
 import lisp.cc4.*;
 import lisp.symbol.LispVisitor;
 

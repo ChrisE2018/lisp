@@ -6,6 +6,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.*;
 import lisp.cc.*;
+import lisp.cc3.*;
 import lisp.cc4.LispTreeWalker;
 import lisp.symbol.LispVisitor;
 

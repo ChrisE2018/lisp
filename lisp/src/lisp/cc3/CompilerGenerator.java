@@ -1,5 +1,5 @@
 
-package lisp.cc;
+package lisp.cc3;
 
 import java.util.Map;
 
@@ -7,6 +7,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.Symbol;
+import lisp.cc.LocalBinding;
 
 public interface CompilerGenerator
 {

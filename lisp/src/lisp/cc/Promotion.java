@@ -6,27 +6,27 @@ import java.util.*;
 public class Promotion
 {
     private static Class<?>[][] PROMOTION_TABLE =
-	{
-	 {boolean.class, Boolean.class, Object.class},
-	 {Boolean.class, boolean.class, Object.class},
-	 {byte.class, Byte.class, char.class, Character.class, short.class, Short.class, int.class, Integer.class, long.class,
-	  Long.class, Object.class},
-	 {Byte.class, byte.class, char.class, Character.class, short.class, Short.class, int.class, Integer.class, long.class,
-	  Long.class, Object.class},
-	 {short.class, Short.class, int.class, Integer.class, long.class, Long.class, Object.class},
-	 {Short.class, short.class, int.class, Integer.class, long.class, Long.class, Object.class},
-	 {int.class, Integer.class, long.class, Long.class, Object.class},
-	 {Integer.class, int.class, long.class, Long.class, Object.class},
-	 {long.class, Long.class, Object.class},
-	 {Long.class, long.class, Object.class},
-	 {float.class, Float.class, double.class, Double.class, Object.class},
-	 {Float.class, float.class, double.class, Double.class, Object.class},
-	 {double.class, Double.class, Object.class},
-	 {Double.class, double.class, Object.class},
-	 {String.class,
-	  // Symbol.class,
-	  Object.class},
-	 {Object.class}};
+        {
+         {boolean.class, Boolean.class, Object.class},
+         {Boolean.class, boolean.class, Object.class},
+         {byte.class, Byte.class, char.class, Character.class, short.class, Short.class, int.class, Integer.class, long.class,
+          Long.class, Object.class},
+         {Byte.class, byte.class, char.class, Character.class, short.class, Short.class, int.class, Integer.class, long.class,
+          Long.class, Object.class},
+         {short.class, Short.class, int.class, Integer.class, long.class, Long.class, Object.class},
+         {Short.class, short.class, int.class, Integer.class, long.class, Long.class, Object.class},
+         {int.class, Integer.class, long.class, Long.class, Object.class},
+         {Integer.class, int.class, long.class, Long.class, Object.class},
+         {long.class, Long.class, Object.class},
+         {Long.class, long.class, Object.class},
+         {float.class, Float.class, double.class, Double.class, Object.class},
+         {Float.class, float.class, double.class, Double.class, Object.class},
+         {double.class, Double.class, Object.class},
+         {Double.class, double.class, Object.class},
+         {String.class,
+          // Symbol.class,
+          Object.class},
+         {Object.class}};
 
     private final Map<Class<?>, List<Class<?>>> promotionTable = new HashMap<Class<?>, List<Class<?>>> ();
 

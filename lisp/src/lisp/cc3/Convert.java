@@ -1,5 +1,5 @@
 
-package lisp.cc;
+package lisp.cc3;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;

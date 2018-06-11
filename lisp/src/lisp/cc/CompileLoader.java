@@ -20,7 +20,8 @@ public class CompileLoader extends ClassLoader implements Compiler
      * ClassLoaded so we get a distinct class as a result. <br/>
      * CONSIDER Maybe use a gensym in the defineClass call to allow ClassLoader re-use?
      */
-    private static final String SHELL_CLASS_DESCRIPTOR = "Llisp/cc/CompiledShell;";
+    @Deprecated
+    private static final String SHELL_CLASS_DESCRIPTOR = "Llisp/cc3/CompiledShell;";
 
     /** The ASM type of the class enclosing the function currently being compiled. */
     private Type classType = Type.getType (SHELL_CLASS_DESCRIPTOR);
