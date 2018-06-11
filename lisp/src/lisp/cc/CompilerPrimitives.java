@@ -26,6 +26,8 @@ public class CompilerPrimitives extends Definer
 
     private final List<Symbol> verifyFailures = new ArrayList<Symbol> ();
 
+    private long startTime = System.currentTimeMillis ();
+
     public static void incrementReplErrorCount ()
     {
 	replErrorCount++;
@@ -200,6 +202,7 @@ public class CompilerPrimitives extends Definer
 	failCount = 0;
 	errorCount = 0;
 	verifyFailures.clear ();
+	startTime = System.currentTimeMillis ();
 	return null;
     }
 
@@ -208,6 +211,8 @@ public class CompilerPrimitives extends Definer
     {
 	if (testCount > 0)
 	{
+	    final long durationMs = System.currentTimeMillis () - startTime;
+	    final double durationSecs = durationMs / 1000.0;
 	    System.out.printf ("%n");
 	    System.out.printf ("%6s %4d of %4d %4.1f%%%n", "Pass", passCount, testCount, (passCount * 100.0 / testCount));
 	    if (failCount > 0)
@@ -225,11 +230,11 @@ public class CompilerPrimitives extends Definer
 	    }
 	    else if (passCount == testCount && failCount == 0 && errorCount == 0)
 	    {
-		System.out.printf ("%nAll tests passed!%n");
+		System.out.printf ("%nAll tests passed in %.2f seconds!%n", durationSecs);
 	    }
 	    else
 	    {
-		System.out.printf ("%nThere were test failures%n");
+		System.out.printf ("%nThere were test failures in %.2f seconds%n", durationSecs);
 	    }
 	    for (final Symbol s : verifyFailures)
 	    {
@@ -240,7 +245,6 @@ public class CompilerPrimitives extends Definer
 	{
 	    System.out.printf ("No tests have been run. Call verify to submit test data.%n");
 	}
-	// System.out.printf ("%nRepl Errors: %s%n", replErrorCount);
 	return null;
     }
 
