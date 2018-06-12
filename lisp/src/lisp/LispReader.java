@@ -17,6 +17,9 @@ public class LispReader
     private static Map<Thread, LispReader> threadReaders = new HashMap<Thread, LispReader> ();
     private static final LispReader defaultLispReader = new LispReader ();
 
+    private static final char BACKSLASH = '\\';
+    private static final char DOUBLEQUOTE = '"';
+
     public static LispReader getLispThreadReader ()
     {
 	final Thread thread = Thread.currentThread ();
@@ -46,13 +49,18 @@ public class LispReader
 	return result;
     }
 
-    private final List<Symbol> importedSymbols = new ArrayList<Symbol> ();
-    private final List<Package> importedPackages = new ArrayList<Package> ();
+    /**
+     * Combined list of Lisp Package, Lisp Symbol, Java package and Java class all of which are made
+     * easily available for typing.
+     */
+    private final List<Object> imports = new ArrayList<Object> ();
+    // private final List<Package> importedPackages = new ArrayList<Package> ();
     // FIXME Generalize the importedPackages to a new interface for Resolver.
     // Give each resolver a chance to handle an an atom and return a result.
     // First resolver to produce a result wins.
     // Resolvers can correspond with Lisp Package or Java Package or with a map from String to
     // imported Objects.
+
     private Package currentPackage;
 
     private final Symbol theSymbol;
@@ -60,26 +68,70 @@ public class LispReader
 
     public LispReader ()
     {
-	importPackage (PackageFactory.getSystemPackage ());
+	addImport (PackageFactory.getSystemPackage ());
 	currentPackage = PackageFactory.getDefaultPackage ();
 	theSymbol = PackageFactory.getSystemPackage ().internSymbol ("the");
 	dotSymbol = PackageFactory.getSystemPackage ().internSymbol ("dot");
     }
 
-    public void importSymbol (final Symbol symbol)
+    /** Import a Lisp package. */
+    public void addImport (final Package pkg)
     {
-	if (!importedSymbols.contains (symbol))
+	if (!imports.contains (pkg))
 	{
-	    importedSymbols.add (symbol);
+	    imports.add (pkg);
 	}
     }
 
-    public void importPackage (final Package pkg)
+    /** Import a Lisp symbol. */
+    public void addImport (final Symbol symbol)
     {
-	if (!importedPackages.contains (pkg))
+	if (!imports.contains (symbol))
 	{
-	    importedPackages.add (pkg);
+	    imports.add (symbol);
 	}
+    }
+
+    /** Import a Lisp symbol. */
+    public void addImport (final java.lang.Package pkg)
+    {
+	if (!imports.contains (pkg))
+	{
+	    imports.add (pkg);
+	}
+    }
+
+    /** Import a Java class. */
+    public void addImport (final Class<?> claz)
+    {
+	if (!imports.contains (claz))
+	{
+	    imports.add (claz);
+	}
+    }
+
+    /** Remove a Lisp package import. */
+    public void removeImport (final Package pkg)
+    {
+	imports.remove (pkg);
+    }
+
+    /** Remove a Lisp symbol import. */
+    public void removeImport (final Symbol symbol)
+    {
+	imports.remove (symbol);
+    }
+
+    /** Remove a Lisp symbol import. */
+    public void removeImport (final java.lang.Package pkg)
+    {
+	imports.remove (pkg);
+    }
+
+    /** Remove a Java class import. */
+    public void removeImport (final Class<?> claz)
+    {
+	imports.remove (claz);
     }
 
     public Package getCurrentPackage ()
@@ -119,9 +171,9 @@ public class LispReader
 	final Parsing parsing = pkg.getParsing ();
 	parsing.skipBlanks (in);
 	final char chr = in.peek ();
-	if (chr == parsing.getStringDelimiter ())
+	if (chr == DOUBLEQUOTE)
 	{
-	    return readString (parsing.getStringDelimiter (), in);
+	    return readString (DOUBLEQUOTE, in);
 	}
 	final LispList mapResult = parsing.getMapResult (chr);
 	if (mapResult != null)
@@ -276,12 +328,16 @@ public class LispReader
     private Object readString (final char stringDelimiter, final LispStream in) throws IOException
     {
 	in.read (stringDelimiter); // Discard double quote
-	int input = in.read ();
+	char input = in.read ();
 	final StringBuilder buffer = new StringBuilder ();
 	// Need to handle embedded slashes
-	while ((char)input != stringDelimiter)
+	while (input != stringDelimiter)
 	{
-	    buffer.append ((char)input);
+	    if (input == BACKSLASH)
+	    {
+		input = in.read ();
+	    }
+	    buffer.append (input);
 	    input = in.read ();
 	}
 	return buffer.toString ();
@@ -301,8 +357,8 @@ public class LispReader
 	{
 	    buffer.append (in.read ());
 	}
-	final String s = buffer.toString ();
-	if (s.length () == 0)
+	final String name = buffer.toString ();
+	if (name.length () == 0)
 	{
 	    throw new IOException ("Character " + (in.peek ()) + " cannot start an atom");
 	}
@@ -310,7 +366,7 @@ public class LispReader
 	try
 	{
 	    // [MAYBE] Create a table for small integers to save memory.
-	    final int value = Integer.parseInt (s);
+	    final int value = Integer.parseInt (name);
 	    return new Integer (value);
 	}
 	catch (final NumberFormatException e)
@@ -320,128 +376,184 @@ public class LispReader
 	// Try parsing a double
 	try
 	{
-	    final double value = Double.parseDouble (s);
+	    final double value = Double.parseDouble (name);
 	    return new Double (value);
 	}
 	catch (final NumberFormatException e)
 	{
 
 	}
-	// Not a number. Return a symbol.
-	final Symbol symbol = readSymbol (pkg, s);
-	if (symbol != null)
+	// Not a number. Return a symbol or Java reference.
+	if (name.indexOf (Symbol.PACKAGE_SEPARATOR) >= 0)
 	{
-	    return symbol;
+	    final Object result = readQualifiedAtom (name);
+	    if (result != null)
+	    {
+		return result;
+	    }
 	}
-	return readJavaSymbol (s);
+
+	// Use imports and name to find reference
+	for (final Object x : imports)
+	{
+	    if (x instanceof Package)
+	    {
+		final Package p = (Package)x;
+		final Symbol result = p.findSymbol (name);
+		if (result != null)
+		{
+		    return result;
+		}
+	    }
+	    else if (x instanceof Symbol)
+	    {
+		final Symbol symbol = (Symbol)x;
+		if (symbol.is (name))
+		{
+		    return symbol;
+		}
+	    }
+	    else if (x instanceof java.lang.Package)
+	    {
+		final java.lang.Package jpkg = (java.lang.Package)x;
+		final String packageName = jpkg.getName ();
+		final Object result = readQualifiedAtom (packageName + "." + name);
+		if (result != null)
+		{
+		    return result;
+		}
+		// try
+		// {
+		// final java.lang.Package jpkg = (java.lang.Package)x;
+		// final String packageName = jpkg.getName ();
+		// final Class<?> cls = Class.forName (packageName + "." + name);
+		// if (cls != null)
+		// {
+		// return cls;
+		// }
+		// }
+		// catch (final ClassNotFoundException e)
+		// {
+		// }
+	    }
+	    else if (x instanceof Class)
+	    {
+		// Look for a field or method called memberName
+		final Class<?> cls = (Class<?>)x;
+		if (cls.getSimpleName ().equals (name))
+		{
+		    return cls;
+		}
+	    }
+	}
+	// Intern the name in the reader default package
+	return pkg.internSymbol (name);
+
     }
 
-    public Symbol readSymbol (final Package pkg, final String name)
+    private Object readQualifiedAtom (final String name)
     {
-	// java.util.logging.Level.SEVERE
+	final int pos = name.indexOf (Symbol.PACKAGE_SEPARATOR);
+	final String packageName = name.substring (0, pos);
+	final Package lpkg = PackageFactory.findPackage (packageName);
+	if (lpkg != null)
+	{
+	    final String symbolName = name.substring (pos + 1);
+	    return lpkg.internSymbol (symbolName);
+	}
+	final java.lang.Package jpkg = findJavaPackage (name);
+	if (jpkg != null)
+	{
+	    final String jpackageName = jpkg.getName ();
+	    final String tail = name.substring (jpackageName.length ());
+	    if (tail.isEmpty ())
+	    {
+		return jpkg;
+	    }
+	    // (java.lang.System.currentTimeMillis)
+	    return readJavaObject (jpkg, tail);
+	}
+	return null;
+    }
+
+    private Object readJavaObject (final java.lang.Package pkg, final String tail)
+    {
+	try
+	{
+	    final String[] words = tail.split ("\\.");
+	    final String className = words[1];
+	    final String packageName = pkg.getName ();
+	    final Class<?> cls = Class.forName (packageName + "." + className);
+	    if (words.length == 2)
+	    {
+		return cls;
+	    }
+	    if (words.length == 3)
+	    {
+		// Look for a field or method called memberName
+		final String memberName = words[2];
+		try
+		{
+		    final Field field = cls.getField (memberName);
+		    final Object object = field.get (cls);
+		    return object;
+		}
+		catch (final IllegalArgumentException | IllegalAccessException | NoSuchFieldException e)
+		{
+		}
+		final Method method = getAnyMethodNamed (cls, memberName);
+		if (Modifier.isStatic (method.getModifiers ()))
+		{
+		    return new LispList (dotSymbol, cls, method);
+		}
+		else
+		{
+		    return method;
+		}
+	    }
+	    return followFieldChain (cls, words, 2);
+	}
+	catch (final ClassNotFoundException e)
+	{
+	    throw new Error ("Error reading symbol (" + tail + ") " + e);
+	}
+	catch (final SecurityException e)
+	{
+	    e.printStackTrace ();
+	}
+	throw new Error ("Could not read " + tail + " as a Java class or method reference");
+    }
+
+    private Package findLispPackage (final String name)
+    {
 	final int pos = name.indexOf (Symbol.PACKAGE_SEPARATOR);
 	if (pos >= 0)
 	{
 	    // Process package prefix
 	    final String packageName = name.substring (0, pos);
 	    final Package p = PackageFactory.findPackage (packageName);
-	    if (p != null)
-	    {
-		final String symbolName = name.substring (pos + 1);
-		final Symbol result = p.internSymbol (symbolName);
-		return result;
-	    }
-	    return null;
-	}
-	// FIXME Eliminate above here and let interpreter/compiler handle dot forms
-	final Symbol result = findImportedSymbol (name);
-	if (result != null)
-	{
-	    return result;
-	}
-	return pkg.internSymbol (name);
-    }
-
-    /** Lookup a name to determine if it represents an imported symbol. */
-    public Symbol findImportedSymbol (final String name)
-    {
-	for (final Symbol symbol : importedSymbols)
-	{
-	    if (symbol.is (name))
-	    {
-		return symbol;
-	    }
-	}
-	for (final Package p : importedPackages)
-	{
-	    final Symbol result = p.findSymbol (name);
-	    if (result != null)
-	    {
-		return result;
-	    }
+	    return p;
 	}
 	return null;
     }
 
-    private Object readJavaSymbol (final String name)
+    private java.lang.Package findJavaPackage (final String name)
     {
-	// (java.lang.System.currentTimeMillis)
-	final java.lang.Package pkg = findJavaPackage (name);
-	if (pkg != null)
+	java.lang.Package result = null;
+	final String[] parts = name.split ("\\.");
+	final StringBuilder buffer = new StringBuilder ();
+	for (int i = 0; i < parts.length; i++)
 	{
-	    final String packageName = pkg.getName ();
-	    final String tail = name.substring (packageName.length ());
-	    if (tail.isEmpty ())
+	    buffer.append (parts[i]);
+	    final java.lang.Package pp = java.lang.Package.getPackage (buffer.toString ());
+	    if (pp != null)
 	    {
-		return pkg;
+		result = pp;
 	    }
-	    else
-	    {
-		try
-		{
-		    final String[] words = tail.split ("\\.");
-		    final String className = words[1];
-		    final Class<?> cls = Class.forName (packageName + "." + className);
-		    if (words.length == 2)
-		    {
-			return cls;
-		    }
-		    if (words.length == 3)
-		    {
-			// Look for a field or method called memberName
-			final String memberName = words[2];
-			try
-			{
-			    final Field field = cls.getField (memberName);
-			    final Object object = field.get (cls);
-			    return object;
-			}
-			catch (final IllegalArgumentException | IllegalAccessException | NoSuchFieldException e)
-			{
-			}
-			final Method method = getAnyMethodNamed (cls, memberName);
-			if (Modifier.isStatic (method.getModifiers ()))
-			{
-			    return new LispList (dotSymbol, cls, method);
-			}
-			else
-			{
-			    return method;
-			}
-		    }
-		    return followFieldChain (cls, words, 2);
-		}
-		catch (final ClassNotFoundException e)
-		{
-		    throw new Error ("Error reading symbol (" + name + ") " + e);
-		}
-		catch (final SecurityException e)
-		{
-		    e.printStackTrace ();
-		}
-	    }
+	    buffer.append ('.');
 	}
-	throw new Error ("Could not read " + name + " as a Java class or method reference");
+
+	return result;
     }
 
     private Object followFieldChain (final Class<?> cls, final String[] words, final int p)
@@ -491,23 +603,62 @@ public class LispReader
 	return null;
     }
 
-    private java.lang.Package findJavaPackage (final String name)
+    /**
+     * Read a symbol using the specified default package.
+     *
+     * @param pkg The package to intern the symbol into, if not specified explicitly.
+     * @param name The print representation of the symbol. If this contains a package specifier,
+     *            then the package argument is ignored.
+     * @return An interned symbol, or null if it could not be read. The only case it can't be read
+     *         is when the explicit package specifier is not a valid Lisp package.
+     */
+    public Symbol readSymbol (final Package pkg, final String name)
     {
-	java.lang.Package result = null;
-	final String[] parts = name.split ("\\.");
-	final StringBuilder buffer = new StringBuilder ();
-	for (int i = 0; i < parts.length; i++)
+	// java.util.logging.Level.SEVERE
+	final Package p = findLispPackage (name);
+	if (p != null)
 	{
-	    buffer.append (parts[i]);
-	    final java.lang.Package pp = java.lang.Package.getPackage (buffer.toString ());
-	    if (pp != null)
-	    {
-		result = pp;
-	    }
-	    buffer.append ('.');
+	    final int pos = name.indexOf (Symbol.PACKAGE_SEPARATOR);
+	    final String symbolName = name.substring (pos + 1);
+	    return p.internSymbol (symbolName);
 	}
+	// CONSIDER Eliminate above here and let interpreter/compiler handle dot forms
+	final Symbol result = findImportedSymbol (name);
+	if (result != null)
+	{
+	    return result;
+	}
+	return pkg.internSymbol (name);
+    }
 
-	return result;
+    /**
+     * Lookup a name to determine if it represents an imported symbol. This is used by the Symbol
+     * class to determine how it should print in such a way that the current reader would read it
+     * back correctly.
+     */
+    Symbol findImportedSymbol (final String name)
+    {
+	for (final Object x : imports)
+	{
+	    if (x instanceof Package)
+	    {
+		final Package p = (Package)x;
+		final Symbol result = p.findSymbol (name);
+		if (result != null)
+		{
+		    return result;
+		}
+	    }
+	    else if (x instanceof Symbol)
+	    {
+		final Symbol symbol = (Symbol)x;
+		if (symbol.is (name))
+		{
+		    return symbol;
+		}
+	    }
+	}
+	return null;
     }
 
     @Override
@@ -531,10 +682,19 @@ public class LispReader
     {
 	if (element instanceof String)
 	{
-	    buffer.append ('"');
-	    // TODO Slashify
-	    buffer.append (element);
-	    buffer.append ('"');
+	    final String str = (String)element;
+	    buffer.append (DOUBLEQUOTE);
+	    for (int i = 0; i < str.length (); i++)
+	    {
+		// Slashify
+		final char c = str.charAt (i);
+		if (c == DOUBLEQUOTE || c == BACKSLASH)
+		{
+		    buffer.append (BACKSLASH);
+		}
+		buffer.append (c);
+	    }
+	    buffer.append (DOUBLEQUOTE);
 	}
 	else
 	{

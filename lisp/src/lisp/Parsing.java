@@ -166,10 +166,10 @@ public class Parsing
 	return wrapperSymbols.getKey (symbol);
     }
 
-    public char getStringDelimiter ()
-    {
-	return DOUBLE_QUOTE;
-    }
+    // public char getStringDelimiter ()
+    // {
+    // return DOUBLE_QUOTE;
+    // }
 
     public char getTheMarker ()
     {
