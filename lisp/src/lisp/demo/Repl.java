@@ -6,7 +6,7 @@ import java.util.logging.*;
 
 import lisp.*;
 import lisp.Package;
-import lisp.cc.CompilerPrimitives;
+import lisp.cc.VerifyPrimitives;
 import lisp.eval.*;
 import lisp.gui.*;
 
@@ -28,7 +28,7 @@ public class Repl
 	}
 	catch (final java.lang.reflect.InvocationTargetException e)
 	{
-	    CompilerPrimitives.incrementReplErrorCount ();
+	    VerifyPrimitives.incrementReplErrorCount ();
 	    Throwable ee = e;
 	    for (int i = 0; i < 10 && ee instanceof java.lang.reflect.InvocationTargetException; i++)
 	    {
@@ -38,7 +38,7 @@ public class Repl
 	}
 	catch (final Throwable e)
 	{
-	    CompilerPrimitives.incrementReplErrorCount ();
+	    VerifyPrimitives.incrementReplErrorCount ();
 	    LOGGER.log (Level.SEVERE, "Miscellaneous initialization error", e);
 	}
     }
@@ -75,7 +75,7 @@ public class Repl
 	    }
 	    catch (final java.lang.reflect.InvocationTargetException e)
 	    {
-		CompilerPrimitives.incrementReplErrorCount ();
+		VerifyPrimitives.incrementReplErrorCount ();
 		Throwable ee = e;
 		for (int i = 0; i < 10 && ee instanceof java.lang.reflect.InvocationTargetException; i++)
 		{
@@ -85,7 +85,7 @@ public class Repl
 	    }
 	    catch (final Throwable e)
 	    {
-		CompilerPrimitives.incrementReplErrorCount ();
+		VerifyPrimitives.incrementReplErrorCount ();
 		LOGGER.log (Level.SEVERE, "Miscellaneous REPL error", e);
 	    }
 	}
@@ -104,7 +104,7 @@ public class Repl
 	}
 	catch (final Throwable ex)
 	{
-	    CompilerPrimitives.incrementReplErrorCount ();
+	    VerifyPrimitives.incrementReplErrorCount ();
 	    try
 	    {
 		System.out.printf ("Error reading expression: %s\n", ex);
@@ -116,7 +116,7 @@ public class Repl
 	    }
 	    catch (final Throwable exx)
 	    {
-		CompilerPrimitives.incrementReplErrorCount ();
+		VerifyPrimitives.incrementReplErrorCount ();
 		System.out.printf ("[Error recovering from error: %s]\n", exx);
 	    }
 	    return;

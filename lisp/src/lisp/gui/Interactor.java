@@ -16,7 +16,7 @@ import javax.swing.text.*;
 
 import lisp.*;
 import lisp.Package;
-import lisp.cc.CompilerPrimitives;
+import lisp.cc.VerifyPrimitives;
 import lisp.eval.*;
 
 /**
@@ -207,7 +207,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 			    }
 			    catch (final Exception e1)
 			    {
-				CompilerPrimitives.incrementReplErrorCount ();
+				VerifyPrimitives.incrementReplErrorCount ();
 				e1.printStackTrace ();
 			    }
 			}
@@ -268,7 +268,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	}
 	catch (final Throwable e)
 	{
-	    CompilerPrimitives.incrementReplErrorCount ();
+	    VerifyPrimitives.incrementReplErrorCount ();
 	    // System.out.printf ("TryForm Error %s%n", e);
 	    logError (e);
 	}
@@ -333,7 +333,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	    }
 	    catch (final java.lang.reflect.InvocationTargetException e)
 	    {
-		CompilerPrimitives.incrementReplErrorCount ();
+		VerifyPrimitives.incrementReplErrorCount ();
 		final Throwable cause = e.getCause ();
 
 		err.printf ("Eval Error %s%n", cause);
@@ -341,7 +341,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	    }
 	    catch (final Throwable e)
 	    {
-		CompilerPrimitives.incrementReplErrorCount ();
+		VerifyPrimitives.incrementReplErrorCount ();
 		err.printf ("Eval Error %s%n", e);
 		logError (e);
 	    }

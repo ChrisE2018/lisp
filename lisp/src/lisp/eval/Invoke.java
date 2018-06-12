@@ -50,30 +50,31 @@ public class Invoke
 	return javaMethodCall (target, parentClass, methodName, arguments);
     }
 
-    /**
-     * Determine if an overloaded method is applicable to a specific set of arguments. Currently
-     * this just tests the number of arguments, it needs to be modified to test the types too.</br>
-     * FIXME Test parameter types.
-     *
-     * @param method
-     * @param arguments
-     * @return
-     */
-    private boolean applicable (final Method method, final List<Object> arguments)
-    {
-	if (method.isVarArgs ())
-	{
-	    if (method.getParameterCount () - 1 <= arguments.size ())
-	    {
-		return true;
-	    }
-	}
-	else if (method.getParameterCount () == arguments.size ())
-	{
-	    return true;
-	}
-	return false;
-    }
+    // /**
+    // * Determine if an overloaded method is applicable to a specific set of arguments. Currently
+    // * this just tests the number of arguments, it needs to be modified to test the types
+    // too.</br>
+    // * FIXME Test parameter types.
+    // *
+    // * @param method
+    // * @param arguments
+    // * @return
+    // */
+    // private boolean applicable (final Method method, final List<Object> arguments)
+    // {
+    // if (method.isVarArgs ())
+    // {
+    // if (method.getParameterCount () - 1 <= arguments.size ())
+    // {
+    // return true;
+    // }
+    // }
+    // else if (method.getParameterCount () == arguments.size ())
+    // {
+    // return true;
+    // }
+    // return false;
+    // }
 
     /**
      * Apply a single method to a target and argument list. This will only apply this method, it

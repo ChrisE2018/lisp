@@ -43,6 +43,8 @@
 (new "lisp.primitives.SandboxPrimitives")
 
 (new "lisp.cc.CompilerPrimitives")
+(new "lisp.cc.DefinePrimitives")
+(new "lisp.cc.VerifyPrimitives")
 
 (inPackage "system")
 
