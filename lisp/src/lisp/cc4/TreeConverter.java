@@ -10,7 +10,6 @@ import lisp.asm.instructions.InsnNode;
 import lisp.asm.instructions.JumpInsnNode;
 import lisp.asm.instructions.LabelNode;
 import lisp.asm.instructions.LdcInsnNode;
-import lisp.asm.instructions.LineNumberNode;
 import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.TypeInsnNode;
 import lisp.cc3.Boxer;
@@ -189,7 +188,6 @@ public class TreeConverter implements Opcodes
 	    }
 	}
 	add (il, lExit);
-	il.add (new LineNumberNode (185, lExit));
     }
 
     /**

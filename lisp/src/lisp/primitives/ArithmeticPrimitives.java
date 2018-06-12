@@ -18,7 +18,7 @@ public class ArithmeticPrimitives extends Definer
     // CONSIDER Statistical
     // CONSIDER Case for 'long' needed everywhere
 
-    @DefineLisp
+    @DefineLisp (classname = "lisp.special.NotFunction")
     public boolean not (final Object arg)
     {
 	if (arg instanceof Boolean)

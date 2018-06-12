@@ -94,6 +94,10 @@ public abstract class FunctionCell implements Describer
     /** Optional support object with compiler and analyzer. */
     public void setLispFunction (final LispFunction lispFunction)
     {
+	if (this.lispFunction != null)
+	{
+	    throw new Error ("Lisp function support has already been defined for " + this);
+	}
 	this.lispFunction = lispFunction;
     }
 

@@ -80,11 +80,11 @@ public class Package implements Describer
 	return Parsing.getDefaultParsing ();
     }
 
-    /** Print value to a buffer. */
-    public void print (final StringBuilder buffer)
-    {
-	buffer.append (toString ());
-    }
+    // /** Print value to a buffer. */
+    // public void print (final StringBuilder buffer)
+    // {
+    // buffer.append (toString ());
+    // }
 
     @Override
     public String toString ()
