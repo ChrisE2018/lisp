@@ -1,3 +1,7 @@
+/**
+ * Copyright © 2018 Christopher Eliot.
+ * All rights reserved.
+ */
 
 package lisp.symbol;
 
@@ -15,6 +19,9 @@ import lisp.util.MultiMap;
 /** Base class of all function cells. */
 public abstract class FunctionCell implements Describer
 {
+    private static Applicable applicable = new Applicable ();
+    private static Selectable selectable = new Selectable ();
+
     /** The symbol this function cell is attached to. */
     private final Symbol symbol;
 
@@ -120,7 +127,8 @@ public abstract class FunctionCell implements Describer
 	ObjectMethod selectedMethod = null;
 	for (final ObjectMethod method : overloads)
 	{
-	    if (method.isSelectable (arguments))
+	    final Method m = method.getMethod ();
+	    if (selectable.isSelectable (m, arguments))
 	    {
 		if (selectedMethod == null)
 		{
@@ -267,7 +275,8 @@ public abstract class FunctionCell implements Describer
 	ObjectMethod selectedMethod = null;
 	for (final ObjectMethod method : overloads)
 	{
-	    if (method.applicable (arguments))
+	    final Method m = method.getMethod ();
+	    if (applicable.applicable (m, arguments))
 	    {
 		if (selectedMethod == null)
 		{

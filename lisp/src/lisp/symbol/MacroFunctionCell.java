@@ -1,3 +1,7 @@
+/**
+ * Copyright © 2018 Christopher Eliot.
+ * All rights reserved.
+ */
 
 package lisp.symbol;
 

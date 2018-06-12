@@ -6,9 +6,12 @@ import java.util.List;
 
 import lisp.Symbol;
 import lisp.exceptions.CoerceError;
+import lisp.symbol.Applicable;
 
 public class Invoke
 {
+    private static Applicable applicable = new Applicable ();
+
     /**
      * Recursive method to perform a java method call. Actual arguments start at argument 0. This
      * attempts to select a method that matches the parameter types, but because of dynamic
@@ -33,7 +36,7 @@ public class Invoke
 	{
 	    if (method.getName ().equals (methodName))
 	    {
-		if (applicable (method, target, arguments))
+		if (applicable.applicable (method, arguments))
 		{
 		    return apply (method, target, arguments);
 		}
@@ -53,11 +56,10 @@ public class Invoke
      * FIXME Test parameter types.
      *
      * @param method
-     * @param target
      * @param arguments
      * @return
      */
-    public boolean applicable (final Method method, final Object target, final List<Object> arguments)
+    private boolean applicable (final Method method, final List<Object> arguments)
     {
 	if (method.isVarArgs ())
 	{
@@ -92,7 +94,6 @@ public class Invoke
     public Object apply (final Method method, final Object target, final List<Object> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-
 	// Need to handle VarArgs here.
 	if (method.isVarArgs ())
 	{
