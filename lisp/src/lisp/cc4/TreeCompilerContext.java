@@ -21,6 +21,7 @@ import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.TypeInsnNode;
 import lisp.asm.instructions.VarInsnNode;
 import lisp.cc.LocalBinding;
+import lisp.exceptions.DontOptimize;
 import lisp.symbol.*;
 import lisp.util.LogString;
 
@@ -276,11 +277,18 @@ public class TreeCompilerContext implements Opcodes
 	final FunctionCell function = symbol.getFunction ();
 	if (function != null)
 	{
-	    if (function.getLispFunction () instanceof LispTreeFunction)
+	    try
 	    {
-		// Some 'normal' functions need special coding, i.e, arithmetic and comparisons, so
-		// this is called for any function with a compiler, not just special forms.
-		return compileSpecialLispFunction (expression, resultDesired);
+		if (function.getLispFunction () instanceof LispTreeFunction)
+		{
+		    // Some 'normal' functions need special coding, i.e, arithmetic and comparisons,
+		    // so this is called for any function with a compiler, not just special forms.
+		    return compileSpecialLispFunction (expression, resultDesired);
+		}
+	    }
+	    catch (final DontOptimize e)
+	    {
+		// Ignore and continue
 	    }
 	    if (function instanceof SpecialFunctionCell)
 	    {
@@ -314,6 +322,7 @@ public class TreeCompilerContext implements Opcodes
     }
 
     private CompileResultSet compileSpecialLispFunction (final LispList expression, final boolean resultDesired)
+            throws DontOptimize
     {
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
@@ -360,6 +369,7 @@ public class TreeCompilerContext implements Opcodes
 	return null;
     }
 
+    /** Compile a function all into to directly call the given method. */
     private CompileResultSet compileDirectFunctionCall (final ObjectMethod objectMethod, final LispList expression)
     {
 	// (setq showBytecode t)

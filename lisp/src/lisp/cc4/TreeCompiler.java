@@ -23,7 +23,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (TreeCompiler.class.getName ());
     private static Symbol QUOTE_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("quote");
-    private final CompileLoader compileLoader;
+    private final CompileLoaderV4 compileLoader;
     private final Type returnType;
     private final Class<?> methodReturnClass;
     private final String methodName;
@@ -36,7 +36,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
     private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
     private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
 
-    public TreeCompiler (final ClassVisitor cv, final CompileLoader compileLoader, final Class<?> methodReturnClass,
+    public TreeCompiler (final ClassVisitor cv, final CompileLoaderV4 compileLoader, final Class<?> methodReturnClass,
             final String methodName, final LispList methodArgs, final LispList methodBody)
     {
 	// '(setq system.compilerVersion "V4")' "(setq system.showBytecode t)"
@@ -181,7 +181,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	final Type symbolType = Type.getType (Symbol.class);
 	final String symbolTypeDescriptor = symbolType.getDescriptor ();
 	final Type stringType = Type.getType (String.class);
-	final Type classLoaderType = Type.getType (CompileLoader.class);
+	final Type classLoaderType = Type.getType (CompileLoaderV4.class);
 	final String classLoaderInternalName = classLoaderType.getInternalName ();
 
 	// Create initialization code for all entries in symbolReferences.

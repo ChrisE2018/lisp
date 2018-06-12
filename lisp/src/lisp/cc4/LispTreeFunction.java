@@ -2,6 +2,7 @@
 package lisp.cc4;
 
 import lisp.LispList;
+import lisp.exceptions.DontOptimize;
 import lisp.symbol.LispFunction;
 
 public interface LispTreeFunction extends LispFunction
@@ -26,6 +27,9 @@ public interface LispTreeFunction extends LispFunction
      *         result is true, false, null or a number. Quoted constants can also be returned as
      *         implicit results. The consumer can perform constant folding on the implicit results
      *         to avoid runtime instructions.
+     * @throws DontOptimize In cases where the compiler can't optimize an expression the normal
+     *             compiler product can be produced by throwing this condition.
      */
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired);
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+            throws DontOptimize;
 }

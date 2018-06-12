@@ -303,7 +303,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     private void createInitI ()
     {
 	final String classInternalName = shellClassType.getInternalName ();
-	final Type classLoaderType = Type.getType (CompileLoader.class);
+	final Type classLoaderType = Type.getType (CompileLoaderV3.class);
 	final String classLoaderInternalName = classLoaderType.getInternalName ();
 	final Type symbolType = Type.getType (Symbol.class);
 	final String symbolTypeDescriptor = symbolType.getDescriptor ();

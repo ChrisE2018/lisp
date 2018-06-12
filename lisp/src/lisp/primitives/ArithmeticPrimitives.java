@@ -36,41 +36,53 @@ public class ArithmeticPrimitives extends Definer
     }
 
     @DefineLisp (name = "null")
-    public Object nullPredicate (final Object arg)
+    public boolean nullPredicate (final Object arg)
     {
 	return arg == null;
     }
 
+    /** Zero test for integers. We don't define zero test for floating point numbers. */
     @DefineLisp
-    public Object zerop (final int a)
+    public boolean zerop (final int a)
     {
 	return a == 0;
     }
 
+    /** Zero test for long integers. We don't define zero test for floating point numbers. */
     @DefineLisp
-    public Object zerop (final long a)
+    public boolean zerop (final long a)
     {
 	return a == 0;
     }
 
+    /** Remainder for integers. We don't define remainder for floating point numbers. */
     @DefineLisp
-    public Object rem (final int a, final int b)
+    public int rem (final int a, final int b)
     {
 	return a % b;
     }
 
+    /** Remainder for long integers. We don't define remainder for floating point numbers. */
     @DefineLisp
-    public Object rem (final long a, final long b)
+    public long rem (final long a, final long b)
     {
 	return a % b;
     }
 
+    /**
+     * One plus for integers. Direct calls to this method can be made if the compiler knows the
+     * argument type.
+     */
     @DefineLisp (name = "1+")
     public int addOne (final int x)
     {
 	return x + 1;
     }
 
+    /**
+     * One plus for double. Direct calls to this method can be made if the compiler knows the
+     * argument type.
+     */
     @DefineLisp (name = "1+")
     public double addOne (final double x)
     {
@@ -255,23 +267,20 @@ public class ArithmeticPrimitives extends Definer
     }
 
     @DefineLisp (name = "-")
-    public Object minus (final Object... arguments)
+    public Object minus (final Object from, final Object... arguments)
     {
-	switch (arguments.length)
+	if (arguments.length == 0)
 	{
-	    case 0:
-		throw new IllegalArgumentException ("Too few arguments supplied to minus function");
-
-	    case 1:
-		return minus (0, arguments[0]);
-
-	    default:
-		Object result = arguments[0];
-		for (int i = 1; i < arguments.length; i++)
-		{
-		    result = minus (result, arguments[i]);
-		}
-		return result;
+	    return minus (0, from);
+	}
+	else
+	{
+	    Object result = from;
+	    for (int i = 0; i < arguments.length; i++)
+	    {
+		result = minus (result, arguments[i]);
+	    }
+	    return result;
 	}
     }
 
@@ -471,24 +480,21 @@ public class ArithmeticPrimitives extends Definer
     }
 
     @DefineLisp (name = "/")
-    public Object quotient (final Object... arguments)
+    public Object quotient (final Object from, final Object... arguments)
     {
-	switch (arguments.length)
+	if (arguments.length == 0)
 	{
-	    case 0:
-		throw new IllegalArgumentException ("Too few arguments supplied to quotient function");
-
-	    case 1:
-		return quotient (1.0, arguments[0]);
-
-	    default:
-		final Object numerator = arguments[0];
-		Object denominator = arguments[1];
-		for (int i = 2; i < arguments.length; i++)
-		{
-		    denominator = times (denominator, arguments[i]);
-		}
-		return quotient (numerator, denominator);
+	    return quotient (1.0, from);
+	}
+	else
+	{
+	    final Object numerator = from;
+	    Object denominator = arguments[0];
+	    for (int i = 1; i < arguments.length; i++)
+	    {
+		denominator = times (denominator, arguments[i]);
+	    }
+	    return quotient (numerator, denominator);
 	}
     }
 
@@ -840,7 +846,7 @@ public class ArithmeticPrimitives extends Definer
     }
 
     @DefineLisp (name = "sign")
-    public Object sign (final Object a)
+    public int sign (final Object a)
     {
 	if (a instanceof Integer)
 	{
@@ -904,7 +910,7 @@ public class ArithmeticPrimitives extends Definer
     }
 
     @DefineLisp
-    public Object sin (final Object a)
+    public double sin (final Object a)
     {
 	if (a instanceof Integer)
 	{
@@ -936,7 +942,7 @@ public class ArithmeticPrimitives extends Definer
     }
 
     @DefineLisp
-    public Object cos (final Object a)
+    public double cos (final Object a)
     {
 	if (a instanceof Integer)
 	{
@@ -968,7 +974,7 @@ public class ArithmeticPrimitives extends Definer
     }
 
     @DefineLisp
-    public Object tan (final Object a)
+    public double tan (final Object a)
     {
 	if (a instanceof Integer)
 	{

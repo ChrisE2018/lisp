@@ -1,5 +1,5 @@
 
-package lisp.cc;
+package lisp.cc3;
 
 import java.io.*;
 import java.util.*;
@@ -8,11 +8,12 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
+import lisp.cc.Compiler;
 import lisp.util.LogString;
 
-public class CompileLoader extends ClassLoader implements Compiler
+public class CompileLoaderV3 extends ClassLoader implements Compiler
 {
-    private static final Logger LOGGER = Logger.getLogger (CompileLoader.class.getName ());
+    private static final Logger LOGGER = Logger.getLogger (CompileLoaderV3.class.getName ());
 
     /**
      * Predefined shell class structure with support methods. To create a compiled function we load
@@ -43,7 +44,7 @@ public class CompileLoader extends ClassLoader implements Compiler
     private ClassNode classNode = null;
     private MethodNode methodNode = null;
 
-    public CompileLoader () throws IOException
+    public CompileLoaderV3 () throws IOException
     {
 	LOGGER.info (new LogString ("Creating compiled class: %s", classType.getClassName ()));
 	final String resource = classType.getInternalName () + ".class";

@@ -12,7 +12,7 @@ import lisp.Package;
 import lisp.Symbol;
 import lisp.cc1.CompileLoader_v1;
 import lisp.cc2.CompileLoader_v2;
-import lisp.cc3.CompileClassAdaptor_v3;
+import lisp.cc3.*;
 import lisp.cc4.*;
 import lisp.util.LogString;
 
@@ -60,7 +60,7 @@ public class CompilerFactory
 	    }
 	    case V3:
 	    {
-		final CompileLoader result = new CompileLoader ();
+		final CompileLoaderV3 result = new CompileLoaderV3 ();
 		ClassVisitor cv = result.getClassVisitor ();
 		final boolean showBytecode = showBytecodeSymbol.getValue (false) != Boolean.FALSE;
 		if (showBytecode)
@@ -76,7 +76,7 @@ public class CompilerFactory
 	    case V4:
 	    {
 		final Type classType = Type.getType ("Llisp/cc/Foobar;");
-		final CompileLoader result = new CompileLoader ();
+		final CompileLoaderV4 result = new CompileLoaderV4 ();
 		// set class visitor to null to disable actual bytecode generation. Sometimes this
 		// allows the bytecode to be printed before an error that would otherwise be
 		// difficult to debug.
