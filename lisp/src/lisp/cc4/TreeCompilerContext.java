@@ -310,11 +310,10 @@ public class TreeCompilerContext implements Opcodes
 		    throw new Error ("Error expanding macro " + symbol, e1);
 		}
 	    }
-	    final ObjectMethod objectMethod = optimizeFunctionCall (expression);
-	    if (objectMethod != null)
+	    final CompileResultSet result = compileOptimizedFunctionCall (expression);
+	    if (result != null)
 	    {
-		// Function call always returns a value whether we want it or not
-		return compileDirectFunctionCall (objectMethod, expression);
+		return result;
 	    }
 	}
 	// Function call always returns a value whether we want it or not
@@ -338,10 +337,8 @@ public class TreeCompilerContext implements Opcodes
 	return null;
     }
 
-    /** Determine if a function call should be optimized. */
-    private ObjectMethod optimizeFunctionCall (final LispList expression)
+    private CompileResultSet compileOptimizedFunctionCall (final LispList expression)
     {
-	// final int argCount = expression.size () - 1;
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
 	if (function != null)
@@ -351,16 +348,17 @@ public class TreeCompilerContext implements Opcodes
 		final ObjectMethod objectMethod = function.selectMethod (locals, expression);
 		if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
 		{
-		    // Only methods with Object parameters work right now.
-		    // coerceRequired will need to be improved before general method parameters are
-		    // ok.
-		    if (// objectMethod.isObjectOnly () &&
-		        // FIXME Handle var args too
-		    !objectMethod.isVarArgs ())
+		    if (Symbol.test ("optimizeFunctionCalls", true))
 		    {
-			if (Symbol.test ("optimizeFunctionCalls", true))
+			if (objectMethod.isVarArgs ())
 			{
-			    return objectMethod;
+			    // Function call always returns a value whether we want it or not
+			    return compileVarArgsFunctionCall (objectMethod, expression);
+			}
+			else
+			{
+			    // Function call always returns a value whether we want it or not
+			    return compileFixedFunctionCall (objectMethod, expression);
 			}
 		    }
 		}
@@ -370,7 +368,7 @@ public class TreeCompilerContext implements Opcodes
     }
 
     /** Compile a function all into to directly call the given method. */
-    private CompileResultSet compileDirectFunctionCall (final ObjectMethod objectMethod, final LispList expression)
+    private CompileResultSet compileFixedFunctionCall (final ObjectMethod objectMethod, final LispList expression)
     {
 	// (setq showBytecode t)
 	// (define foo () (getDefaultPackage))
@@ -408,6 +406,60 @@ public class TreeCompilerContext implements Opcodes
 	    // System.out.printf ("%s (%s : %s) %s %n", symbol, i, arg, argType);
 	    final CompileResultSet rs = compile (arg, true);
 	    convert (rs, argType, false, false);
+	}
+	add (new MethodInsnNode (INVOKEVIRTUAL, objectClassInternalName, method.getName (), methodSignature, false));
+	final Class<?> methodValueClass = method.getReturnType ();
+	final CompileResultSet result = new CompileResultSet ();
+	final LabelNode ll = new LabelNode ();
+	result.addExplicitCompileResult (ll, methodValueClass);
+	add (new JumpInsnNode (GOTO, ll));
+	return result;
+    }
+
+    /** Compile a function all into to directly call the given method. */
+    private CompileResultSet compileVarArgsFunctionCall (final ObjectMethod objectMethod, final LispList expression)
+    {
+	// (setq showBytecode t)
+	// (define foo (a b) (+ a b))
+
+	final Symbol symbol = expression.head ();
+	LOGGER.info ("Optimized call to " + symbol + " using " + objectMethod);
+
+	final Label l1 = new Label ();
+	add (new LabelNode (l1));
+	final Object target = objectMethod.getObject ();
+	final Method method = objectMethod.getMethod ();
+
+	final Symbol reference = symbol.gensym ();
+	final String methodSignature = objectMethod.getSignature ();
+	final Type objectType = Type.getType (target.getClass ());
+	final String objectClassInternalName = objectType.getInternalName ();
+	treeCompiler.addQuotedConstant (reference, target);
+	add (new VarInsnNode (ALOAD, 0));
+	final String classInternalName = treeCompiler.getClassType ().getInternalName ();
+	add (new FieldInsnNode (GETFIELD, classInternalName, reference.getName (), objectType.getDescriptor ()));
+	// Compile arguments here
+	final Class<?>[] params = method.getParameterTypes ();
+	for (int i = 0; i < params.length - 1; i++)
+	{
+	    final Object arg = expression.get (i + 1);
+	    final Class<?> argClass = params[i];
+	    final CompileResultSet rs = compile (arg, true);
+	    convert (rs, argClass, false, false);
+	}
+	final Class<?> argClass = params[params.length - 1].getComponentType ();
+	final Type argType = Type.getType (argClass);
+	final int optcount = expression.size () - params.length;
+	il.add (new LdcInsnNode (optcount));
+	il.add (new TypeInsnNode (ANEWARRAY, argType.getInternalName ()));
+	for (int i = 0; i < optcount; i++)
+	{
+	    il.add (new InsnNode (DUP));
+	    il.add (new LdcInsnNode (i));
+	    final Object arg = expression.get (i + params.length);
+	    final CompileResultSet rs = compile (arg, true);
+	    convert (rs, argClass, false, false);
+	    il.add (new InsnNode (AASTORE));
 	}
 	add (new MethodInsnNode (INVOKEVIRTUAL, objectClassInternalName, method.getName (), methodSignature, false));
 	final Class<?> methodValueClass = method.getReturnType ();

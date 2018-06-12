@@ -91,9 +91,6 @@ public class DefaultFunctionCell extends FunctionCell
 	    }
 	    if (selectedMethod != null)
 	    {
-		// TODO VarArgs
-		// final Object[] argArrray = args.toArray ();
-		// return selectedMethod.invoke (target, argArrray);
 		return invoke.apply (selectedMethod, target, args);
 	    }
 	}
