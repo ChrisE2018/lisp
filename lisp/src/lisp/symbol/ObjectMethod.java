@@ -24,7 +24,6 @@ import lisp.util.MultiMap;
 public class ObjectMethod implements Describer
 {
     private static Invoke invoke = new Invoke ();
-    // private static Applicable applicable = new Applicable ();
     private static Assignable assignable = new Assignable ();
 
     final Object object;

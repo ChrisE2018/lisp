@@ -11,13 +11,24 @@ import java.util.List;
 import org.objectweb.asm.tree.ClassNode;
 
 import lisp.Symbol;
-import lisp.eval.LexicalContext;
+import lisp.eval.*;
 
 public class DefaultFunctionCell extends FunctionCell
 {
+    private static Applicable applicable = new Applicable ();
+    private static Assignable assignable = new Assignable ();
+    private static Invoke invoke = new Invoke ();
+
     public DefaultFunctionCell (final Symbol symbol, final boolean allowRedefinition)
     {
 	super (symbol, allowRedefinition);
+    }
+
+    @Override
+    public void overload (final Object obj, final Method method, final String documentation, final Object source,
+            final ClassNode cn)
+    {
+	throw new UnsupportedOperationException ("Can't overload default function definitions");
     }
 
     @Override
@@ -26,63 +37,89 @@ public class DefaultFunctionCell extends FunctionCell
 	throw new UnsupportedOperationException ("Can't eval default function definitions");
     }
 
+    /**
+     * Find a method that can be applied to the arguments.
+     *
+     * @param arguments Arguments to a function call. The first argument is taken as the target
+     *            object to invoke upon. The rest are passed as method arguments. Method selection
+     *            is based on argument types and inherits from superclasses of the target object.
+     */
     @Override
     public Object apply (final List<Object> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	final Object target = arguments.get (0);
 	final String name = getFunctionName ().getName ();
-	return apply (target, name, arguments);
-    }
-
-    private Object apply (final Object target, final String name, final List<Object> arguments)
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
-    {
-	final int argCount = arguments.size () - 1;
-	final Object[] args = new Object[argCount];
-	for (int i = 0; i < args.length; i++)
-	{
-	    args[i] = arguments.get (i + 1);
-	}
-	// final Object[] args = Arrays.copyOfRange (arguments, 1, arguments.length);
+	final List<Object> args = arguments.subList (1, arguments.size ());
 	for (Class<?> cls = target.getClass (); cls != null; cls = cls.getSuperclass ())
 	{
+	    Method selectedMethod = null;
 	    for (final Method method : cls.getDeclaredMethods ())
 	    {
 		if (method.getName ().equals (name))
 		{
-		    // FIXME handle VarArgs
-		    if (method.getParameterCount () == argCount)
+		    if (applicable.applicable (method, args))
 		    {
-			if (canInvoke (method, args))
+			if (selectedMethod == null)
 			{
-			    return method.invoke (target, args);
+			    selectedMethod = method;
+			}
+			else if (isBetterThan (selectedMethod, method))
+			{
+			    // Ignore
+			}
+			else if (isBetterThan (method, selectedMethod))
+			{
+			    selectedMethod = method;
+			}
+			else
+			{
+			    final StringBuilder buffer = new StringBuilder ();
+			    buffer.append ("Ambiguous ");
+			    buffer.append (name);
+			    buffer.append (" method selection for ");
+			    buffer.append (args);
+			    buffer.append (". Both ");
+			    buffer.append (selectedMethod);
+			    buffer.append (" and ");
+			    buffer.append (method);
+			    buffer.append (" apply.");
+			    throw new IllegalArgumentException (buffer.toString ());
 			}
 		    }
 		}
+	    }
+	    if (selectedMethod != null)
+	    {
+		// TODO VarArgs
+		// final Object[] argArrray = args.toArray ();
+		// return selectedMethod.invoke (target, argArrray);
+		return invoke.apply (selectedMethod, target, args);
 	    }
 	}
 	return null;
     }
 
-    private boolean canInvoke (final Method method, final Object[] arguments)
+    /**
+     * Determine if this method overload is better than another viable candidate.
+     *
+     * @param otherMethod Another overload option that is known to be applicable to an argument set.
+     * @return True if this method overload should be used in preference to the other overload.
+     */
+    private boolean isBetterThan (final Method method, final Method otherMethod)
     {
-	final Class<?>[] parameters = method.getParameterTypes ();
-	for (int i = 0; i < parameters.length; i++)
+	final Class<?>[] myTypes = method.getParameterTypes ();
+	final Class<?>[] otherTypes = otherMethod.getParameterTypes ();
+	for (int i = 0; i < myTypes.length; i++)
 	{
-	    if (!parameters[i].isAssignableFrom (arguments[i].getClass ()))
+	    final Class<?> myType = myTypes[i];
+	    final Class<?> otherType = otherTypes[i];
+	    if (!assignable.isAssignableFrom (myType, otherType))
 	    {
-		return false;
+		return true;
 	    }
 	}
-	return true;
-    }
-
-    @Override
-    public void overload (final Object obj, final Method method, final String documentation, final Object source,
-            final ClassNode cn)
-    {
-	throw new UnsupportedOperationException ("Can't overload default function definitions");
+	return false;
     }
 
     @Override
