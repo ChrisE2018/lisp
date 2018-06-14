@@ -21,7 +21,7 @@ import lisp.util.MultiMap;
  *
  * @author cre
  */
-public class OverloadedFunction implements Describer
+public class Overload implements Describer
 {
     private static Invoke invoke = new Invoke ();
     private static Assignable assignable = new Assignable ();
@@ -42,7 +42,8 @@ public class OverloadedFunction implements Describer
      */
     boolean valid = true;
 
-    OverloadedFunction (final Object object, final Method method, final String documentation, final Object source, final ClassNode cn)
+    Overload (final Object object, final Method method, final String documentation, final Object source,
+            final ClassNode cn)
     {
 	this.object = object;
 	this.method = method;
@@ -51,7 +52,7 @@ public class OverloadedFunction implements Describer
 	this.cn = cn;
     }
 
-    OverloadedFunction (final Object object, final Method method, final String documentation)
+    Overload (final Object object, final Method method, final String documentation)
     {
 	this.object = object;
 	this.method = method;
@@ -96,7 +97,7 @@ public class OverloadedFunction implements Describer
      * @param otherMethod Another overload option that is known to be applicable to an argument set.
      * @return True if this method overload should be used in preference to the other overload.
      */
-    public boolean isBetterThan (final OverloadedFunction otherMethod)
+    public boolean isBetterThan (final Overload otherMethod)
     {
 	final Class<?>[] myTypes = method.getParameterTypes ();
 	final Class<?>[] otherTypes = otherMethod.getParameterTypes ();

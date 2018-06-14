@@ -361,7 +361,7 @@ public class TreeCompilerContext implements Opcodes
 	{
 	    if (!(function instanceof DefaultFunctionCell))
 	    {
-		final OverloadedFunction objectMethod = function.selectMethod (locals, expression);
+		final Overload objectMethod = function.selectMethod (locals, expression);
 		if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
 		{
 		    if (Symbol.test ("optimizeFunctionCalls", true))
@@ -384,7 +384,7 @@ public class TreeCompilerContext implements Opcodes
     }
 
     /** Compile a function all into to directly call the given method. */
-    private CompileResultSet compileFixedFunctionCall (final OverloadedFunction objectMethod, final LispList expression)
+    private CompileResultSet compileFixedFunctionCall (final Overload objectMethod, final LispList expression)
     {
 	// (setq showBytecode t)
 	// (define foo () (getDefaultPackage))
@@ -433,7 +433,7 @@ public class TreeCompilerContext implements Opcodes
     }
 
     /** Compile a function all into to directly call the given method. */
-    private CompileResultSet compileVarArgsFunctionCall (final OverloadedFunction objectMethod, final LispList expression)
+    private CompileResultSet compileVarArgsFunctionCall (final Overload objectMethod, final LispList expression)
     {
 	// (setq showBytecode t)
 	// (define foo (a b) (+ a b))

@@ -27,7 +27,7 @@ public abstract class FunctionCell implements Describer
 
     private final boolean allowRedefinition;
 
-    private final List<OverloadedFunction> overloads = new ArrayList<OverloadedFunction> ();
+    private final List<Overload> overloads = new ArrayList<Overload> ();
 
     /** Optional support object with compiler and analyzer. */
     private LispFunction lispFunction;
@@ -47,12 +47,12 @@ public abstract class FunctionCell implements Describer
     public void overload (final Object obj, final Method method, final String documentation, final Object source,
             final ClassNode cn)
     {
-	final OverloadedFunction newOverload = new OverloadedFunction (obj, method, documentation, source, cn);
+	final Overload newOverload = new Overload (obj, method, documentation, source, cn);
 	final String signature = newOverload.getArgumentSignature ();
-	overloads.removeIf (new Predicate<OverloadedFunction> ()
+	overloads.removeIf (new Predicate<Overload> ()
 	{
 	    @Override
-	    public boolean test (final OverloadedFunction t)
+	    public boolean test (final Overload t)
 	    {
 		final boolean result = t.getArgumentSignature ().equals (signature);
 		if (result)
@@ -115,7 +115,7 @@ public abstract class FunctionCell implements Describer
      * @param locals The current binding context.
      * @param expression The expression that will be evaluated.
      */
-    public OverloadedFunction selectMethod (final Map<Symbol, LocalBinding> locals, final LispList expression)
+    public Overload selectMethod (final Map<Symbol, LocalBinding> locals, final LispList expression)
     {
 	final List<Class<?>> arguments = new ArrayList<Class<?>> ();
 	for (int i = 1; i < expression.size (); i++)
@@ -124,8 +124,8 @@ public abstract class FunctionCell implements Describer
 	    final Class<?> argClass = predictResultClass (locals, arg);
 	    arguments.add (argClass);
 	}
-	OverloadedFunction selectedMethod = null;
-	for (final OverloadedFunction method : overloads)
+	Overload selectedMethod = null;
+	for (final Overload method : overloads)
 	{
 	    final Method m = method.getMethod ();
 	    if (selectable.isSelectable (m, arguments))
@@ -230,7 +230,7 @@ public abstract class FunctionCell implements Describer
     {
 	if (overloads.size () > 0)
 	{
-	    final OverloadedFunction result = selectMethod (locals, expression);
+	    final Overload result = selectMethod (locals, expression);
 	    if (result != null)
 	    {
 		return result.getMethod ().getReturnType ();
@@ -272,8 +272,8 @@ public abstract class FunctionCell implements Describer
     public Object apply (final List<Object> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-	OverloadedFunction selectedMethod = null;
-	for (final OverloadedFunction method : overloads)
+	Overload selectedMethod = null;
+	for (final Overload method : overloads)
 	{
 	    final Method m = method.getMethod ();
 	    if (applicable.applicable (m, arguments))
@@ -330,7 +330,7 @@ public abstract class FunctionCell implements Describer
 	{
 	    result.put ("Function", lispFunction);
 	}
-	for (final OverloadedFunction method : overloads)
+	for (final Overload method : overloads)
 	{
 	    result.put ("Overload", method);
 	}
