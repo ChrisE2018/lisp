@@ -21,7 +21,7 @@ import lisp.util.MultiMap;
  *
  * @author cre
  */
-public class ObjectMethod implements Describer
+public class OverloadedFunction implements Describer
 {
     private static Invoke invoke = new Invoke ();
     private static Assignable assignable = new Assignable ();
@@ -36,33 +36,28 @@ public class ObjectMethod implements Describer
     /** Place to store the ASM bytecode, if available. */
     final ClassNode cn;
 
-    // /** The minimum number of arguments that can be passed to this method. */
-    // private final int minimumArgCount;
-
     /**
      * If this method overload is replaced, set this to false. Compiled code can be setup to check
      * this flag and repair a compiled call to this method if it changes.
      */
     boolean valid = true;
 
-    ObjectMethod (final Object object, final Method method, final String documentation, final Object source, final ClassNode cn)
+    OverloadedFunction (final Object object, final Method method, final String documentation, final Object source, final ClassNode cn)
     {
 	this.object = object;
 	this.method = method;
 	this.documentation = documentation;
 	this.source = source;
 	this.cn = cn;
-	// minimumArgCount = method.getParameterCount () + (method.isVarArgs () ? -1 : 0);
     }
 
-    ObjectMethod (final Object object, final Method method, final String documentation)
+    OverloadedFunction (final Object object, final Method method, final String documentation)
     {
 	this.object = object;
 	this.method = method;
 	this.documentation = documentation;
 	source = null;
 	cn = null;
-	// minimumArgCount = method.getParameterCount () + (method.isVarArgs () ? -1 : 0);
     }
 
     public Object getObject ()
@@ -95,109 +90,13 @@ public class ObjectMethod implements Describer
 	return method.getParameterTypes ();
     }
 
-    // /**
-    // * Determine if this method overload is applicable to the provided arguments. This method is
-    // * used when the actual arguments are available.
-    // *
-    // * @param arguments The arguments that will be used to invoke the method.
-    // * @return True if it is applicable.
-    // */
-    // public boolean applicableX (final List<Object> arguments)
-    // {
-    // return applicable.applicable (method, arguments);
-    // // final int count = arguments.size ();
-    // // if (count < minimumArgCount)
-    // // {
-    // // return false;
-    // // }
-    // // if (count > minimumArgCount)
-    // // {
-    // // if (!method.isVarArgs ())
-    // // {
-    // // return false;
-    // // }
-    // // }
-    // // // Additional filters here.
-    // // final Class<?>[] types = method.getParameterTypes ();
-    // // for (int i = 0; i < minimumArgCount; i++)
-    // // {
-    // // final Class<?> argType = types[i]; // What is needed
-    // // final Object arg = arguments.get (i);
-    // // if (!assignable.isAssignableFrom (argType, arg))
-    // // {
-    // // return false;
-    // // }
-    // // }
-    // // if (count > minimumArgCount && method.isVarArgs ())
-    // // {
-    // // final Class<?> argType = types[minimumArgCount].getComponentType (); // What is needed
-    // // for (int i = minimumArgCount; i < arguments.size (); i++)
-    // // {
-    // // final Object arg = arguments.get (i);
-    // // if (!assignable.isAssignableFrom (argType, arg))
-    // // {
-    // // return false;
-    // // }
-    // // }
-    // // }
-    // // return true;
-    // }
-
-    // /**
-    // * Determine if this method overload is applicable to arguments of the specified classes. This
-    // * method is used when the argument types are known but the actual values are not known, for
-    // * example during compilation.
-    // *
-    // * @param arguments
-    // * @return
-    // */
-    // public boolean isSelectable (final List<Class<?>> arguments)
-    // {
-    // final int count = arguments.size ();
-    // if (count < minimumArgCount)
-    // {
-    // return false;
-    // }
-    // if (count > minimumArgCount)
-    // {
-    // if (!method.isVarArgs ())
-    // {
-    // return false;
-    // }
-    // }
-    // // Additional filters here.
-    // final Class<?>[] types = method.getParameterTypes ();
-    // for (int i = 0; i < minimumArgCount; i++)
-    // {
-    // final Class<?> argType = types[i]; // What is needed
-    // final Class<?> argClass = arguments.get (i);
-    // if (!assignable.isAssignableFrom (argType, argClass))
-    // {
-    // return false;
-    // }
-    // }
-    // if (count > minimumArgCount && method.isVarArgs ())
-    // {
-    // final Class<?> argType = types[minimumArgCount].getComponentType (); // What is needed
-    // for (int i = minimumArgCount; i < arguments.size (); i++)
-    // {
-    // final Class<?> argClass = arguments.get (i);
-    // if (!assignable.isAssignableFrom (argType, argClass))
-    // {
-    // return false;
-    // }
-    // }
-    // }
-    // return true;
-    // }
-
     /**
      * Determine if this method overload is better than another viable candidate.
      *
      * @param otherMethod Another overload option that is known to be applicable to an argument set.
      * @return True if this method overload should be used in preference to the other overload.
      */
-    public boolean isBetterThan (final ObjectMethod otherMethod)
+    public boolean isBetterThan (final OverloadedFunction otherMethod)
     {
 	final Class<?>[] myTypes = method.getParameterTypes ();
 	final Class<?>[] otherTypes = otherMethod.getParameterTypes ();
