@@ -107,17 +107,23 @@ public class DefclassPrimitives extends Definer
 	    final boolean optimize = Symbol.named ("system", "optimize").getBooleanValue (true);
 	    final boolean printBytecode = pbl.isLoggable (Level.INFO);
 
-	    // Form chain
+	    // Form chain adding things in the middle.
+	    // The last thing to do is write the code using cw.
 	    ClassVisitor cv = cw;
+
 	    if (printBytecode)
 	    {
+		// Install PrintBytecodeClassAdaptor before Optimizer so it runs after.
+		// Move this block lower to print code before optimization.
 		cv = new PrintBytecodeClassAdaptor (asmApi, cv, new StringWriter ());
 	    }
 	    if (optimize)
 	    {
 		cv = new Optimizer (Compiler.ASM_VERSION, cv);
 	    }
+
 	    // Put code into init method to initialize fields and quoted data
+	    // This should be the last operation installed (first done)
 	    cv = defclass.new InitModifierClassVisitor (cv);
 	    cn.accept (cv);
 
