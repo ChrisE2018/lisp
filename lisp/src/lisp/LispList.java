@@ -109,6 +109,13 @@ public class LispList extends ArrayList<Object> implements Describer
 	return get (size () - 1);
     }
 
+    public LispList subList (final int i)
+    {
+	final LispList result = new LispList ();
+	result.addAll (subList (i, size ()));
+	return result;
+    }
+
     /** Print in the same format as the reader. */
     public void print (final StringBuilder buffer)
     {

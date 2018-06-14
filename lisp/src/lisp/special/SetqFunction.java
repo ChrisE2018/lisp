@@ -19,6 +19,8 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 {
     private static final Logger LOGGER = Logger.getLogger (SetqFunction.class.getName ());
 
+    private static JavaName javaName = new JavaName ();
+
     /** Call visitor on all directly nested subexpressions. */
     @Override
     public void walker (final LispVisitor visitor, final LispList expression)
@@ -70,14 +72,14 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    // FIXME If the symbol valueCell is constant, use the current value.
 	    // TODO If the valueCell is a TypedValueCell, use the type information.
 	    // global
-	    final TreeCompiler compiler = context.getTreeCompiler ();
+	    final TreeCompilerInterface compiler = context.getTreeCompiler ();
 	    compiler.addSymbolReference (symbol);
 	    compiler.addGlobalReference (symbol);
-	    final String javaName = compiler.createJavaSymbolName (symbol);
-	    LOGGER.finer (new LogString ("Global assignment to %s as %s", symbol, javaName));
+	    final String javaSymbolName = javaName.createJavaSymbolName (symbol);
+	    LOGGER.finer (new LogString ("Global assignment to %s as %s", symbol, javaSymbolName));
 	    final String classInternalName = compiler.getClassType ().getInternalName ();
 	    context.add (new VarInsnNode (ALOAD, 0));
-	    context.add (new FieldInsnNode (GETFIELD, classInternalName, javaName, "Llisp/Symbol;"));
+	    context.add (new FieldInsnNode (GETFIELD, classInternalName, javaSymbolName, "Llisp/Symbol;"));
 	    final CompileResultSet results = context.compile (expression.get (2), true);
 	    context.convert (results, Object.class, false, false);
 	    if (resultDesired)

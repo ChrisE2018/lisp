@@ -1,0 +1,25 @@
+(%defclass Foobar
+	 (access public)
+	 (extends java.lang.Object)
+	 (field blah 
+	 	(access public)
+	 	(type java.lang.Integer)
+	 	(value 3))
+	 (constructor ()
+	 	(access public)
+	 	(throws java.lang.Error)
+	 	(printf "init called%n")
+	 	)
+	 (method foo ()
+	 	(access public)
+	 	;(throws java.lang.Error)
+	 	;(printf "foo")
+	 	;(+ 3 4)
+	 	;7
+	 	;"alpha"
+	 	;(rem 9 5)
+	 	;"alpha"
+	 	(printf "foo called%n")
+	 	(+ 3 4)
+	 	)
+)

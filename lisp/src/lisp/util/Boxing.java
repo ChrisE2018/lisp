@@ -91,6 +91,92 @@ public class Boxing
 	throw new IllegalArgumentException ("Wrapper class required: " + wrapperClass);
     }
 
+    /**
+     * Determine if the class represents a primitive type.
+     *
+     * @param primitiveClass The class of a any type.
+     * @return True if this is a primitive type class.
+     */
+    public boolean isBoxedClass (final Class<?> primitiveClass)
+    {
+	if (primitiveClass == boolean.class)
+	{
+	    return true;
+	}
+	if (primitiveClass == byte.class)
+	{
+	    return true;
+	}
+	if (primitiveClass == char.class)
+	{
+	    return true;
+	}
+	if (primitiveClass == short.class)
+	{
+	    return true;
+	}
+	if (primitiveClass == int.class)
+	{
+	    return true;
+	}
+	if (primitiveClass == long.class)
+	{
+	    return true;
+	}
+	if (primitiveClass == float.class)
+	{
+	    return true;
+	}
+	if (primitiveClass == double.class)
+	{
+	    return true;
+	}
+	return false;
+    }
+
+    /**
+     * Determine if the class is a wrapper type corresponding to some primitive class.
+     *
+     * @param wrapperClass The class of a wrapper type.
+     * @return True if this is a wrapper class for a primitive type.
+     */
+    public boolean isUnboxedClass (final Class<?> wrapperClass)
+    {
+	if (wrapperClass == Boolean.class)
+	{
+	    return true;
+	}
+	if (wrapperClass == Byte.class)
+	{
+	    return true;
+	}
+	if (wrapperClass == Character.class)
+	{
+	    return true;
+	}
+	if (wrapperClass == Short.class)
+	{
+	    return true;
+	}
+	if (wrapperClass == Integer.class)
+	{
+	    return true;
+	}
+	if (wrapperClass == Long.class)
+	{
+	    return true;
+	}
+	if (wrapperClass == Float.class)
+	{
+	    return true;
+	}
+	if (wrapperClass == Double.class)
+	{
+	    return true;
+	}
+	return false;
+    }
+
     @Override
     public String toString ()
     {

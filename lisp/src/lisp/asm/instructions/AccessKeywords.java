@@ -20,13 +20,13 @@ package lisp.asm.instructions;
 public enum AccessKeywords
 {
     // From asm Opcodes.java
-    ACC_PUBLIC (0x0001), // class, field, method
-    ACC_PRIVATE (0x0002), // class, field, method
-    ACC_PROTECTED (0x0004), // class, field, method
-    ACC_STATIC (0x0008), // field, method
-    ACC_FINAL (0x0010), // class, field, method, parameter
+    ACC_PUBLIC (0x0001, "public"), // class, field, method
+    ACC_PRIVATE (0x0002, "private"), // class, field, method
+    ACC_PROTECTED (0x0004, "protected"), // class, field, method
+    ACC_STATIC (0x0008, "static"), // field, method
+    ACC_FINAL (0x0010, "final"), // class, field, method, parameter
     ACC_SUPER (0x0020), // class
-    ACC_SYNCHRONIZED (0x0020), // method
+    ACC_SYNCHRONIZED (0x0020, "synchronized"), // method
     ACC_OPEN (0x0020), // module
     ACC_TRANSITIVE (0x0020), // module requires
     ACC_VOLATILE (0x0040), // field
@@ -35,26 +35,39 @@ public enum AccessKeywords
     ACC_VARARGS (0x0080), // method
     ACC_TRANSIENT (0x0080), // field
     ACC_NATIVE (0x0100), // method
-    ACC_INTERFACE (0x0200), // class
-    ACC_ABSTRACT (0x0400), // class, method
+    ACC_INTERFACE (0x0200, "interface"), // class
+    ACC_ABSTRACT (0x0400, "abstract"), // class, method
     ACC_STRICT (0x0800), // method
     ACC_SYNTHETIC (0x1000), // class, field, method, parameter, module *
     ACC_ANNOTATION (0x2000), // class
-    ACC_ENUM (0x4000), // class(?) field inner
+    ACC_ENUM (0x4000, "enum"), // class(?) field inner
     ACC_MANDATED (0x8000), // parameter, module, module *
     ACC_MODULE (0x8000) // class
     ;
 
     private int accessCode;
+    private String keyword;
 
     private AccessKeywords (final int accessCode)
     {
 	this.accessCode = accessCode;
+	keyword = null;
+    }
+
+    private AccessKeywords (final int accessCode, final String keyword)
+    {
+	this.accessCode = accessCode;
+	this.keyword = keyword;
     }
 
     public int getAccessCode ()
     {
 	return accessCode;
+    }
+
+    public String getKeyword ()
+    {
+	return keyword;
     }
 
     public static AccessKeywords find (final int accessCode)
@@ -67,5 +80,17 @@ public enum AccessKeywords
 	    }
 	}
 	throw new Error ("There is no AccessKeywords for value " + accessCode);
+    }
+
+    public static AccessKeywords find (final String keyword)
+    {
+	for (final AccessKeywords ic : AccessKeywords.values ())
+	{
+	    if (keyword.equals (ic.keyword))
+	    {
+		return ic;
+	    }
+	}
+	throw new Error ("There is no AccessKeywords for " + keyword);
     }
 }

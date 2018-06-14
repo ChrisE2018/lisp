@@ -19,9 +19,10 @@ import lisp.asm.instructions.VarInsnNode;
 import lisp.cc.*;
 import lisp.util.LogString;
 
-public class TreeCompiler extends ClassNode implements Opcodes
+public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInterface
 {
     private static final Logger LOGGER = Logger.getLogger (TreeCompiler.class.getName ());
+    private static JavaName javaName = new JavaName ();
     private static Symbol QUOTE_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("quote");
     private final CompileLoaderV4 compileLoader;
     private final Type returnType;
@@ -141,7 +142,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	for (final Symbol symbol : symbolReferences)
 	{
 	    final String typeDescriptor = Type.getType (symbol.getClass ()).getDescriptor ();
-	    fields.add (new FieldNode (ACC_PRIVATE, createJavaSymbolName (symbol), typeDescriptor, null, null));
+	    fields.add (new FieldNode (ACC_PRIVATE, javaName.createJavaSymbolName (symbol), typeDescriptor, null, null));
 	}
 	for (final Entry<String, Object> entry : quotedReferences.entrySet ())
 	{
@@ -187,22 +188,20 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	// Create initialization code for all entries in symbolReferences.
 	for (final Symbol symbol : symbolReferences)
 	{
-	    final String javaName = createJavaSymbolName (symbol);
+	    final String javaSymbolName = javaName.createJavaSymbolName (symbol);
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    il.add (new LdcInsnNode (symbol.getPackage ().getName ()));
 	    il.add (new LdcInsnNode (symbol.getName ()));
 	    il.add (new MethodInsnNode (INVOKESPECIAL, classInternalName, "getSymbol",
 	            Type.getMethodDescriptor (symbolType, stringType, stringType), false));
-	    il.add (new FieldInsnNode (PUTFIELD, classInternalName, javaName, symbolTypeDescriptor));
+	    il.add (new FieldInsnNode (PUTFIELD, classInternalName, javaSymbolName, symbolTypeDescriptor));
 
-	    LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaName, symbol));
+	    LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaSymbolName, symbol));
 	}
 	for (final Entry<String, Object> entry : quotedReferences.entrySet ())
 	{
 	    // (define foo () (quote bar))
-	    final String reference = entry.getKey ();
-	    final Object quoted = entry.getValue ();
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    il.add (new InsnNode (DUP));
 	    final Type classType = Type.getType (Class.class);
@@ -214,6 +213,8 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	    il.add (new MethodInsnNode (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;",
 	            false));
 
+	    final String reference = entry.getKey ();
+	    final Object quoted = entry.getValue ();
 	    il.add (new LdcInsnNode (reference));
 	    il.add (new MethodInsnNode (INVOKEINTERFACE, "java/util/Map", "get",
 	            Type.getMethodDescriptor (objectType, objectType), true));
@@ -282,7 +283,7 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	    locals.put (arg, new LocalBinding (arg, methodArgClasses.get (i), i + 1));
 	}
 	// Should pass mn to the TreeCompilerContext so it can get at the method locals.
-	final TreeCompilerContext context = new TreeCompilerContext (this, mn, locals);
+	final TreeCompilerContext context = new TreeCompilerContext (this, methodReturnClass, mn, locals);
 	for (int i = 0; i < methodBody.size () - 1; i++)
 	{
 	    final Object expr = methodBody.get (i);
@@ -325,43 +326,6 @@ public class TreeCompiler extends ClassNode implements Opcodes
 	}
 	buffer.append (")");
 	buffer.append (returnTypeDescriptor);
-	return buffer.toString ();
-    }
-
-    /**
-     * Convert a lisp symbol name into a valid Java identifier String. The same symbol will always
-     * convert to the same Java name. Symbols of the same name in different packages may produce
-     * conflicts.
-     *
-     * @param symbol The symbol to extract a name from.
-     * @return A valid Java identifier corresponding to the symbol.
-     */
-    public String createJavaSymbolName (final Symbol symbol)
-    {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("SYM_");
-	final String symbolName = symbol.getName ();
-	for (int i = 0; i < symbolName.length (); i++)
-	{
-	    final char c = symbolName.charAt (i);
-	    if (Character.isJavaIdentifierPart (c))
-	    {
-		buffer.append (c);
-	    }
-	    else
-	    {
-		final int codePoint = symbolName.codePointAt (i);
-		final String cn = Character.getName (codePoint);
-		if (cn != null)
-		{
-		    buffer.append (c);
-		}
-		else
-		{
-		    buffer.append (String.format ("%03d", codePoint));
-		}
-	    }
-	}
 	return buffer.toString ();
     }
 

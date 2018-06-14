@@ -20,7 +20,7 @@ import lisp.asm.instructions.LdcInsnNode;
 import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.TypeInsnNode;
 import lisp.asm.instructions.VarInsnNode;
-import lisp.cc.LocalBinding;
+import lisp.cc.*;
 import lisp.exceptions.DontOptimize;
 import lisp.symbol.*;
 import lisp.util.LogString;
@@ -33,21 +33,34 @@ public class TreeCompilerContext implements Opcodes
 
     private static final TreeBoxer boxer = new TreeBoxer ();
 
-    private final TreeCompiler treeCompiler;
+    private static JavaName javaName = new JavaName ();
+
+    private final TreeCompilerInterface treeCompiler;
 
     private final MethodNode mn;
 
     private final InsnList il;
 
+    /** Return value type of the method being compiled. */
+    private final Class<?> returnClass;
+
+    /** Arguments of the method being compiled. */
+    private final Type[] argumentTypes;
+    private final int argumentCount;
+
     // Can we use mn.locals instead of our own structure?
     private final Map<Symbol, LocalBinding> locals;
 
-    public TreeCompilerContext (final TreeCompiler treeCompiler, final MethodNode mn, final Map<Symbol, LocalBinding> locals)
+    public TreeCompilerContext (final TreeCompilerInterface treeCompiler, final Class<?> returnClass, final MethodNode mn,
+            final Map<Symbol, LocalBinding> locals)
     {
 	this.treeCompiler = treeCompiler;
+	this.returnClass = returnClass;
 	this.mn = mn;
 	il = mn.instructions;
 	this.locals = locals;
+	argumentTypes = Type.getArgumentTypes (mn.desc);
+	argumentCount = argumentTypes.length;
     }
 
     /** Setup the binding for a new local variable. */
@@ -61,12 +74,12 @@ public class TreeCompilerContext implements Opcodes
 	final String signature = null;
 	final LabelNode start = new LabelNode ();
 	final LabelNode end = new LabelNode ();
-	final int index = lvl.size () + treeCompiler.getArgCount () + 1;
+	final int index = lvl.size () + argumentCount + 1;
 	final LocalVariableNode local = new LocalVariableNode (name, descriptor, signature, start, end, index);
 	lvl.add (local);
 	final Map<Symbol, LocalBinding> newLocals = new HashMap<Symbol, LocalBinding> (locals);
 	newLocals.put (var, new LocalBinding (var, varClass, index));
-	return new TreeCompilerContext (treeCompiler, mn, newLocals);
+	return new TreeCompilerContext (treeCompiler, returnClass, mn, newLocals);
     }
 
     /** Setup the bindings for several new local variables. */
@@ -85,12 +98,12 @@ public class TreeCompilerContext implements Opcodes
 	    final String signature = null;
 	    final LabelNode start = new LabelNode ();
 	    final LabelNode end = new LabelNode ();
-	    final int index = lvl.size () + treeCompiler.getArgCount () + 1;
+	    final int index = lvl.size () + argumentCount + 1;
 	    final LocalVariableNode local = new LocalVariableNode (name, descriptor, signature, start, end, index);
 	    lvl.add (local);
 	    newLocals.put (var, new LocalBinding (var, varClass, index));
 	}
-	return new TreeCompilerContext (treeCompiler, mn, newLocals);
+	return new TreeCompilerContext (treeCompiler, returnClass, mn, newLocals);
     }
 
     public LocalBinding getLocalVariableBinding (final Symbol var)
@@ -98,7 +111,7 @@ public class TreeCompilerContext implements Opcodes
 	return locals.get (var);
     }
 
-    public TreeCompiler getTreeCompiler ()
+    public TreeCompilerInterface getTreeCompiler ()
     {
 	return treeCompiler;
     }
@@ -118,7 +131,7 @@ public class TreeCompilerContext implements Opcodes
 	if (node != null)
 	{
 	    il.add (node);
-	    LOGGER.finer (il.size () + " Instr: " + node);
+	    LOGGER.finer (new LogString ("%s instr: %s", il.size (), node));
 	}
     }
 
@@ -129,7 +142,7 @@ public class TreeCompilerContext implements Opcodes
 	    if (node != null)
 	    {
 		il.add (node);
-		LOGGER.finer (il.size () + " Instr: " + node);
+		LOGGER.finer (new LogString ("%s instr: %s", il.size (), node));
 	    }
 	}
     }
@@ -203,7 +216,8 @@ public class TreeCompilerContext implements Opcodes
 		    il.add (new VarInsnNode (ALOAD, 0));
 		    final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 		    il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
-		    convert (quotedClass, treeCompiler.getMethodReturnClass (), false, false);
+		    convert (quotedClass, returnClass, // treeCompiler.getMethodReturnClass (),
+		            false, false);
 		}
 	    }
 	    // Jump to exit label
@@ -224,7 +238,8 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new LdcInsnNode (x));
 	    final Class<?> ec = x.getClass ();
 	    final Class<?> p = boxer.getUnboxedClass (ec);
-	    convert (p != null ? p : ec, treeCompiler.getMethodReturnClass (), false, false);
+	    convert (p != null ? p : ec, returnClass, // treeCompiler.getMethodReturnClass (),
+	            false, false);
 	}
 	else
 	{
@@ -234,7 +249,8 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 	    il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
-	    convert (quotedClass, treeCompiler.getMethodReturnClass (), false, false);
+	    convert (quotedClass, returnClass, // treeCompiler.getMethodReturnClass (),
+	            false, false);
 	}
     }
 
@@ -377,7 +393,7 @@ public class TreeCompilerContext implements Opcodes
 	// (define foo (a b) (rem a b))
 
 	final Symbol symbol = expression.head ();
-	LOGGER.info ("Optimized call to " + symbol + " using " + objectMethod);
+	LOGGER.info (new LogString ("Optimized call to %s using %s", symbol, objectMethod));
 
 	// If we are compiling for speed and can assume that the current definition won't
 	// change, then compile a direct call to the current function method.
@@ -423,7 +439,7 @@ public class TreeCompilerContext implements Opcodes
 	// (define foo (a b) (+ a b))
 
 	final Symbol symbol = expression.head ();
-	LOGGER.info ("Optimized call to " + symbol + " using " + objectMethod);
+	LOGGER.info (new LogString ("Optimized call to %s using %s", symbol, objectMethod));
 
 	final Label l1 = new Label ();
 	add (new LabelNode (l1));
@@ -487,7 +503,7 @@ public class TreeCompilerContext implements Opcodes
 	il.add (new VarInsnNode (ALOAD, 0));
 	final Type classType = treeCompiler.getClassType ();
 	final String classInternalName = classType.getInternalName ();
-	il.add (new FieldInsnNode (GETFIELD, classInternalName, treeCompiler.createJavaSymbolName (symbol), "Llisp/Symbol;"));
+	il.add (new FieldInsnNode (GETFIELD, classInternalName, javaName.createJavaSymbolName (symbol), "Llisp/Symbol;"));
 
 	// Get the FunctionCell from the function symbol.
 	// The call to getDefaultHandlerFunction will return a DefaultHandler that tries to invoke
@@ -562,7 +578,7 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    final Type classType = treeCompiler.getClassType ();
 	    final String classInternalName = classType.getInternalName ();
-	    il.add (new FieldInsnNode (GETFIELD, classInternalName, treeCompiler.createJavaSymbolName (symbol), "Llisp/Symbol;"));
+	    il.add (new FieldInsnNode (GETFIELD, classInternalName, javaName.createJavaSymbolName (symbol), "Llisp/Symbol;"));
 	    il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false));
 
 	    final LabelNode ll = new LabelNode ();
