@@ -159,6 +159,30 @@ public class Interpreter extends Definer
             throws ClassNotFoundException, InstantiationException, IllegalAccessException
     {
 	final Class<?> cls = Class.forName (className);
+	return newFunction (cls, args);
+	// if (args.length > 0)
+	// {
+	// final Constructor<?>[] constructors = cls.getDeclaredConstructors ();
+	// for (final Constructor<?> c : constructors)
+	// {
+	// try
+	// {
+	// final Object result = c.newInstance (args);
+	// return result;
+	// }
+	// catch (final InstantiationException | IllegalArgumentException |
+	// InvocationTargetException
+	// | IllegalAccessException x)
+	// {
+	// }
+	// }
+	// }
+	// return cls.newInstance ();
+    }
+
+    @DefineLisp (name = "new")
+    public Object newFunction (final Class<?> cls, final Object... args) throws InstantiationException, IllegalAccessException
+    {
 	if (args.length > 0)
 	{
 	    final Constructor<?>[] constructors = cls.getDeclaredConstructors ();

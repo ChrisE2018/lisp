@@ -44,6 +44,7 @@
 
 (new "lisp.cc.CompilerPrimitives")
 (new "lisp.cc.DefclassPrimitives")
+(new "lisp.cc.DefclassTesting")
 (new "lisp.cc.DefinePrimitives")
 (new "lisp.cc.VerifyPrimitives")
 

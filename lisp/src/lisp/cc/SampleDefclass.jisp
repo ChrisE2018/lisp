@@ -8,17 +8,16 @@
 	 (constructor ()
 	 	(access public)
 	 	(throws java.lang.Error)
-	 	(printf "init called%n")
+	 	(printf "init default called%n")
+	 	)
+	 (constructor (int:x)
+	 	(access public)
+	 	(throws java.lang.Error)
+	 	(printf "init int called%n")
 	 	)
 	 (method foo ()
 	 	(access public)
 	 	;(throws java.lang.Error)
-	 	;(printf "foo")
-	 	;(+ 3 4)
-	 	;7
-	 	;"alpha"
-	 	;(rem 9 5)
-	 	;"alpha"
 	 	(printf "foo called%n")
 	 	(+ 3 4)
 	 	)

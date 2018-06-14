@@ -1,16 +1,16 @@
 
 package lisp.cc;
 
-import java.lang.reflect.*;
+import java.io.StringWriter;
 import java.util.List;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 import org.objectweb.asm.*;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
 import lisp.LispList;
 import lisp.Symbol;
+import lisp.cc4.Optimizer;
 import lisp.eval.*;
 import lisp.util.LogString;
 
@@ -43,7 +43,9 @@ public class DefclassPrimitives extends Definer
     // staticCode:
     //
     // Annotations
-    private final int api = Opcodes.ASM5;
+
+    private final int asmApi = Opcodes.ASM5;
+    private final int bytecodeVersion = Opcodes.V1_5;
 
     /**
      * Primitive function to define a class. This is intended to be a primitive special form version
@@ -79,11 +81,10 @@ public class DefclassPrimitives extends Definer
     {
 	try
 	{
-	    final int asmVersion = Opcodes.V1_5;
 	    // The class access, class name, superclass and interfaces need to be determined before
 	    // we can visit the class node
 	    final LispClassLoader classLoader = new LispClassLoader ();
-	    final Defclass defclass = new Defclass (api, classLoader, name, clauses);
+	    final Defclass defclass = new Defclass (asmApi, classLoader, name, clauses);
 	    final int accessCode = defclass.getClassAccess ();
 	    final String classSimpleName = defclass.getClassSimpleName ();
 	    final Type classType = defclass.getClassType ();
@@ -91,20 +92,35 @@ public class DefclassPrimitives extends Definer
 	    final String superClassInternalName = superClassType.getInternalName ();
 	    LOGGER.info (new LogString ("Defclass %s extends %s", classSimpleName, superClassType.getClassName ()));
 	    final String classInternalName = classType.getInternalName ();
-	    final String classBinaryName = classType.getClassName (); // Uses dots
+	    // final String classBinaryName = classType.getClassName (); // Uses dots
+	    final String classBinaryName = null; // Must be null or TraceClassVisitor fails
 	    final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
 	    final List<String> interfaceList = defclass.getInterfaces ();
 	    final String[] interfaces = new String[interfaceList.size ()];
 	    interfaceList.toArray (interfaces);
 	    final ClassNode cn = defclass;
-	    cn.visit (asmVersion, accessCode, classInternalName, classBinaryName, superClassInternalName, interfaces);
-	    // defclass.addDefaultInitMethod ();
+	    cn.visit (bytecodeVersion, accessCode, classInternalName, classBinaryName, superClassInternalName, interfaces);
 	    defclass.addSampleAdditionMethod ();
 	    cn.visitEnd ();
 	    // optimizers here
-	    // cn.accept (new PrintBytecodeClassAdaptor (Compiler.ASM_VERSION, null, new
-	    // StringWriter ()));
-	    cn.accept (cw);
+	    final Logger pbl = Logger.getLogger (PrintBytecodeClassAdaptor.class.getName ());
+	    final boolean optimize = Symbol.named ("system", "optimize").getBooleanValue (true);
+	    final boolean printBytecode = pbl.isLoggable (Level.INFO);
+
+	    // Form chain
+	    ClassVisitor cv = cw;
+	    if (printBytecode)
+	    {
+		cv = new PrintBytecodeClassAdaptor (asmApi, cv, new StringWriter ());
+	    }
+	    if (optimize)
+	    {
+		cv = new Optimizer (Compiler.ASM_VERSION, cv);
+	    }
+	    // Put code into init method to initialize fields and quoted data
+	    cv = defclass.new InitModifierClassVisitor (cv);
+	    cn.accept (cv);
+
 	    final byte[] b = cw.toByteArray ();
 	    final Class<?> c = classLoader.defineClass (classBinaryName, b);
 	    LOGGER.info (new LogString ("Compiled %s as %s", classSimpleName, c));
@@ -116,35 +132,6 @@ public class DefclassPrimitives extends Definer
 	    e.printStackTrace ();
 	}
 	return null;
-    }
-
-    @DefineLisp
-    public void dd (final Class<?> c)
-    {
-	LOGGER.info (new LogString ("List of Declared Methods"));
-	for (final Method method : c.getDeclaredMethods ())
-	{
-	    LOGGER.info (new LogString ("* Method: %s", method));
-	}
-	LOGGER.info ("");
-    }
-
-    @DefineLisp
-    public void tc (final Class<?> c) throws InstantiationException, IllegalAccessException, NoSuchMethodException,
-            SecurityException, IllegalArgumentException, InvocationTargetException
-    {
-	final Object calc = c.newInstance ();
-	final Method add = c.getMethod ("add", int.class, int.class);
-	System.out.println ("2 + 2 = " + add.invoke (calc, 2, 2));
-    }
-
-    @DefineLisp
-    public void tc (final Class<?> c, final int a, final int b) throws InstantiationException, IllegalAccessException,
-            NoSuchMethodException, SecurityException, IllegalArgumentException, InvocationTargetException
-    {
-	final Object calc = c.newInstance ();
-	final Method add = c.getMethod ("add", int.class, int.class);
-	System.out.printf ("%s + %s = %s%n", a, b, add.invoke (calc, a, b));
     }
 
     @Override

@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
+import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
@@ -316,31 +317,140 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	final InsnList il = mn.instructions;
 	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
 	il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false));
-	addHiddenConstructorSteps (il);
+	// addHiddenConstructorSteps (il);
 	// TODO compile the rest of the method here
 	// TODO Need to determine symbol/quoted references produced by the following and include
-	// them in
-	// hidden constructor steps
-	// final Map<Symbol, LocalBinding> locals = new LinkedHashMap<Symbol, LocalBinding> ();
-	// for (int i = 0; i < arguments.size (); i++)
-	// {
-	// final Symbol arg = NameSpec.getVariableName (arguments.get (i));
-	// final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
-	// locals.put (arg, new LocalBinding (arg, argClass, i + 1));
-	// }
-	// // Should pass mn to the TreeCompilerContext so it can get at the method locals.
-	// final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn,
-	// locals);
-	// for (int i = 0; i < bodyForms.size (); i++)
-	// {
-	// final Object expr = bodyForms.get (i);
-	// final CompileResultSet resultClass = context.compile (expr, false);
-	// context.convert (resultClass, void.class, false, false);
-	// }
+	// them in hidden constructor steps
+	final Map<Symbol, LocalBinding> locals = new LinkedHashMap<Symbol, LocalBinding> ();
+	for (int i = 0; i < arguments.size (); i++)
+	{
+	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
+	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
+	    locals.put (arg, new LocalBinding (arg, argClass, i + 1));
+	}
+	// Should pass mn to the TreeCompilerContext so it can get at the method locals.
+	final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
+	for (int i = 0; i < bodyForms.size (); i++)
+	{
+	    final Object expr = bodyForms.get (i);
+	    final CompileResultSet resultClass = context.compile (expr, false);
+	    context.convert (resultClass, void.class, false, false);
+	}
 	il.add (new InsnNode (Opcodes.RETURN));
 	methods.add (mn);
 	hasConstructor = true;
     }
+
+    class InitModifierClassVisitor extends ClassVisitor
+    {
+	public InitModifierClassVisitor (final ClassVisitor classVisitor)
+	{
+	    super (Defclass.super.api, classVisitor);
+	}
+
+	@Override
+	public MethodVisitor visitMethod (final int methodAccess, final String methodName, final String descriptor,
+	        final String methodSignature, final String[] exceptions)
+	{
+	    return new AdviceAdapter (api, super.visitMethod (methodAccess, methodName, descriptor, methodSignature, exceptions),
+	            methodAccess, methodName, descriptor)
+	    {
+		@Override
+		protected void onMethodEnter ()
+		{
+		    if (methodName.equals ("<init>"))
+		    {
+			mv.visitInsn (NOP);
+			addHiddenConstructorSteps (mv);
+			mv.visitInsn (NOP);
+		    }
+		}
+
+		@Override
+		protected void onMethodExit (final int opcode)
+		{
+		    // if (methodName.equals ("<init>"))
+		    // {
+		    // mv.visitInsn (NOP);
+		    // }
+		}
+	    };
+	}
+    }
+
+    private void addHiddenConstructorSteps (final MethodVisitor mv)
+    {
+	final String classInternalName = getClassType ().getInternalName ();
+
+	if (!symbolReferences.isEmpty ())
+	{
+	    final Type stringType = Type.getType (String.class);
+	    final Type symbolType = Type.getType (Symbol.class);
+	    final String symbolTypeDescriptor = symbolType.getDescriptor ();
+	    // Create initialization code for all required symbols.
+	    for (final Symbol symbol : symbolReferences)
+	    {
+		final String javaSymbolName = javaName.createJavaSymbolName (symbol);
+		mv.visitVarInsn (ALOAD, 0);
+		mv.visitVarInsn (ALOAD, 0);
+		mv.visitLdcInsn (symbol.getPackage ().getName ());
+		mv.visitLdcInsn (symbol.getName ());
+		mv.visitMethodInsn (INVOKESPECIAL, classInternalName, "getSymbol",
+		        Type.getMethodDescriptor (symbolType, stringType, stringType), false);
+		mv.visitFieldInsn (PUTFIELD, classInternalName, javaSymbolName, symbolTypeDescriptor);
+
+		LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaSymbolName, symbol));
+	    }
+	}
+	if (!quotedReferences.isEmpty ())
+	{
+	    final Type classLoaderType = Type.getType (classLoader.getClass ());
+	    final String classLoaderInternalName = classLoaderType.getInternalName ();
+	    final String mapMethodDescriptor = Type.getMethodDescriptor (OBJECT_TYPE, OBJECT_TYPE);
+	    // Create initialization code for all required quoted data.
+	    for (final Entry<String, Object> entry : quotedReferences.entrySet ())
+	    {
+		// (define foo () (quote bar))
+		mv.visitVarInsn (ALOAD, 0);
+		mv.visitInsn (DUP);
+		mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
+		mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
+		mv.visitTypeInsn (CHECKCAST, classLoaderInternalName);
+		mv.visitMethodInsn (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;", false);
+
+		final String reference = entry.getKey ();
+		final Object quoted = entry.getValue ();
+		mv.visitLdcInsn (reference);
+		mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", mapMethodDescriptor, true);
+		final Type quotedType = Type.getType (quoted.getClass ());
+		final String typeDescriptor = quotedType.getDescriptor ();
+		mv.visitTypeInsn (CHECKCAST, quotedType.getInternalName ());
+		mv.visitFieldInsn (PUTFIELD, classInternalName, reference, typeDescriptor);
+	    }
+	}
+    }
+    // @Override
+    // public MethodVisitor visitMethod (final int access, final String name, final String
+    // descriptor, final String signature,
+    // final String[] exceptions)
+    // {
+    // return new AdviceAdapter (api, super.visitMethod (access, name, descriptor, signature,
+    // exceptions), access, name,
+    // descriptor)
+    // {
+    // @Override
+    // protected void onMethodEnter ()
+    // {
+    // mv.visitInsn (NOP);
+    // }
+    //
+    // @Override
+    // protected void onMethodExit (final int opcode)
+    // {
+    // mv.visitInsn (NOP);
+    // }
+    // };
+    // }
 
     private void addHiddenConstructorSteps (final InsnList il)
     {
@@ -576,7 +686,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	final InsnList il = mn.instructions;
 	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
 	il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false));
-	addHiddenConstructorSteps (il);
+	// addHiddenConstructorSteps (il);
 	il.add (new InsnNode (Opcodes.RETURN));
 	methods.add (mn);
 	hasConstructor = true;
