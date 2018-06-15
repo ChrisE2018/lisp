@@ -49,10 +49,10 @@ public class TreeCompilerContext implements Opcodes
     private final int argumentCount;
 
     // Can we use mn.locals instead of our own structure?
-    private final Map<Symbol, LocalBinding> locals;
+    private final Map<Symbol, LexicalBinding> locals;
 
     public TreeCompilerContext (final TreeCompilerInterface treeCompiler, final Class<?> returnClass, final MethodNode mn,
-            final Map<Symbol, LocalBinding> locals)
+            final Map<Symbol, LexicalBinding> locals)
     {
 	this.treeCompiler = treeCompiler;
 	this.returnClass = returnClass;
@@ -77,8 +77,8 @@ public class TreeCompilerContext implements Opcodes
 	final int index = lvl.size () + argumentCount + 1;
 	final LocalVariableNode local = new LocalVariableNode (name, descriptor, signature, start, end, index);
 	lvl.add (local);
-	final Map<Symbol, LocalBinding> newLocals = new HashMap<Symbol, LocalBinding> (locals);
-	newLocals.put (var, new LocalBinding (var, varClass, index));
+	final Map<Symbol, LexicalBinding> newLocals = new HashMap<Symbol, LexicalBinding> (locals);
+	newLocals.put (var, new LexicalBinding (var, varClass, index));
 	return new TreeCompilerContext (treeCompiler, returnClass, mn, newLocals);
     }
 
@@ -87,7 +87,7 @@ public class TreeCompilerContext implements Opcodes
     {
 	// CONSIDER Can we use mn.locals instead of our own structure?
 	final List<LocalVariableNode> lvl = mn.localVariables;
-	final Map<Symbol, LocalBinding> newLocals = new HashMap<Symbol, LocalBinding> (locals);
+	final Map<Symbol, LexicalBinding> newLocals = new HashMap<Symbol, LexicalBinding> (locals);
 	for (final Entry<Symbol, Class<?>> entry : bindings.entrySet ())
 	{
 	    final Symbol var = entry.getKey ();
@@ -101,12 +101,12 @@ public class TreeCompilerContext implements Opcodes
 	    final int index = lvl.size () + argumentCount + 1;
 	    final LocalVariableNode local = new LocalVariableNode (name, descriptor, signature, start, end, index);
 	    lvl.add (local);
-	    newLocals.put (var, new LocalBinding (var, varClass, index));
+	    newLocals.put (var, new LexicalBinding (var, varClass, index));
 	}
 	return new TreeCompilerContext (treeCompiler, returnClass, mn, newLocals);
     }
 
-    public LocalBinding getLocalVariableBinding (final Symbol var)
+    public LexicalBinding getLocalVariableBinding (final Symbol var)
     {
 	return locals.get (var);
     }
@@ -121,7 +121,7 @@ public class TreeCompilerContext implements Opcodes
 	return il;
     }
 
-    public Map<Symbol, LocalBinding> getLocals ()
+    public Map<Symbol, LexicalBinding> getLocals ()
     {
 	return locals;
     }
@@ -549,7 +549,7 @@ public class TreeCompilerContext implements Opcodes
 	if (locals.containsKey (symbol))
 	{
 	    // Reference to a local lexical variable
-	    final LocalBinding lb = locals.get (symbol);
+	    final LexicalBinding lb = locals.get (symbol);
 	    final int localRef = lb.getLocalRef ();
 	    final Type varType = lb.getType ();
 	    il.add (new VarInsnNode (varType.getOpcode (ILOAD), localRef));

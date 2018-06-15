@@ -7,7 +7,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.Symbol;
-import lisp.cc.LocalBinding;
+import lisp.cc.LexicalBinding;
 
 public interface CompilerGenerator
 {
@@ -36,13 +36,13 @@ public interface CompilerGenerator
     public int getMethodArgIndex (Symbol symbol);
 
     /** Get binding information about a local variable. */
-    public LocalBinding getLocalVariableBinding (Symbol symbol);
+    public LexicalBinding getLocalVariableBinding (Symbol symbol);
 
     /** Get the current local binding context. */
-    public Map<Symbol, LocalBinding> getLocalBindingContext ();
+    public Map<Symbol, LexicalBinding> getLocalBindingContext ();
 
     /** Set the current local binding context. */
-    public void setLocalBindingContext (Map<Symbol, LocalBinding> variableMap);
+    public void setLocalBindingContext (Map<Symbol, LexicalBinding> variableMap);
 
     /**
      * Compile a single expression and leave the value on top of the stack. This is the primary

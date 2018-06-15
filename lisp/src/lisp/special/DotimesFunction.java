@@ -44,7 +44,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	final LispList control = expression.getSublist (1);
 	final Symbol var = control.head (); // always an int, not need to declare
 	final TreeCompilerContext innerContext = context.bindVariable (var, int.class);
-	final LocalBinding binding = innerContext.getLocalVariableBinding (var);
+	final LexicalBinding binding = innerContext.getLocalVariableBinding (var);
 	final int countRef = binding.getLocalRef ();
 	innerContext.add (new InsnNode (ICONST_0));
 	innerContext.add (new VarInsnNode (ISTORE, countRef));
@@ -96,8 +96,8 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	// Leave repeat count on the stack
 
 	// Put iteration number into local variable
-	final Map<Symbol, LocalBinding> savedLocalVariableMap = generator.getLocalBindingContext ();
-	final Map<Symbol, LocalBinding> localVariableMap = new LinkedHashMap<Symbol, LocalBinding> (savedLocalVariableMap);
+	final Map<Symbol, LexicalBinding> savedLocalVariableMap = generator.getLocalBindingContext ();
+	final Map<Symbol, LexicalBinding> localVariableMap = new LinkedHashMap<Symbol, LexicalBinding> (savedLocalVariableMap);
 	generator.setLocalBindingContext (localVariableMap);
 	// Create a local variable to hold the iteration number.
 	// This is always stored in boxed format so body code can reference it.
@@ -105,7 +105,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	final Type type = Boxer.INTEGER_TYPE;
 	final int iterationRef = mv.newLocal (type);
 	final Symbol var = (Symbol)control.get (0);
-	final LocalBinding lb = new LocalBinding (var, Integer.class, iterationRef);
+	final LexicalBinding lb = new LexicalBinding (var, Integer.class, iterationRef);
 	localVariableMap.put (var, lb);
 	mv.visitInsn (ICONST_0);
 	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);

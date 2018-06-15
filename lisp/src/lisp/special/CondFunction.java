@@ -195,11 +195,11 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 
 	// Store as an object until return time
 	final int resultRef = mv.newLocal (Boxer.OBJECT_TYPE);
-	final LocalBinding lb = new LocalBinding (var, Object.class, resultRef);
+	final LexicalBinding lb = new LexicalBinding (var, Object.class, resultRef);
 
-	final Map<Symbol, LocalBinding> savedBindings = generator.getLocalBindingContext ();
+	final Map<Symbol, LexicalBinding> savedBindings = generator.getLocalBindingContext ();
 	// final Map<Symbol, LocalBinding> savedBindings = localVariableMap;
-	final Map<Symbol, LocalBinding> localVariableMap = new HashMap<Symbol, LocalBinding> (savedBindings);
+	final Map<Symbol, LexicalBinding> localVariableMap = new HashMap<Symbol, LexicalBinding> (savedBindings);
 	localVariableMap.put (var, lb);
 	generator.setLocalBindingContext (localVariableMap);
 	generator.pushDefaultValue (mv, Object.class, false);

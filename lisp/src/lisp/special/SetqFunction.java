@@ -36,7 +36,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	final Symbol symbol = (Symbol)expression.get (1);
-	final LocalBinding lb = context.getLocalVariableBinding (symbol);
+	final LexicalBinding lb = context.getLocalVariableBinding (symbol);
 	if (lb != null)
 	{
 	    // The following code will generate ISTORE/ILOAD which is optimized away.
@@ -103,7 +103,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	// (define foo (x) (setq a x))
 	// (define foo (x) (let ((a 3)) (setq a (+ a x)) a))
 	final Symbol symbol = (Symbol)expr.get (1);
-	final LocalBinding lb = generator.getLocalVariableBinding (symbol);
+	final LexicalBinding lb = generator.getLocalVariableBinding (symbol);
 	if (lb != null)
 	{
 	    LOGGER.finer (new LogString ("Setq local %s (%d)", symbol, lb));
@@ -123,7 +123,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     }
 
     /** Compile a setq that modifies a local variable. */
-    private void compileLocalSetq (final CompilerGenerator generator, final GeneratorAdapter mv, final LocalBinding lb,
+    private void compileLocalSetq (final CompilerGenerator generator, final GeneratorAdapter mv, final LexicalBinding lb,
             final Object expr, final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	final int localRef = lb.getLocalRef ();

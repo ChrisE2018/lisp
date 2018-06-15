@@ -276,11 +276,11 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     private MethodNode getCompiledMethod ()
     {
 	final MethodNode mn = new MethodNode (ACC_PUBLIC, methodName, getMethodSignature (), null, null);
-	final Map<Symbol, LocalBinding> locals = new LinkedHashMap<Symbol, LocalBinding> ();
+	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
 	for (int i = 0; i < methodArgs.size (); i++)
 	{
 	    final Symbol arg = methodArgs.get (i);
-	    locals.put (arg, new LocalBinding (arg, methodArgClasses.get (i), i + 1));
+	    locals.put (arg, new LexicalBinding (arg, methodArgClasses.get (i), i + 1));
 	}
 	// Should pass mn to the TreeCompilerContext so it can get at the method locals.
 	final TreeCompilerContext context = new TreeCompilerContext (this, methodReturnClass, mn, locals);

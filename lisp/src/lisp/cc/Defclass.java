@@ -273,14 +273,14 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 
 	// Compile the rest of the method here
 	final InsnList il = mn.instructions;
-	final Map<Symbol, LocalBinding> locals = new LinkedHashMap<Symbol, LocalBinding> ();
+	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
 	// Define 'this' as a local variable
-	locals.put (THIS_SYMBOL, new LocalBinding (THIS_SYMBOL, superclass, 0));
+	locals.put (THIS_SYMBOL, new LexicalBinding (THIS_SYMBOL, superclass, 0));
 	for (int i = 0; i < arguments.size (); i++)
 	{
 	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
 	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
-	    locals.put (arg, new LocalBinding (arg, argClass, i + 1));
+	    locals.put (arg, new LexicalBinding (arg, argClass, i + 1));
 	}
 	// Pass mn to the TreeCompilerContext so it can get at the method locals.
 	final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
@@ -448,14 +448,14 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	}
 	final LispList bodyForms = body.subList (headerCount);
 	// bodyForms is the rest of the code
-	final Map<Symbol, LocalBinding> locals = new LinkedHashMap<Symbol, LocalBinding> ();
+	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
 	// Define 'this' as a local variable
-	locals.put (THIS_SYMBOL, new LocalBinding (THIS_SYMBOL, superclass, 0));
+	locals.put (THIS_SYMBOL, new LexicalBinding (THIS_SYMBOL, superclass, 0));
 	for (int i = 0; i < arguments.size (); i++)
 	{
 	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
 	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
-	    locals.put (arg, new LocalBinding (arg, argClass, i + 1));
+	    locals.put (arg, new LexicalBinding (arg, argClass, i + 1));
 	}
 	// Pass mn to the TreeCompilerContext so it can get at the method locals.
 	final TreeCompilerContext context = new TreeCompilerContext (this, valueClass, mn, locals);

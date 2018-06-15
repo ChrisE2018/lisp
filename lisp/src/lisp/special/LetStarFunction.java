@@ -64,7 +64,7 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 	    final CompileResultSet valueResult = innerContext.compile (valueExpression, true);
 	    innerContext.convert (valueResult, varClass, false, false);
 	    innerContext = innerContext.bindVariable (varName, varClass);
-	    final LocalBinding binding = innerContext.getLocalVariableBinding (varName);
+	    final LexicalBinding binding = innerContext.getLocalVariableBinding (varName);
 	    final int varRef = binding.getLocalRef ();
 	    innerContext.add (new VarInsnNode (varType.getOpcode (ISTORE), varRef));
 	}
@@ -92,8 +92,8 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 
 	// Compile expression values onto the stack in order
 	// Bind the variables as each value is computed
-	final Map<Symbol, LocalBinding> savedLocalVariableMap = generator.getLocalBindingContext ();
-	final Map<Symbol, LocalBinding> localVariableMap = new LinkedHashMap<Symbol, LocalBinding> (savedLocalVariableMap);
+	final Map<Symbol, LexicalBinding> savedLocalVariableMap = generator.getLocalBindingContext ();
+	final Map<Symbol, LexicalBinding> localVariableMap = new LinkedHashMap<Symbol, LexicalBinding> (savedLocalVariableMap);
 	generator.setLocalBindingContext (localVariableMap);
 	final LispList args = (LispList)e.get (1);
 	for (final Object clause : args)
@@ -106,7 +106,7 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 	    generator.compileExpression (mv, c.get (1), varClass, false, false);
 	    final int localRef = mv.newLocal (varType);
 	    mv.storeLocal (localRef);
-	    final LocalBinding lb = new LocalBinding (var, varClass, localRef);
+	    final LexicalBinding lb = new LexicalBinding (var, varClass, localRef);
 	    localVariableMap.put (var, lb);
 	}
 

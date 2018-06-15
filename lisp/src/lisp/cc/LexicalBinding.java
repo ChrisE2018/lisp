@@ -10,14 +10,14 @@ import lisp.Symbol;
  *
  * @author cre
  */
-public class LocalBinding
+public class LexicalBinding
 {
     private final Symbol variable;
     private final Class<?> varClass;
     private final int localRef;
     private final Type type;
 
-    public LocalBinding (final Symbol variable, final Class<?> varClass, final int localRef)
+    public LexicalBinding (final Symbol variable, final Class<?> varClass, final int localRef)
     {
 	this.variable = variable;
 	this.varClass = varClass;

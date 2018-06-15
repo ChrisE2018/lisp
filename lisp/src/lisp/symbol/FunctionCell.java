@@ -12,7 +12,7 @@ import java.util.function.Predicate;
 import org.objectweb.asm.tree.ClassNode;
 
 import lisp.*;
-import lisp.cc.LocalBinding;
+import lisp.cc.LexicalBinding;
 import lisp.eval.LexicalContext;
 import lisp.util.MultiMap;
 
@@ -115,7 +115,7 @@ public abstract class FunctionCell implements Describer
      * @param locals The current binding context.
      * @param expression The expression that will be evaluated.
      */
-    public Overload selectMethod (final Map<Symbol, LocalBinding> locals, final LispList expression)
+    public Overload selectMethod (final Map<Symbol, LexicalBinding> locals, final LispList expression)
     {
 	final List<Class<?>> arguments = new ArrayList<Class<?>> ();
 	for (int i = 1; i < expression.size (); i++)
@@ -166,7 +166,7 @@ public abstract class FunctionCell implements Describer
      *
      * @param expression The expression that will be evaluated.
      */
-    private Class<?> predictResultClass (final Map<Symbol, LocalBinding> locals, final Object expression)
+    private Class<?> predictResultClass (final Map<Symbol, LexicalBinding> locals, final Object expression)
     {
 	if (expression instanceof List)
 	{
@@ -191,7 +191,7 @@ public abstract class FunctionCell implements Describer
 	    if (locals.containsKey (var))
 	    {
 		// Reference to a local lexical variable
-		final LocalBinding lb = locals.get (var);
+		final LexicalBinding lb = locals.get (var);
 		return lb.getVariableClass ();
 	    }
 	    else if (var.is ("true") || var.is ("t") || var.is ("false") || var.is ("f"))
@@ -226,7 +226,7 @@ public abstract class FunctionCell implements Describer
      * @param locals The current binding context.
      * @param expression The expression that will be evaluated.
      */
-    private Class<?> getResultClass (final Map<Symbol, LocalBinding> locals, final LispList expression)
+    private Class<?> getResultClass (final Map<Symbol, LexicalBinding> locals, final LispList expression)
     {
 	if (overloads.size () > 0)
 	{

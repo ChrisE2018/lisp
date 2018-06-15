@@ -40,7 +40,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
      */
     private final Map<String, Object> quotedReferences;
 
-    private Map<Symbol, LocalBinding> localVariableMap = new LinkedHashMap<Symbol, LocalBinding> ();
+    private Map<Symbol, LexicalBinding> localVariableMap = new LinkedHashMap<Symbol, LexicalBinding> ();
 
     public CompileClassAdaptor_v3 (final ClassVisitor cv, final Type shellClassType, final Class<?> returnClass,
             final String methodName, final LispList methodArgs, final LispList methodBody,
@@ -95,21 +95,21 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 
     /** Get binding information about a local variable. */
     @Override
-    public LocalBinding getLocalVariableBinding (final Symbol symbol)
+    public LexicalBinding getLocalVariableBinding (final Symbol symbol)
     {
 	return localVariableMap.get (symbol);
     }
 
     /** Get the current local binding context. */
     @Override
-    public Map<Symbol, LocalBinding> getLocalBindingContext ()
+    public Map<Symbol, LexicalBinding> getLocalBindingContext ()
     {
 	return localVariableMap;
     }
 
     /** Set the current local binding context. */
     @Override
-    public void setLocalBindingContext (final Map<Symbol, LocalBinding> variableMap)
+    public void setLocalBindingContext (final Map<Symbol, LexicalBinding> variableMap)
     {
 	localVariableMap = variableMap;
     }
@@ -433,7 +433,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	{
 	    // Reference to a local lexical variable
 	    // If we can determine the type, use that information.
-	    final LocalBinding lb = localVariableMap.get (symbol);
+	    final LexicalBinding lb = localVariableMap.get (symbol);
 	    final int localRef = lb.getLocalRef ();
 	    mv.loadLocal (localRef);
 	    final Class<?> fromClass = lb.getClass ();
