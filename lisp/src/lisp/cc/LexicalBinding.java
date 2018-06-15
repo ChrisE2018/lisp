@@ -45,6 +45,13 @@ public class LexicalBinding
 	return type;
     }
 
+    // abstract public void loadValue (final InsnList il);
+    // abstract public void loadValue (final GeneratorAdapter mv);
+    // abstract public void loadValue (final TreeCompilerContext context);
+    // abstract public void store (final TreeCompilerContext context);
+    // abstract public void store (final GeneratorAdapter mv);
+    // abstract public void increment (final TreeCompilerContext context);
+
     @Override
     public String toString ()
     {
