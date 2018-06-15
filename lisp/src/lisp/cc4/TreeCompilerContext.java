@@ -268,6 +268,8 @@ public class TreeCompilerContext implements Opcodes
     {
 	if (expression instanceof List)
 	{
+	    // FIXME This fails if the expression starts with a method
+	    // Try: 'java.lang.String.format
 	    return compileFunctionCall ((LispList)expression, resultDesired);
 	}
 	else if (resultDesired)
@@ -393,7 +395,7 @@ public class TreeCompilerContext implements Opcodes
 	// (define foo (a b) (rem a b))
 
 	final Symbol symbol = expression.head ();
-	LOGGER.info (new LogString ("Optimized call to %s using %s", symbol, objectMethod));
+	LOGGER.fine (new LogString ("Optimized call to %s using %s", symbol, objectMethod));
 
 	// If we are compiling for speed and can assume that the current definition won't
 	// change, then compile a direct call to the current function method.
@@ -439,7 +441,7 @@ public class TreeCompilerContext implements Opcodes
 	// (define foo (a b) (+ a b))
 
 	final Symbol symbol = expression.head ();
-	LOGGER.info (new LogString ("Optimized call to %s using %s", symbol, objectMethod));
+	LOGGER.fine (new LogString ("Optimized call to %s using %s", symbol, objectMethod));
 
 	final Label l1 = new Label ();
 	add (new LabelNode (l1));
