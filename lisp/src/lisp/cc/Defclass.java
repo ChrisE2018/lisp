@@ -275,12 +275,12 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	final InsnList il = mn.instructions;
 	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
 	// Define 'this' as a local variable
-	locals.put (THIS_SYMBOL, new LexicalBinding (THIS_SYMBOL, superclass, 0));
+	locals.put (THIS_SYMBOL, new LexicalVariable (THIS_SYMBOL, superclass, 0));
 	for (int i = 0; i < arguments.size (); i++)
 	{
 	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
 	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
-	    locals.put (arg, new LexicalBinding (arg, argClass, i + 1));
+	    locals.put (arg, new LexicalVariable (arg, argClass, i + 1));
 	}
 	// Pass mn to the TreeCompilerContext so it can get at the method locals.
 	final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
@@ -450,12 +450,12 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	// bodyForms is the rest of the code
 	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
 	// Define 'this' as a local variable
-	locals.put (THIS_SYMBOL, new LexicalBinding (THIS_SYMBOL, superclass, 0));
+	locals.put (THIS_SYMBOL, new LexicalVariable (THIS_SYMBOL, superclass, 0));
 	for (int i = 0; i < arguments.size (); i++)
 	{
 	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
 	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
-	    locals.put (arg, new LexicalBinding (arg, argClass, i + 1));
+	    locals.put (arg, new LexicalVariable (arg, argClass, i + 1));
 	}
 	// Pass mn to the TreeCompilerContext so it can get at the method locals.
 	final TreeCompilerContext context = new TreeCompilerContext (this, valueClass, mn, locals);

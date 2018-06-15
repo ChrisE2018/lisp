@@ -78,7 +78,7 @@ public class TreeCompilerContext implements Opcodes
 	final LocalVariableNode local = new LocalVariableNode (name, descriptor, signature, start, end, index);
 	lvl.add (local);
 	final Map<Symbol, LexicalBinding> newLocals = new HashMap<Symbol, LexicalBinding> (locals);
-	newLocals.put (var, new LexicalBinding (var, varClass, index));
+	newLocals.put (var, new LexicalVariable (var, varClass, index));
 	return new TreeCompilerContext (treeCompiler, returnClass, mn, newLocals);
     }
 
@@ -101,7 +101,7 @@ public class TreeCompilerContext implements Opcodes
 	    final int index = lvl.size () + argumentCount + 1;
 	    final LocalVariableNode local = new LocalVariableNode (name, descriptor, signature, start, end, index);
 	    lvl.add (local);
-	    newLocals.put (var, new LexicalBinding (var, varClass, index));
+	    newLocals.put (var, new LexicalVariable (var, varClass, index));
 	}
 	return new TreeCompilerContext (treeCompiler, returnClass, mn, newLocals);
     }
@@ -550,9 +550,10 @@ public class TreeCompilerContext implements Opcodes
 	{
 	    // Reference to a local lexical variable
 	    final LexicalBinding lb = locals.get (symbol);
-	    final int localRef = lb.getLocalRef ();
-	    final Type varType = lb.getType ();
-	    il.add (new VarInsnNode (varType.getOpcode (ILOAD), localRef));
+	    // final int localRef = lb.getLocalRef ();
+	    // final Type varType = lb.getType ();
+	    // il.add (new VarInsnNode (varType.getOpcode (ILOAD), localRef));
+	    lb.loadValue (il);
 	    final Class<?> fromClass = lb.getVariableClass ();
 	    final LabelNode ll = new LabelNode ();
 	    il.add (new JumpInsnNode (GOTO, ll));

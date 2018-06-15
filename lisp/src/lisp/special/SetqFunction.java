@@ -42,7 +42,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    // The following code will generate ISTORE/ILOAD which is optimized away.
 	    // (setq system.removeStoreLoad false) to see it.
 	    // (define foo (int:x) (setq x 3 ) x)
-	    final int localRef = lb.getLocalRef ();
+	    // final int localRef = lb.getLocalRef ();
 	    final Class<?> varClass = lb.getVariableClass ();
 	    final Type varType = lb.getType ();
 	    final CompileResultSet results = context.compile (expression.get (2), true);
@@ -62,7 +62,8 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 		    throw new Error ("Invalid size");
 		}
 	    }
-	    context.add (new VarInsnNode (varType.getOpcode (ISTORE), localRef));
+	    lb.store (context);
+	    // context.add (new VarInsnNode (varType.getOpcode (ISTORE), localRef));
 	    final LabelNode ll = new LabelNode ();
 	    context.add (new JumpInsnNode (GOTO, ll));
 	    return new CompileResultSet (new ExplicitCompileResult (ll, resultDesired ? varClass : void.class));
@@ -126,18 +127,20 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     private void compileLocalSetq (final CompilerGenerator generator, final GeneratorAdapter mv, final LexicalBinding lb,
             final Object expr, final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
-	final int localRef = lb.getLocalRef ();
+	// final int localRef = lb.getLocalRef ();
 	final Class<?> varClass = lb.getVariableClass ();
 	if (valueClass == null)
 	{
 	    generator.compileExpression (mv, expr, varClass, false, false);
-	    mv.storeLocal (localRef);
+	    lb.store (mv);
+	    // mv.storeLocal (localRef);
 	}
 	else
 	{
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    mv.visitInsn (DUP);
-	    mv.storeLocal (localRef);
+	    lb.store (mv);
+	    // mv.storeLocal (localRef);
 	    generator.convert (mv, varClass, valueClass, allowNarrowing, liberalTruth);
 	}
     }

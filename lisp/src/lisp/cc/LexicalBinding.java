@@ -2,55 +2,98 @@
 package lisp.cc;
 
 import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.InsnList;
 
 import lisp.Symbol;
+import lisp.cc4.TreeCompilerContext;
 
 /**
- * Record of a local variable binding or for a method parameter.
+ * Record of a local variable binding. Subclasses define bindings for local variables and fields.
  *
  * @author cre
  */
-public class LexicalBinding
+abstract public class LexicalBinding
 {
+    /** The Lisp name of the variable. */
     private final Symbol variable;
+
+    /** The Java class of the variable data. */
     private final Class<?> varClass;
-    private final int localRef;
+
+    /** The ASM type of the variable data. */
     private final Type type;
 
-    public LexicalBinding (final Symbol variable, final Class<?> varClass, final int localRef)
+    public LexicalBinding (final Symbol variable, final Class<?> varClass)
     {
 	this.variable = variable;
 	this.varClass = varClass;
-	this.localRef = localRef;
 	type = Type.getType (varClass);
     }
 
+    /** The Lisp name of the variable. */
     public Symbol getVariable ()
     {
 	return variable;
     }
 
+    /** The Java class of the variable data. */
     public Class<?> getVariableClass ()
     {
 	return varClass;
     }
 
-    public int getLocalRef ()
-    {
-	return localRef;
-    }
-
+    /** The ASM type of the variable data. */
     public Type getType ()
     {
 	return type;
     }
 
-    // abstract public void loadValue (final InsnList il);
-    // abstract public void loadValue (final GeneratorAdapter mv);
-    // abstract public void loadValue (final TreeCompilerContext context);
-    // abstract public void store (final TreeCompilerContext context);
-    // abstract public void store (final GeneratorAdapter mv);
-    // abstract public void increment (final TreeCompilerContext context);
+    /**
+     * Load value onto the stack by adding instructions.
+     *
+     * @param il The instructions will be added to the end of this list.
+     */
+    abstract public void loadValue (final InsnList il);
+
+    /**
+     * Load value onto the stack.
+     *
+     * @param mv
+     * @Deprecated Only relevant to compiler V3.
+     */
+    @Deprecated
+    abstract public void loadValue (final GeneratorAdapter mv);
+
+    /**
+     * Load value onto the stack.
+     *
+     * @param context The instructions will be added to the end of the context list.
+     */
+    abstract public void loadValue (final TreeCompilerContext context);
+
+    /**
+     * Store top value from the stack.
+     *
+     * @param context The instructions will be added to the end of the context list.
+     */
+    abstract public void store (final TreeCompilerContext context);
+
+    /**
+     * Store top value from the stack.
+     *
+     * @param mv
+     * @Deprecated Only relevant to compiler V3.
+     */
+    @Deprecated
+    abstract public void store (final GeneratorAdapter mv);
+
+    /**
+     * Increment stored value by one.
+     *
+     * @param context The instructions will be added to the end of the context list.
+     */
+    abstract public void increment (final TreeCompilerContext context);
 
     @Override
     public String toString ()
@@ -62,8 +105,6 @@ public class LexicalBinding
 	buffer.append (variable);
 	buffer.append (" ");
 	buffer.append (type);
-	buffer.append (" ");
-	buffer.append (localRef);
 	buffer.append (">");
 	return buffer.toString ();
     }

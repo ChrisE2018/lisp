@@ -45,9 +45,10 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	final Symbol var = control.head (); // always an int, not need to declare
 	final TreeCompilerContext innerContext = context.bindVariable (var, int.class);
 	final LexicalBinding binding = innerContext.getLocalVariableBinding (var);
-	final int countRef = binding.getLocalRef ();
 	innerContext.add (new InsnNode (ICONST_0));
-	innerContext.add (new VarInsnNode (ISTORE, countRef));
+	binding.store (innerContext);
+	// final int countRef = binding.getLocalRef ();
+	// innerContext.add (new VarInsnNode (ISTORE, countRef));
 
 	final Object countExpression = control.get (1);
 	final CompileResultSet repeatCount = context.compile (countExpression, true);
@@ -56,7 +57,8 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	    // Current index is in local, repeat limit is on stack
 	    innerContext.add (l1);
 	    innerContext.add (new InsnNode (DUP));
-	    innerContext.add (new VarInsnNode (ILOAD, countRef));
+	    binding.loadValue (innerContext);
+	    // innerContext.add (new VarInsnNode (ILOAD, countRef));
 	    innerContext.add (new JumpInsnNode (IF_ICMPLT, l0));
 
 	    for (int i = 2; i < expression.size (); i++)
@@ -65,7 +67,8 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 		// Do something with r to throw away garbage if required
 		innerContext.convert (r, void.class, false, false);
 	    }
-	    innerContext.add (new IincInsnNode (countRef, 1));
+	    binding.increment (innerContext);
+	    // innerContext.add (new IincInsnNode (countRef, 1));
 	    innerContext.add (new JumpInsnNode (GOTO, l1));
 
 	}
@@ -105,7 +108,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	final Type type = Boxer.INTEGER_TYPE;
 	final int iterationRef = mv.newLocal (type);
 	final Symbol var = (Symbol)control.get (0);
-	final LexicalBinding lb = new LexicalBinding (var, Integer.class, iterationRef);
+	final LexicalBinding lb = new LexicalVariable (var, Integer.class, iterationRef);
 	localVariableMap.put (var, lb);
 	mv.visitInsn (ICONST_0);
 	mv.visitMethodInsn (INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);

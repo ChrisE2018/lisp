@@ -434,8 +434,9 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    // Reference to a local lexical variable
 	    // If we can determine the type, use that information.
 	    final LexicalBinding lb = localVariableMap.get (symbol);
-	    final int localRef = lb.getLocalRef ();
-	    mv.loadLocal (localRef);
+	    // final int localRef = lb.getLocalRef ();
+	    // mv.loadLocal (localRef);
+	    lb.loadValue (mv);
 	    final Class<?> fromClass = lb.getClass ();
 	    final Class<?> toClass = valueClass;
 	    convert.convert (mv, fromClass, toClass, allowNarrowing, liberalTruth);

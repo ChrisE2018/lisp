@@ -5,7 +5,6 @@ import java.util.*;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.tree.VarInsnNode;
 
 import lisp.LispList;
 import lisp.Symbol;
@@ -70,8 +69,9 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	    final CompileResultSet valueResult = context.compile (valueExpression, true);
 	    context.convert (valueResult, varClass, false, false);
 	    final LexicalBinding binding = innerContext.getLocalVariableBinding (varName);
-	    final int varRef = binding.getLocalRef ();
-	    innerContext.add (new VarInsnNode (varType.getOpcode (ISTORE), varRef));
+	    binding.store (innerContext);
+	    // final int varRef = binding.getLocalRef ();
+	    // innerContext.add (new VarInsnNode (varType.getOpcode (ISTORE), varRef));
 	}
 	for (int i = 2; i < expression.size () - 1; i++)
 	{
@@ -108,7 +108,7 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	    final int localRef = mv.newLocal (varType);
 	    generator.compileExpression (mv, c.get (1), varClass, false, false);
 	    mv.storeLocal (localRef);
-	    final LexicalBinding lb = new LexicalBinding (var, varClass, localRef);
+	    final LexicalBinding lb = new LexicalVariable (var, varClass, localRef);
 	    newLocalVariableMap.put (var, lb);
 	}
 	generator.setLocalBindingContext (newLocalVariableMap);

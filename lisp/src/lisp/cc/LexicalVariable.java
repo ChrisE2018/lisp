@@ -1,7 +1,13 @@
 
 package lisp.cc;
 
+import org.objectweb.asm.*;
+import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.InsnList;
+
 import lisp.Symbol;
+import lisp.asm.instructions.*;
+import lisp.cc4.TreeCompilerContext;
 
 public class LexicalVariable extends LexicalBinding
 {
@@ -9,52 +15,52 @@ public class LexicalVariable extends LexicalBinding
 
     public LexicalVariable (final Symbol variable, final Class<?> varClass, final int localRef)
     {
-	super (variable, varClass, localRef);
+	super (variable, varClass);
 	this.localRef = localRef;
     }
 
-    @Override
+    // @Override
     public int getLocalRef ()
     {
 	return localRef;
     }
 
-    // @Override
-    // public void loadValue (final InsnList il)
-    // {
-    // final Type varType = getType ();
-    // il.add (new VarInsnNode (varType.getOpcode (Opcodes.ILOAD), localRef));
-    // }
+    @Override
+    public void loadValue (final InsnList il)
+    {
+	final Type varType = getType ();
+	il.add (new VarInsnNode (varType.getOpcode (Opcodes.ILOAD), localRef));
+    }
 
-    // @Override
-    // public void loadValue (final GeneratorAdapter mv)
-    // {
-    // mv.loadLocal (localRef);
-    // }
+    @Override
+    public void loadValue (final GeneratorAdapter mv)
+    {
+	mv.loadLocal (localRef);
+    }
 
-    // @Override
-    // public void loadValue (final TreeCompilerContext context)
-    // {
-    // context.add (new VarInsnNode (Opcodes.ILOAD, localRef));
-    // }
+    @Override
+    public void loadValue (final TreeCompilerContext context)
+    {
+	context.add (new VarInsnNode (getType ().getOpcode (Opcodes.ILOAD), localRef));
+    }
 
-    // @Override
-    // public void store (final TreeCompilerContext context)
-    // {
-    // context.add (new VarInsnNode (Opcodes.ISTORE, localRef));
-    // }
+    @Override
+    public void store (final TreeCompilerContext context)
+    {
+	context.add (new VarInsnNode (getType ().getOpcode (Opcodes.ISTORE), localRef));
+    }
 
-    // @Override
-    // public void store (final GeneratorAdapter mv)
-    // {
-    // mv.storeLocal (localRef);
-    // }
+    @Override
+    public void store (final GeneratorAdapter mv)
+    {
+	mv.storeLocal (localRef);
+    }
 
-    // @Override
-    // public void increment (final TreeCompilerContext context)
-    // {
-    // context.add (new IincInsnNode (localRef, 1));
-    // }
+    @Override
+    public void increment (final TreeCompilerContext context)
+    {
+	context.add (new IincInsnNode (localRef, 1));
+    }
 
     @Override
     public String toString ()

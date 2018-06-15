@@ -13,13 +13,7 @@ public class VerifyPrimitives extends Definer
 
     private static int replErrorCount = 0;
 
-    private Symbol verifyPhase = null;
-
-    private boolean stopAtFirstFailure = false;
-
-    private final List<Symbol> verifyFailures = new ArrayList<Symbol> ();
-
-    private long startTime = System.currentTimeMillis ();
+    private static final List<Symbol> verifyFailures = new ArrayList<Symbol> ();
 
     public static void incrementReplErrorCount ()
     {
@@ -49,6 +43,17 @@ public class VerifyPrimitives extends Definer
 	replErrorCount = 0;
 	return value;
     }
+
+    public static List<Symbol> getVerifyFailures ()
+    {
+	return verifyFailures;
+    }
+
+    private boolean stopAtFirstFailure = false;
+
+    private Symbol verifyPhase = null;
+
+    private long startTime = System.currentTimeMillis ();
 
     private int testCount = 0;
     private int passCount = 0;

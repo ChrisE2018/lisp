@@ -8,7 +8,6 @@ import lisp.eval.*;
 
 public class CompilerPrimitives extends Definer
 {
-
     @DefineLisp (special = true)
     public Object analyze (@SuppressWarnings ("unused") final LexicalContext context, final Object nameSpec,
             final LispList methodArgs, final Object... bodyForms)
