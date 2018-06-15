@@ -23,6 +23,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private static final Logger LOGGER = Logger.getLogger (Defclass.class.getName ());
     private static Boxing boxing = new Boxing ();
     private static JavaName javaName = new JavaName ();
+    private static ClassNamed classNamed = new ClassNamed ();
     private static Symbol THIS_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("this");
     private static Symbol SUPER_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("super");
     private static final Type OBJECT_TYPE = Type.getType (Object.class);
@@ -65,6 +66,9 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private Type superclassType = Type.getType (Object.class);
     private final List<Class<?>> interfaceClasses = new ArrayList<Class<?>> ();
     private boolean hasConstructor = false;
+
+    private final Map<Symbol, FieldNode> fieldMap = new HashMap<Symbol, FieldNode> ();
+    private final Map<Symbol, Class<?>> fieldClass = new HashMap<Symbol, Class<?>> ();
 
     public Defclass (final int api, final LispClassLoader classLoader, final String name, final LispList[] members)
     {
@@ -141,6 +145,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 
     private void parse (final LispList[] members)
     {
+	// Process everything except constructor and method members.
+	// Methods generate code that depends on knowing the fields.
 	for (final LispList clause : members)
 	{
 	    final Symbol key = clause.head ();
@@ -162,6 +168,21 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    }
 	    else if (key.is ("constructor"))
 	    {
+	    }
+	    else if (key.is ("method"))
+	    {
+	    }
+	    else
+	    {
+		throw new Error ("Invalid %defclass clause " + key);
+	    }
+	}
+	// Process constructor and method members.
+	for (final LispList clause : members)
+	{
+	    final Symbol key = clause.head ();
+	    if (key.is ("constructor"))
+	    {
 		final LispList arguments = clause.getSublist (1);
 		final LispList body = clause.subList (2);
 		parseConstructorClause (arguments, body);
@@ -174,10 +195,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		final LispList arguments = clause.getSublist (2);
 		final LispList body = clause.subList (3);
 		parseMethodClause (valueClass, methodName, arguments, body);
-	    }
-	    else
-	    {
-		throw new Error ("Invalid %defclass clause " + key);
 	    }
 	}
     }
@@ -204,8 +221,9 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 
     private void parseFieldClause (final LispList clause)
     {
-	final String fieldName = ((Symbol)clause.get (1)).getName ();
-	LOGGER.info (new LogString ("Field: %s", fieldName));
+	final Symbol fName = (Symbol)clause.get (1);
+	final String fieldName = fName.getName ();
+	LOGGER.info (new LogString ("Field: %s", fName));
 	final FieldNode fn = new FieldNode (api, 0, null, null, null, null);
 	fn.name = fieldName;
 	for (int i = 2; i < clause.size (); i++)
@@ -225,9 +243,10 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		else if (key.is ("type"))
 		{
 		    // Clause defines the field data type
-		    final Class<?> dataType = (Class<?>)c.get (1);
+		    final Class<?> dataType = classNamed.getClass (c.get (1));
 		    final Type type = Type.getType (dataType);
 		    fn.desc = type.getDescriptor ();
+		    fieldClass.put (fName, dataType);
 		}
 		else if (key.is ("value"))
 		{
@@ -248,6 +267,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    }
 	}
 	fields.add (fn);
+	fieldMap.put (fName, fn);
     }
 
     private void parseConstructorClause (final LispList arguments, final LispList body)
@@ -298,24 +318,27 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private LispList addConstructorChain (final MethodNode mn, final LispList bodyForms)
     {
 	final InsnList il = mn.instructions;
-	final Object firstForm = bodyForms.get (0);
-	// TODO Need to support explicit calls to super or this constructors.
-	if (firstForm instanceof LispList)
+	if (bodyForms.size () > 0)
 	{
-	    final LispList first = (LispList)firstForm;
-	    if (first.head () == THIS_SYMBOL)
+	    final Object firstForm = bodyForms.get (0);
+	    // TODO Need to support explicit calls to super or this constructors.
+	    if (firstForm instanceof LispList)
 	    {
-		// FIXME Compile call to another constructor
-		il.add (new VarInsnNode (Opcodes.ALOAD, 0));
-		il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, classType.getInternalName (), "<init>", "()V", false));
-		return bodyForms.subList (1);
-	    }
-	    else if (first.head () == SUPER_SYMBOL)
-	    {
-		// FIXME Compile call to superclass constructor
-		il.add (new VarInsnNode (Opcodes.ALOAD, 0));
-		il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", "()V", false));
-		return bodyForms.subList (1);
+		final LispList first = (LispList)firstForm;
+		if (first.head () == THIS_SYMBOL)
+		{
+		    // FIXME Compile call to another constructor
+		    il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+		    il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, classType.getInternalName (), "<init>", "()V", false));
+		    return bodyForms.subList (1);
+		}
+		else if (first.head () == SUPER_SYMBOL)
+		{
+		    // FIXME Compile call to superclass constructor
+		    il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+		    il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", "()V", false));
+		    return bodyForms.subList (1);
+		}
 	    }
 	}
 	// Currently just calls default Object constructor.
@@ -456,6 +479,13 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
 	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
 	    locals.put (arg, new LexicalVariable (arg, argClass, i + 1));
+	}
+	for (final Entry<Symbol, FieldNode> entry : fieldMap.entrySet ())
+	{
+	    final Symbol fName = entry.getKey ();
+	    // final FieldNode field = entry.getValue ();
+	    final Class<?> fClass = fieldClass.get (fName);
+	    locals.put (fName, new LexicalField (fName, fClass, classType));
 	}
 	// Pass mn to the TreeCompilerContext so it can get at the method locals.
 	final TreeCompilerContext context = new TreeCompilerContext (this, valueClass, mn, locals);

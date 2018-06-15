@@ -1,7 +1,7 @@
 
 package lisp.cc;
 
-import org.objectweb.asm.*;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.InsnList;
 
@@ -28,8 +28,7 @@ public class LexicalVariable extends LexicalBinding
     @Override
     public void loadValue (final InsnList il)
     {
-	final Type varType = getType ();
-	il.add (new VarInsnNode (varType.getOpcode (Opcodes.ILOAD), localRef));
+	il.add (new VarInsnNode (getType ().getOpcode (Opcodes.ILOAD), localRef));
     }
 
     @Override

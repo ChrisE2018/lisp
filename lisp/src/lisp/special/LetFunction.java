@@ -25,7 +25,6 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	for (int i = 0; i < bindings.size (); i++)
 	{
 	    final LispList clause = (LispList)bindings.get (i);
-	    // varSpec = clause.get (0)
 	    visitor.visitValue (clause.get (1));
 	}
 	for (int i = 2; i < expression.size () - 1; i++)
@@ -64,14 +63,11 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	    final Object varSpec = clause.get (0);
 	    final Symbol varName = NameSpec.getVariableName (varSpec);
 	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);
-	    final Type varType = Type.getType (varClass);
 	    final Object valueExpression = clause.get (1);
 	    final CompileResultSet valueResult = context.compile (valueExpression, true);
 	    context.convert (valueResult, varClass, false, false);
 	    final LexicalBinding binding = innerContext.getLocalVariableBinding (varName);
 	    binding.store (innerContext);
-	    // final int varRef = binding.getLocalRef ();
-	    // innerContext.add (new VarInsnNode (varType.getOpcode (ISTORE), varRef));
 	}
 	for (int i = 2; i < expression.size () - 1; i++)
 	{

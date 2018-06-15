@@ -406,11 +406,11 @@ public class TreeCompilerContext implements Opcodes
 	final Object target = objectMethod.getObject ();
 	final Method method = objectMethod.getMethod ();
 
-	final Symbol reference = symbol.gensym ();
+	// final Symbol reference = symbol.gensym ();
 	final String methodSignature = objectMethod.getSignature ();
 	final Type objectType = Type.getType (target.getClass ());
 	final String objectClassInternalName = objectType.getInternalName ();
-	treeCompiler.addQuotedConstant (reference, target);
+	final Symbol reference = treeCompiler.addQuotedConstant (target);
 	add (new VarInsnNode (ALOAD, 0));
 	final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 	add (new FieldInsnNode (GETFIELD, classInternalName, reference.getName (), objectType.getDescriptor ()));
@@ -448,11 +448,11 @@ public class TreeCompilerContext implements Opcodes
 	final Object target = objectMethod.getObject ();
 	final Method method = objectMethod.getMethod ();
 
-	final Symbol reference = symbol.gensym ();
+	// final Symbol reference = symbol.gensym ();
 	final String methodSignature = objectMethod.getSignature ();
 	final Type objectType = Type.getType (target.getClass ());
 	final String objectClassInternalName = objectType.getInternalName ();
-	treeCompiler.addQuotedConstant (reference, target);
+	final Symbol reference = treeCompiler.addQuotedConstant (target);
 	add (new VarInsnNode (ALOAD, 0));
 	final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 	add (new FieldInsnNode (GETFIELD, classInternalName, reference.getName (), objectType.getDescriptor ()));

@@ -3,10 +3,12 @@ package lisp.cc4;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
+import lisp.Symbol;
 import lisp.cc.Compiler;
 
 public class CompileLoaderV4 extends ClassLoader implements Compiler
@@ -21,7 +23,7 @@ public class CompileLoaderV4 extends ClassLoader implements Compiler
      * to a file and load it later, the quoted structure would have to be reconstructed at load
      * time.
      */
-    private final Map<String, Object> quotedReferences = new HashMap<String, Object> ();
+    private final Map<Symbol, Object> quotedReferences = new LinkedHashMap<Symbol, Object> ();
     private ClassReader cr = null;
     private ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
     private ClassVisitor cv = cw;
@@ -106,6 +108,16 @@ public class CompileLoaderV4 extends ClassLoader implements Compiler
      * would required building the structure in the init method when the class is loaded.
      */
     public Map<String, Object> getQuotedReferences ()
+    {
+	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
+	{
+	    result.put (entry.getKey ().getName (), entry.getValue ());
+	}
+	return result;
+    }
+
+    public Map<Symbol, Object> getQuotedData ()
     {
 	return quotedReferences;
     }

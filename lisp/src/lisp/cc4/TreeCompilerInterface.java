@@ -14,13 +14,6 @@ import lisp.Symbol;
  */
 public interface TreeCompilerInterface
 {
-    // /**
-    // * The return value class of the function currently being compiled.
-    // *
-    // * @return The class of the function return value.
-    // */
-    // public Class<?> getMethodReturnClass ();
-
     /** The ASM type of the class enclosing the function currently being compiled. */
     public Type getClassType ();
 
@@ -32,14 +25,6 @@ public interface TreeCompilerInterface
      * message. globalReferences does nothing else.
      */
     public void addGlobalReference (final Symbol symbol);
-
-    /**
-     * Arrange for a field to be added to the compilation class containing quoted data.
-     *
-     * @param reference The symbol that will name the data field.
-     * @param quoted The quoted data to be stored.
-     */
-    public void addQuotedConstant (final Symbol reference, final Object quoted);
 
     /**
      * Arrange for a field to be added to the compilation class containing quoted data.

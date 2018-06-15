@@ -1,23 +1,30 @@
 
 package lisp.cc;
 
+import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.InsnList;
 
 import lisp.Symbol;
+import lisp.asm.instructions.*;
 import lisp.cc4.TreeCompilerContext;
 
 public class LexicalField extends LexicalBinding
 {
-    public LexicalField (final Symbol variable, final Class<?> varClass)
+    private final Type classType;
+
+    public LexicalField (final Symbol variable, final Class<?> varClass, final Type classType)
     {
 	super (variable, varClass);
+	this.classType = classType;
     }
 
     @Override
     public void loadValue (final InsnList il)
     {
-	throw new Error ("NYI");
+	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+	final String desc = getType ().getDescriptor ();
+	il.add (new FieldInsnNode (Opcodes.GETFIELD, classType.getInternalName (), getVariable ().getName (), desc));
     }
 
     @Override
@@ -35,7 +42,9 @@ public class LexicalField extends LexicalBinding
     @Override
     public void store (final TreeCompilerContext context)
     {
-	throw new Error ("NYI");
+	context.add (new VarInsnNode (Opcodes.ALOAD, 0));
+	final String desc = getType ().getDescriptor ();
+	context.add (new FieldInsnNode (Opcodes.PUTFIELD, classType.getInternalName (), getVariable ().getName (), desc));
     }
 
     @Override

@@ -29,7 +29,7 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     private final Class<?> methodReturnClass;
     private final String methodName;
     private final LispList methodBody;
-    private final Map<String, Object> quotedReferences;
+    private final Map<Symbol, Object> quotedReferences;
 
     private final List<Symbol> methodArgs = new ArrayList<Symbol> ();
     private final List<Class<?>> methodArgClasses = new ArrayList<Class<?>> ();
@@ -49,7 +49,7 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	this.methodReturnClass = methodReturnClass;
 	this.methodName = methodName;
 	this.methodBody = methodBody;
-	quotedReferences = compileLoader.getQuotedReferences ();
+	quotedReferences = compileLoader.getQuotedData ();
 
 	returnType = Type.getType (methodReturnClass);
 	for (final Object arg : methodArgs)
@@ -110,24 +110,20 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     /**
      * Arrange for a field to be added to the compilation class containing quoted data.
      *
-     * @param reference The symbol that will name the data field.
-     * @param quoted The quoted data to be stored.
-     */
-    public void addQuotedConstant (final Symbol reference, final Object quoted)
-    {
-	quotedReferences.put (reference.getName (), quoted);
-    }
-
-    /**
-     * Arrange for a field to be added to the compilation class containing quoted data.
-     *
      * @param quoted The quoted data to be stored.
      * @return The symbol that will name the data field. This is a generated unique symbol.
      */
     public Symbol addQuotedConstant (final Object quoted)
     {
+	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
+	{
+	    if (quoted.equals (entry.getValue ()))
+	    {
+		return entry.getKey ();
+	    }
+	}
 	final Symbol reference = QUOTE_SYMBOL.gensym ();
-	quotedReferences.put (reference.getName (), quoted);
+	quotedReferences.put (reference, quoted);
 	return reference;
     }
 
@@ -144,9 +140,9 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	    final String typeDescriptor = Type.getType (symbol.getClass ()).getDescriptor ();
 	    fields.add (new FieldNode (ACC_PRIVATE, javaName.createJavaSymbolName (symbol), typeDescriptor, null, null));
 	}
-	for (final Entry<String, Object> entry : quotedReferences.entrySet ())
+	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
 	{
-	    final String reference = entry.getKey ();
+	    final String reference = entry.getKey ().getName ();
 	    final Object quoted = entry.getValue ();
 	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
 	    fields.add (new FieldNode (ACC_PRIVATE, reference, typeDescriptor, null, null));
@@ -199,7 +195,7 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 
 	    LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaSymbolName, symbol));
 	}
-	for (final Entry<String, Object> entry : quotedReferences.entrySet ())
+	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
 	{
 	    // (define foo () (quote bar))
 	    il.add (new VarInsnNode (ALOAD, 0));
@@ -213,7 +209,7 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	    il.add (new MethodInsnNode (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;",
 	            false));
 
-	    final String reference = entry.getKey ();
+	    final String reference = entry.getKey ().getName ();
 	    final Object quoted = entry.getValue ();
 	    il.add (new LdcInsnNode (reference));
 	    il.add (new MethodInsnNode (INVOKEINTERFACE, "java/util/Map", "get",

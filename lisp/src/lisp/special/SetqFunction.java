@@ -42,7 +42,6 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    // The following code will generate ISTORE/ILOAD which is optimized away.
 	    // (setq system.removeStoreLoad false) to see it.
 	    // (define foo (int:x) (setq x 3 ) x)
-	    // final int localRef = lb.getLocalRef ();
 	    final Class<?> varClass = lb.getVariableClass ();
 	    final Type varType = lb.getType ();
 	    final CompileResultSet results = context.compile (expression.get (2), true);
@@ -63,7 +62,6 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 		}
 	    }
 	    lb.store (context);
-	    // context.add (new VarInsnNode (varType.getOpcode (ISTORE), localRef));
 	    final LabelNode ll = new LabelNode ();
 	    context.add (new JumpInsnNode (GOTO, ll));
 	    return new CompileResultSet (new ExplicitCompileResult (ll, resultDesired ? varClass : void.class));
@@ -95,6 +93,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	}
     }
 
+    /** For compiler v3 */
     @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expr,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
@@ -127,20 +126,17 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     private void compileLocalSetq (final CompilerGenerator generator, final GeneratorAdapter mv, final LexicalBinding lb,
             final Object expr, final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
-	// final int localRef = lb.getLocalRef ();
 	final Class<?> varClass = lb.getVariableClass ();
 	if (valueClass == null)
 	{
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    lb.store (mv);
-	    // mv.storeLocal (localRef);
 	}
 	else
 	{
 	    generator.compileExpression (mv, expr, varClass, false, false);
 	    mv.visitInsn (DUP);
 	    lb.store (mv);
-	    // mv.storeLocal (localRef);
 	    generator.convert (mv, varClass, valueClass, allowNarrowing, liberalTruth);
 	}
     }
@@ -149,7 +145,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     private void compileArgSetq (final CompilerGenerator generator, final GeneratorAdapter mv, final Symbol symbol,
             final Object expr, final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
-	// TODO If we can determine the type, use that information.
+	// If we can determine the type, use that information.
 	final int localRef = generator.getMethodArgIndex (symbol);
 	final Class<?> varClass = generator.getMethodArgClass (symbol);
 	if (valueClass == null)
@@ -170,8 +166,8 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
             final Object valueExpr, final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	generator.addSymbolReference (symbol);
-	// TODO If the symbol valueCell is constant, use the current value.
-	// TODO If the valueCell is a TypedValueCell, use the type information.
+	// If the symbol valueCell is constant, use the current value.
+	// If the valueCell is a TypedValueCell, use the type information.
 	mv.visitVarInsn (ALOAD, 0);
 	final String classInternalName = generator.getClassType ().getInternalName ();
 	mv.visitFieldInsn (GETFIELD, classInternalName, generator.createJavaSymbolName (symbol), "Llisp/Symbol;");
