@@ -69,6 +69,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 
     private final Map<Symbol, FieldNode> fieldMap = new HashMap<Symbol, FieldNode> ();
     private final Map<Symbol, Class<?>> fieldClass = new HashMap<Symbol, Class<?>> ();
+    private final Map<Symbol, Object> fieldValues = new HashMap<Symbol, Object> ();
 
     public Defclass (final int api, final LispClassLoader classLoader, final String name, final LispList[] members)
     {
@@ -265,6 +266,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		    {
 			// The init method must have code to compute and store this value
 		    }
+		    fieldValues.put (fName, value);
 		}
 	    }
 	}
@@ -304,8 +306,25 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
 	    locals.put (arg, new LexicalVariable (arg, argClass, i + 1));
 	}
-	// Pass mn to the TreeCompilerContext so it can get at the method locals.
 	final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
+	for (final Entry<Symbol, Object> entry : fieldValues.entrySet ())
+	{
+	    final Symbol fName = entry.getKey ();
+	    final Object value = entry.getValue ();
+	    final Class<?> fClass = fieldClass.get (fName);
+	    final LexicalField lf = new LexicalField (fName, fClass, classType);
+	    final CompileResultSet cr = context.compile (value, true);
+	    context.convert (cr, fClass, false, false);
+	    lf.store (context);
+	}
+	for (final Entry<Symbol, FieldNode> entry : fieldMap.entrySet ())
+	{
+	    final Symbol fName = entry.getKey ();
+	    // final FieldNode field = entry.getValue ();
+	    final Class<?> fClass = fieldClass.get (fName);
+	    locals.put (fName, new LexicalField (fName, fClass, classType));
+	}
+	// Pass mn to the TreeCompilerContext so it can get at the method locals.
 	for (int i = 0; i < bodyForms.size (); i++)
 	{
 	    final Object expr = bodyForms.get (i);

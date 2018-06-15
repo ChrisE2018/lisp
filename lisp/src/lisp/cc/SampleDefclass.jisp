@@ -4,7 +4,10 @@
 	 (field blah 
 	 	(access private)
 	 	(type int)
-	 	(value 3))
+	 	(value 3)
+	 	(getter getBlah)
+	 	(putter putBlah)
+	 	)
 	 (constructor ()
 	 	(access public)
 	 	)
