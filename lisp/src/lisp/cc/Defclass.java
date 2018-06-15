@@ -24,6 +24,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private static Boxing boxing = new Boxing ();
     private static JavaName javaName = new JavaName ();
     private static Symbol THIS_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("this");
+    private static Symbol SUPER_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("super");
     private static final Type OBJECT_TYPE = Type.getType (Object.class);
 
     private static final Object[][] CLASS_MODIFIERS_DATA =
@@ -72,7 +73,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	classSimpleName = name;
 	classType = Type.getType ("Llisp/cc/" + classSimpleName + ";");
 	parse (members);
-	// parse2 (members);
 	if (!hasConstructor)
 	{
 	    addDefaultInitMethod ();
@@ -84,8 +84,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    for (final Symbol symbol : symbolReferences)
 	    {
 		final String typeDescriptor = Type.getType (symbol.getClass ()).getDescriptor ();
-		fields.add (
-		        new FieldNode (hiddenFieldAccess, javaName.createJavaSymbolName (symbol), typeDescriptor, null, null));
+		final String javaSymbolName = javaName.createJavaSymbolName (symbol);
+		fields.add (new FieldNode (hiddenFieldAccess, javaSymbolName, typeDescriptor, null, null));
 	    }
 	    final MethodNode symbolMethod = getGetSymbolMethod ();
 	    methods.add (symbolMethod);
@@ -182,50 +182,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	}
     }
 
-    // private void parse2 (final LispList[] members)
-    // {
-    // for (final LispList clause : members)
-    // {
-    // final Symbol key = clause.head ();
-    // // if (key.is ("access"))
-    // // {
-    // // parseAccessClause (clause);
-    // // }
-    // // else if (key.is ("extends"))
-    // // {
-    // // parseExtendsClause (clause);
-    // // }
-    // // else if (key.is ("implements"))
-    // // {
-    // // parseImplementsClause (clause);
-    // // }
-    // // else if (key.is ("field"))
-    // // {
-    // // parseFieldClause (clause);
-    // // }
-    // // else
-    // if (key.is ("constructor"))
-    // {
-    // final LispList arguments = clause.getSublist (1);
-    // final LispList body = clause.subList (2);
-    // parseConstructorClause (arguments, body);
-    // }
-    // // else if (key.is ("method"))
-    // // {
-    // // final Object nameSpec = clause.get (1);
-    // // final Class<?> valueClass = NameSpec.getVariableClass (nameSpec);
-    // // final Symbol methodName = NameSpec.getVariableName (nameSpec);
-    // // final LispList arguments = clause.getSublist (2);
-    // // final LispList body = clause.subList (3);
-    // // parseMethodClause (valueClass, methodName, arguments, body);
-    // // }
-    // // else
-    // // {
-    // // throw new Error ("Invalid %defclass clause " + key);
-    // // }
-    // }
-    // }
-
     private void parseAccessClause (final LispList clause)
     {
 	for (int i = 1; i < clause.size (); i++)
@@ -308,17 +264,15 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    processMethodHeader (mn, CONSTRUCTOR_MODIFIERS, body.getSublist (i));
 	    headerCount++;
 	}
-	final InsnList il = mn.instructions;
-	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
-	// TODO Need to support explicit calls to super or this constructors.
-	// Currently just calls default Object constructor.
-	il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false));
+	final LispList bodyForms = addConstructorChain (mn, body.subList (headerCount));
+
+	// bodyForms is the rest of the code
+
 	// The AdviceAdapter will add hidden instructions here to initialize symbol and quoted
 	// fields.
 
-	final LispList bodyForms = body.subList (headerCount);
-	// bodyForms is the rest of the code
 	// Compile the rest of the method here
+	final InsnList il = mn.instructions;
 	final Map<Symbol, LocalBinding> locals = new LinkedHashMap<Symbol, LocalBinding> ();
 	// Define 'this' as a local variable
 	locals.put (THIS_SYMBOL, new LocalBinding (THIS_SYMBOL, superclass, 0));
@@ -339,6 +293,35 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	il.add (new InsnNode (Opcodes.RETURN));
 	methods.add (mn);
 	hasConstructor = true;
+    }
+
+    private LispList addConstructorChain (final MethodNode mn, final LispList bodyForms)
+    {
+	final InsnList il = mn.instructions;
+	final Object firstForm = bodyForms.get (0);
+	// TODO Need to support explicit calls to super or this constructors.
+	if (firstForm instanceof LispList)
+	{
+	    final LispList first = (LispList)firstForm;
+	    if (first.head () == THIS_SYMBOL)
+	    {
+		// FIXME Compile call to another constructor
+		il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+		il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, classType.getInternalName (), "<init>", "()V", false));
+		return bodyForms.subList (1);
+	    }
+	    else if (first.head () == SUPER_SYMBOL)
+	    {
+		// FIXME Compile call to superclass constructor
+		il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+		il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", "()V", false));
+		return bodyForms.subList (1);
+	    }
+	}
+	// Currently just calls default Object constructor.
+	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+	il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", "()V", false));
+	return bodyForms;
     }
 
     class InitModifierClassVisitor extends ClassVisitor
@@ -429,87 +412,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    }
 	}
     }
-    // @Override
-    // public MethodVisitor visitMethod (final int access, final String name, final String
-    // descriptor, final String signature,
-    // final String[] exceptions)
-    // {
-    // return new AdviceAdapter (api, super.visitMethod (access, name, descriptor, signature,
-    // exceptions), access, name,
-    // descriptor)
-    // {
-    // @Override
-    // protected void onMethodEnter ()
-    // {
-    // mv.visitInsn (NOP);
-    // }
-    //
-    // @Override
-    // protected void onMethodExit (final int opcode)
-    // {
-    // mv.visitInsn (NOP);
-    // }
-    // };
-    // }
-
-    // private void addHiddenConstructorSteps (final InsnList il)
-    // {
-    // final String classInternalName = getClassType ().getInternalName ();
-    //
-    // if (!symbolReferences.isEmpty ())
-    // {
-    // final Type stringType = Type.getType (String.class);
-    // final Type symbolType = Type.getType (Symbol.class);
-    // final String symbolTypeDescriptor = symbolType.getDescriptor ();
-    // // Create initialization code for all required symbols.
-    // for (final Symbol symbol : symbolReferences)
-    // {
-    // final String javaSymbolName = javaName.createJavaSymbolName (symbol);
-    // il.add (new VarInsnNode (ALOAD, 0));
-    // il.add (new VarInsnNode (ALOAD, 0));
-    // il.add (new LdcInsnNode (symbol.getPackage ().getName ()));
-    // il.add (new LdcInsnNode (symbol.getName ()));
-    // il.add (new MethodInsnNode (INVOKESPECIAL, classInternalName, "getSymbol",
-    // Type.getMethodDescriptor (symbolType, stringType, stringType), false));
-    // il.add (new FieldInsnNode (PUTFIELD, classInternalName, javaSymbolName,
-    // symbolTypeDescriptor));
-    //
-    // LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaSymbolName, symbol));
-    // }
-    // }
-    // if (!quotedReferences.isEmpty ())
-    // {
-    // final Type classLoaderType = Type.getType (classLoader.getClass ());
-    // final String classLoaderInternalName = classLoaderType.getInternalName ();
-    // final String mapMethodDescriptor = Type.getMethodDescriptor (OBJECT_TYPE, OBJECT_TYPE);
-    // // Create initialization code for all required quoted data.
-    // for (final Entry<String, Object> entry : quotedReferences.entrySet ())
-    // {
-    // // (define foo () (quote bar))
-    // il.add (new VarInsnNode (ALOAD, 0));
-    // il.add (new InsnNode (DUP));
-    // il.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Object", "getClass",
-    // "()Ljava/lang/Class;", false));
-    // il.add (new MethodInsnNode (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader",
-    // "()Ljava/lang/ClassLoader;",
-    // false));
-    // il.add (new TypeInsnNode (CHECKCAST, classLoaderInternalName));
-    // il.add (new MethodInsnNode (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences",
-    // "()Ljava/util/Map;",
-    // false));
-    //
-    // final String reference = entry.getKey ();
-    // final Object quoted = entry.getValue ();
-    // il.add (new LdcInsnNode (reference));
-    // il.add (new MethodInsnNode (INVOKEINTERFACE, "java/util/Map", "get", mapMethodDescriptor,
-    // true));
-    // final Type quotedType = Type.getType (quoted.getClass ());
-    // final String typeDescriptor = quotedType.getDescriptor ();
-    // il.add (new TypeInsnNode (CHECKCAST, quotedType.getInternalName ()));
-    // il.add (new FieldInsnNode (PUTFIELD, classInternalName, reference, typeDescriptor));
-    // }
-    // }
-    // }
 
     /** Create a method to locate a Symbol at runtime. */
     private MethodNode getGetSymbolMethod ()

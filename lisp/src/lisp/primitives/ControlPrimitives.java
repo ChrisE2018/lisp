@@ -1,6 +1,8 @@
 
 package lisp.primitives;
 
+import java.lang.reflect.Constructor;
+
 import lisp.eval.*;
 
 /** Control primitives that don't require special compiler support. */
@@ -37,6 +39,39 @@ public class ControlPrimitives extends Definer
     public void exit ()
     {
 	System.exit (0);
+    }
+
+    @DefineLisp (name = "throw")
+    public void throwFunction (final Class<? extends Throwable> exception, final String format, final Object... args)
+            throws Throwable
+    {
+	final String message = String.format (format, args);
+	final Constructor<? extends Throwable> c = exception.getConstructor (String.class);
+	throw c.newInstance (message);
+    }
+
+    @DefineLisp (name = "throw")
+    public void throwFunction (final Class<? extends Throwable> exception, final String message) throws Throwable
+    {
+	final Constructor<? extends Throwable> c = exception.getConstructor (String.class);
+	throw c.newInstance (message);
+    }
+
+    @DefineLisp (name = "rethrow")
+    public void rethrowFunction (final Throwable cause, final Class<? extends Throwable> exception, final String format,
+            final Object... args) throws Throwable
+    {
+	final String message = String.format (format, args);
+	final Constructor<? extends Throwable> c = exception.getConstructor (String.class, Throwable.class);
+	throw c.newInstance (message, cause);
+    }
+
+    @DefineLisp (name = "rethrow")
+    public void rethrowFunction (final Throwable cause, final Class<? extends Throwable> exception, final String message)
+            throws Throwable
+    {
+	final Constructor<? extends Throwable> c = exception.getConstructor (String.class, Throwable.class);
+	throw c.newInstance (message, cause);
     }
 
     @Override

@@ -12,6 +12,7 @@
 	 	)
 	 (constructor (int:x)
 	 	(access public)
+	 	;(this)
 	 	(throws java.lang.Error)
 	 	(printf "init int called%n")
 	 	)

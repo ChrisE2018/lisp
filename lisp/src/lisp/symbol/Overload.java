@@ -42,8 +42,7 @@ public class Overload implements Describer
      */
     boolean valid = true;
 
-    Overload (final Object object, final Method method, final String documentation, final Object source,
-            final ClassNode cn)
+    Overload (final Object object, final Method method, final String documentation, final Object source, final ClassNode cn)
     {
 	this.object = object;
 	this.method = method;
@@ -101,6 +100,16 @@ public class Overload implements Describer
     {
 	final Class<?>[] myTypes = method.getParameterTypes ();
 	final Class<?>[] otherTypes = otherMethod.getParameterTypes ();
+	if (myTypes.length < otherTypes.length)
+	{
+	    // Prefer fixed argument methods to VarArgs methods.
+	    return true;
+	}
+	else if (otherTypes.length < myTypes.length)
+	{
+	    // Prefer fixed argument methods to VarArgs methods.
+	    return false;
+	}
 	for (int i = 0; i < myTypes.length; i++)
 	{
 	    final Class<?> myType = myTypes[i];
