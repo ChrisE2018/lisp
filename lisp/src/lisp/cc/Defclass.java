@@ -250,14 +250,16 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		}
 		else if (key.is ("value"))
 		{
+		    final Object value = c.get (1);
 		    // This is the initialization form
-		    if (boxing.isBoxedClass (m.getClass ()))
+		    // FIXME The field is not initialialized
+		    if (boxing.isBoxedClass (value.getClass ()))
 		    {
-			fn.value = m;
+			fn.value = value;
 		    }
-		    else if (m instanceof String)
+		    else if (value instanceof String)
 		    {
-			fn.value = m;
+			fn.value = value;
 		    }
 		    else
 		    {

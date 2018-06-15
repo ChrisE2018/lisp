@@ -43,6 +43,7 @@ public class LexicalField extends LexicalBinding
     public void store (final TreeCompilerContext context)
     {
 	context.add (new VarInsnNode (Opcodes.ALOAD, 0));
+	context.add (new InsnNode (Opcodes.SWAP));
 	final String desc = getType ().getDescriptor ();
 	context.add (new FieldInsnNode (Opcodes.PUTFIELD, classType.getInternalName (), getVariable ().getName (), desc));
     }

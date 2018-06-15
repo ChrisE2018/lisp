@@ -97,7 +97,7 @@ public class Boxing
      * @param primitiveClass The class of a any type.
      * @return True if this is a primitive type class.
      */
-    public boolean isBoxedClass (final Class<?> primitiveClass)
+    public boolean isPrimitiveClass (final Class<?> primitiveClass)
     {
 	if (primitiveClass == boolean.class)
 	{
@@ -140,7 +140,7 @@ public class Boxing
      * @param wrapperClass The class of a wrapper type.
      * @return True if this is a wrapper class for a primitive type.
      */
-    public boolean isUnboxedClass (final Class<?> wrapperClass)
+    public boolean isBoxedClass (final Class<?> wrapperClass)
     {
 	if (wrapperClass == Boolean.class)
 	{
