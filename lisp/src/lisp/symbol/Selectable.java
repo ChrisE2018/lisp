@@ -25,21 +25,62 @@ public class Selectable
      */
     public boolean isSelectable (final Method method, final List<Class<?>> arguments)
     {
+	return isSelectable (method.getParameterTypes (), method.isVarArgs (), arguments);
+	// final int actualArgCount = arguments.size ();
+	// final int minimumArgCount = method.getParameterCount () + (method.isVarArgs () ? -1 : 0);
+	// if (actualArgCount < minimumArgCount)
+	// {
+	// return false;
+	// }
+	// if (actualArgCount > minimumArgCount)
+	// {
+	// if (!method.isVarArgs ())
+	// {
+	// return false;
+	// }
+	// }
+	// // Additional filters here.
+	// final Class<?>[] types = method.getParameterTypes ();
+	// for (int i = 0; i < minimumArgCount; i++)
+	// {
+	// final Class<?> argType = types[i]; // What is needed
+	// final Class<?> argClass = arguments.get (i);
+	// if (!assignable.isAssignableFrom (argType, argClass))
+	// {
+	// return false;
+	// }
+	// }
+	// if (actualArgCount > minimumArgCount && method.isVarArgs ())
+	// {
+	// final Class<?> argType = types[minimumArgCount].getComponentType (); // What is needed
+	// for (int i = minimumArgCount; i < arguments.size (); i++)
+	// {
+	// final Class<?> argClass = arguments.get (i);
+	// if (!assignable.isAssignableFrom (argType, argClass))
+	// {
+	// return false;
+	// }
+	// }
+	// }
+	// return true;
+    }
+
+    public boolean isSelectable (final Class<?>[] types, final boolean isVarArgs, final List<Class<?>> arguments)
+    {
 	final int actualArgCount = arguments.size ();
-	final int minimumArgCount = method.getParameterCount () + (method.isVarArgs () ? -1 : 0);
+	final int minimumArgCount = types.length + (isVarArgs ? -1 : 0);
 	if (actualArgCount < minimumArgCount)
 	{
 	    return false;
 	}
 	if (actualArgCount > minimumArgCount)
 	{
-	    if (!method.isVarArgs ())
+	    if (!isVarArgs)
 	    {
 		return false;
 	    }
 	}
 	// Additional filters here.
-	final Class<?>[] types = method.getParameterTypes ();
 	for (int i = 0; i < minimumArgCount; i++)
 	{
 	    final Class<?> argType = types[i]; // What is needed
@@ -49,7 +90,7 @@ public class Selectable
 		return false;
 	    }
 	}
-	if (actualArgCount > minimumArgCount && method.isVarArgs ())
+	if (actualArgCount > minimumArgCount && isVarArgs)
 	{
 	    final Class<?> argType = types[minimumArgCount].getComponentType (); // What is needed
 	    for (int i = minimumArgCount; i < arguments.size (); i++)

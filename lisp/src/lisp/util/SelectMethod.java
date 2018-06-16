@@ -15,6 +15,96 @@ public class SelectMethod
     private static Assignable assignable = new Assignable ();
 
     /**
+     * Determine a constructor to use for a set of arguments.
+     *
+     * @param claz The class to search for a constructor.
+     * @param arguments The classes of the constructor arguments.
+     */
+    public Constructor<?> selectConstructor (final Class<?> claz, final List<Class<?>> arguments)
+    {
+	Constructor<?> selectedConstructor = null;
+	for (final Constructor<?> constructor : claz.getDeclaredConstructors ())
+	{
+	    // if (Modifier.isStatic (constructor.getModifiers ()))
+	    {
+		if (selectable.isSelectable (constructor.getParameterTypes (), constructor.isVarArgs (), arguments))
+		{
+		    if (selectedConstructor == null)
+		    {
+			selectedConstructor = constructor;
+		    }
+		    else if (isBetterThan (selectedConstructor, constructor))
+		    {
+			// Ignore
+		    }
+		    else if (isBetterThan (constructor, selectedConstructor))
+		    {
+			selectedConstructor = constructor;
+		    }
+		    else
+		    {
+			final StringBuilder buffer = new StringBuilder ();
+			buffer.append ("Ambiguous " + claz + " constructor selection for ");
+			buffer.append (arguments);
+			buffer.append (". Both ");
+			buffer.append (methSignature.getArgumentSignature (selectedConstructor));
+			buffer.append (" and ");
+			buffer.append (methSignature.getArgumentSignature (constructor));
+			buffer.append (" apply.");
+			throw new IllegalArgumentException (buffer.toString ());
+		    }
+		}
+	    }
+	}
+	// No search up to superclass
+	return selectedConstructor;
+    }
+
+    /**
+     * Determine a constructor to use for a set of arguments.
+     *
+     * @param claz The class to search for a constructor.
+     * @param arguments The classes of the constructor arguments.
+     */
+    public Class<?>[] selectConstructor (final List<Class<?>[]> constructors, final List<Class<?>> arguments)
+    {
+	Class<?>[] selectedConstructor = null;
+	for (final Class<?>[] constructor : constructors)
+	{
+
+	    if (selectable.isSelectable (constructor, false, arguments))
+	    {
+		if (selectedConstructor == null)
+		{
+		    selectedConstructor = constructor;
+		}
+		else if (isBetterThan (selectedConstructor, constructor))
+		{
+		    // Ignore
+		}
+		else if (isBetterThan (constructor, selectedConstructor))
+		{
+		    selectedConstructor = constructor;
+		}
+		else
+		{
+		    final StringBuilder buffer = new StringBuilder ();
+		    buffer.append ("Ambiguous constructor selection for ");
+		    buffer.append (arguments);
+		    buffer.append (". Both ");
+		    buffer.append (methSignature.getArgumentSignature (selectedConstructor));
+		    buffer.append (" and ");
+		    buffer.append (methSignature.getArgumentSignature (constructor));
+		    buffer.append (" apply.");
+		    throw new IllegalArgumentException (buffer.toString ());
+		}
+	    }
+	}
+	// No search up to superclass
+	return selectedConstructor;
+    }
+
+    /**
      * Determine the overload used when this function is called on an expression. FIXME Special
      * functions need to implement their own version of this.
      *
@@ -202,6 +292,18 @@ public class SelectMethod
     {
 	final Class<?>[] myTypes = method.getParameterTypes ();
 	final Class<?>[] otherTypes = otherMethod.getParameterTypes ();
+	return isBetterThan (myTypes, otherTypes);
+    }
+
+    public boolean isBetterThan (final Constructor<?> method, final Constructor<?> otherMethod)
+    {
+	final Class<?>[] myTypes = method.getParameterTypes ();
+	final Class<?>[] otherTypes = otherMethod.getParameterTypes ();
+	return isBetterThan (myTypes, otherTypes);
+    }
+
+    public boolean isBetterThan (final Class<?>[] myTypes, final Class<?>[] otherTypes)
+    {
 	if (myTypes.length < otherTypes.length)
 	{
 	    // Prefer fixed argument methods to VarArgs methods.

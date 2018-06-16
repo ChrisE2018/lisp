@@ -1,6 +1,7 @@
 
 package lisp.cc;
 
+import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
@@ -24,6 +25,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private static Boxing boxing = new Boxing ();
     private static JavaName javaName = new JavaName ();
     private static ClassNamed classNamed = new ClassNamed ();
+    private static SelectMethod selectMethod = new SelectMethod ();
+    private static MethodSignature methSignature = new MethodSignature ();
     private static Symbol THIS_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("this");
     private static Symbol SUPER_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("super");
     private static final Type OBJECT_TYPE = Type.getType (Object.class);
@@ -76,6 +79,9 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private final Map<Symbol, FieldNode> fieldMap = new HashMap<Symbol, FieldNode> ();
     private final Map<Symbol, Class<?>> fieldClass = new HashMap<Symbol, Class<?>> ();
     private final Map<Symbol, Object> fieldValues = new HashMap<Symbol, Object> ();
+
+    /** For each constructor this contains the classes of the parameters. */
+    private final List<Class<?>[]> constructorParameters = new ArrayList<Class<?>[]> ();
 
     public Defclass (final int api, final LispClassLoader classLoader, final String name, final LispList[] members)
     {
@@ -176,6 +182,10 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    }
 	    else if (key.is ("constructor"))
 	    {
+		// Extract information about constructors so constructor chains can be resolved.
+		final LispList arguments = clause.getSublist (1);
+		final Class<?>[] params = getParameterClasses (arguments);
+		constructorParameters.add (params);
 	    }
 	    else if (key.is ("method"))
 	    {
@@ -309,7 +319,14 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		}
 	    }
 	}
-	final LispList bodyForms = addConstructorChain (mn, body.subList (headerCount));
+	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
+	for (int i = 0; i < arguments.size (); i++)
+	{
+	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
+	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
+	    locals.put (arg, new LexicalVariable (arg, argClass, i + 1));
+	}
+	final LispList bodyForms = addConstructorChain (mn, locals, body.subList (headerCount));
 
 	// bodyForms is the rest of the code
 
@@ -318,15 +335,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 
 	// Compile the rest of the method here
 	final InsnList il = mn.instructions;
-	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
-	// Define 'this' as a local variable
-	locals.put (THIS_SYMBOL, new LexicalVariable (THIS_SYMBOL, superclass, 0));
-	for (int i = 0; i < arguments.size (); i++)
-	{
-	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
-	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
-	    locals.put (arg, new LexicalVariable (arg, argClass, i + 1));
-	}
 	final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
 	if (!referencesThis)
 	{
@@ -342,6 +350,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		lf.store (context);
 	    }
 	}
+	// Create local references for all class fields
 	for (final Entry<Symbol, FieldNode> entry : fieldMap.entrySet ())
 	{
 	    final Symbol fName = entry.getKey ();
@@ -349,6 +358,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    final Class<?> fClass = fieldClass.get (fName);
 	    locals.put (fName, new LexicalField (fName, fClass, classType));
 	}
+	// Define 'this' as a local variable
+	locals.put (THIS_SYMBOL, new LexicalVariable (THIS_SYMBOL, superclass, 0));
 	// Pass mn to the TreeCompilerContext so it can get at the method locals.
 	for (int i = 0; i < bodyForms.size (); i++)
 	{
@@ -361,7 +372,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	hasConstructor = true;
     }
 
-    private LispList addConstructorChain (final MethodNode mn, final LispList bodyForms)
+    private LispList addConstructorChain (final MethodNode mn, final Map<Symbol, LexicalBinding> locals, final LispList bodyForms)
     {
 	final InsnList il = mn.instructions;
 	if (bodyForms.size () > 0)
@@ -371,18 +382,47 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    if (firstForm instanceof LispList)
 	    {
 		final LispList first = (LispList)firstForm;
-		if (first.head () == THIS_SYMBOL)
+		final Symbol h = first.head ();
+		if (h == THIS_SYMBOL)
 		{
-		    // FIXME Compile call to another constructor
+		    // Compile call to another constructor
 		    il.add (new VarInsnNode (Opcodes.ALOAD, 0));
-		    il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, classType.getInternalName (), "<init>", "()V", false));
+
+		    final List<Class<?>> arguments = new ArrayList<Class<?>> ();
+		    for (int i = 1; i < first.size (); i++)
+		    {
+			arguments.add (selectMethod.predictResultClass (locals, first.get (i)));
+		    }
+		    final Class<?>[] constructor = selectMethod.selectConstructor (constructorParameters, arguments);
+		    final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
+		    for (int i = 1; i < first.size (); i++)
+		    {
+			final CompileResultSet cr = context.compile (first.get (i), true);
+			context.convert (cr, constructor[i - 1], false, false);
+		    }
+		    final String cs = methSignature.getArgumentSignature (constructor) + "V";
+		    il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, classType.getInternalName (), "<init>", cs, false));
 		    return bodyForms.subList (1);
 		}
-		else if (first.head () == SUPER_SYMBOL)
+		else if (h == SUPER_SYMBOL)
 		{
-		    // FIXME Compile call to superclass constructor
+		    // Compile call to superclass constructor
 		    il.add (new VarInsnNode (Opcodes.ALOAD, 0));
-		    il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", "()V", false));
+		    final List<Class<?>> arguments = new ArrayList<Class<?>> ();
+		    for (int i = 1; i < first.size (); i++)
+		    {
+			arguments.add (selectMethod.predictResultClass (locals, first.get (i)));
+		    }
+		    final Constructor<?> constructor = selectMethod.selectConstructor (superclass, arguments);
+		    final Class<?>[] params = constructor.getParameterTypes ();
+		    final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
+		    for (int i = 1; i < first.size (); i++)
+		    {
+			final CompileResultSet cr = context.compile (first.get (i), true);
+			context.convert (cr, params[i - 1], false, false);
+		    }
+		    final String cs = methSignature.getArgumentSignature (constructor);
+		    il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", cs, false));
 		    return bodyForms.subList (1);
 		}
 	    }
@@ -391,6 +431,13 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
 	il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", "()V", false));
 	return bodyForms;
+    }
+
+    private List<List<Class<?>>> getConstructorSigs ()
+    {
+	final List<List<Class<?>>> result = new ArrayList<List<Class<?>>> ();
+
+	return result;
     }
 
     class InitModifierClassVisitor extends ClassVisitor
@@ -634,6 +681,16 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    result.add (variable);
 	}
 	return null;
+    }
+
+    private Class<?>[] getParameterClasses (final LispList arguments)
+    {
+	final Class<?>[] result = new Class<?>[arguments.size ()];
+	for (int i = 0; i < arguments.size (); i++)
+	{
+	    result[i] = NameSpec.getVariableClass (arguments.get (i));
+	}
+	return result;
     }
 
     private List<Type> getParameterTypes (final LispList arguments)

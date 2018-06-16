@@ -1,7 +1,7 @@
 
 package lisp.util;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 
 import org.objectweb.asm.Type;
 
@@ -37,9 +37,19 @@ public class MethodSignature
      */
     public String getArgumentSignature (final Method method)
     {
+	return getArgumentSignature (method.getParameterTypes ());
+    }
+
+    public String getArgumentSignature (final Constructor<?> method)
+    {
+	return getArgumentSignature (method.getParameterTypes ());
+    }
+
+    public String getArgumentSignature (final Class<?>[] parameters)
+    {
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append ('(');
-	for (final Class<?> param : method.getParameterTypes ())
+	for (final Class<?> param : parameters)
 	{
 	    final Type type = Type.getType (param);
 	    buffer.append (type.getDescriptor ());
