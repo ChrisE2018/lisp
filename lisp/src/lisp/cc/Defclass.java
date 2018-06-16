@@ -55,7 +55,9 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
          {"protected", Opcodes.ACC_PROTECTED},
          {"default", 0},
          {"abstract", Opcodes.ACC_ABSTRACT},
-         {"final", Opcodes.ACC_FINAL}};
+         {"final", Opcodes.ACC_FINAL},
+         {"synchronized", Opcodes.ACC_SYNCHRONIZED},
+         {"static", Opcodes.ACC_STATIC}};
 
     private static final List<Object[]> CLASS_MODIFIERS = Arrays.asList (CLASS_MODIFIERS_DATA);
     private static final List<Object[]> FIELD_MODIFIERS = Arrays.asList (FIELD_MODIFIERS_DATA);
