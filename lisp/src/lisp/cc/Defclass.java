@@ -47,7 +47,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
          {"private", Opcodes.ACC_PRIVATE},
          {"protected", Opcodes.ACC_PROTECTED},
          {"default", 0},
-         {"final", Opcodes.ACC_FINAL}};
+         {"final", Opcodes.ACC_FINAL},
+         {"static", Opcodes.ACC_STATIC}};
 
     private static final Object[][] METHOD_MODIFIERS_DATA =
         {
