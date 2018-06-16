@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.FieldInsnNode;
 
 import lisp.*;
 import lisp.Symbol;
@@ -291,6 +292,45 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	}
 	fields.add (fn);
 	fieldMap.put (fName, fn);
+	for (int i = 2; i < clause.size (); i++)
+	{
+	    final Object m = clause.get (i);
+	    if (m instanceof LispList)
+	    {
+		final LispList c = (LispList)m;
+		final Symbol key = c.head ();
+		if (key.is ("getter"))
+		{
+		    if (c.size () == 0)
+		    {
+			addGetterMethod (fName);
+		    }
+		    else
+		    {
+			for (int j = 1; j < c.size (); j++)
+			{
+			    final Symbol n = (Symbol)c.get (j);
+			    addGetterMethod (fName, Opcodes.ACC_PUBLIC, n.getName ());
+			}
+		    }
+		}
+		else if (key.is ("setter"))
+		{
+		    if (c.size () == 0)
+		    {
+			addSetterMethod (fName);
+		    }
+		    else
+		    {
+			for (int j = 1; j < c.size (); j++)
+			{
+			    final Symbol n = (Symbol)c.get (j);
+			    addSetterMethod (fName, Opcodes.ACC_PUBLIC, n.getName ());
+			}
+		    }
+		}
+	    }
+	}
     }
 
     private void parseConstructorClause (final LispList arguments, final LispList body)
@@ -739,27 +779,57 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	hasConstructor = true;
     }
 
-    // /** Build empty default constructor */
-    // public void addDefaultInitMethod ()
-    // {
-    // // @see https://dzone.com/articles/fully-dynamic-classes-with-asm
-    // final MethodVisitor con = visitMethod (Opcodes.ACC_PUBLIC, // public method
-    // "<init>", // method name
-    // "()V", // descriptor
-    // null, // signature (null means not generic)
-    // null); // exceptions (array of strings)
-    //
-    // con.visitCode (); // Start the code for this method
-    // con.visitVarInsn (Opcodes.ALOAD, 0); // Load "this" onto the stack
-    // con.visitMethodInsn (Opcodes.INVOKESPECIAL, // Invoke an instance method (non-virtual)
-    // "java/lang/Object", // Class on which the method is defined
-    // "<init>", // Name of the method
-    // "()V", // Descriptor
-    // false); // Is this class an interface?
-    // con.visitInsn (Opcodes.RETURN); // End the constructor method
-    // con.visitMaxs (1, 1); // Specify max stack and local vars
-    // hasConstructor = true;
-    // }
+    private void addGetterMethod (final Symbol field)
+    {
+	final String root = field.getName ();
+	final char ch = root.charAt (0);
+	final String methodName = "get" + Character.toUpperCase (ch) + root.substring (1);
+	addGetterMethod (field, Opcodes.ACC_PUBLIC, methodName);
+    }
+
+    private void addGetterMethod (final Symbol field, final int getterAccess, final String methodName)
+    {
+	final MethodNode mn = new MethodNode ();
+	final FieldNode fn = fieldMap.get (field);
+	final Class<?> cls = fieldClass.get (field);
+	final Type type = Type.getType (cls);
+	mn.access = getterAccess;
+	mn.name = methodName;
+	mn.desc = "()" + type.getDescriptor ();
+	mn.exceptions = new ArrayList<String> ();
+	final InsnList il = mn.instructions;
+	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+	il.add (new FieldInsnNode (Opcodes.GETFIELD, classType.getInternalName (), fn.name, fn.desc));
+	il.add (new InsnNode (type.getOpcode (Opcodes.IRETURN)));
+	methods.add (mn);
+    }
+
+    private void addSetterMethod (final Symbol field)
+    {
+	final String root = field.getName ();
+	final char ch = root.charAt (0);
+	final String methodName = "set" + Character.toUpperCase (ch) + root.substring (1);
+	addSetterMethod (field, Opcodes.ACC_PUBLIC, methodName);
+    }
+
+    private void addSetterMethod (final Symbol field, final int setterAccess, final String methodName)
+    {
+	final MethodNode mn = new MethodNode ();
+	final FieldNode fn = fieldMap.get (field);
+	final Class<?> cls = fieldClass.get (field);
+	final Type type = Type.getType (cls);
+	mn.access = setterAccess;
+	mn.name = methodName;
+	mn.desc = "(" + type.getDescriptor () + ")V";
+	mn.exceptions = new ArrayList<String> ();
+	final InsnList il = mn.instructions;
+	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+	il.add (new VarInsnNode (type.getOpcode (Opcodes.ILOAD), 1));
+	il.add (new FieldInsnNode (Opcodes.PUTFIELD, classType.getInternalName (), fn.name, fn.desc));
+	il.add (new InsnNode (Opcodes.RETURN));
+	methods.add (mn);
+	hasConstructor = true;
+    }
 
     /** Build 'add' method */
     public void addSampleAdditionMethod ()
