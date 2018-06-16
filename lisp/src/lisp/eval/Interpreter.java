@@ -5,6 +5,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.util.List;
+import java.util.logging.*;
 
 import lisp.*;
 import lisp.FileReader;
@@ -18,7 +19,7 @@ import lisp.symbol.FunctionCell;
  */
 public class Interpreter extends Definer
 {
-    // private static final Logger LOGGER = Logger.getLogger (Interpreter.class.getName ());
+    private static final Logger LOGGER = Logger.getLogger (Interpreter.class.getName ());
 
     private static Invoke invoke = new Invoke ();
 
@@ -160,46 +161,48 @@ public class Interpreter extends Definer
     {
 	final Class<?> cls = Class.forName (className);
 	return newFunction (cls, args);
-	// if (args.length > 0)
-	// {
-	// final Constructor<?>[] constructors = cls.getDeclaredConstructors ();
-	// for (final Constructor<?> c : constructors)
-	// {
-	// try
-	// {
-	// final Object result = c.newInstance (args);
-	// return result;
-	// }
-	// catch (final InstantiationException | IllegalArgumentException |
-	// InvocationTargetException
-	// | IllegalAccessException x)
-	// {
-	// }
-	// }
-	// }
-	// return cls.newInstance ();
     }
 
     @DefineLisp (name = "new")
     public Object newFunction (final Class<?> cls, final Object... args) throws InstantiationException, IllegalAccessException
     {
-	if (args.length > 0)
+	final int n = args.length;
+	if (n > 0)
 	{
 	    final Constructor<?>[] constructors = cls.getDeclaredConstructors ();
-	    for (final Constructor<?> c : constructors)
+	    for (final Constructor<?> constructor : constructors)
 	    {
 		try
 		{
-		    final Object result = c.newInstance (args);
-		    return result;
+		    if (constructor.isVarArgs ())
+		    {
+			if (constructor.getParameterCount () - 1 <= n)
+			{
+			    final Object result = constructor.newInstance (args);
+			    return result;
+			}
+		    }
+		    else if (constructor.getParameterCount () == n)
+		    {
+			final Object result = constructor.newInstance (args);
+			return result;
+		    }
 		}
 		catch (final InstantiationException | IllegalArgumentException | InvocationTargetException
 		        | IllegalAccessException x)
 		{
+		    if (LOGGER.isLoggable (Level.FINEST))
+		    {
+			LOGGER.log (Level.FINEST, "Can't instantiate " + cls + " : ", x);
+		    }
 		}
 	    }
+	    throw new InstantiationException ("No " + cls + " constructor found for " + args);
 	}
-	return cls.newInstance ();
+	else
+	{
+	    return cls.newInstance ();
+	}
     }
 
     /**

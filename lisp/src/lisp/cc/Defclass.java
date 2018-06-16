@@ -67,6 +67,12 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private final List<Class<?>> interfaceClasses = new ArrayList<Class<?>> ();
     private boolean hasConstructor = false;
 
+    /**
+     * If a constructor calls 'this' then the object initialization is not required. The signature
+     * of such a constructor is added to this set so it can be skipped by the AdviceAdaptor.
+     */
+    private final Set<String> selfReferentialConstructors = new HashSet<String> ();
+
     private final Map<Symbol, FieldNode> fieldMap = new HashMap<Symbol, FieldNode> ();
     private final Map<Symbol, Class<?>> fieldClass = new HashMap<Symbol, Class<?>> ();
     private final Map<Symbol, Object> fieldValues = new HashMap<Symbol, Object> ();
@@ -103,6 +109,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    fields.add (new FieldNode (hiddenFieldAccess, reference, typeDescriptor, null, null));
 	}
 	classLoader.setQuotedReferences (quotedReferences);
+	LOGGER.info ("defclass " + name);
     }
 
     public String getClassSimpleName ()
@@ -224,7 +231,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     {
 	final Symbol fName = (Symbol)clause.get (1);
 	final String fieldName = fName.getName ();
-	LOGGER.info (new LogString ("Field: %s", fName));
+	LOGGER.fine (new LogString ("Field: %s", fName));
 	final FieldNode fn = new FieldNode (api, 0, null, null, null, null);
 	fn.name = fieldName;
 	for (int i = 2; i < clause.size (); i++)
@@ -276,7 +283,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 
     private void parseConstructorClause (final LispList arguments, final LispList body)
     {
-	LOGGER.info (new LogString ("Constructor: %s", arguments));
+	LOGGER.fine (new LogString ("Constructor: %s", arguments));
 
 	final MethodNode mn = new MethodNode ();
 	mn.name = "<init>";
@@ -298,6 +305,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		if (((List<?>)firstStatement).get (0) == THIS_SYMBOL)
 		{
 		    referencesThis = true;
+		    selfReferentialConstructors.add (mn.desc);
 		}
 	    }
 	}
@@ -404,9 +412,12 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		{
 		    if (methodName.equals ("<init>"))
 		    {
-			// mv.visitInsn (NOP);
-			addHiddenConstructorSteps (mv);
-			// mv.visitInsn (NOP);
+			if (!selfReferentialConstructors.contains (descriptor))
+			{
+			    // mv.visitInsn (NOP);
+			    addHiddenConstructorSteps (mv);
+			    // mv.visitInsn (NOP);
+			}
 		    }
 		}
 
@@ -495,7 +506,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private void parseMethodClause (final Class<?> valueClass, final Symbol methodName, final LispList arguments,
             final LispList body)
     {
-	LOGGER.info (new LogString ("Method: %s %s", methodName, arguments));
+	LOGGER.fine (new LogString ("Method: %s %s", methodName, arguments));
 	final MethodNode mn = new MethodNode ();
 	final Type returnType = Type.getType (valueClass);
 	mn.name = methodName.getName ();
