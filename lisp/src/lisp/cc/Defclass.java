@@ -288,6 +288,19 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    processMethodHeader (mn, CONSTRUCTOR_MODIFIERS, body.getSublist (i));
 	    headerCount++;
 	}
+	final LispList restForms = body.subList (headerCount);
+	boolean referencesThis = false;
+	if (restForms.size () > 0)
+	{
+	    final Object firstStatement = restForms.get (0);
+	    if (firstStatement instanceof List)
+	    {
+		if (((List<?>)firstStatement).get (0) == THIS_SYMBOL)
+		{
+		    referencesThis = true;
+		}
+	    }
+	}
 	final LispList bodyForms = addConstructorChain (mn, body.subList (headerCount));
 
 	// bodyForms is the rest of the code
@@ -307,15 +320,19 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    locals.put (arg, new LexicalVariable (arg, argClass, i + 1));
 	}
 	final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
-	for (final Entry<Symbol, Object> entry : fieldValues.entrySet ())
+	if (!referencesThis)
 	{
-	    final Symbol fName = entry.getKey ();
-	    final Object value = entry.getValue ();
-	    final Class<?> fClass = fieldClass.get (fName);
-	    final LexicalField lf = new LexicalField (fName, fClass, classType);
-	    final CompileResultSet cr = context.compile (value, true);
-	    context.convert (cr, fClass, false, false);
-	    lf.store (context);
+	    // Determine if this constructor calls 'this' and not do this part.
+	    for (final Entry<Symbol, Object> entry : fieldValues.entrySet ())
+	    {
+		final Symbol fName = entry.getKey ();
+		final Object value = entry.getValue ();
+		final Class<?> fClass = fieldClass.get (fName);
+		final LexicalField lf = new LexicalField (fName, fClass, classType);
+		final CompileResultSet cr = context.compile (value, true);
+		context.convert (cr, fClass, false, false);
+		lf.store (context);
+	    }
 	}
 	for (final Entry<Symbol, FieldNode> entry : fieldMap.entrySet ())
 	{

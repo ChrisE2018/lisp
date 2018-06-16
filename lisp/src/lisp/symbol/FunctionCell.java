@@ -14,14 +14,14 @@ import org.objectweb.asm.tree.ClassNode;
 import lisp.*;
 import lisp.cc.LexicalBinding;
 import lisp.eval.LexicalContext;
-import lisp.util.MultiMap;
+import lisp.util.*;
 
 /** Base class of all function cells. */
 public abstract class FunctionCell implements Describer
 {
     private static Applicable applicable = new Applicable ();
     private static Selectable selectable = new Selectable ();
-
+    private static MethodSignature signature = new MethodSignature ();
     /** The symbol this function cell is attached to. */
     private final Symbol symbol;
 
@@ -48,13 +48,14 @@ public abstract class FunctionCell implements Describer
             final ClassNode cn)
     {
 	final Overload newOverload = new Overload (obj, method, documentation, source, cn);
-	final String signature = newOverload.getArgumentSignature ();
+	final String sig = FunctionCell.signature.getArgumentSignature (method);
 	overloads.removeIf (new Predicate<Overload> ()
 	{
 	    @Override
 	    public boolean test (final Overload t)
 	    {
-		final boolean result = t.getArgumentSignature ().equals (signature);
+		final String s2 = FunctionCell.signature.getArgumentSignature (t.getMethod ());
+		final boolean result = s2.equals (sig);
 		if (result)
 		{
 		    // Invalidate the overload that is about to be removed.
@@ -150,9 +151,9 @@ public abstract class FunctionCell implements Describer
 		    buffer.append (" method selection for ");
 		    buffer.append (arguments);
 		    buffer.append (". Both ");
-		    buffer.append (selectedMethod.getArgumentSignature ());
+		    buffer.append (FunctionCell.signature.getArgumentSignature (selectedMethod.getMethod ()));
 		    buffer.append (" and ");
-		    buffer.append (method.getArgumentSignature ());
+		    buffer.append (FunctionCell.signature.getArgumentSignature (m));
 		    buffer.append (" apply.");
 		    throw new IllegalArgumentException (buffer.toString ());
 		}
@@ -226,7 +227,7 @@ public abstract class FunctionCell implements Describer
      * @param locals The current binding context.
      * @param expression The expression that will be evaluated.
      */
-    private Class<?> getResultClass (final Map<Symbol, LexicalBinding> locals, final LispList expression)
+    public Class<?> getResultClass (final Map<Symbol, LexicalBinding> locals, final LispList expression)
     {
 	if (overloads.size () > 0)
 	{
@@ -300,9 +301,9 @@ public abstract class FunctionCell implements Describer
 		    buffer.append (" method selection for ");
 		    buffer.append (arguments);
 		    buffer.append (". Both ");
-		    buffer.append (selectedMethod.getArgumentSignature ());
+		    buffer.append (FunctionCell.signature.getArgumentSignature (selectedMethod.getMethod ()));
 		    buffer.append (" and ");
-		    buffer.append (method.getArgumentSignature ());
+		    buffer.append (FunctionCell.signature.getArgumentSignature (m));
 		    buffer.append (" apply.");
 		    throw new IllegalArgumentException (buffer.toString ());
 		}
