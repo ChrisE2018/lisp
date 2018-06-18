@@ -45,11 +45,6 @@ public class BraceList extends LispList
 	}
     }
 
-    private BraceList requireBraceList (final Object o)
-    {
-	return (BraceList)o;
-    }
-
     /** First element of a list, using standard Lisp terminology. */
     @Override
     public Object car ()

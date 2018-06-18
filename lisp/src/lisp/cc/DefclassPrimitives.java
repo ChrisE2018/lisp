@@ -56,8 +56,9 @@ public class DefclassPrimitives extends Definer
     {
 	try
 	{
+	    final String pkgName = "lisp.cc";
 	    final LispClassLoader classLoader = new LispClassLoader ();
-	    final byte[] b = getDefclassBytecode (classLoader, name, clauses);
+	    final byte[] b = getDefclassBytecode (classLoader, pkgName, name, clauses);
 	    final String classBinaryName = null; // Must be null or TraceClassVisitor fails
 	    final Class<?> c = classLoader.defineClass (classBinaryName, b);
 	    LOGGER.info (new LogString ("Compiled %s as %s", name, c));
@@ -75,28 +76,29 @@ public class DefclassPrimitives extends Definer
 
     @DefineLisp (name = "%compile", special = true)
     public String pctCompileclassForm (@SuppressWarnings ("unused") final LexicalContext context, final String pathname,
-            final Symbol name, final Object... clauses)
+            final String pkgName, final Symbol name, final Object... clauses)
     {
 	final LispList[] cc = new LispList[clauses.length];
 	for (int i = 0; i < clauses.length; i++)
 	{
 	    cc[i] = (LispList)clauses[i];
 	}
-	return compileClass (pathname, name.getName (), cc);
+	return compileClass (pathname, pkgName, name.getName (), cc);
     }
 
     @DefineLisp (name = "%compileClass")
-    public String compileClass (final String pathname, final String name, final LispList... clauses)
+    public String compileClass (final String pathname, final String pkgName, final String name, final LispList... clauses)
     {
 	if (pathname.indexOf ('.') < 0)
 	{
-	    return compileClass (pathname + ".class", name, clauses);
+	    return compileClass (pathname + ".class", pkgName, name, clauses);
 	}
 	try
 	{
 	    final LispClassLoader classLoader = new LispClassLoader ();
-	    final byte[] b = getDefclassBytecode (classLoader, name, clauses);
+	    final byte[] b = getDefclassBytecode (classLoader, pkgName, name, clauses);
 	    final File file = new File (pathname);
+	    ensureOutputExists (file);
 	    final OutputStream stream = new BufferedOutputStream (new FileOutputStream (file));
 	    stream.write (b, 0, b.length);
 	    stream.flush ();
@@ -111,11 +113,21 @@ public class DefclassPrimitives extends Definer
 	return null;
     }
 
-    private byte[] getDefclassBytecode (final LispClassLoader classLoader, final String name, final LispList[] clauses)
+    private void ensureOutputExists (final File file)
+    {
+	final File folder = file.getParentFile ();
+	if (!folder.exists ())
+	{
+	    folder.mkdirs ();
+	}
+    }
+
+    private byte[] getDefclassBytecode (final LispClassLoader classLoader, final String pkgName, final String name,
+            final LispList[] clauses)
     {
 	// The class access, class name, superclass and interfaces need to be determined before
 	// we can visit the class node
-	final Defclass defclass = new Defclass (asmApi, classLoader, name, clauses);
+	final Defclass defclass = new Defclass (asmApi, classLoader, pkgName, name, clauses);
 	final int accessCode = defclass.getClassAccess ();
 	final String classSimpleName = defclass.getClassSimpleName ();
 	final Type classType = defclass.getClassType ();

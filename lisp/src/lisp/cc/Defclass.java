@@ -23,7 +23,7 @@ import lisp.util.*;
 public class Defclass extends ClassNode implements TreeCompilerInterface, Opcodes
 {
     private static final Logger LOGGER = Logger.getLogger (Defclass.class.getName ());
-    private static Boxing boxing = new Boxing ();
+    // private static Boxing boxing = new Boxing ();
     private static JavaName javaName = new JavaName ();
     private static ClassNamed classNamed = new ClassNamed ();
     private static SelectMethod selectMethod = new SelectMethod ();
@@ -87,12 +87,13 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     /** For each constructor this contains the classes of the parameters. */
     private final List<Class<?>[]> constructorParameters = new ArrayList<Class<?>[]> ();
 
-    public Defclass (final int api, final LispClassLoader classLoader, final String name, final LispList[] members)
+    public Defclass (final int api, final LispClassLoader classLoader, final String pkgName, final String name,
+            final LispList[] members)
     {
 	super (api);
 	this.classLoader = classLoader;
 	classSimpleName = name;
-	classType = Type.getType ("Llisp/cc/" + classSimpleName + ";");
+	classType = Type.getType ("L" + pkgName.replace ('.', '/') + '/' + classSimpleName + ";");
 	parse (members);
 	if (!hasConstructor)
 	{
@@ -276,19 +277,18 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		{
 		    final Object value = c.get (1);
 		    // This is the initialization form
-		    // FIXME The field is not initialialized
-		    if (boxing.isBoxedClass (value.getClass ()))
-		    {
-			fn.value = value;
-		    }
-		    else if (value instanceof String)
-		    {
-			fn.value = value;
-		    }
-		    else
-		    {
-			// The init method must have code to compute and store this value
-		    }
+		    // if (boxing.isBoxedClass (value.getClass ()))
+		    // {
+		    // fn.value = value;
+		    // }
+		    // else if (value instanceof String)
+		    // {
+		    // fn.value = value;
+		    // }
+		    // else
+		    // {
+		    // // The init method must have code to compute and store this value
+		    // }
 		    fieldValues.put (fName, value);
 		}
 	    }
@@ -476,13 +476,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
 	il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", "()V", false));
 	return bodyForms;
-    }
-
-    private List<List<Class<?>>> getConstructorSigs ()
-    {
-	final List<List<Class<?>>> result = new ArrayList<List<Class<?>>> ();
-
-	return result;
     }
 
     class InitModifierClassVisitor extends ClassVisitor
@@ -717,17 +710,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	}
     }
 
-    private List<Symbol> getParameterNames (final LispList arguments)
-    {
-	final List<Symbol> result = new ArrayList<Symbol> ();
-	for (final Object arg : arguments)
-	{
-	    final Symbol variable = NameSpec.getVariableName (arg);
-	    result.add (variable);
-	}
-	return null;
-    }
-
     private Class<?>[] getParameterClasses (final LispList arguments)
     {
 	final Class<?>[] result = new Class<?>[arguments.size ()];
@@ -764,25 +746,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	buffer.append (returnTypeDescriptor);
 	return buffer.toString ();
     }
-
-    // /** Build empty default constructor */
-    // public void addDefaultInitMethod ()
-    // {
-    // final MethodNode mn = new MethodNode ();
-    // mn.access = Opcodes.ACC_PUBLIC;
-    // mn.name = "<init>";
-    // mn.desc = "()V";
-    // mn.exceptions = new ArrayList<String> ();
-    // final InsnList il = mn.instructions;
-    // il.add (new VarInsnNode (Opcodes.ALOAD, 0));
-    // // il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V",
-    // // false));
-    // il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", "()V", false));
-    //
-    // il.add (new InsnNode (Opcodes.RETURN));
-    // methods.add (mn);
-    // hasConstructor = true;
-    // }
 
     private void addGetterMethod (final Symbol field)
     {
@@ -835,35 +798,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	methods.add (mn);
     }
 
-    // /** Build 'add' method */
-    // public void addSampleAdditionMethod ()
-    // {
-    // // @see https://dzone.com/articles/fully-dynamic-classes-with-asm
-    // final MethodVisitor mv = visitMethod (Opcodes.ACC_PUBLIC, // public method
-    // "add", // name
-    // "(II)I", // descriptor
-    // null, // signature (null means not generic)
-    // null); // exceptions (array of strings)
-    // mv.visitCode ();
-    // mv.visitVarInsn (Opcodes.ILOAD, 1); // Load int value onto stack
-    // mv.visitVarInsn (Opcodes.ILOAD, 2); // Load int value onto stack
-    // mv.visitInsn (Opcodes.IADD); // Integer add from stack and push to stack
-    // mv.visitInsn (Opcodes.IRETURN); // Return integer from top of stack
-    // mv.visitMaxs (2, 3); // Specify max stack and local vars
-    // }
-
-    @Override
-    public String toString ()
-    {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (System.identityHashCode (this));
-	buffer.append (">");
-	return buffer.toString ();
-    }
-
     private static Symbol QUOTE_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("quote");
     private final Map<String, Object> quotedReferences = new HashMap<String, Object> ();
     private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
@@ -913,5 +847,17 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	final Symbol reference = QUOTE_SYMBOL.gensym ();
 	quotedReferences.put (reference.getName (), quoted);
 	return reference;
+    }
+
+    @Override
+    public String toString ()
+    {
+	final StringBuilder buffer = new StringBuilder ();
+	buffer.append ("#<");
+	buffer.append (getClass ().getSimpleName ());
+	buffer.append (" ");
+	buffer.append (System.identityHashCode (this));
+	buffer.append (">");
+	return buffer.toString ();
     }
 }

@@ -73,7 +73,8 @@ Foobar
 	 	)
 )
 
-(%compile "/Users/cre/Documents/Work/Workspaces/lisp/Sandbox/xbin/lisp/cc/Foobar" Foobar
+(%compile "/Users/cre/Documents/Work/Workspaces/lisp/Sandbox/xbin/lisp/something/Foobar" 
+	"lisp.something" Foobar
 	(access public)
 	(extends java.lang.Object)	
 	; (constructor () (access public))

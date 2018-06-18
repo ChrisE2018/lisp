@@ -1,7 +1,8 @@
 
 package lisp;
 
-import java.util.List;
+import java.util.*;
+import java.util.function.UnaryOperator;
 
 public class BracketList extends LispList
 {
@@ -27,6 +28,78 @@ public class BracketList extends LispList
     public char getCloseChar ()
     {
 	return ']';
+    }
+
+    @Override
+    public boolean add (final Object e)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public void add (final int index, final Object element)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public boolean addAll (final Collection<? extends Object> c)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public boolean addAll (final int index, final Collection<? extends Object> c)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public void clear ()
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public Object remove (final int index)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public boolean remove (final Object o)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public boolean removeAll (final Collection<?> c)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public void replaceAll (final UnaryOperator<Object> operator)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public boolean retainAll (final Collection<?> c)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public Object set (final int index, final Object element)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
+    }
+
+    @Override
+    public void sort (final Comparator<? super Object> c)
+    {
+	throw new UnsupportedOperationException ("Bracket Lists are immutable");
     }
 
     private BracketList requireBracketList (final Object o)
