@@ -96,7 +96,9 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	parse (members);
 	if (!hasConstructor)
 	{
-	    addDefaultInitMethod ();
+	    final LispList arguments = new LispList ();
+	    final LispList body = new LispList ();
+	    parseConstructorClause (arguments, body);
 	}
 	final int hiddenFieldAccess = Opcodes.ACC_PRIVATE;
 	// Create field definitions for all entries in symbolReferences.
@@ -425,7 +427,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    if (firstForm instanceof LispList)
 	    {
 		final LispList first = (LispList)firstForm;
-		final Symbol h = first.head ();
+		final Object h = first.get (0);
 		if (h == THIS_SYMBOL)
 		{
 		    // Compile call to another constructor
@@ -763,22 +765,24 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	return buffer.toString ();
     }
 
-    /** Build empty default constructor */
-    public void addDefaultInitMethod ()
-    {
-	final MethodNode mn = new MethodNode ();
-	mn.access = Opcodes.ACC_PUBLIC;
-	mn.name = "<init>";
-	mn.desc = "()V";
-	mn.exceptions = new ArrayList<String> ();
-	final InsnList il = mn.instructions;
-	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
-	il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false));
-	// addHiddenConstructorSteps (il);
-	il.add (new InsnNode (Opcodes.RETURN));
-	methods.add (mn);
-	hasConstructor = true;
-    }
+    // /** Build empty default constructor */
+    // public void addDefaultInitMethod ()
+    // {
+    // final MethodNode mn = new MethodNode ();
+    // mn.access = Opcodes.ACC_PUBLIC;
+    // mn.name = "<init>";
+    // mn.desc = "()V";
+    // mn.exceptions = new ArrayList<String> ();
+    // final InsnList il = mn.instructions;
+    // il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+    // // il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V",
+    // // false));
+    // il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", "()V", false));
+    //
+    // il.add (new InsnNode (Opcodes.RETURN));
+    // methods.add (mn);
+    // hasConstructor = true;
+    // }
 
     private void addGetterMethod (final Symbol field)
     {
@@ -829,25 +833,24 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	il.add (new FieldInsnNode (Opcodes.PUTFIELD, classType.getInternalName (), fn.name, fn.desc));
 	il.add (new InsnNode (Opcodes.RETURN));
 	methods.add (mn);
-	hasConstructor = true;
     }
 
-    /** Build 'add' method */
-    public void addSampleAdditionMethod ()
-    {
-	// @see https://dzone.com/articles/fully-dynamic-classes-with-asm
-	final MethodVisitor mv = visitMethod (Opcodes.ACC_PUBLIC, // public method
-	        "add", // name
-	        "(II)I", // descriptor
-	        null, // signature (null means not generic)
-	        null); // exceptions (array of strings)
-	mv.visitCode ();
-	mv.visitVarInsn (Opcodes.ILOAD, 1); // Load int value onto stack
-	mv.visitVarInsn (Opcodes.ILOAD, 2); // Load int value onto stack
-	mv.visitInsn (Opcodes.IADD); // Integer add from stack and push to stack
-	mv.visitInsn (Opcodes.IRETURN); // Return integer from top of stack
-	mv.visitMaxs (2, 3); // Specify max stack and local vars
-    }
+    // /** Build 'add' method */
+    // public void addSampleAdditionMethod ()
+    // {
+    // // @see https://dzone.com/articles/fully-dynamic-classes-with-asm
+    // final MethodVisitor mv = visitMethod (Opcodes.ACC_PUBLIC, // public method
+    // "add", // name
+    // "(II)I", // descriptor
+    // null, // signature (null means not generic)
+    // null); // exceptions (array of strings)
+    // mv.visitCode ();
+    // mv.visitVarInsn (Opcodes.ILOAD, 1); // Load int value onto stack
+    // mv.visitVarInsn (Opcodes.ILOAD, 2); // Load int value onto stack
+    // mv.visitInsn (Opcodes.IADD); // Integer add from stack and push to stack
+    // mv.visitInsn (Opcodes.IRETURN); // Return integer from top of stack
+    // mv.visitMaxs (2, 3); // Specify max stack and local vars
+    // }
 
     @Override
     public String toString ()

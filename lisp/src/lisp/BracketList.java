@@ -3,15 +3,14 @@ package lisp;
 
 import java.util.List;
 
-/** Alternate implementation of List for braces. (not used) */
-public class BraceList extends LispList
+public class BracketList extends LispList
 {
-    public BraceList (final List<Object> p)
+    public BracketList (final List<Object> p)
     {
 	super (p);
     }
 
-    public BraceList (final Object... p)
+    public BracketList (final Object... p)
     {
 	super (p);
     }
@@ -20,60 +19,60 @@ public class BraceList extends LispList
     @Override
     public char getOpenChar ()
     {
-	return '{';
+	return '[';
     }
 
     /** Character that finishes the list. */
     @Override
     public char getCloseChar ()
     {
-	return '}';
+	return ']';
     }
 
-    /** Convenience method that allows the caller to avoid a cast. */
-    @Override
-    public LispList getSublist (final int i)
+    private BracketList requireBracketList (final Object o)
     {
-	final Object result = get (i);
-	try
-	{
-	    return (LispList)result;
-	}
-	catch (final ClassCastException e)
-	{
-	    throw new IllegalArgumentException ("List member " + i + " is not a sublist", e);
-	}
-    }
-
-    private BraceList requireBraceList (final Object o)
-    {
-	return (BraceList)o;
+	return (BracketList)o;
     }
 
     /** First element of a list, using standard Lisp terminology. */
     @Override
     public Object car ()
     {
-	return get (0);
+	final Object result = get (0);
+	if (result instanceof LispList)
+	{
+	    return requireBracketList (result);
+	}
+	return result;
     }
 
     /** First element of a list. */
     @Override
     public Object first ()
     {
-	return get (0);
+	final Object result = get (0);
+	if (result instanceof LispList)
+	{
+	    return requireBracketList (result);
+	}
+	return result;
     }
 
     @Override
     public Object last ()
     {
-	return get (size () - 1);
+	final Object result = get (size () - 1);
+	if (result instanceof LispList)
+	{
+	    return requireBracketList (result);
+	}
+	return result;
     }
 
     @Override
     public LispList subList (final int i)
     {
-	final LispList result = new LispList ();
+	final BracketList result = new BracketList ();
 	result.addAll (subList (i, size ()));
 	return result;
     }
@@ -82,7 +81,7 @@ public class BraceList extends LispList
     @Override
     public void print (final StringBuilder buffer)
     {
-	buffer.append ('{');
+	buffer.append ('[');
 	for (int i = 0; i < size (); i++)
 	{
 	    if (i > 0)
@@ -108,6 +107,6 @@ public class BraceList extends LispList
 		LispReader.printElement (buffer, rawItem);
 	    }
 	}
-	buffer.append ('}');
+	buffer.append (']');
     }
 }

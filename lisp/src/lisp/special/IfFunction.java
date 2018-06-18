@@ -5,7 +5,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.LispList;
-import lisp.asm.instructions.*;
+import lisp.asm.instructions.LabelNode;
 import lisp.cc3.*;
 import lisp.cc4.*;
 import lisp.symbol.LispVisitor;
@@ -59,7 +59,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 
 	    // false case
 	    context.add (lFalse);
-	    context.add (new LineNumberNode (65, lFalse));
+	    // context.add (new LineNumberNode (65, lFalse));
 	    for (int i = 3; i < expression.size () - 1; i++)
 	    {
 		final CompileResultSet r = context.compile (expression.get (i), false);

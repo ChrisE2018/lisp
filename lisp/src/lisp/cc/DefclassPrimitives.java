@@ -1,7 +1,7 @@
 
 package lisp.cc;
 
-import java.io.StringWriter;
+import java.io.*;
 import java.util.List;
 import java.util.logging.*;
 
@@ -18,31 +18,6 @@ import lisp.util.LogString;
 public class DefclassPrimitives extends Definer
 {
     private static final Logger LOGGER = Logger.getLogger (DefclassPrimitives.class.getName ());
-
-    // (package p) (import q)
-    // (defclass [public/static/final] foo (extends x) (implements y) (generics) (annotations) .
-    // members)
-    // TODO Annotations?
-    //
-    // Members:
-    // <fieldDeclaration>
-    // <constructorDeclaration>
-    // <methodDeclaration>
-    // <nestedClass>
-    // <staticCode>
-    //
-    // fieldDeclaration:
-    // ([public/private] [static] [type][fieldname] <initform>)
-    //
-    // constructorDeclaration:
-    //
-    // methodDeclaration:
-    //
-    // nestedClass:
-    //
-    // staticCode:
-    //
-    // Annotations
 
     private final int asmApi = Opcodes.ASM5;
     private final int bytecodeVersion = Opcodes.V1_5;
@@ -81,55 +56,11 @@ public class DefclassPrimitives extends Definer
     {
 	try
 	{
-	    // The class access, class name, superclass and interfaces need to be determined before
-	    // we can visit the class node
 	    final LispClassLoader classLoader = new LispClassLoader ();
-	    final Defclass defclass = new Defclass (asmApi, classLoader, name, clauses);
-	    final int accessCode = defclass.getClassAccess ();
-	    final String classSimpleName = defclass.getClassSimpleName ();
-	    final Type classType = defclass.getClassType ();
-	    final Type superClassType = defclass.getSuperclassType ();
-	    final String superClassInternalName = superClassType.getInternalName ();
-	    LOGGER.info (new LogString ("Defclass %s extends %s", classSimpleName, superClassType.getClassName ()));
-	    final String classInternalName = classType.getInternalName ();
-	    // final String classBinaryName = classType.getClassName (); // Uses dots
+	    final byte[] b = getDefclassBytecode (classLoader, name, clauses);
 	    final String classBinaryName = null; // Must be null or TraceClassVisitor fails
-	    final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
-	    final List<String> interfaceList = defclass.getInterfaces ();
-	    final String[] interfaces = new String[interfaceList.size ()];
-	    interfaceList.toArray (interfaces);
-	    final ClassNode cn = defclass;
-	    cn.visit (bytecodeVersion, accessCode, classInternalName, classBinaryName, superClassInternalName, interfaces);
-	    defclass.addSampleAdditionMethod ();
-	    cn.visitEnd ();
-	    // optimizers here
-	    final Logger pbl = Logger.getLogger (PrintBytecodeClassAdaptor.class.getName ());
-	    final boolean optimize = Symbol.named ("system", "optimize").getBooleanValue (true);
-	    final boolean printBytecode = pbl.isLoggable (Level.INFO);
-
-	    // Form chain adding things in the middle.
-	    // The last thing to do is write the code using cw.
-	    ClassVisitor cv = cw;
-
-	    if (printBytecode)
-	    {
-		// Install PrintBytecodeClassAdaptor before Optimizer so it runs after.
-		// Move this block lower to print code before optimization.
-		cv = new PrintBytecodeClassAdaptor (asmApi, cv, new StringWriter ());
-	    }
-	    if (optimize)
-	    {
-		cv = new Optimizer (Compiler.ASM_VERSION, cv);
-	    }
-
-	    // Put code into init method to initialize fields and quoted data
-	    // This should be the last operation installed (first done)
-	    cv = defclass.new InitModifierClassVisitor (cv);
-	    cn.accept (cv);
-
-	    final byte[] b = cw.toByteArray ();
 	    final Class<?> c = classLoader.defineClass (classBinaryName, b);
-	    LOGGER.info (new LogString ("Compiled %s as %s", classSimpleName, c));
+	    LOGGER.info (new LogString ("Compiled %s as %s", name, c));
 	    return c;
 	}
 	catch (final Exception e)
@@ -138,6 +69,97 @@ public class DefclassPrimitives extends Definer
 	    e.printStackTrace ();
 	}
 	return null;
+    }
+
+    // FIXME (compile pathname &key String:bindir boolean:ifneeded)
+
+    @DefineLisp (name = "%compile", special = true)
+    public String pctCompileclassForm (@SuppressWarnings ("unused") final LexicalContext context, final String pathname,
+            final Symbol name, final Object... clauses)
+    {
+	final LispList[] cc = new LispList[clauses.length];
+	for (int i = 0; i < clauses.length; i++)
+	{
+	    cc[i] = (LispList)clauses[i];
+	}
+	return compileClass (pathname, name.getName (), cc);
+    }
+
+    @DefineLisp (name = "%compileClass")
+    public String compileClass (final String pathname, final String name, final LispList... clauses)
+    {
+	if (pathname.indexOf ('.') < 0)
+	{
+	    return compileClass (pathname + ".class", name, clauses);
+	}
+	try
+	{
+	    final LispClassLoader classLoader = new LispClassLoader ();
+	    final byte[] b = getDefclassBytecode (classLoader, name, clauses);
+	    final File file = new File (pathname);
+	    final OutputStream stream = new BufferedOutputStream (new FileOutputStream (file));
+	    stream.write (b, 0, b.length);
+	    stream.flush ();
+	    stream.close ();
+	    return name;
+	}
+	catch (final Exception e)
+	{
+	    VerifyPrimitives.incrementReplErrorCount ();
+	    e.printStackTrace ();
+	}
+	return null;
+    }
+
+    private byte[] getDefclassBytecode (final LispClassLoader classLoader, final String name, final LispList[] clauses)
+    {
+	// The class access, class name, superclass and interfaces need to be determined before
+	// we can visit the class node
+	final Defclass defclass = new Defclass (asmApi, classLoader, name, clauses);
+	final int accessCode = defclass.getClassAccess ();
+	final String classSimpleName = defclass.getClassSimpleName ();
+	final Type classType = defclass.getClassType ();
+	final Type superClassType = defclass.getSuperclassType ();
+	final String superClassInternalName = superClassType.getInternalName ();
+	LOGGER.info (new LogString ("Defclass %s extends %s", classSimpleName, superClassType.getClassName ()));
+	final String classInternalName = classType.getInternalName ();
+	// final String classBinaryName = classType.getClassName (); // Uses dots
+	final String classBinaryName = null; // Must be null or TraceClassVisitor fails
+	final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
+	final List<String> interfaceList = defclass.getInterfaces ();
+	final String[] interfaces = new String[interfaceList.size ()];
+	interfaceList.toArray (interfaces);
+	final ClassNode cn = defclass;
+	cn.visit (bytecodeVersion, accessCode, classInternalName, classBinaryName, superClassInternalName, interfaces);
+	// defclass.addSampleAdditionMethod ();
+	cn.visitEnd ();
+	// optimizers here
+	final Logger pbl = Logger.getLogger (PrintBytecodeClassAdaptor.class.getName ());
+	final boolean optimize = Symbol.named ("system", "optimize").getBooleanValue (true);
+	final boolean printBytecode = pbl.isLoggable (Level.INFO);
+
+	// Form chain adding things in the middle.
+	// The last thing to do is write the code using cw.
+	ClassVisitor cv = cw;
+
+	if (printBytecode)
+	{
+	    // Install PrintBytecodeClassAdaptor before Optimizer so it runs after.
+	    // Move this block lower to print code before optimization.
+	    cv = new PrintBytecodeClassAdaptor (asmApi, cv, new StringWriter ());
+	}
+	if (optimize)
+	{
+	    cv = new Optimizer (Compiler.ASM_VERSION, cv);
+	}
+
+	// Put code into init method to initialize fields and quoted data
+	// This should be the last operation installed (first done)
+	cv = defclass.new InitModifierClassVisitor (cv);
+	cn.accept (cv);
+
+	final byte[] b = cw.toByteArray ();
+	return b;
     }
 
     @Override

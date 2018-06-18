@@ -53,6 +53,18 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	}
     }
 
+    /**
+     * Compile a general and expression. This implementation is very complex because it is the first
+     * function definition built using the new compiler framework. The methods context.convert and
+     * context.convertIfFalse were derived from this code and could be used to produce a much
+     * simpler implementation. However, this works and may be valuble as an example of how to
+     * implement such a compiler extension "from scratch".
+     *
+     * @param context
+     * @param e
+     * @param resultDesired
+     * @return
+     */
     private CompileResultSet compileAnd (final TreeCompilerContext context, final LispList e, final boolean resultDesired)
     {
 	// (define foo (a b) (and))

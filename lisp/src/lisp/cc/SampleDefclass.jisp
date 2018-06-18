@@ -1,4 +1,31 @@
-(%defclass Foobar
+
+    // (package p) (import q)
+    // (defclass [public/static/final] foo (extends x) (implements y) (generics) (annotations) .
+    // members)
+    // TODO Annotations?
+    //
+    // Members:
+    // <fieldDeclaration>
+    // <constructorDeclaration>
+    // <methodDeclaration>
+    // <nestedClass>
+    // <staticCode>
+    //
+    // fieldDeclaration:
+    // ([public/private] [static] [type][fieldname] <initform>)
+    //
+    // constructorDeclaration:
+    //
+    // methodDeclaration:
+    //
+    // nestedClass:
+    //
+    // staticCode:
+    //
+    // Annotations
+
+(%defclass ;"/Users/cre/Documents/Work/Workspaces/lisp/Foobar" 
+Foobar
 	(access public)
 	(extends java.lang.Object)	
 	(field blah 
@@ -13,36 +40,49 @@
 ;	 	)
 	 (constructor ()
 	 	(access public)
-	 	(printf "init default called%n")
+	 	(java.lang.System.out.printf "init default called%n")
 	 	)
 	 (constructor (int:x)
 	 	(access public)
 	 	(this)
-	 	(printf "init int %s called%n" x)
+	 	(java.lang.System.out.printf "init int %s called%n" x)
 	 	(setq blah x)
 	 	)
 	 (constructor (double:x)
 	 	(access public)
 	 	(this 6)
-	 	(printf "init double %s called%n" x)
+	 	(java.lang.System.out.printf "init double %s called%n" x)
 	 	;(setq blah int:x)
 	 	)
 	 (method int:foo ()
 	 	(access public)
-	 	(printf "foo called on %s%n" this)
+	 	(java.lang.System.out.printf "foo called on %s%n" this)
 	 	;(printf "Blah is %s%n" blah)
 	 	(+ 3 4)
 	 	)
 	 (method int:bar (int:x)
 	 	(access public)
 	 	;(printf "bar called on %s%n" this)
-		(printf "Blah = %s%n" x)
+		(java.lang.System.out.printf "Blah = %s%n" x)
 	 	(setq blah x)
 	 	)
 	 (method String:toString ()
 	 	(access public)
 		;"#<Foobar 99>"
 	 	(java.lang.String.format "#<Foobar %s>" blah)
+	 	)
+)
+
+(%compile "/Users/cre/Documents/Work/Workspaces/lisp/Sandbox/xbin/lisp/cc/Foobar" Foobar
+	(access public)
+	(extends java.lang.Object)	
+	; (constructor () (access public))
+	(field blah 
+	 	(access private)
+	 	(type int)
+	 	(value 5)
+	 	(getter getBlah)
+	 	(setter putBlah)
 	 	)
 )
 

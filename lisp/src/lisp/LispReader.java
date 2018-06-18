@@ -19,6 +19,7 @@ public class LispReader
 
     private static final char BACKSLASH = '\\';
     private static final char DOUBLEQUOTE = '"';
+    private static final char COMMA = ',';
 
     public static LispReader getLispThreadReader ()
     {
@@ -54,16 +55,17 @@ public class LispReader
      * easily available for typing.
      */
     private final List<Object> imports = new ArrayList<Object> ();
-    // private final List<Package> importedPackages = new ArrayList<Package> ();
-    // FIXME Generalize the importedPackages to a new interface for Resolver.
-    // Give each resolver a chance to handle an an atom and return a result.
-    // First resolver to produce a result wins.
-    // Resolvers can correspond with Lisp Package or Java Package or with a map from String to
-    // imported Objects.
 
     private Package currentPackage;
 
+    /**
+     * Symbol for 'the'. Initialize this in the constructor so the PackageFactory is already setup.
+     */
     private final Symbol theSymbol;
+
+    /**
+     * Symbol for 'dot'. Initialize this in the constructor so the PackageFactory is already setup.
+     */
     private final Symbol dotSymbol;
 
     public LispReader ()
@@ -236,6 +238,10 @@ public class LispReader
 	{
 	    readInsideList (in, pkg, result);
 	    parsing.skipBlanks (in);
+	    if (in.tryChar (COMMA))
+	    {
+		parsing.skipBlanks (in);
+	    }
 	}
 	in.read ();
 	return result;
