@@ -126,33 +126,36 @@ public class SelectMethod
 	{
 	    if (Modifier.isStatic (method.getModifiers ()))
 	    {
-		if (selectable.isSelectable (method, arguments))
+		if (method.getName ().equals (methodName))
 		{
-		    if (selectedMethod == null)
+		    if (selectable.isSelectable (method, arguments))
 		    {
-			selectedMethod = method;
-		    }
-		    else if (isBetterThan (selectedMethod, method))
-		    {
-			// Ignore
-		    }
-		    else if (isBetterThan (method, selectedMethod))
-		    {
-			selectedMethod = method;
-		    }
-		    else
-		    {
-			final StringBuilder buffer = new StringBuilder ();
-			buffer.append ("Ambiguous ");
-			buffer.append (methodName);
-			buffer.append (" method selection for ");
-			buffer.append (arguments);
-			buffer.append (". Both ");
-			buffer.append (methSignature.getArgumentSignature (selectedMethod));
-			buffer.append (" and ");
-			buffer.append (methSignature.getArgumentSignature (method));
-			buffer.append (" apply.");
-			throw new IllegalArgumentException (buffer.toString ());
+			if (selectedMethod == null)
+			{
+			    selectedMethod = method;
+			}
+			else if (isBetterThan (selectedMethod, method))
+			{
+			    // Ignore
+			}
+			else if (isBetterThan (method, selectedMethod))
+			{
+			    selectedMethod = method;
+			}
+			else
+			{
+			    final StringBuilder buffer = new StringBuilder ();
+			    buffer.append ("Ambiguous ");
+			    buffer.append (methodName);
+			    buffer.append (" method selection for ");
+			    buffer.append (arguments);
+			    buffer.append (". Both ");
+			    buffer.append (methSignature.getArgumentSignature (selectedMethod));
+			    buffer.append (" and ");
+			    buffer.append (methSignature.getArgumentSignature (method));
+			    buffer.append (" apply.");
+			    throw new IllegalArgumentException (buffer.toString ());
+			}
 		    }
 		}
 	    }
@@ -181,33 +184,36 @@ public class SelectMethod
 	Method selectedMethod = null;
 	for (final Method method : claz.getDeclaredMethods ())
 	{
-	    if (selectable.isSelectable (method, arguments))
+	    if (method.getName ().equals (methodName))
 	    {
-		if (selectedMethod == null)
+		if (selectable.isSelectable (method, arguments))
 		{
-		    selectedMethod = method;
-		}
-		else if (isBetterThan (selectedMethod, method))
-		{
-		    // Ignore
-		}
-		else if (isBetterThan (method, selectedMethod))
-		{
-		    selectedMethod = method;
-		}
-		else
-		{
-		    final StringBuilder buffer = new StringBuilder ();
-		    buffer.append ("Ambiguous ");
-		    buffer.append (methodName);
-		    buffer.append (" method selection for ");
-		    buffer.append (arguments);
-		    buffer.append (". Both ");
-		    buffer.append (methSignature.getArgumentSignature (selectedMethod));
-		    buffer.append (" and ");
-		    buffer.append (methSignature.getArgumentSignature (method));
-		    buffer.append (" apply.");
-		    throw new IllegalArgumentException (buffer.toString ());
+		    if (selectedMethod == null)
+		    {
+			selectedMethod = method;
+		    }
+		    else if (isBetterThan (selectedMethod, method))
+		    {
+			// Ignore
+		    }
+		    else if (isBetterThan (method, selectedMethod))
+		    {
+			selectedMethod = method;
+		    }
+		    else
+		    {
+			final StringBuilder buffer = new StringBuilder ();
+			buffer.append ("Ambiguous ");
+			buffer.append (methodName);
+			buffer.append (" method selection for ");
+			buffer.append (arguments);
+			buffer.append (". Both ");
+			buffer.append (methSignature.getArgumentSignature (selectedMethod));
+			buffer.append (" and ");
+			buffer.append (methSignature.getArgumentSignature (method));
+			buffer.append (" apply.");
+			throw new IllegalArgumentException (buffer.toString ());
+		    }
 		}
 	    }
 	}

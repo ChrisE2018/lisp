@@ -379,28 +379,51 @@ public class TreeCompilerContext implements Opcodes
     {
 	// (define foo (x) (java.lang.String.format "foo %s bar %n" x))
 	final LispList dot = expression.getSublist (0);
-	final Class<?> claz = (Class<?>)dot.get (1);
+	final Object target = dot.get (1);
 	final Method method = (Method)dot.get (2);
 	final String methodName = method.getName ();
 
-	final Object target = null;
+	// final Object target = null;
 	// The method in a dot form is not selected by overloading rules. We need to discard the
 	// method and use only the method name to find the proper method to call.
 	// return null;
-	final Method selectedMethod = selectMethod.selectStaticMethod (claz, methodName, locals, expression);
-	if (selectedMethod == null)
+	if (target instanceof Class)
 	{
-	    throw new Error (String.format ("No %s method found on %s for %s", methodName, claz, expression));
-	}
-	else if (selectedMethod.isVarArgs ())
-	{
-	    // Function call always returns a value whether we want it or not
-	    return compileVarArgsFunctionCall (target, selectedMethod, expression);
+	    final Class<?> claz = (Class<?>)target;
+	    final Method selectedMethod = selectMethod.selectStaticMethod (claz, methodName, locals, expression);
+	    if (selectedMethod == null)
+	    {
+		throw new Error (String.format ("No %s method found on %s for %s", methodName, claz, expression));
+	    }
+	    else if (selectedMethod.isVarArgs ())
+	    {
+		// Function call always returns a value whether we want it or not
+		return compileVarArgsFunctionCall (null, selectedMethod, expression);
+	    }
+	    else
+	    {
+		// Function call always returns a value whether we want it or not
+		return compileFixedFunctionCall (null, selectedMethod, expression);
+	    }
 	}
 	else
 	{
-	    // Function call always returns a value whether we want it or not
-	    return compileFixedFunctionCall (target, selectedMethod, expression);
+	    final Class<?> claz = target.getClass ();
+	    final Method selectedMethod = selectMethod.selectMethod (claz, methodName, locals, expression);
+	    if (selectedMethod == null)
+	    {
+		throw new Error (String.format ("No %s method found on %s for %s", methodName, claz, expression));
+	    }
+	    else if (selectedMethod.isVarArgs ())
+	    {
+		// Function call always returns a value whether we want it or not
+		return compileVarArgsFunctionCall (target, selectedMethod, expression);
+	    }
+	    else
+	    {
+		// Function call always returns a value whether we want it or not
+		return compileFixedFunctionCall (target, selectedMethod, expression);
+	    }
 	}
 	// mv.visitMethodInsn(INVOKESTATIC, "java/lang/String", "format",
 	// "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;", false);

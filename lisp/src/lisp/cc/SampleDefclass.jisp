@@ -24,8 +24,7 @@
     //
     // Annotations
 
-(%defclass ;"/Users/cre/Documents/Work/Workspaces/lisp/Foobar" 
-Foobar
+(%defclass Foobar
 	(access public)
 	(extends java.lang.Object)	
 	(field blah 
@@ -63,7 +62,7 @@ Foobar
 	 (method int:bar (int:x)
 	 	(access public)
 	 	;(printf "bar called on %s%n" this)
-		(java.lang.System.out.printf "Blah = %s%n" x)
+		(printf "Blah = %s%n" x)
 	 	(setq blah x)
 	 	)
 	 (method String:toString ()

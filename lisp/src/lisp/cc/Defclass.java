@@ -114,12 +114,12 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    final MethodNode symbolMethod = getGetSymbolMethod ();
 	    methods.add (symbolMethod);
 	}
-	for (final Entry<String, Object> entry : quotedReferences.entrySet ())
+	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
 	{
-	    final String reference = entry.getKey ();
+	    final Symbol reference = entry.getKey ();
 	    final Object quoted = entry.getValue ();
 	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
-	    fields.add (new FieldNode (hiddenFieldAccess, reference, typeDescriptor, null, null));
+	    fields.add (new FieldNode (hiddenFieldAccess, reference.getName (), typeDescriptor, null, null));
 	}
 	classLoader.setQuotedReferences (quotedReferences);
 	LOGGER.info ("defclass " + name);
@@ -544,30 +544,36 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	}
 	if (!quotedReferences.isEmpty ())
 	{
-	    final Type classLoaderType = Type.getType (classLoader.getClass ());
-	    final String classLoaderInternalName = classLoaderType.getInternalName ();
-	    final String mapMethodDescriptor = Type.getMethodDescriptor (OBJECT_TYPE, OBJECT_TYPE);
 	    // Create initialization code for all required quoted data.
-	    for (final Entry<String, Object> entry : quotedReferences.entrySet ())
+	    for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
 	    {
 		// (define foo () (quote bar))
-		mv.visitVarInsn (ALOAD, 0);
-		mv.visitInsn (DUP);
-		mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
-		mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
-		mv.visitTypeInsn (CHECKCAST, classLoaderInternalName);
-		mv.visitMethodInsn (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;", false);
-
-		final String reference = entry.getKey ();
+		final Symbol reference = entry.getKey ();
 		final Object quoted = entry.getValue ();
-		mv.visitLdcInsn (reference);
-		mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", mapMethodDescriptor, true);
+		loadQuotedData (mv, reference);
+
 		final Type quotedType = Type.getType (quoted.getClass ());
 		final String typeDescriptor = quotedType.getDescriptor ();
 		mv.visitTypeInsn (CHECKCAST, quotedType.getInternalName ());
-		mv.visitFieldInsn (PUTFIELD, classInternalName, reference, typeDescriptor);
+		mv.visitFieldInsn (PUTFIELD, classInternalName, reference.getName (), typeDescriptor);
 	    }
 	}
+    }
+
+    private void loadQuotedData (final MethodVisitor mv, final Symbol reference)
+    {
+	final Type classLoaderType = Type.getType (classLoader.getClass ());
+	final String classLoaderInternalName = classLoaderType.getInternalName ();
+	final String mapMethodDescriptor = Type.getMethodDescriptor (OBJECT_TYPE, OBJECT_TYPE);
+	mv.visitVarInsn (ALOAD, 0);
+	mv.visitInsn (DUP);
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
+	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
+	mv.visitTypeInsn (CHECKCAST, classLoaderInternalName);
+	mv.visitMethodInsn (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;", false);
+
+	mv.visitLdcInsn (reference.getName ());
+	mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", mapMethodDescriptor, true);
     }
 
     /** Create a method to locate a Symbol at runtime. */
@@ -799,7 +805,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     }
 
     private static Symbol QUOTE_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("quote");
-    private final Map<String, Object> quotedReferences = new HashMap<String, Object> ();
+    private final Map<Symbol, Object> quotedReferences = new HashMap<Symbol, Object> ();
     private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
     private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
 
@@ -825,16 +831,16 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	}
     }
 
-    /**
-     * Arrange for a field to be added to the compilation class containing quoted data.
-     *
-     * @param reference The symbol that will name the data field.
-     * @param quoted The quoted data to be stored.
-     */
-    public void addQuotedConstant (final Symbol reference, final Object quoted)
-    {
-	quotedReferences.put (reference.getName (), quoted);
-    }
+    // /**
+    // * Arrange for a field to be added to the compilation class containing quoted data.
+    // *
+    // * @param reference The symbol that will name the data field.
+    // * @param quoted The quoted data to be stored.
+    // */
+    // public void addQuotedConstant (final Symbol reference, final Object quoted)
+    // {
+    // quotedReferences.put (reference.getName (), quoted);
+    // }
 
     /**
      * Arrange for a field to be added to the compilation class containing quoted data.
@@ -844,8 +850,16 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
      */
     public Symbol addQuotedConstant (final Object quoted)
     {
+	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
+	{
+	    final Object q = entry.getValue ();
+	    if (quoted.equals (q))
+	    {
+		return entry.getKey ();
+	    }
+	}
 	final Symbol reference = QUOTE_SYMBOL.gensym ();
-	quotedReferences.put (reference.getName (), quoted);
+	quotedReferences.put (reference, quoted);
 	return reference;
     }
 
