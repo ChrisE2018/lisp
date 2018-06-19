@@ -112,6 +112,8 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	        .readConfiguration (Interactor.class.getResource ("loggingBootstrap.properties").openStream ());
 	final Application application = new Application ();
 	application.initialize (args);
+	interpreter = new Interpreter ();
+	reader = new LispReader ();
 	setBackground (Color.lightGray);
 	doc = getStyledDocument ();
 	rootStyle = doc.addStyle ("root", null);
@@ -138,8 +140,35 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	doc.addDocumentListener (this);
 	addMouseListener (this);
 	addMouseMotionListener (this);
-	interpreter = new Interpreter ();
-	reader = new LispReader ();
+	final int condition = JComponent.WHEN_FOCUSED;
+	final InputMap inputMap = getInputMap (condition);
+	final ActionMap actionMap = getActionMap ();
+
+	final String enter = "enter";
+	inputMap.put (KeyStroke.getKeyStroke (KeyEvent.VK_ENTER, 0), enter);
+	actionMap.put (enter, new AbstractAction ()
+	{
+	    @Override
+	    public void actionPerformed (final ActionEvent e)
+	    {
+		// out.println ("enter pressed");
+		try
+		{
+		    doc.insertString (getCaretPosition (), "\n", normalStyle);
+		    // FIXME Make extra indentation a variable
+		    final int indent = determineIndetation () + 3;
+		    for (int i = 0; i < indent; i++)
+		    {
+			doc.insertString (getCaretPosition (), " ", normalStyle);
+		    }
+		}
+		catch (final BadLocationException e1)
+		{
+		    // e1.printStackTrace();
+		}
+	    }
+	});
+
 	// Bind stdout and stderr after constructing the Interpreter so reads from loading the init
 	// file are not echoed to the interactor.
 	System.setOut (new PrintStream (new InteractorOutputStream (normalStyle)));
@@ -242,6 +271,29 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	tryForm ();
     }
 
+    private int determineIndetation ()
+    {
+	final Package pkg = PackageFactory.getDefaultPackage ();
+	final int offset = inputPosition.getOffset () + 1;
+	// final String change = doc.getText (offset, getCaretPosition () - offset);
+	// out.printf ("[%d] '%s'%n", offset, change);
+	final LispTextPaneStream stream = new LispTextPaneStream (this, offset, getCaretPosition ());
+	stream.setEofThrows (true);
+	try
+	{
+	    reader.read (stream, pkg);
+	}
+	catch (final EOFException e)
+	{
+	    return stream.getIndentation ();
+	}
+	catch (final IOException e)
+	{
+	    e.printStackTrace ();
+	}
+	return 0;
+    }
+
     private void tryForm ()
     {
 	try
@@ -252,7 +304,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 		final int offset = inputPosition.getOffset () + 1;
 		final String change = doc.getText (offset, doc.getLength () - offset);
 		// out.printf ("[%d] '%s'%n", offset, change);
-		final LispStream stream = new LispStream (change);
+		final LispStream stream = new LispInputStream (change);
 		stream.setEofThrows (true);
 		final Object form = reader.read (stream, pkg);
 		if (form != null)

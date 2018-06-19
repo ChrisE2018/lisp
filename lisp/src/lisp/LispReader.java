@@ -181,13 +181,19 @@ public class LispReader
 	if (mapResult != null)
 	{
 	    in.read ();
-	    return readMap (in, pkg, mapResult);
+	    in.startLevel ();
+	    final Object result = readMap (in, pkg, mapResult);
+	    in.finishLevel ();
+	    return result;
 	}
 	final LispList listResult = parsing.getParenList (chr);
 	if (listResult != null)
 	{
 	    in.read ();
-	    return readList (in, pkg, listResult);
+	    in.startLevel ();
+	    final Object result = readList (in, pkg, listResult);
+	    in.finishLevel ();
+	    return result;
 	}
 	// Handle single character form wrappers.
 	final LispList wrapper = parsing.getWrapperList (chr);

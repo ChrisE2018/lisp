@@ -40,7 +40,7 @@ public class FileReader
 	try (InputStream in = url.openStream ())
 	{
 	    final BufferedInputStream b = new BufferedInputStream (in);
-	    final LispStream stream = new LispStream (b);
+	    final LispStream stream = new LispInputStream (b);
 	    return read (context, pkg, stream);
 	}
     }
@@ -50,7 +50,7 @@ public class FileReader
 	try (FileInputStream in = new FileInputStream (file))
 	{
 	    final BufferedInputStream b = new BufferedInputStream (in);
-	    final LispStream stream = new LispStream (b);
+	    final LispStream stream = new LispInputStream (b);
 	    try
 	    {
 		read (context, pkg, stream);

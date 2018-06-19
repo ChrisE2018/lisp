@@ -238,7 +238,7 @@ public class Interpreter extends Definer
     public Object evalString (final String expression) throws Exception
     {
 	final LexicalContext context = new LexicalContext (this);
-	final LispStream stream = new LispStream (expression);
+	final LispStream stream = new LispInputStream (expression);
 	final LispReader lispReader = new LispReader ();
 	final Object form = lispReader.read (stream);
 	return eval (context, form);

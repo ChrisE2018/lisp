@@ -55,7 +55,7 @@ public class Application
 	    @Override
 	    public void accept (final String expression) throws Exception
 	    {
-		final LispStream stream = new LispStream (expression);
+		final LispStream stream = new LispInputStream (expression);
 		final LispReader lispReader = new LispReader ();
 		final Object form = lispReader.read (stream);
 		final Object result = interpreter.eval (new LexicalContext (interpreter), form);
@@ -71,7 +71,7 @@ public class Application
 		final int pos = assignment.indexOf ("=");
 		final String var = assignment.substring (0, pos);
 		final String value = assignment.substring (pos + 1);
-		final LispStream stream = new LispStream (value);
+		final LispStream stream = new LispInputStream (value);
 		final LispReader lispReader = new LispReader ();
 		final Object form = lispReader.read (stream);
 		final Object result = interpreter.eval (new LexicalContext (interpreter), form);

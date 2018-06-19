@@ -19,7 +19,7 @@ public class Rpl
 
     private void rpl ()
     {
-	final LispStream stream = new LispStream (System.in);
+	final LispStream stream = new LispInputStream (System.in);
 	while (true)
 	{
 	    try

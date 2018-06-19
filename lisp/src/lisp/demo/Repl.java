@@ -23,7 +23,7 @@ public class Repl
 	try
 	{
 	    final Repl repl = new Repl (args);
-	    final LispStream stream = new LispStream (System.in);
+	    final LispStream stream = new LispInputStream (System.in);
 	    repl.toplevel (stream);
 	}
 	catch (final java.lang.reflect.InvocationTargetException e)

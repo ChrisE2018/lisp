@@ -1,150 +1,74 @@
 
 package lisp;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 
-/** Wrapper around an InputStream for use by the Lisp reader. */
-public class LispStream
+public interface LispStream
 {
-    private final InputStream stream;
-
-    private boolean eof = false;
-
-    private boolean eofThrows = true;
-
-    public LispStream (final InputStream stream)
+    /**
+     * Should this stream throw an error when EOF is read.
+     *
+     * @param eofThrows
+     */
+    default public void setEofThrows (final boolean eofThrows)
     {
-	this.stream = stream;
+
     }
 
-    public LispStream (final String text)
+    /** Has this stream read all the input. */
+    public boolean eof ();
+
+    /** Close the stream. */
+    public void close () throws IOException;
+
+    /** Indicate that the reader has started a nested form */
+    default public void startLevel ()
     {
-	stream = new ByteArrayInputStream (text.getBytes (StandardCharsets.UTF_8));
+
     }
 
-    public void setEofThrows (final boolean eofThrows)
+    /** Indicate that the reader has finished a nested form */
+    default public void finishLevel ()
     {
-	this.eofThrows = eofThrows;
+
     }
 
-    public boolean eof ()
-    {
-	return eof;
-    }
+    /**
+     * Peek at the next char without advancing the stream.
+     *
+     * @return The next char to be read.
+     */
+    public char peek () throws IOException;
 
-    private void markEof () throws EOFException
-    {
-	eof = true;
-	if (eofThrows)
-	{
-	    throw new EOFException ();
-	}
-    }
+    /**
+     * Peek at the next char without advancing the stream.
+     *
+     * @param expected The character to check for.
+     * @return True if the next char is the expected character. False otherwise. The character will
+     *         still be remaining to be read in either case.
+     */
+    public boolean peek (char expected) throws IOException;
+
+    /**
+     * Peek at the second char without advancing the stream.
+     *
+     * @param expected The character to check for.
+     * @return True if the next char is the expected character. False otherwise. The character will
+     *         still be remaining to be read in either case.
+     */
+    public boolean peek2 (char expected) throws IOException;
+
+    /** Read one character advancing the stream. */
+    public char read () throws IOException;
+
+    /**
+     * Read one character advancing the stream.
+     *
+     * @param expected The character to check for.
+     * @throws IllegalArgumentException If the next char is not the expected character.
+     */
+    public void read (char expected) throws IOException;
 
     /** Take the next char if it is expected, otherwise don't advance the stream. */
-    public boolean tryChar (final char expected) throws IOException
-    {
-	stream.mark (1);
-	final int result = stream.read ();
-	if (result == -1)
-	{
-	    markEof ();
-	}
-	if ((char)result == expected)
-	{
-	    return true;
-	}
-	else
-	{
-	    stream.reset ();
-	    return false;
-	}
-    }
-
-    /** Peek at the next char without advancing the stream. */
-    public char peek () throws IOException
-    {
-	stream.mark (1);
-	final int result = stream.read ();
-	if (result == -1)
-	{
-	    markEof ();
-	}
-	stream.reset ();
-	return (char)result;
-    }
-
-    /** Peek at the next char without advancing the stream. */
-    public boolean peek (final char expected) throws IOException
-    {
-	stream.mark (1);
-	final int result = stream.read ();
-	if (result == -1)
-	{
-	    markEof ();
-	}
-	stream.reset ();
-	return (char)result == expected;
-    }
-
-    /** Peek at the second char without advancing the stream. */
-    public boolean peek2 (final char expected) throws IOException
-    {
-	stream.mark (2);
-	stream.read ();
-	final int result = stream.read ();
-	if (result == -1)
-	{
-	    markEof ();
-	}
-	stream.reset ();
-	return (char)result == expected;
-    }
-
-    /** Read one character advancing the stream. */
-    public char read () throws IOException
-    {
-	final int result = stream.read ();
-	if (result == -1)
-	{
-	    markEof ();
-	}
-	return (char)result;
-    }
-
-    /** Read one character advancing the stream. */
-    public void read (final char expected) throws IOException
-    {
-	final int result = stream.read ();
-	if (result == -1)
-	{
-	    markEof ();
-	}
-	if (result != expected)
-	{
-	    throw new IllegalArgumentException ("Expected '" + expected + "' but found '" + (char)result + '"');
-	}
-    }
-
-    public void close () throws IOException
-    {
-	stream.close ();
-    }
-
-    @Override
-    public String toString ()
-    {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	if (eof)
-	{
-	    buffer.append (" EOF");
-	}
-	buffer.append (" ");
-	buffer.append (stream);
-	buffer.append (">");
-	return buffer.toString ();
-    }
+    public boolean tryChar (char expected) throws IOException;
 }
