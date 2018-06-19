@@ -4,7 +4,10 @@ package lisp;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
-/** Wrapper around an InputStream for use by the Lisp reader. */
+/**
+ * Wrapper around an InputStream for use by the Lisp reader. This also supports reading from text,
+ * since that is a one line constructor addition.
+ */
 public class LispInputStream implements LispStream
 {
     private final InputStream stream;
