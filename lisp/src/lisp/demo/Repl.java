@@ -16,6 +16,8 @@ public class Repl
     private static final LogManager logManager = LogManager.getLogManager ();
     private static final Logger LOGGER = Logger.getLogger (Repl.class.getName ());
 
+    private static boolean running = true;
+
     private final Interpreter interpreter;
 
     public static void main (final String[] args)
@@ -28,19 +30,24 @@ public class Repl
 	}
 	catch (final java.lang.reflect.InvocationTargetException e)
 	{
-	    VerifyPrimitives.incrementReplErrorCount ();
 	    Throwable ee = e;
 	    for (int i = 0; i < 10 && ee instanceof java.lang.reflect.InvocationTargetException; i++)
 	    {
 		ee = ee.getCause ();
 	    }
+	    VerifyPrimitives.incrementReplErrorCount ("Initialization evaluation error " + ee);
 	    LOGGER.log (Level.SEVERE, "Initialization evaluation error", ee);
 	}
 	catch (final Throwable e)
 	{
-	    VerifyPrimitives.incrementReplErrorCount ();
+	    VerifyPrimitives.incrementReplErrorCount ("Miscellaneous initialization error " + e);
 	    LOGGER.log (Level.SEVERE, "Miscellaneous initialization error", e);
 	}
+    }
+
+    public static void exit ()
+    {
+	running = false;
     }
 
     /**
@@ -51,9 +58,9 @@ public class Repl
     private Repl (final String[] args) throws Exception
     {
 	logManager.readConfiguration (Interactor.class.getResource ("loggingBootstrap.properties").openStream ());
-	final Application application = new Application ();
-	application.initialize (args);
 	interpreter = new Interpreter ();
+	final Application application = new Application (interpreter);
+	application.initialize (args);
     }
 
     public Repl (final Interpreter interpreter) throws SecurityException, IOException
@@ -66,7 +73,7 @@ public class Repl
     {
 	LOGGER.info ("Starting REPL toplevel");
 	int index = 0;
-	while (true)
+	while (running)
 	{
 	    try
 	    {
@@ -75,17 +82,17 @@ public class Repl
 	    }
 	    catch (final java.lang.reflect.InvocationTargetException e)
 	    {
-		VerifyPrimitives.incrementReplErrorCount ();
 		Throwable ee = e;
 		for (int i = 0; i < 10 && ee instanceof java.lang.reflect.InvocationTargetException; i++)
 		{
 		    ee = ee.getCause ();
 		}
+		VerifyPrimitives.incrementReplErrorCount ("REPL evaluation error " + ee);
 		LOGGER.log (Level.SEVERE, "REPL evaluation error", ee);
 	    }
 	    catch (final Throwable e)
 	    {
-		VerifyPrimitives.incrementReplErrorCount ();
+		VerifyPrimitives.incrementReplErrorCount ("Miscellaneous REPL error " + e);
 		LOGGER.log (Level.SEVERE, "Miscellaneous REPL error", e);
 	    }
 	}
@@ -104,10 +111,10 @@ public class Repl
 	}
 	catch (final Throwable ex)
 	{
-	    VerifyPrimitives.incrementReplErrorCount ();
 	    try
 	    {
 		System.out.printf ("Error reading expression: %s\n", ex);
+		VerifyPrimitives.incrementReplErrorCount ("Error reading expression: " + ex);
 		// Read to a newline character
 		while (stream.read () != '\n')
 		{
@@ -116,7 +123,7 @@ public class Repl
 	    }
 	    catch (final Throwable exx)
 	    {
-		VerifyPrimitives.incrementReplErrorCount ();
+		VerifyPrimitives.incrementReplErrorCount ("Error recovering from error: " + exx);
 		System.out.printf ("[Error recovering from error: %s]\n", exx);
 	    }
 	    return;

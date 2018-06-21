@@ -9,7 +9,6 @@ import java.util.logging.*;
 
 import lisp.*;
 import lisp.FileReader;
-import lisp.Package;
 import lisp.symbol.FunctionCell;
 
 /**
@@ -73,19 +72,61 @@ public class Interpreter extends Definer
 	    if (fn instanceof List)
 	    {
 		final List<?> dotForm = (List<?>)fn;
-		// Handle fn like (dot object method)
-		// (java.lang.System.out.println)
-		// (java.lang.System.out.print "This is output")
-		// (java.lang.System.out.println "This is output")
-		// (java.lang.System.out.printf "foo %s %n" 172)
-		final List<Object> arguments = new LispList ();
-		final Object target = dotForm.get (1);
-		final Method method = (Method)dotForm.get (2);
-		for (int i = 1; i < list.size (); i++)
+		// Handle fn like (dot (field class java.lang.System "out") "println")
+		final Object f = dotForm.get (0);
+		if (f instanceof Symbol)
 		{
-		    arguments.add (eval (context, list.get (i)));
+		    final Symbol fs = (Symbol)f;
+		    if (fs.is ("dot"))
+		    {
+			// (System.out.println "foo")
+			// (String.format "foo")
+			final String methodName = (String)dotForm.get (2);
+			final Object target = eval (context, dotForm.get (1));
+			final List<Object> arguments = new LispList ();
+			for (int i = 1; i < list.size (); i++)
+			{
+			    arguments.add (eval (context, list.get (i)));
+			}
+			if (target instanceof Class)
+			{
+			    return invoke.javaMethodCall (null, (Class<?>)target, methodName, arguments);
+			}
+			else
+			{
+			    return invoke.javaMethodCall (target, target.getClass (), methodName, arguments);
+			}
+		    }
 		}
-		return invoke.javaMethodCall (target, method.getDeclaringClass (), method.getName (), arguments);
+		// if (f instanceof String)
+		// {
+		// // (System.out.println "foo")
+		// // (String.format "foo")
+		// final Object target = eval (context, dotForm.get (1));
+		// final List<Object> arguments = new LispList ();
+		// for (int i = 1; i < list.size (); i++)
+		// {
+		// arguments.add (eval (context, list.get (i)));
+		// }
+		// if (target instanceof Class)
+		// {
+		// return invoke.javaMethodCall (null, (Class<?>)target, (String)f, arguments);
+		// }
+		// else
+		// {
+		// return invoke.javaMethodCall (target, target.getClass (), (String)f, arguments);
+		// }
+		// }
+		// final List<Object> arguments = new LispList ();
+		// final Object target = dotForm.get (1);
+		// final Method method = (Method)dotForm.get (2);
+		// for (int i = 1; i < list.size (); i++)
+		// {
+		// arguments.add (eval (context, list.get (i)));
+		// }
+		// return invoke.javaMethodCall (target, method.getDeclaringClass (), method.getName
+		// (), arguments);
+		throw new Error ("NYI fn as " + fn);
 	    }
 	    if (fn instanceof Symbol)
 	    {
@@ -277,10 +318,9 @@ public class Interpreter extends Definer
 	    try
 	    {
 		System.out.printf ("Loading system file %s %n", pathname);
-		final Package pkg = PackageFactory.getDefaultPackage ();
 		final LexicalContext context = new LexicalContext (this);
 		final FileReader fileReader = new FileReader ();
-		fileReader.read (context, pkg, file);
+		fileReader.read (context, file);
 	    }
 	    catch (final EOFException e)
 	    {
@@ -289,17 +329,6 @@ public class Interpreter extends Definer
 	    }
 	}
 	return false;
-    }
-
-    /** Load a file. First argument is the pathname. Optional second argument is the package. */
-    @DefineLisp
-    public Object loadFile (final String pathname, final Object p) throws Exception
-    {
-	final Package pkg = coercePackage (p);
-	final LexicalContext context = new LexicalContext (this);
-	final FileReader fileReader = new FileReader ();
-	final Object result = fileReader.read (context, pkg, pathname);
-	return result;
     }
 
     @DefineLisp (name = "throw")
