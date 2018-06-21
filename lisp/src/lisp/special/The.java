@@ -1,5 +1,5 @@
 
-package lisp.primitives;
+package lisp.special;
 
 import lisp.Symbol;
 import lisp.eval.*;

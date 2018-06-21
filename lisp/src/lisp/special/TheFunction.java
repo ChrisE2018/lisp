@@ -1,17 +1,47 @@
 
 package lisp.special;
 
+import java.util.*;
+
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 import lisp.*;
+import lisp.asm.instructions.LabelNode;
 import lisp.cc3.*;
-import lisp.cc4.LispTreeWalker;
+import lisp.cc4.*;
 import lisp.symbol.LispVisitor;
 
-public class TheFunction implements LispCCFunction, Opcodes, LispTreeWalker
+public class TheFunction implements LispTreeFunction, LispCCFunction, Opcodes, LispTreeWalker
 {
+    private static Object[][] TYPE_TO_CLASS =
+        {
+         {"byte", byte.class},
+         {"char", char.class},
+         {"short", short.class},
+         {"int", int.class},
+         {"long", long.class},
+         {"float", float.class},
+         {"double", double.class},
+         {"Byte", Byte.class},
+         {"Char", Character.class},
+         {"Short", Short.class},
+         {"Int", Integer.class},
+         {"Long", Long.class},
+         {"Float", Float.class},
+         {"Double", Double.class},
+         {"Object", Object.class}};
+
+    private final Map<String, Class<?>> typeToClass = new HashMap<String, Class<?>> ();
     private static Convert convert = new Convert ();
+
+    public TheFunction ()
+    {
+	for (final Object[] ttc : TYPE_TO_CLASS)
+	{
+	    typeToClass.put ((String)ttc[0], (Class<?>)ttc[1]);
+	}
+    }
 
     @Override
     public void walker (final LispVisitor visitor, final LispList expression)
@@ -21,7 +51,64 @@ public class TheFunction implements LispCCFunction, Opcodes, LispTreeWalker
 	visitor.visitEnd (expression);
     }
 
-    // FIXME Define LispTreeFunction for the
+    @Override
+    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    {
+	final Object type = expression.get (1);
+	final Object arg = expression.get (2);
+	// (setq system.showBytecode t)
+	// (define foo () byte:3)
+	// Need to allow narrowing conversions here
+	if (type instanceof Symbol)
+	{
+	    final Symbol t = (Symbol)type;
+	    final Class<?> toClass = typeToClass.get (t.getName ());
+
+	    final CompileResultSet rs = context.compile (arg, resultDesired);
+	    context.convert (rs, toClass, true, false);
+	    final LabelNode l1 = new LabelNode ();
+	    return new CompileResultSet (new ExplicitCompileResult (l1, toClass));
+	}
+	// Narrowing has not been implemented below this line
+	else if (type instanceof Class)
+	{
+	    final Class<?> c = (Class<?>)type;
+	    final CompileResultSet rs = context.compile (arg, resultDesired);
+	    context.convert (rs, c, true, false);
+	    final LabelNode l1 = new LabelNode ();
+	    return new CompileResultSet (new ExplicitCompileResult (l1, c));
+	}
+	else if (type instanceof String)
+	{
+	    final String t = (String)type;
+	    try
+	    {
+		final Class<?> c = Class.forName (t);
+		final CompileResultSet rs = context.compile (arg, resultDesired);
+		context.convert (rs, c, true, false);
+		final LabelNode l1 = new LabelNode ();
+		return new CompileResultSet (new ExplicitCompileResult (l1, c));
+	    }
+	    catch (final ClassNotFoundException e)
+	    {
+	    }
+	    if (t.indexOf (".") < 0)
+	    {
+		try
+		{
+		    final Class<?> c = Class.forName ("java.lang." + t);
+		    final CompileResultSet rs = context.compile (arg, resultDesired);
+		    context.convert (rs, c, true, false);
+		    final LabelNode l1 = new LabelNode ();
+		    return new CompileResultSet (new ExplicitCompileResult (l1, c));
+		}
+		catch (final ClassNotFoundException e)
+		{
+		}
+	    }
+	}
+	throw new UnsupportedOperationException ("Can't convert " + arg + " to " + type);
+    }
 
     @Override
     public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,

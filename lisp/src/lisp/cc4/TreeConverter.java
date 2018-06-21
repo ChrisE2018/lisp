@@ -1283,8 +1283,18 @@ public class TreeConverter implements Opcodes
 		return;
 	    }
 	}
-	if (fromClass.equals (long.class) || fromClass.equals (Long.class) || fromClass.equals (double.class)
-	    || fromClass.equals (Double.class))
+	if (fromClass.equals (long.class))
+	{
+	    il.add (new InsnNode (L2F));
+	    return;
+	}
+	if (fromClass.equals (Long.class))
+	{
+	    boxer.unbox (il, boxer.getUnboxedType (fromType));
+	    il.add (new InsnNode (L2F));
+	    return;
+	}
+	if (fromClass.equals (double.class) || fromClass.equals (Double.class))
 	{
 	    throw new IllegalArgumentException ("Use 'the' for explicit narrowing conversion to float");
 	}

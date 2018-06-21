@@ -8,6 +8,7 @@ import java.util.logging.*;
 
 import lisp.*;
 import lisp.Package;
+import lisp.demo.Repl;
 import lisp.eval.*;
 import lisp.util.*;
 
@@ -18,25 +19,39 @@ public class Application
     private final Map<String, String> parameterDocumentation = new HashMap<String, String> ();
     private final Map<String, ThrowingConsumer<String>> parameterActions = new HashMap<String, ThrowingConsumer<String>> ();
 
-    private final Interpreter interpreter = new Interpreter ();
-
-    public Application ()
+    public Application (final Interpreter interpreter)
     {
+	final LispReader lispReader = LispReader.getLispThreadReader ();
 	// Try: defaults write -g NSAutomaticDashSubstitutionEnabled 0
-	// --setq "var=form"
 	// --eval "form"
+	// --exit "message"
+	// --load "pathname"
+	// --log "config"
 	// --package pkg
+	// --setq "var=form"
+
 	addParameter (new ThrowingConsumer<String> ()
 	{
 	    @Override
-	    public void accept (final String filename) throws SecurityException, IOException
+	    public void accept (final String expression) throws Exception
 	    {
-		final LogManager logManager = LogManager.getLogManager ();
-		final URL resource = getClass ().getResource (filename);
-		logManager.readConfiguration (resource.openStream ());
-		LOGGER.info ("Logging Configuration: " + resource);
+		final LispStream stream = new LispInputStream (expression);
+		// final LispReader lispReader = new LispReader ();
+		final Object form = lispReader.read (stream);
+		final Object result = interpreter.eval (new LexicalContext (interpreter), form);
+		System.out.printf ("-E %s => %s %n", form, result);
 	    }
-	}, "Load logging properties file", "-g", "--log");
+	}, "Evaluate a form", "-E", "--eval");
+
+	addParameter (new ThrowingConsumer<String> ()
+	{
+	    @Override
+	    public void accept (final String message) throws Exception
+	    {
+		System.out.printf ("--exit %s %n", message);
+		Repl.exit ();
+	    }
+	}, "Exit Lisp system", "--exit");
 
 	addParameter (new ThrowingConsumer<String> ()
 	{
@@ -53,15 +68,27 @@ public class Application
 	addParameter (new ThrowingConsumer<String> ()
 	{
 	    @Override
-	    public void accept (final String expression) throws Exception
+	    public void accept (final String filename) throws SecurityException, IOException
 	    {
-		final LispStream stream = new LispInputStream (expression);
-		final LispReader lispReader = new LispReader ();
-		final Object form = lispReader.read (stream);
-		final Object result = interpreter.eval (new LexicalContext (interpreter), form);
-		System.out.printf ("-E %s => %s %n", form, result);
+		final LogManager logManager = LogManager.getLogManager ();
+		final URL resource = getClass ().getResource (filename);
+		logManager.readConfiguration (resource.openStream ());
+		LOGGER.info ("Logging Configuration: " + resource);
 	    }
-	}, "Evaluate a form", "-E", "--eval");
+	}, "Load logging properties file", "-g", "--log");
+
+	addParameter (new ThrowingConsumer<String> ()
+	{
+	    @Override
+	    public void accept (final String packageName) throws Exception
+	    {
+		final Package pkg = PackageFactory.getPackage (packageName);
+		PackageFactory.setDefaultPackage (pkg);
+		// final LispReader lispReader = LispReader.getLispThreadReader ();
+		lispReader.setCurrentPackage (pkg);
+		System.out.printf ("-Package %s %n", pkg);
+	    }
+	}, "Evaluate a form", "-P", "--package");
 
 	addParameter (new ThrowingConsumer<String> ()
 	{
@@ -72,7 +99,7 @@ public class Application
 		final String var = assignment.substring (0, pos);
 		final String value = assignment.substring (pos + 1);
 		final LispStream stream = new LispInputStream (value);
-		final LispReader lispReader = new LispReader ();
+		// final LispReader lispReader = new LispReader ();
 		final Object form = lispReader.read (stream);
 		final Object result = interpreter.eval (new LexicalContext (interpreter), form);
 		final Package pkg = lispReader.getCurrentPackage ();
@@ -81,19 +108,6 @@ public class Application
 		System.out.printf ("-setq %s %s => %s %n", var, form, result);
 	    }
 	}, "Evaluate a form", "-S", "--setq");
-
-	addParameter (new ThrowingConsumer<String> ()
-	{
-	    @Override
-	    public void accept (final String packageName) throws Exception
-	    {
-		final Package pkg = PackageFactory.getPackage (packageName);
-		PackageFactory.setDefaultPackage (pkg);
-		final LispReader lispReader = LispReader.getLispThreadReader ();
-		lispReader.setCurrentPackage (pkg);
-		System.out.printf ("-Package %s %n", pkg);
-	    }
-	}, "Evaluate a form", "-P", "--package");
     }
 
     public void addParameter (final ThrowingConsumer<String> action, final String doc, final String... keys)

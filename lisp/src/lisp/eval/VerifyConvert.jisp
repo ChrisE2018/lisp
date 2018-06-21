@@ -119,6 +119,8 @@
 (define double:foo () byte:7)
 (verify (foo) 7)
 
+(verifyPhase conversionShortInside)
+
 ; Use short inside
 (define int:foo () short:3)
 (verify (foo) 3)
@@ -132,6 +134,7 @@
 (define double:foo () short:7)
 (verify (foo) 7)
 
+(verifyPhase conversionIntInside)
 ; Use int inside
 (define int:foo () int:3)
 (verify (foo) 3)
@@ -145,6 +148,7 @@
 (define double:foo () int:7)
 (verify (foo) 7)
 
+(verifyPhase conversionLongInside)
 ; Use long inside
 (define long:foo () long:5)
 (verify (foo) 5)
@@ -161,29 +165,4 @@
 
 ; And quit
 (verifyPhase verifyComplete)
-(exit)
 
-(define foo (a b)
-	(setq b a)
-	(list a b))
-	
-(define foo (a int:b)
-	(setq b a)
-	(list a b))
-	
-(define foo (int:a int:b)
-	(setq b a)
-	(list a b))
-	
-(define foo (int:a b)
-	(setq b a)
-	(list a b))
-	
-(define foo (short:a int:b)
-	(setq b a))
-
-(sleep 0.2)
-(printTestStatistics)
-
-; And quit
-(exit)

@@ -110,9 +110,9 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
     {
 	LogManager.getLogManager ()
 	        .readConfiguration (Interactor.class.getResource ("loggingBootstrap.properties").openStream ());
-	final Application application = new Application ();
-	application.initialize (args);
 	interpreter = new Interpreter ();
+	final Application application = new Application (interpreter);
+	application.initialize (args);
 	reader = new LispReader ();
 	setBackground (Color.lightGray);
 	doc = getStyledDocument ();
@@ -236,7 +236,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 			    }
 			    catch (final Exception e1)
 			    {
-				VerifyPrimitives.incrementReplErrorCount ();
+				VerifyPrimitives.incrementReplErrorCount ("Action error " + e1);
 				e1.printStackTrace ();
 			    }
 			}
@@ -320,7 +320,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	}
 	catch (final Throwable e)
 	{
-	    VerifyPrimitives.incrementReplErrorCount ();
+	    VerifyPrimitives.incrementReplErrorCount ("TryForm Error " + e);
 	    // System.out.printf ("TryForm Error %s%n", e);
 	    logError (e);
 	}
@@ -385,15 +385,15 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	    }
 	    catch (final java.lang.reflect.InvocationTargetException e)
 	    {
-		VerifyPrimitives.incrementReplErrorCount ();
 		final Throwable cause = e.getCause ();
+		VerifyPrimitives.incrementReplErrorCount ("Eval Error " + cause);
 
 		err.printf ("Eval Error %s%n", cause);
 		logError (cause);
 	    }
 	    catch (final Throwable e)
 	    {
-		VerifyPrimitives.incrementReplErrorCount ();
+		VerifyPrimitives.incrementReplErrorCount ("Eval Error " + e);
 		err.printf ("Eval Error %s%n", e);
 		logError (e);
 	    }

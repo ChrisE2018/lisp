@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
-import org.objectweb.asm.*;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
@@ -215,15 +215,17 @@ public class TreeCompilerContext implements Opcodes
 		    converter.convert (il, fc, toClass, allowNarrowing, liberalTruth);
 		}
 		else
-		{
+		{// Need new special case for standard class, like java.lang.System
 		    final Symbol s = treeCompiler.addQuotedConstant (x);
 		    final Class<?> quotedClass = x.getClass ();
 		    final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
 		    il.add (new VarInsnNode (ALOAD, 0));
 		    final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 		    il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
-		    convert (quotedClass, returnClass, // treeCompiler.getMethodReturnClass (),
-		            false, false);
+		    convert (quotedClass, toClass,
+		            // returnClass,
+		            //
+		            allowNarrowing, liberalTruth);
 		}
 	    }
 	    // Jump to exit label
@@ -244,8 +246,7 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new LdcInsnNode (x));
 	    final Class<?> ec = x.getClass ();
 	    final Class<?> p = boxer.getUnboxedClass (ec);
-	    convert (p != null ? p : ec, returnClass, // treeCompiler.getMethodReturnClass (),
-	            false, false);
+	    convert (p != null ? p : ec, returnClass, false, false);
 	}
 	else
 	{
@@ -255,8 +256,7 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 	    il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
-	    convert (quotedClass, returnClass, // treeCompiler.getMethodReturnClass (),
-	            false, false);
+	    convert (quotedClass, returnClass, false, false);
 	}
     }
 
@@ -305,7 +305,14 @@ public class TreeCompilerContext implements Opcodes
 		final List<?> f = (List<?>)fn;
 		if (f.size () > 0 && f.get (0) == DOT_SYMBOL)
 		{
-		    return compileDotFunctionCall (expression);
+		    try
+		    {
+			return compileDotFunctionCall (expression);
+		    }
+		    catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e)
+		    {
+			e.printStackTrace ();
+		    }
 		}
 	    }
 	    throw new Error (String.format ("Object %s is not a function", fn));
@@ -374,19 +381,23 @@ public class TreeCompilerContext implements Opcodes
 	return null;
     }
 
-    /** Compile a static method call. */
+    /**
+     * Compile a static method call.
+     *
+     * @throws SecurityException
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
+     */
     private CompileResultSet compileDotFunctionCall (final LispList expression)
+            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException
     {
 	// (define foo (x) (java.lang.String.format "foo %s bar %n" x))
+	// (define foo (x) (System.out.println x))
 	final LispList dot = expression.getSublist (0);
 	final Object target = dot.get (1);
-	final Method method = (Method)dot.get (2);
-	final String methodName = method.getName ();
+	final String methodName = (String)dot.get (2);
 
-	// final Object target = null;
-	// The method in a dot form is not selected by overloading rules. We need to discard the
-	// method and use only the method name to find the proper method to call.
-	// return null;
 	if (target instanceof Class)
 	{
 	    final Class<?> claz = (Class<?>)target;
@@ -406,9 +417,17 @@ public class TreeCompilerContext implements Opcodes
 		return compileFixedFunctionCall (null, selectedMethod, expression);
 	    }
 	}
-	else
+	else if (target instanceof List)
 	{
-	    final Class<?> claz = target.getClass ();
+	    // target is (field <class> <fieldName>)
+	    final List<?> fieldForm = (List<?>)target;
+	    final Class<?> fieldOf = (Class<?>)fieldForm.get (1);
+	    final Type fieldOfType = Type.getType (fieldOf);
+	    final String fieldName = (String)fieldForm.get (2);
+	    final Field field = fieldOf.getField (fieldName);
+	    final Object fieldValue = field.get (fieldOf);
+	    final Class<?> claz = fieldValue.getClass ();
+	    final Type fieldType = Type.getType (claz);
 	    final Method selectedMethod = selectMethod.selectMethod (claz, methodName, locals, expression);
 	    if (selectedMethod == null)
 	    {
@@ -417,17 +436,21 @@ public class TreeCompilerContext implements Opcodes
 	    else if (selectedMethod.isVarArgs ())
 	    {
 		// Function call always returns a value whether we want it or not
-		return compileVarArgsFunctionCall (target, selectedMethod, expression);
+		il.add (new FieldInsnNode (GETSTATIC, fieldOfType.getInternalName (), fieldName, fieldType.getDescriptor ()));
+		// Need version that does not compile the target
+		return compileVarArgsFunctionCallNoTarget (selectedMethod, expression);
 	    }
 	    else
 	    {
+		// (define foo (x) (System.out.println x))
 		// Function call always returns a value whether we want it or not
-		return compileFixedFunctionCall (target, selectedMethod, expression);
+		il.add (new FieldInsnNode (GETSTATIC, fieldOfType.getInternalName (), fieldName, fieldType.getDescriptor ()));
+		return compileFixedFunctionCallNoTarget (selectedMethod, expression);
 	    }
 	}
 	// mv.visitMethodInsn(INVOKESTATIC, "java/lang/String", "format",
 	// "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;", false);
-
+	throw new Error ("Could not compile " + expression);
     }
 
     private CompileResultSet compileOptimizedFunctionCall (final LispList expression)
@@ -481,12 +504,79 @@ public class TreeCompilerContext implements Opcodes
     }
 
     /** Compile a function all into to directly call the given method. */
+    // private CompileResultSet compileVarArgsFunctionCall (final Object target, final Method
+    // method, final LispList expression)
+    // {
+    // LOGGER.fine (new LogString ("Optimized call to %s using %s on %s", expression.get (0),
+    // method, target));
+    // final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature (method);
+    // final Label l1 = new Label ();
+    // add (new LabelNode (l1));
+    //
+    // final String classInternalName = treeCompiler.getClassType ().getInternalName ();
+    // if (target == null)
+    // {
+    // add (new InsnNode (ACONST_NULL));
+    // }
+    // else
+    // {
+    // final Type objectType = Type.getType (target.getClass ());
+    // final Symbol reference = treeCompiler.addQuotedConstant (target);
+    // add (new VarInsnNode (ALOAD, 0));
+    // add (new FieldInsnNode (GETFIELD, classInternalName, reference.getName (),
+    // objectType.getDescriptor ()));
+    // }
+    // // Compile arguments here
+    // final Class<?>[] params = method.getParameterTypes ();
+    // for (int i = 0; i < params.length - 1; i++)
+    // {
+    // final Object arg = expression.get (i + 1);
+    // final Class<?> argClass = params[i];
+    // final CompileResultSet rs = compile (arg, true);
+    // convert (rs, argClass, false, false);
+    // }
+    // final Class<?> argClass = params[params.length - 1].getComponentType ();
+    // final Type argType = Type.getType (argClass);
+    // final int optcount = expression.size () - params.length;
+    // il.add (new LdcInsnNode (optcount));
+    // il.add (new TypeInsnNode (ANEWARRAY, argType.getInternalName ()));
+    // for (int i = 0; i < optcount; i++)
+    // {
+    // il.add (new InsnNode (DUP));
+    // il.add (new LdcInsnNode (i));
+    // final Object arg = expression.get (i + params.length);
+    // final CompileResultSet rs = compile (arg, true);
+    // convert (rs, argClass, false, false);
+    // il.add (new InsnNode (AASTORE));
+    // }
+    // if (Modifier.isStatic (method.getModifiers ()))
+    // {
+    // final String owner = Type.getType (method.getDeclaringClass ()).getInternalName ();
+    // add (new MethodInsnNode (INVOKESTATIC, owner, method.getName (), methodSignature, false));
+    // }
+    // else
+    // {
+    // final Type objectType = Type.getType (target.getClass ());
+    // final String objectClassInternalName = objectType.getInternalName ();
+    // add (new MethodInsnNode (INVOKEVIRTUAL, objectClassInternalName, method.getName (),
+    // methodSignature, false));
+    // }
+    // final Class<?> methodValueClass = method.getReturnType ();
+    // final CompileResultSet result = new CompileResultSet ();
+    // final LabelNode ll = new LabelNode ();
+    // result.addExplicitCompileResult (ll, methodValueClass);
+    // add (new JumpInsnNode (GOTO, ll));
+    // return result;
+    // }
+
+    /** Compile a function all into to directly call the given method. */
     private CompileResultSet compileVarArgsFunctionCall (final Object target, final Method method, final LispList expression)
     {
 	LOGGER.fine (new LogString ("Optimized call to %s using %s on %s", expression.get (0), method, target));
-	final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature (method);
-	final Label l1 = new Label ();
-	add (new LabelNode (l1));
+	// final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature
+	// (method);
+	// final Label l1 = new Label ();
+	// add (new LabelNode (l1));
 
 	final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 	if (target == null)
@@ -500,6 +590,19 @@ public class TreeCompilerContext implements Opcodes
 	    add (new VarInsnNode (ALOAD, 0));
 	    add (new FieldInsnNode (GETFIELD, classInternalName, reference.getName (), objectType.getDescriptor ()));
 	}
+	// final Type targetType = null;// Type.getType (target.getClass ());
+	return compileVarArgsFunctionCallNoTarget (method, expression);
+    }
+
+    /**
+     * Compile a function all into to directly call the given method. This version does not produce
+     * instructions to load the target onto the stack.
+     */
+    private CompileResultSet compileVarArgsFunctionCallNoTarget (final Method method, final LispList expression)
+    {
+	LOGGER.fine (new LogString ("Optimized call to %s using %s", expression.get (0), method));
+	final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature (method);
+
 	// Compile arguments here
 	final Class<?>[] params = method.getParameterTypes ();
 	for (int i = 0; i < params.length - 1; i++)
@@ -523,16 +626,16 @@ public class TreeCompilerContext implements Opcodes
 	    convert (rs, argClass, false, false);
 	    il.add (new InsnNode (AASTORE));
 	}
+	final String ownerType = Type.getType (method.getDeclaringClass ()).getInternalName ();
 	if (Modifier.isStatic (method.getModifiers ()))
 	{
-	    final String owner = Type.getType (method.getDeclaringClass ()).getInternalName ();
-	    add (new MethodInsnNode (INVOKESTATIC, owner, method.getName (), methodSignature, false));
+	    add (new MethodInsnNode (INVOKESTATIC, ownerType, method.getName (), methodSignature, false));
 	}
 	else
 	{
-	    final Type objectType = Type.getType (target.getClass ());
-	    final String objectClassInternalName = objectType.getInternalName ();
-	    add (new MethodInsnNode (INVOKEVIRTUAL, objectClassInternalName, method.getName (), methodSignature, false));
+	    // final Type objectType = Type.getType (target.getClass ());
+	    // final String objectClassInternalName = targetType.getInternalName ();
+	    add (new MethodInsnNode (INVOKEVIRTUAL, ownerType, method.getName (), methodSignature, false));
 	}
 	final Class<?> methodValueClass = method.getReturnType ();
 	final CompileResultSet result = new CompileResultSet ();
@@ -546,13 +649,14 @@ public class TreeCompilerContext implements Opcodes
     private CompileResultSet compileFixedFunctionCall (final Object target, final Method method, final LispList expression)
     {
 	LOGGER.fine (new LogString ("Optimized call to %s using %s on %s", expression.get (0), method, target));
-	final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature (method);
+	// final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature
+	// (method);
 	// If we are compiling for speed and can assume that the current definition won't
 	// change, then compile a direct call to the current function method.
 	// TODO If we know argument types of the function we are about to call we can try to
 	// compile the expression more efficiently.
-	final Label l1 = new Label ();
-	add (new LabelNode (l1));
+	// final Label l1 = new Label ();
+	// add (new LabelNode (l1));
 
 	// final Symbol reference = symbol.gensym ();
 	// final String methodSignature = objectMethod.getSignature ();
@@ -568,27 +672,31 @@ public class TreeCompilerContext implements Opcodes
 	    final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 	    add (new FieldInsnNode (GETFIELD, classInternalName, reference.getName (), objectType.getDescriptor ()));
 	}
+	return compileFixedFunctionCallNoTarget (method, expression);
+    }
+
+    private CompileResultSet compileFixedFunctionCallNoTarget (final Method method, final LispList expression)
+    {
 	// Compile arguments here
 	final Class<?>[] params = method.getParameterTypes ();
 	for (int i = 0; i < params.length; i++)
 	{
-	    // (define f (x) (incr x))
 	    final Object arg = expression.get (i + 1);
 	    final Class<?> argType = params[i];
-	    // System.out.printf ("%s (%s : %s) %s %n", symbol, i, arg, argType);
 	    final CompileResultSet rs = compile (arg, true);
 	    convert (rs, argType, false, false);
 	}
+	final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature (method);
+	final String ownerType = Type.getType (method.getDeclaringClass ()).getInternalName ();
 	if (Modifier.isStatic (method.getModifiers ()))
 	{
-	    final String owner = Type.getType (method.getDeclaringClass ()).getInternalName ();
-	    add (new MethodInsnNode (INVOKESTATIC, owner, method.getName (), methodSignature, false));
+	    add (new MethodInsnNode (INVOKESTATIC, ownerType, method.getName (), methodSignature, false));
 	}
 	else
 	{
-	    final Type objectType = Type.getType (target.getClass ());
-	    final String objectClassInternalName = objectType.getInternalName ();
-	    add (new MethodInsnNode (INVOKEVIRTUAL, objectClassInternalName, method.getName (), methodSignature, false));
+	    // final Type objectType = Type.getType (target.getClass ());
+	    // final String objectClassInternalName = objectType.getInternalName ();
+	    add (new MethodInsnNode (INVOKEVIRTUAL, ownerType, method.getName (), methodSignature, false));
 	}
 	final Class<?> methodValueClass = method.getReturnType ();
 	final CompileResultSet result = new CompileResultSet ();
@@ -600,7 +708,26 @@ public class TreeCompilerContext implements Opcodes
 
     /**
      * Compile a function call and add it to the instruction list. This creates a generic function
-     * call to any normal function.
+     * call to any normal Lisp function. This involves loading the FunctionCell from the function
+     * symbol, evaluating the arguments and calling the FunctionCell.
+     * <p>
+     * This has a lot of efficiency problems. Getting to the FunctionCell requires some pointer
+     * chasing. The arguments must be passed by VarArgs semantics since we don't know for sure how
+     * many there are, so the calling code produced here will allocate an array for the arguments.
+     * The function cell must unpack the array and may need to create a new one, if the actual
+     * underlying primitive expects a different VarArgs calling sequence. And, since all arguments
+     * must be objects there may be wrapping and unwrapping of primitive types involved. Without
+     * knowing the number and type of the arguments expected by the function we are calling there is
+     * not much to be done to improve the situation without creating a new set of calling
+     * conventions different than the Java VarArgs convention.
+     * </p>
+     * <p>
+     * One option would be to push the arguments onto the stack in reverse order, followed by an
+     * argument count. The function being called could then pick up fixed arguments at known
+     * locations relative to the top of the stack. Optional or VarArgs arguments could be referenced
+     * as a virtual array on the stack. This array would silently go away when the function returns
+     * so it could not be made into a real pointer.
+     * </p>
      *
      * @param il The instruction list.
      * @param locals Local variable binding information.
@@ -669,6 +796,7 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new JumpInsnNode (GOTO, ll));
 	    return new CompileResultSet (new ExplicitCompileResult (ll, fromClass));
 	}
+	// Handle some simple constants
 	else if (symbol.is ("true") || symbol.is ("t"))
 	{
 	    final LabelNode ll = new LabelNode ();
@@ -681,6 +809,7 @@ public class TreeCompilerContext implements Opcodes
 	    add (new JumpInsnNode (GOTO, ll));
 	    return new CompileResultSet (new ImplicitCompileResult (ll, false));
 	}
+	// TODO Handle references to standard Java classes (like java.lang.*)
 	else
 	{
 	    // Reference to a global variable

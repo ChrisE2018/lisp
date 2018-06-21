@@ -1,9 +1,7 @@
 
 package lisp.cc;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,57 +12,59 @@ class CompilerTest
 {
     private void checkVerifyStatus ()
     {
-	if (VerifyPrimitives.getReplErrorCount () > 0)
+	// assertEquals (0, VerifyPrimitives.getReplErrorCount ());
+	for (final String err : VerifyPrimitives.getVerifyErrors ())
 	{
-	    final List<Symbol> errors = VerifyPrimitives.getVerifyFailures ();
-	    final StringBuilder buffer = new StringBuilder ();
-	    buffer.append (errors.size ());
-	    buffer.append ("failures\n");
-	    for (int i = 0; i < errors.size (); i++)
-	    {
-		buffer.append (i);
-		buffer.append (": ");
-		buffer.append (errors.get (i));
-		buffer.append ("\n");
-	    }
-	    fail (buffer.toString ());
+	    fail (err.toString ());
 	}
-	else
+	for (final Symbol failure : VerifyPrimitives.getVerifyFailures ())
 	{
-	    assertEquals (VerifyPrimitives.getReplErrorCount (), 0);
+	    fail (failure.toString ());
 	}
     }
 
     @Test
     void testV4 ()
     {
-	final String[] args = {"-l", "init.jisp", "--setq", "system.compilerVersion=\"V4\"", "-l", "Verify.jisp"};
+	final String[] args =
+	    {"-l", "init.jisp", "--setq", "system.compilerVersion=\"V4\"", "-l", "Verify.jisp", "--exit", "done test"};
+	System.out.println ("Starting testV4");
 	Repl.main (args);
 	checkVerifyStatus ();
+	System.out.println ("Completed testV4");
     }
 
     @Test
     void testV3 ()
     {
-	final String[] args = {"-l", "init.jisp", "--setq", "system.compilerVersion=\"V3\"", "-l", "Verify.jisp"};
+	final String[] args =
+	    {"-l", "init.jisp", "--setq", "system.compilerVersion=\"V3\"", "-l", "Verify.jisp", "--exit", "done test"};
+	System.out.println ("Starting testV3");
 	Repl.main (args);
 	checkVerifyStatus ();
+	System.out.println ("Completed testV3");
     }
 
     @Test
     void testConvertV4 ()
     {
-	final String[] args = {"-l", "init.jisp", "--setq", "system.compilerVersion=\"V4\"", "-l", "VerifyConvert.jisp"};
+	final String[] args =
+	    {"-l", "init.jisp", "--setq", "system.compilerVersion=\"V4\"", "-l", "VerifyConvert.jisp", "--exit", "done test"};
+	System.out.println ("Starting testConvertV4");
 	Repl.main (args);
 	checkVerifyStatus ();
+	System.out.println ("Completed testConvertV4");
     }
 
     @Test
     void testConvertV3 ()
     {
-	final String[] args = {"-l", "init.jisp", "--setq", "system.compilerVersion=\"V3\"", "-l", "VerifyConvert.jisp"};
+	final String[] args =
+	    {"-l", "init.jisp", "--setq", "system.compilerVersion=\"V3\"", "-l", "VerifyConvert.jisp", "--exit", "done test"};
+	System.out.println ("Starting testConvertV3");
 	Repl.main (args);
 	checkVerifyStatus ();
+	System.out.println ("Completed testConvertV3");
     }
 
     @Override

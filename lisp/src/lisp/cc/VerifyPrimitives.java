@@ -5,43 +5,55 @@ import java.util.*;
 
 import lisp.*;
 import lisp.eval.*;
-import lisp.primitives.The;
+import lisp.special.The;
 
 public class VerifyPrimitives extends Definer
 {
     private static The the = new The ();
 
-    private static int replErrorCount = 0;
+    // private static int replErrorCount = 0;
 
     private static final List<Symbol> verifyFailures = new ArrayList<Symbol> ();
+    private static final List<String> verifyErrors = new ArrayList<String> ();
 
-    public static void incrementReplErrorCount ()
+    /**
+     * Record an error. Originally this just stored the count. It was modified to record a message
+     * but several function names are still based on count.
+     *
+     * @param message
+     */
+    public static void incrementReplErrorCount (final String message)
     {
-	replErrorCount++;
+	verifyErrors.add (message);
     }
 
     public static int getReplErrorCount ()
     {
-	return replErrorCount;
+	return verifyErrors.size ();
     }
 
     public static void resetReplErrorCount ()
     {
-	replErrorCount = 0;
+	verifyErrors.clear ();
     }
 
     @DefineLisp
     public int getErrorCount ()
     {
-	return replErrorCount;
+	return verifyErrors.size ();
     }
 
     @DefineLisp
     public int resetErrorCount ()
     {
-	final int value = replErrorCount;
-	replErrorCount = 0;
+	final int value = verifyErrors.size ();
+	verifyErrors.clear ();
 	return value;
+    }
+
+    public static List<String> getVerifyErrors ()
+    {
+	return verifyErrors;
     }
 
     public static List<Symbol> getVerifyFailures ()
@@ -90,9 +102,13 @@ public class VerifyPrimitives extends Definer
 		System.out.printf ("%6s %4d of %4d %4.1f%%%n", "Error", errorCount, testCount, (errorCount * 100.0 / testCount));
 	    }
 	    System.out.printf ("%6s %4d of %4d %4.1f%%%n", "Total", testCount, testCount, (testCount * 100.0 / testCount));
-	    if (replErrorCount > 0)
+	    if (verifyErrors.size () > 0)
 	    {
-		System.out.printf ("%nThere were %d exceptions during testing%n", replErrorCount);
+		System.out.printf ("%nThere were %d exceptions during testing%n", verifyErrors.size ());
+		for (int i = 0; i < verifyErrors.size (); i++)
+		{
+		    System.out.printf ("[%d] %s%n", i + 1, verifyErrors.get (i));
+		}
 	    }
 	    else if (passCount == testCount && failCount == 0 && errorCount == 0)
 	    {
@@ -110,6 +126,14 @@ public class VerifyPrimitives extends Definer
 	else
 	{
 	    System.out.printf ("No tests have been run. Call verify to submit test data.%n");
+	}
+	if (verifyErrors.size () > 0)
+	{
+	    System.out.printf ("%nThere were %d exceptions during testing%n", verifyErrors.size ());
+	    for (int i = 0; i < verifyErrors.size (); i++)
+	    {
+		System.out.printf ("[%d] %s%n", i + 1, verifyErrors.get (i));
+	    }
 	}
 	return null;
     }
@@ -249,6 +273,19 @@ public class VerifyPrimitives extends Definer
 		checkStopAtFirstFailure ();
 		return false;
 	    }
+	}
+	catch (final java.lang.reflect.InvocationTargetException originalEx)
+	{
+	    Throwable e = originalEx;
+	    for (int i = 0; i < 10 && e instanceof java.lang.reflect.InvocationTargetException; i++)
+	    {
+		e = e.getCause ();
+	    }
+	    verifyFailures.add (phase);
+	    System.out.printf ("[%s] Error: while evaluating %s: %s%n", phase, expr, e);
+	    errorCount++;
+	    checkStopAtFirstFailure ();
+	    return false;
 	}
 	catch (final Throwable e)
 	{

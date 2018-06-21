@@ -3,7 +3,7 @@
 
 (resetTestStatistics)
 (showBytecode f)
-(stopAtFirstFailure t)
+(stopAtFirstFailure f)
 
 (verify 1 1)
 (verify 2 2)
@@ -52,6 +52,10 @@
 (verify (/ 2) 0.5)
 
 (verifyPhase compile)
+
+(undefine 'foo true)
+(undefine 'bar true)
+(undefine 'alpha true)
 
 (define foo (x) (not x))
 (verify (foo true) false)
@@ -116,6 +120,7 @@
 (verify (foo false true) 9)
 (verify (foo true false) 9)
 (verify (foo false false) 9)
+
 (undefine 'foo true)
 
 (verifyPhase logic-b)
@@ -267,6 +272,8 @@
 
 (verifyPhase factorial)
 
+(undefine 'factorial true)
+
 ; This will test compilation of a call to an undefined function.
 (define factorial (n)
 	(if (<= n 0)
@@ -285,6 +292,11 @@
 (verify (foo) 210)
 
 (verifyPhase interpretedPrimes)
+
+(undefine 'isprime true)
+(undefine 'collectPrimes true)
+(undefine 'size true)
+(undefine 'add true)
 
 (def isprime (a)
   (let ((b 2)
@@ -640,35 +652,5 @@
 
 ; And quit
 (verifyPhase verifyComplete)
-(exit)
 
 
-(define isprime (a) ;ok
-  (let ((b 2)
-  		(result true))
-    (while (and (<= (* b b) a) result)
-      (when (zerop (rem a b)) 
-      	(setq result false))
-      (setq b (1+ b))
-      )
-    result))
-    
-(define isprime (a) ; ok
-  (let ((b 2)
-  		(result true))
-    (while (and (<= (* b b) a) result)
-      (if (zerop (rem a b)) 
-      	  (setq result false))
-      (setq b (1+ b))
-      )
-    result))
- 
-(define isprime (a) ; bad
-  (let ((b 2)
-  		(result true))
-    (while (and (<= (* b b) a) result)
-      (if (zerop (rem a b)) 
-      	  (setq result false)
-          (setq b (1+ b)))
-      )
-    result))

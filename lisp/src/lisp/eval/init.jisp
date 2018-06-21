@@ -20,7 +20,7 @@
 (new "lisp.special.Quote")
 (new "lisp.special.Repeat")
 (new "lisp.special.Setq")
-;(new "lisp.special.TheCompiler")
+(new "lisp.special.The")
 (new "lisp.special.When")
 (new "lisp.special.While")
 (new "lisp.special.Unless")
@@ -35,6 +35,7 @@
 (new "lisp.primitives.ControlPrimitives")
 (new "lisp.primitives.FunctionPrimitives")
 (new "lisp.primitives.IOPrimitives")
+(new "lisp.primitives.JavaPrimitives")
 (new "lisp.primitives.ListPrimitives")
 (new "lisp.primitives.LoggerPrimitives")
 (new "lisp.primitives.NetPrimitives")
@@ -49,6 +50,7 @@
 (new "lisp.cc.VerifyPrimitives")
 
 (inPackage "system")
+(import java.lang)
 
 (def d (x)
 	"Shorthand for describe"
@@ -70,3 +72,4 @@
 			    	)
 			    ))
 
+(inPackage "user")
