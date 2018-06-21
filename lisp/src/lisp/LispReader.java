@@ -20,6 +20,7 @@ public class LispReader
     private static final char BACKSLASH = '\\';
     private static final char DOUBLEQUOTE = '"';
     private static final char COMMA = ',';
+    private static final char DOT = '.';
 
     public static LispReader getLispThreadReader ()
     {
@@ -54,7 +55,7 @@ public class LispReader
      * Combined list of Lisp Package, Lisp Symbol, Java package and Java class all of which are made
      * easily available for typing.
      */
-    private final List<Object> imports = new ArrayList<Object> ();
+    private final LispList imports = new LispList ();
 
     private Package currentPackage;
 
@@ -68,12 +69,19 @@ public class LispReader
      */
     private final Symbol dotSymbol;
 
+    /**
+     * Symbol for 'field'. Initialize this in the constructor so the PackageFactory is already
+     * setup.
+     */
+    private final Symbol fieldSymbol;
+
     public LispReader ()
     {
 	addImport (PackageFactory.getSystemPackage ());
 	currentPackage = PackageFactory.getDefaultPackage ();
 	theSymbol = PackageFactory.getSystemPackage ().internSymbol ("the");
 	dotSymbol = PackageFactory.getSystemPackage ().internSymbol ("dot");
+	fieldSymbol = PackageFactory.getSystemPackage ().internSymbol ("field");
     }
 
     /** Import a Lisp package. */
@@ -134,6 +142,11 @@ public class LispReader
     public void removeImport (final Class<?> claz)
     {
 	imports.remove (claz);
+    }
+
+    public LispList getImports ()
+    {
+	return imports;
     }
 
     public Package getCurrentPackage ()
@@ -396,16 +409,79 @@ public class LispReader
 
 	}
 	// Not a number. Return a symbol or Java reference.
-	if (name.indexOf (Symbol.PACKAGE_SEPARATOR) >= 0)
+	// 1) If this matches an imported lisp.Symbol return that
+	// 2) If this matches an existing lisp.Symbol in the current package return that
+	// 3) If this matches an existing lisp.Symbol in an imported package return that
+	// Ignore dots in the name: if a symbol somehow has then return it
+	// 4) If this matches an existing java package return that
+	// 5) If this matches a fully qualified java Class return that
+	// 6) If this matches an imported java Class return that
+	// 7) If this matches a java Class in an imported package return that
+	// 5') If a prefix matches a fully qualified java Class use it and look for a field or
+	// method suffix
+	// 6') If a prefix matches an imported java Class use it and look for a field or method
+	// suffix
+	// 7') If a prefix matches a java Class in an imported package use it and look for a field
+	// or method suffix
+	// Results:
+	// target ::= <class>
+	// target ::= (field <target> <fieldname>)
+	// target ::= (dot <target> <methodname>)
+	// 99) Create a new symbol in the current package and return it
+	// Intern the name in the reader default package
+	Object result = findExistingSymbol (name, pkg);
+	if (result != null)
 	{
-	    final Object result = readQualifiedAtom (name);
+	    // We found an existing lisp.Symbol (rules 1, 2 and 3).
+	    return result;
+	}
+	result = java.lang.Package.getPackage (name);
+	if (result != null)
+	{
+	    // Java Package (rule 4).
+	    return result;
+	}
+	result = checkFullyQualifiedJavaClass (name);
+	if (result != null)
+	{
+	    // Java Package (rule 4).
+	    return result;
+	}
+	result = checkImportedJavaClass (name);
+	if (result != null)
+	{
+	    // Java Package (rule 4).
+	    return result;
+	}
+	result = checkImportedPackageJavaClass (name);
+	if (result != null)
+	{
+	    // Java Package (rule 4).
+	    return result;
+	}
+	return pkg.internSymbol (name);
+    }
+
+    private Symbol findExistingSymbol (final String name, final Package pkg)
+    {
+	for (final Object x : imports)
+	{
+	    if (x instanceof Symbol)
+	    {
+		final Symbol symbol = (Symbol)x;
+		if (symbol.is (name))
+		{
+		    return symbol;
+		}
+	    }
+	}
+	{
+	    final Symbol result = pkg.findSymbol (name);
 	    if (result != null)
 	    {
 		return result;
 	    }
 	}
-
-	// Use imports and name to find reference
 	for (final Object x : imports)
 	{
 	    if (x instanceof Package)
@@ -417,123 +493,219 @@ public class LispReader
 		    return result;
 		}
 	    }
-	    else if (x instanceof Symbol)
+	}
+	return null;
+    }
+
+    private Object checkFullyQualifiedJavaClass (final String name)
+    {
+	// Rule 5
+	// 5) If a prefix matches a fully qualified java Class use it and look for a field or method
+	// suffix
+	for (int p = name.indexOf (DOT); p > 0; p = name.indexOf (DOT, p + 1))
+	{
+	    final String prefix = name.substring (0, p);
+	    final Class<?> cls = silentClassForName (prefix);
+	    if (cls != null)
 	    {
-		final Symbol symbol = (Symbol)x;
-		if (symbol.is (name))
-		{
-		    return symbol;
-		}
+		return processClassSuffix (cls, name.substring (p + 1));
 	    }
-	    else if (x instanceof java.lang.Package)
+	}
+	final Class<?> result = silentClassForName (name);
+	if (result != null)
+	{
+	    return result;
+	}
+	return null;
+    }
+
+    private Object checkImportedJavaClass (final String name)
+    {
+	// Rule 6
+	// 6) If a prefix matches an imported java Class use it and look for a field or method
+	// suffix
+	for (int p = name.indexOf (DOT); p > 0; p = name.indexOf (DOT, p + 1))
+	{
+	    final String prefix = name.substring (0, p);
+	    final Class<?> cls = findImportedJavaClass (prefix);
+	    if (cls != null)
 	    {
-		final java.lang.Package jpkg = (java.lang.Package)x;
-		final String packageName = jpkg.getName ();
-		final Object result = readQualifiedAtom (packageName + "." + name);
-		if (result != null)
-		{
-		    return result;
-		}
-		// try
-		// {
-		// final java.lang.Package jpkg = (java.lang.Package)x;
-		// final String packageName = jpkg.getName ();
-		// final Class<?> cls = Class.forName (packageName + "." + name);
-		// if (cls != null)
-		// {
-		// return cls;
-		// }
-		// }
-		// catch (final ClassNotFoundException e)
-		// {
-		// }
+		return processClassSuffix (cls, name.substring (p + 1));
 	    }
-	    else if (x instanceof Class)
+	}
+	final Class<?> result = findImportedJavaClass (name);
+	if (result != null)
+	{
+	    return result;
+	}
+	return null;
+    }
+
+    private Class<?> findImportedJavaClass (final String name)
+    {
+	for (final Object x : imports)
+	{
+	    if (x instanceof Class)
 	    {
-		// Look for a field or method called memberName
 		final Class<?> cls = (Class<?>)x;
-		if (cls.getSimpleName ().equals (name))
+		if (name.equals (cls.getSimpleName ()))
 		{
 		    return cls;
 		}
 	    }
 	}
-	// Intern the name in the reader default package
-	return pkg.internSymbol (name);
-
+	return null;
     }
 
-    private Object readQualifiedAtom (final String name)
+    private Object checkImportedPackageJavaClass (final String name)
     {
-	final int pos = name.indexOf (Symbol.PACKAGE_SEPARATOR);
-	final String packageName = name.substring (0, pos);
-	final Package lpkg = PackageFactory.findPackage (packageName);
-	if (lpkg != null)
+	// Rule 7
+	// 7') If a prefix matches a java Class in an imported package use it and look for a field
+	// or method suffix
+	for (int p = name.indexOf (DOT); p > 0; p = name.indexOf (DOT, p + 1))
 	{
-	    final String symbolName = name.substring (pos + 1);
-	    return lpkg.internSymbol (symbolName);
-	}
-	final java.lang.Package jpkg = findJavaPackage (name);
-	if (jpkg != null)
-	{
-	    final String jpackageName = jpkg.getName ();
-	    final String tail = name.substring (jpackageName.length ());
-	    if (tail.isEmpty ())
+	    final String prefix = name.substring (0, p);
+	    final Class<?> cls = findImportedPackageJavaClass (prefix);
+	    if (cls != null)
 	    {
-		return jpkg;
+		return processClassSuffix (cls, name.substring (p + 1));
 	    }
-	    // (java.lang.System.currentTimeMillis)
-	    return readJavaObject (jpkg, tail);
+	}
+	final Class<?> result = findImportedPackageJavaClass (name);
+	if (result != null)
+	{
+	    return result;
 	}
 	return null;
     }
 
-    private Object readJavaObject (final java.lang.Package pkg, final String tail)
+    private Class<?> findImportedPackageJavaClass (final String name)
+    {
+	for (final Object x : imports)
+	{
+	    if (x instanceof java.lang.Package)
+	    {
+		final java.lang.Package pkg = (java.lang.Package)x;
+		final Class<?> cls = silentClassForName (pkg.getName () + DOT + name);
+		if (cls != null)
+		{
+		    return cls;
+		}
+	    }
+	}
+	return null;
+    }
+
+    private Class<?> silentClassForName (final String name)
     {
 	try
 	{
-	    final String[] words = tail.split ("\\.");
-	    final String className = words[1];
-	    final String packageName = pkg.getName ();
-	    final Class<?> cls = Class.forName (packageName + "." + className);
-	    if (words.length == 2)
+	    final Class<?> result = Class.forName (name);
+	    if (result != null)
 	    {
-		return cls;
+		return result;
 	    }
-	    if (words.length == 3)
-	    {
-		// Look for a field or method called memberName
-		final String memberName = words[2];
-		try
-		{
-		    final Field field = cls.getField (memberName);
-		    final Object object = field.get (cls);
-		    return object;
-		}
-		catch (final IllegalArgumentException | IllegalAccessException | NoSuchFieldException e)
-		{
-		}
-		final Method method = getAnyMethodNamed (cls, memberName);
-		if (Modifier.isStatic (method.getModifiers ()))
-		{
-		    return new LispList (dotSymbol, cls, method);
-		}
-		else
-		{
-		    return method;
-		}
-	    }
-	    return followFieldChain (cls, words, 2);
 	}
 	catch (final ClassNotFoundException e)
 	{
-	    throw new Error ("Error reading symbol (" + tail + ") " + e);
 	}
-	catch (final SecurityException e)
+	return null;
+    }
+
+    private Object processClassSuffix (final Class<?> cls, final String suffix)
+    {
+	// This will have to process things twice: once look at the actual field data
+	// to determine types and another to build the result
+	final int p = suffix.indexOf (DOT);
+	if (p < 0)
 	{
-	    e.printStackTrace ();
+	    // Check for field reference
+	    // Check for method reference
+	    try
+	    {
+		@SuppressWarnings ("unused")
+		final Field field = cls.getField (suffix);
+		return new LispList (fieldSymbol, cls, suffix);
+	    }
+	    catch (final IllegalArgumentException | NoSuchFieldException e)
+	    {
+	    }
+	    final Method method = getAnyMethodNamed (cls, suffix);
+	    if (method == null)
+	    {
+		throw new IllegalArgumentException ("No " + suffix + " method found in " + cls);
+	    }
+	    if (Modifier.isStatic (method.getModifiers ()))
+	    {
+		return new LispList (dotSymbol, cls, suffix);
+	    }
+	    else
+	    {
+		return suffix;
+	    }
 	}
-	throw new Error ("Could not read " + tail + " as a Java class or method reference");
+	else
+	{
+	    // System.out.println ==> ("println" (field java.lang.System "out"))
+	    final String memberName = suffix.substring (0, p);
+	    final Class<?> referenceClass = determineReferenceClass (cls, memberName);
+	    final Object o = processClassSuffix (referenceClass, suffix.substring (p + 1));
+	    try
+	    {
+		@SuppressWarnings ("unused")
+		final Field field = cls.getField (memberName);
+		return new LispList (dotSymbol, new LispList (fieldSymbol, cls, memberName), o);
+	    }
+	    catch (final IllegalArgumentException | NoSuchFieldException e)
+	    {
+	    }
+	    final Method method = getAnyMethodNamed (cls, memberName);
+	    if (method == null)
+	    {
+		throw new IllegalArgumentException ("No " + memberName + " method found in " + cls);
+	    }
+	    if (Modifier.isStatic (method.getModifiers ()))
+	    {
+		return new LispList (dotSymbol, new LispList (fieldSymbol, cls, memberName), o);
+	    }
+	    else
+	    {
+		return new LispList (dotSymbol, cls, suffix);
+	    }
+	}
+    }
+
+    private Class<?> determineReferenceClass (final Class<?> cls, final String suffix)
+    {
+	// This will have to process things twice: once look at the actual field data
+	// to determine types and another to build the result
+	final int p = suffix.indexOf (DOT);
+	if (p < 0)
+	{
+	    // Check for field reference
+	    // Check for method reference
+	    try
+	    {
+		final Field field = cls.getField (suffix);
+		final Object object = field.get (cls);
+		return object.getClass ();
+	    }
+	    catch (final IllegalArgumentException | IllegalAccessException | NoSuchFieldException e)
+	    {
+	    }
+	    final Method method = getAnyMethodNamed (cls, suffix);
+	    // if (Modifier.isStatic (method.getModifiers ()))
+	    // {
+	    // return new LispList (dotSymbol, cls, method);
+	    // }
+	    // else
+	    {
+		// Not correct: method overload may not be selected
+		return method.getReturnType ();
+	    }
+	}
+	final Class<?> reference = determineReferenceClass (cls, suffix.substring (0, p));
+	return determineReferenceClass (reference, suffix.substring (p + 1));
     }
 
     private Package findLispPackage (final String name)
@@ -547,60 +719,6 @@ public class LispReader
 	    return p;
 	}
 	return null;
-    }
-
-    private java.lang.Package findJavaPackage (final String name)
-    {
-	java.lang.Package result = null;
-	final String[] parts = name.split ("\\.");
-	final StringBuilder buffer = new StringBuilder ();
-	for (int i = 0; i < parts.length; i++)
-	{
-	    buffer.append (parts[i]);
-	    final java.lang.Package pp = java.lang.Package.getPackage (buffer.toString ());
-	    if (pp != null)
-	    {
-		result = pp;
-	    }
-	    buffer.append ('.');
-	}
-
-	return result;
-    }
-
-    private Object followFieldChain (final Class<?> cls, final String[] words, final int p)
-    {
-	// (java.lang.System.out.printf "Foo %s" 44)
-	Object object = cls;
-	Class<?> c = cls;
-	int pos = p;
-	try
-	{
-	    while (pos < words.length)
-	    {
-		final Field field = c.getField (words[pos]);
-		object = field.get (object);
-		c = object.getClass ();
-		pos++;
-	    }
-	}
-	catch (final NoSuchFieldException | IllegalArgumentException | IllegalAccessException e)
-	{
-	}
-	if (pos < words.length)
-	{
-	    final Method method = getAnyMethodNamed (c, words[pos]);
-	    if (method == null)
-	    {
-		throw new Error ("Could not access method from " + c + " . " + words[pos]);
-	    }
-	    return new LispList (dotSymbol, object, method);
-	}
-	if (pos < words.length)
-	{
-	    throw new Error ("Could not access field " + object + " . " + words[pos]);
-	}
-	return object;
     }
 
     private Method getAnyMethodNamed (final Class<?> cls, final String methodName)

@@ -15,37 +15,23 @@ public class FileReader
 
     // All of these should return boolean true if the file is loaded, false or exception if there is
     // a problem
-    public boolean read (final LexicalContext context, final Package pkg, final String pathname) throws Exception
-    {
-	return read (context, pkg, new File (pathname));
-    }
 
     public boolean read (final LexicalContext context, final String pathname) throws Exception
     {
 	return read (context, new File (pathname));
     }
 
-    public boolean read (final LexicalContext context, final File file) throws Exception
-    {
-	return read (context, PackageFactory.getDefaultPackage (), file);
-    }
-
     public boolean read (final LexicalContext context, final URL url) throws Exception
-    {
-	return read (context, PackageFactory.getDefaultPackage (), url);
-    }
-
-    public boolean read (final LexicalContext context, final Package pkg, final URL url) throws Exception
     {
 	try (InputStream in = url.openStream ())
 	{
 	    final BufferedInputStream b = new BufferedInputStream (in);
 	    final LispStream stream = new LispInputStream (b);
-	    return read (context, pkg, stream);
+	    return read (context, stream);
 	}
     }
 
-    public boolean read (final LexicalContext context, final Package pkg, final File file) throws Exception
+    public boolean read (final LexicalContext context, final File file) throws Exception
     {
 	try (FileInputStream in = new FileInputStream (file))
 	{
@@ -53,7 +39,7 @@ public class FileReader
 	    final LispStream stream = new LispInputStream (b);
 	    try
 	    {
-		read (context, pkg, stream);
+		read (context, stream);
 	    }
 	    catch (final EOFException e)
 	    {
@@ -63,11 +49,10 @@ public class FileReader
 	return true;
     }
 
-    public boolean read (final LexicalContext context, final Package pkg, final LispStream stream) throws Exception
+    private boolean read (final LexicalContext context, final LispStream stream) throws Exception
     {
 	// This LispReader must be associated with the LispThread
-	final LispReader reader = new LispReader ();
-	reader.setCurrentPackage (pkg);
+	final LispReader reader = LispReader.getLispThreadReader ();
 	LispReader.withLispThreadReader (reader, new ThrowingSupplier<Object> ()
 	{
 	    @Override

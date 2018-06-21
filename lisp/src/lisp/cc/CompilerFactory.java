@@ -25,7 +25,7 @@ public class CompilerFactory
 	V1, V2, V3, V4;
     }
 
-    private static Version DEFAULT_VERSION = Version.V3;
+    private static Version DEFAULT_VERSION = Version.V4;
 
     private final Package systemPackage = PackageFactory.getSystemPackage ();
     /**

@@ -66,7 +66,7 @@ public class DefclassPrimitives extends Definer
 	}
 	catch (final Exception e)
 	{
-	    VerifyPrimitives.incrementReplErrorCount ();
+	    VerifyPrimitives.incrementReplErrorCount (e.toString ());
 	    e.printStackTrace ();
 	}
 	return null;
@@ -107,7 +107,7 @@ public class DefclassPrimitives extends Definer
 	}
 	catch (final Exception e)
 	{
-	    VerifyPrimitives.incrementReplErrorCount ();
+	    VerifyPrimitives.incrementReplErrorCount (e.toString ());
 	    e.printStackTrace ();
 	}
 	return null;

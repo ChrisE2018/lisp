@@ -18,6 +18,13 @@ public class PackagePrimitives extends Definer
 	return pkg;
     }
 
+    @DefineLisp
+    public LispList getImports ()
+    {
+	final LispReader lispReader = LispReader.getLispThreadReader ();
+	return lispReader.getImports ();
+    }
+
     /**
      * Add an import to a Package, Symbol, Java Package or Java Class. This is kind of ugly and
      * perhaps could be condensed.
