@@ -5,9 +5,9 @@ import java.util.*;
 
 import org.objectweb.asm.Opcodes;
 
-import lisp.LispList;
 import lisp.asm.instructions.*;
 import lisp.cc4.*;
+import lisp.lang.LispList;
 import lisp.symbol.LispVisitor;
 
 public class PlusOneFunction implements Opcodes, LispTreeWalker, LispTreeFunction

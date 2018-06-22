@@ -8,8 +8,6 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
-import lisp.*;
-import lisp.Symbol;
 import lisp.asm.instructions.FieldInsnNode;
 import lisp.asm.instructions.InsnNode;
 import lisp.asm.instructions.LdcInsnNode;
@@ -17,6 +15,8 @@ import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.TypeInsnNode;
 import lisp.asm.instructions.VarInsnNode;
 import lisp.cc.*;
+import lisp.lang.*;
+import lisp.lang.Symbol;
 import lisp.util.LogString;
 
 public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInterface
@@ -231,13 +231,14 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     private MethodNode getGetSymbolMethod ()
     {
 	final MethodNode mn =
-	    new MethodNode (ACC_PRIVATE, "getSymbol", "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;", null, null);
+	    new MethodNode (ACC_PRIVATE, "getSymbol", "(Ljava/lang/String;Ljava/lang/String;)Llisp/lang/Symbol;", null, null);
 	final InsnList il = mn.instructions;
 	il.add (new VarInsnNode (ALOAD, 1));
-	il.add (new MethodInsnNode (INVOKESTATIC, "lisp/PackageFactory", "getPackage", "(Ljava/lang/String;)Llisp/Package;",
-	        false));
+	il.add (new MethodInsnNode (INVOKESTATIC, "lisp/lang/PackageFactory", "getPackage",
+	        "(Ljava/lang/String;)Llisp/lang/Package;", false));
 	il.add (new VarInsnNode (ALOAD, 2));
-	il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Package", "findSymbol", "(Ljava/lang/String;)Llisp/Symbol;", false));
+	il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Package", "findSymbol", "(Ljava/lang/String;)Llisp/lang/Symbol;",
+	        false));
 	il.add (new InsnNode (ARETURN));
 
 	mn.maxStack = 0;
@@ -250,16 +251,17 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     // {
     // final MethodNode mn =
     // new MethodNode (ACC_PRIVATE, "getSymbolValue",
-    // "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;", null, null);
+    // "(Ljava/lang/String;Ljava/lang/String;)Llisp/lang/Symbol;", null, null);
     // final InsnList il = mn.instructions;
     // il.add (new VarInsnNode (ALOAD, 1));
-    // il.add (new MethodInsnNode (INVOKESTATIC, "lisp/PackageFactory", "getPackage",
-    // "(Ljava/lang/String;)Llisp/Package;",
+    // il.add (new MethodInsnNode (INVOKESTATIC, "lisp/lang/PackageFactory", "getPackage",
+    // "(Ljava/lang/String;)Llisp/lang/Package;",
     // false));
     // il.add (new VarInsnNode (ALOAD, 2));
-    // il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Package", "findSymbol",
-    // "(Ljava/lang/String;)Llisp/Symbol;", false));
-    // il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;",
+    // il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Package", "findSymbol",
+    // "(Ljava/lang/String;)Llisp/lang/Symbol;", false));
+    // il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Symbol", "getValue",
+    // "()Ljava/lang/Object;",
     // false));
     // il.add (new InsnNode (ARETURN));
     //

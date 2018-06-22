@@ -8,8 +8,8 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
-import lisp.LispList;
 import lisp.cc.Compiler;
+import lisp.lang.LispList;
 import lisp.util.LogString;
 
 public class CompileLoader_v2 extends ClassLoader implements Compiler

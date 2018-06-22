@@ -9,11 +9,11 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
-import lisp.*;
-import lisp.Package;
-import lisp.Symbol;
-import lisp.cc.*;
+import lisp.cc.NameSpec;
 import lisp.cc1.CompileLoader_v1;
+import lisp.lang.*;
+import lisp.lang.Package;
+import lisp.lang.Symbol;
 import lisp.symbol.*;
 import lisp.util.LogString;
 
@@ -271,8 +271,8 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 
 		mv.visitVarInsn (ALOAD, 0);
 		final String classInternalName = shellClassType.getInternalName ();
-		mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
-		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
+		mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/lang/Symbol;");
+		mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/lang/Symbol", "getValue", "()Ljava/lang/Object;", false);
 		if (valueType.equals (boolean.class))
 		{
 		    coerceBoolean (mv);
@@ -418,11 +418,12 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 
 	mv.visitVarInsn (ALOAD, 0);
 	final String classInternalName = shellClassType.getInternalName ();
-	mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
+	mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/lang/Symbol;");
 
 	// The call to getDefaultHandlerFunction will return a DefaultHandler that tries to invoke
 	// the java method on arg 1 if the function has not been given any other definition.
-	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;", false);
+	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/lang/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;",
+	        false);
 	// Compile the arguments
 	final int argCount = e.size () - 1;
 	ldcGeneral (mv, argCount);
@@ -837,7 +838,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    // If the valueCell is a TypedValueCell, use the type information.
 	    mv.visitVarInsn (ALOAD, 0);
 	    final String classInternalName = shellClassType.getInternalName ();
-	    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
+	    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/lang/Symbol;");
 	    compileExpression (mv, e.get (2), Object.class);
 	    if (valueType != null)
 	    {
@@ -845,7 +846,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 		mv.visitInsn (DUP_X1);
 	    }
 
-	    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "setValue", "(Ljava/lang/Object;)V", false);
+	    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/lang/Symbol", "setValue", "(Ljava/lang/Object;)V", false);
 	    // Return the expression value
 	    if (!globalReferences.contains (symbol))
 	    {

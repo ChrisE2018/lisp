@@ -14,10 +14,10 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
-import lisp.*;
-import lisp.Package;
 import lisp.cc.VerifyPrimitives;
 import lisp.eval.*;
+import lisp.lang.*;
+import lisp.lang.Package;
 
 /**
  * Swing window for lisp interactions.

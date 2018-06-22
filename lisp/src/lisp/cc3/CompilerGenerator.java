@@ -6,8 +6,8 @@ import java.util.Map;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-import lisp.Symbol;
 import lisp.cc.LexicalBinding;
+import lisp.lang.Symbol;
 
 public interface CompilerGenerator
 {

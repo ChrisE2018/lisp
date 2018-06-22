@@ -7,8 +7,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.logging.*;
 
-import lisp.*;
-import lisp.FileReader;
+import lisp.lang.*;
+import lisp.lang.FileReader;
 import lisp.symbol.FunctionCell;
 
 /**

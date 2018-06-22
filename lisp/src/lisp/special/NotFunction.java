@@ -3,9 +3,9 @@ package lisp.special;
 
 import org.objectweb.asm.Opcodes;
 
-import lisp.LispList;
 import lisp.asm.instructions.*;
 import lisp.cc4.*;
+import lisp.lang.LispList;
 
 public class NotFunction implements Opcodes, LispTreeFunction
 {

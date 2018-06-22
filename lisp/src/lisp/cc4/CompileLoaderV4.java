@@ -8,8 +8,8 @@ import java.util.Map.Entry;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
-import lisp.Symbol;
 import lisp.cc.Compiler;
+import lisp.lang.Symbol;
 
 public class CompileLoaderV4 extends ClassLoader implements Compiler
 {

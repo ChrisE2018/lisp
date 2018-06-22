@@ -5,8 +5,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.InsnList;
 
-import lisp.Symbol;
 import lisp.cc4.TreeCompilerContext;
+import lisp.lang.Symbol;
 
 /**
  * Record of a local variable binding. Subclasses define bindings for local variables and fields.

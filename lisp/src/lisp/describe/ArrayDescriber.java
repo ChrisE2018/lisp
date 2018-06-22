@@ -3,7 +3,7 @@ package lisp.describe;
 
 import java.lang.reflect.Array;
 
-import lisp.Describer;
+import lisp.lang.Describer;
 import lisp.util.MultiMap;
 
 public class ArrayDescriber implements Describer

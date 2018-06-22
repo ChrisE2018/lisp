@@ -11,9 +11,9 @@ import java.util.function.Predicate;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import lisp.*;
 import lisp.cc.LexicalBinding;
 import lisp.eval.LexicalContext;
+import lisp.lang.*;
 import lisp.util.*;
 
 /** Base class of all function cells. */

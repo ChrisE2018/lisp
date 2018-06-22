@@ -10,9 +10,8 @@ import org.objectweb.asm.tree.*;
 // @see https://www.beyondjava.net/blog/quick-guide-writing-byte-code-asm/
 import org.objectweb.asm.util.*;
 
-import lisp.*;
-import lisp.Symbol;
 import lisp.cc.Compiler;
+import lisp.lang.*;
 
 public class CompileLoader_v1 extends ClassLoader implements Compiler
 {

@@ -9,8 +9,8 @@ import java.util.Map.Entry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
-import lisp.Package;
-import lisp.PackageFactory;
+import lisp.lang.Package;
+import lisp.lang.PackageFactory;
 
 class TestPackageFactory
 {

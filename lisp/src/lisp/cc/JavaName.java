@@ -1,7 +1,7 @@
 
 package lisp.cc;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 
 public class JavaName
 {

@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
 
-import lisp.Symbol;
 import lisp.cc.VerifyPrimitives;
 import lisp.demo.Repl;
+import lisp.lang.Symbol;
 
 class CompilerTest
 {

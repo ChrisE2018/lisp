@@ -7,8 +7,8 @@ import java.util.logging.Logger;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import lisp.*;
 import lisp.eval.*;
+import lisp.lang.*;
 import lisp.symbol.*;
 
 public class DefinePrimitives extends Definer

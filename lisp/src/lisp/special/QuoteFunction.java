@@ -4,11 +4,10 @@ package lisp.special;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-import lisp.LispList;
-import lisp.Symbol;
 import lisp.asm.instructions.*;
 import lisp.cc3.*;
 import lisp.cc4.*;
+import lisp.lang.*;
 import lisp.symbol.LispVisitor;
 
 public class QuoteFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker

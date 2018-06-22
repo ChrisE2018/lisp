@@ -1,9 +1,9 @@
 
 package lisp.primitives;
 
-import lisp.*;
-import lisp.Package;
 import lisp.eval.*;
+import lisp.lang.*;
+import lisp.lang.Package;
 import lisp.symbol.*;
 
 /** Primitives for packages and symbols. */

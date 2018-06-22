@@ -9,9 +9,9 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-import lisp.LispList;
-import lisp.Symbol;
 import lisp.cc.*;
+import lisp.lang.LispList;
+import lisp.lang.Symbol;
 import lisp.symbol.*;
 import lisp.util.LogString;
 
@@ -460,8 +460,8 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	    // If the valueCell is a TypedValueCell, use the type information.
 	    mv.visitVarInsn (ALOAD, 0);
 	    final String classInternalName = shellClassType.getInternalName ();
-	    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
-	    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false);
+	    mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/lang/Symbol;");
+	    mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/lang/Symbol", "getValue", "()Ljava/lang/Object;", false);
 	    convert.convert (mv, Object.class, valueClass, allowNarrowing, liberalTruth);
 	}
     }
@@ -639,12 +639,13 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
 	LOGGER.finer (new LogString ("Function symbol reference to %s", symbol));
 	mv.visitVarInsn (ALOAD, 0);
 	final String classInternalName = shellClassType.getInternalName ();
-	mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/Symbol;");
+	mv.visitFieldInsn (GETFIELD, classInternalName, createJavaSymbolName (symbol), "Llisp/lang/Symbol;");
 
 	// Get the FunctionCell from the function symbol.
 	// The call to getDefaultHandlerFunction will return a DefaultHandler that tries to invoke
 	// the java method on arg 1 if the function has not been given any other definition.
-	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;", false);
+	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/lang/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;",
+	        false);
 
 	// Compile the arguments. Pass all the arguments as elements of a single array of Objects.
 	final int argCount = expression.size () - 1;

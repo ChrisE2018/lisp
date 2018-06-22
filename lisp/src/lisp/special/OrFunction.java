@@ -6,10 +6,10 @@ import java.util.List;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-import lisp.LispList;
 import lisp.asm.instructions.*;
 import lisp.cc3.*;
 import lisp.cc4.*;
+import lisp.lang.LispList;
 import lisp.symbol.LispVisitor;
 
 public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker

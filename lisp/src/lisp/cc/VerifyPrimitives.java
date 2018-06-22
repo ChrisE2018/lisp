@@ -3,8 +3,8 @@ package lisp.cc;
 
 import java.util.*;
 
-import lisp.*;
 import lisp.eval.*;
+import lisp.lang.*;
 import lisp.special.The;
 
 public class VerifyPrimitives extends Definer

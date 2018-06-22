@@ -5,9 +5,9 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.logging.Logger;
 
-import lisp.*;
-import lisp.Package;
 import lisp.exceptions.CoerceError;
+import lisp.lang.*;
+import lisp.lang.Package;
 import lisp.symbol.*;
 
 /**

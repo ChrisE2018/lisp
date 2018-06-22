@@ -3,7 +3,7 @@ package lisp.cc3;
 
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-import lisp.LispList;
+import lisp.lang.LispList;
 import lisp.symbol.LispFunction;
 
 /***Base class for functions to support a Lisp function.This includes compiler and walker methods.**

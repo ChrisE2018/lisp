@@ -1,8 +1,8 @@
 
 package lisp.demo;
 
-import lisp.*;
-import lisp.Package;
+import lisp.lang.*;
+import lisp.lang.Package;
 
 /** Simple toplevel loop that reads a lisp form and prints it back. */
 public class Rpl

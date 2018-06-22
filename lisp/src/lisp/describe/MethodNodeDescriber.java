@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.objectweb.asm.tree.*;
 
-import lisp.Describer;
 import lisp.asm.instructions.AccessKeywords;
+import lisp.lang.Describer;
 import lisp.util.MultiMap;
 
 public class MethodNodeDescriber implements Describer

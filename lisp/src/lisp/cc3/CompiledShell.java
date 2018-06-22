@@ -1,7 +1,7 @@
 
 package lisp.cc3;
 
-import lisp.*;
+import lisp.lang.*;
 
 public class CompiledShell
 {

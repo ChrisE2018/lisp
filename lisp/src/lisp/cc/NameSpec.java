@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.objectweb.asm.Type;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 
 public class NameSpec
 {

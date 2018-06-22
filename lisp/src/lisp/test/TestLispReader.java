@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
-import lisp.*;
-import lisp.Package;
+import lisp.lang.*;
+import lisp.lang.Package;
 
 class TestLispReader
 {

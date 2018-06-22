@@ -8,7 +8,7 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
-import lisp.*;
+import lisp.lang.*;
 
 class TestCommentReader
 {

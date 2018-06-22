@@ -11,7 +11,7 @@ import java.util.*;
 import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
 
-import lisp.LispStream;
+import lisp.lang.LispStream;
 
 /**
  * @author cre
@@ -47,7 +47,7 @@ public class LispTextPaneStream implements LispStream
     /**
      * Has this stream read all the input.
      *
-     * @see lisp.LispStream#eof()
+     * @see lisp.lang.LispStream#eof()
      */
     @Override
     public boolean eof ()

@@ -1,8 +1,8 @@
 
 package lisp.cc4;
 
-import lisp.LispList;
 import lisp.exceptions.DontOptimize;
+import lisp.lang.LispList;
 import lisp.symbol.LispFunction;
 
 public interface LispTreeFunction extends LispFunction

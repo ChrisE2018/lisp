@@ -7,7 +7,7 @@ package lisp.cc4;
 
 import org.objectweb.asm.Type;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 
 /**
  * @author cre

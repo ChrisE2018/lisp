@@ -3,7 +3,7 @@ package lisp.cc;
 
 import java.util.*;
 
-import lisp.*;
+import lisp.lang.*;
 import lisp.symbol.*;
 
 public class Analyzer

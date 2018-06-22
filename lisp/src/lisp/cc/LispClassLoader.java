@@ -4,7 +4,7 @@ package lisp.cc;
 import java.util.*;
 import java.util.Map.Entry;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 
 public class LispClassLoader extends ClassLoader
 {

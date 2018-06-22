@@ -1,8 +1,8 @@
 
 package lisp.special;
 
-import lisp.LispList;
 import lisp.eval.*;
+import lisp.lang.LispList;
 
 public class Cond extends LogicDefiner
 {

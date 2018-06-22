@@ -1,7 +1,7 @@
 
 package lisp.cc4;
 
-import lisp.LispList;
+import lisp.lang.LispList;
 import lisp.symbol.LispVisitor;
 
 public interface LispTreeWalker

@@ -7,7 +7,7 @@ import java.util.logging.*;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 import lisp.util.LogString;
 
 public class Optimizer extends ClassNode implements Opcodes

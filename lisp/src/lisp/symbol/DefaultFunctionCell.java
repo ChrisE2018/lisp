@@ -10,8 +10,8 @@ import java.util.List;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import lisp.Symbol;
 import lisp.eval.*;
+import lisp.lang.Symbol;
 
 public class DefaultFunctionCell extends FunctionCell
 {

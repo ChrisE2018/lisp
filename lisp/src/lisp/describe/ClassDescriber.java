@@ -4,7 +4,7 @@ package lisp.describe;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 
-import lisp.Describer;
+import lisp.lang.Describer;
 import lisp.util.MultiMap;
 
 public class ClassDescriber implements Describer

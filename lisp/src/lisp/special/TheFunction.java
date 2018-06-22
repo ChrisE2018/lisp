@@ -6,10 +6,10 @@ import java.util.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-import lisp.*;
 import lisp.asm.instructions.LabelNode;
 import lisp.cc3.*;
 import lisp.cc4.*;
+import lisp.lang.*;
 import lisp.symbol.LispVisitor;
 
 public class TheFunction implements LispTreeFunction, LispCCFunction, Opcodes, LispTreeWalker

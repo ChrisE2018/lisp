@@ -7,8 +7,8 @@ package lisp.symbol;
 
 import java.util.List;
 
-import lisp.*;
 import lisp.eval.LexicalContext;
+import lisp.lang.*;
 
 public class StandardFunctionCell extends FunctionCell
 {

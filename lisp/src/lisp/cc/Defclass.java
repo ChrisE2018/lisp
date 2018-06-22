@@ -12,12 +12,12 @@ import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.FieldInsnNode;
 
-import lisp.*;
-import lisp.Symbol;
 import lisp.asm.instructions.InsnNode;
 import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.VarInsnNode;
 import lisp.cc4.*;
+import lisp.lang.*;
+import lisp.lang.Symbol;
 import lisp.util.*;
 
 public class Defclass extends ClassNode implements TreeCompilerInterface, Opcodes
@@ -580,13 +580,14 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private MethodNode getGetSymbolMethod ()
     {
 	final MethodNode mn =
-	    new MethodNode (ACC_PRIVATE, "getSymbol", "(Ljava/lang/String;Ljava/lang/String;)Llisp/Symbol;", null, null);
+	    new MethodNode (ACC_PRIVATE, "getSymbol", "(Ljava/lang/String;Ljava/lang/String;)Llisp/lang/Symbol;", null, null);
 	final InsnList il = mn.instructions;
 	il.add (new VarInsnNode (ALOAD, 1));
-	il.add (new MethodInsnNode (INVOKESTATIC, "lisp/PackageFactory", "getPackage", "(Ljava/lang/String;)Llisp/Package;",
-	        false));
+	il.add (new MethodInsnNode (INVOKESTATIC, "lisp/lang/PackageFactory", "getPackage",
+	        "(Ljava/lang/String;)Llisp/lang/Package;", false));
 	il.add (new VarInsnNode (ALOAD, 2));
-	il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Package", "findSymbol", "(Ljava/lang/String;)Llisp/Symbol;", false));
+	il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Package", "findSymbol", "(Ljava/lang/String;)Llisp/lang/Symbol;",
+	        false));
 	il.add (new InsnNode (ARETURN));
 
 	mn.maxStack = 0;

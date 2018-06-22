@@ -4,8 +4,8 @@ package lisp.util;
 import java.lang.reflect.*;
 import java.util.*;
 
-import lisp.*;
 import lisp.cc.LexicalBinding;
+import lisp.lang.*;
 import lisp.symbol.*;
 
 public class SelectMethod

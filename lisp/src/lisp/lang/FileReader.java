@@ -1,5 +1,5 @@
 
-package lisp;
+package lisp.lang;
 
 import java.io.*;
 import java.net.URL;

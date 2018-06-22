@@ -5,7 +5,7 @@
 
 package lisp.symbol;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 import lisp.util.Boxing;
 
 public class Assignable

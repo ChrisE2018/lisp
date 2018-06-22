@@ -10,8 +10,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
-import lisp.*;
-import lisp.Symbol;
 import lisp.asm.instructions.FieldInsnNode;
 import lisp.asm.instructions.InsnNode;
 import lisp.asm.instructions.JumpInsnNode;
@@ -22,6 +20,8 @@ import lisp.asm.instructions.TypeInsnNode;
 import lisp.asm.instructions.VarInsnNode;
 import lisp.cc.*;
 import lisp.exceptions.DontOptimize;
+import lisp.lang.*;
+import lisp.lang.Symbol;
 import lisp.symbol.*;
 import lisp.util.*;
 
@@ -742,13 +742,13 @@ public class TreeCompilerContext implements Opcodes
 	il.add (new VarInsnNode (ALOAD, 0));
 	final Type classType = treeCompiler.getClassType ();
 	final String classInternalName = classType.getInternalName ();
-	il.add (new FieldInsnNode (GETFIELD, classInternalName, javaName.createJavaSymbolName (symbol), "Llisp/Symbol;"));
+	il.add (new FieldInsnNode (GETFIELD, classInternalName, javaName.createJavaSymbolName (symbol), "Llisp/lang/Symbol;"));
 
 	// Get the FunctionCell from the function symbol.
 	// The call to getDefaultHandlerFunction will return a DefaultHandler that tries to invoke
 	// the java method on arg 1 if the function has not been given any other definition.
-	il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Symbol", "getDefaultHandlerFunction", "()Llisp/symbol/FunctionCell;",
-	        false));
+	il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Symbol", "getDefaultHandlerFunction",
+	        "()Llisp/symbol/FunctionCell;", false));
 
 	// Compile the arguments. Pass all the arguments as elements of a single array of Objects.
 	final int argCount = expression.size () - 1;
@@ -820,8 +820,9 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    final Type classType = treeCompiler.getClassType ();
 	    final String classInternalName = classType.getInternalName ();
-	    il.add (new FieldInsnNode (GETFIELD, classInternalName, javaName.createJavaSymbolName (symbol), "Llisp/Symbol;"));
-	    il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Symbol", "getValue", "()Ljava/lang/Object;", false));
+	    il.add (new FieldInsnNode (GETFIELD, classInternalName, javaName.createJavaSymbolName (symbol),
+	            "Llisp/lang/Symbol;"));
+	    il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Symbol", "getValue", "()Ljava/lang/Object;", false));
 
 	    final LabelNode ll = new LabelNode ();
 	    il.add (new JumpInsnNode (GOTO, ll));

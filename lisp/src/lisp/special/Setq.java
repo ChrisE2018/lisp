@@ -3,8 +3,8 @@ package lisp.special;
 
 import org.objectweb.asm.Opcodes;
 
-import lisp.Symbol;
 import lisp.eval.*;
+import lisp.lang.Symbol;
 
 public class Setq extends Definer implements Opcodes
 {

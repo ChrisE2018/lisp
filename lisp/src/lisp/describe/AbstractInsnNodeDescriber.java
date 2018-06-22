@@ -3,7 +3,7 @@ package lisp.describe;
 
 import org.objectweb.asm.tree.*;
 
-import lisp.Describer;
+import lisp.lang.Describer;
 
 public class AbstractInsnNodeDescriber implements Describer
 {

@@ -6,13 +6,13 @@ import java.util.*;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-import lisp.*;
-import lisp.Package;
-import lisp.Symbol;
 import lisp.asm.instructions.*;
 import lisp.cc.*;
 import lisp.cc3.*;
 import lisp.cc4.*;
+import lisp.lang.*;
+import lisp.lang.Package;
+import lisp.lang.Symbol;
 import lisp.symbol.LispVisitor;
 
 public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker

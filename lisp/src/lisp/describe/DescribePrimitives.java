@@ -6,9 +6,9 @@ import java.util.Map.Entry;
 
 import org.objectweb.asm.tree.*;
 
-import lisp.*;
-import lisp.Package;
 import lisp.eval.*;
+import lisp.lang.*;
+import lisp.lang.Package;
 import lisp.util.MultiMap;
 
 public class DescribePrimitives extends Definer

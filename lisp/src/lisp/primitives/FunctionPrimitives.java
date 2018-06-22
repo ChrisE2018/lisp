@@ -3,8 +3,8 @@ package lisp.primitives;
 
 import java.util.*;
 
-import lisp.*;
 import lisp.eval.*;
+import lisp.lang.*;
 import lisp.symbol.DefFunctionCell;
 
 /**

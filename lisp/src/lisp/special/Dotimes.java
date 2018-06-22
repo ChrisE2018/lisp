@@ -3,8 +3,8 @@ package lisp.special;
 
 import org.objectweb.asm.Opcodes;
 
-import lisp.*;
 import lisp.eval.*;
+import lisp.lang.*;
 
 public class Dotimes extends LogicDefiner implements Opcodes
 {

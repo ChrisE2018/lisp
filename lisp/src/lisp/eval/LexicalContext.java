@@ -3,7 +3,7 @@ package lisp.eval;
 
 import java.util.*;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 
 /**
  * Combination of interpreter and lexical bindings.

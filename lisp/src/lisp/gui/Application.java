@@ -6,10 +6,10 @@ import java.net.URL;
 import java.util.*;
 import java.util.logging.*;
 
-import lisp.*;
-import lisp.Package;
 import lisp.demo.Repl;
 import lisp.eval.*;
+import lisp.lang.*;
+import lisp.lang.Package;
 import lisp.util.*;
 
 public class Application

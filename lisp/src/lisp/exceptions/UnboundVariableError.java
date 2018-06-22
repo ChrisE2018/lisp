@@ -1,7 +1,7 @@
 
 package lisp.exceptions;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 
 public class UnboundVariableError extends Error
 {

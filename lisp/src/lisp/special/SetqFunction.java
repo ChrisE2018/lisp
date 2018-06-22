@@ -6,12 +6,12 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-import lisp.LispList;
-import lisp.Symbol;
 import lisp.asm.instructions.*;
 import lisp.cc.*;
 import lisp.cc3.*;
 import lisp.cc4.*;
+import lisp.lang.LispList;
+import lisp.lang.Symbol;
 import lisp.symbol.LispVisitor;
 import lisp.util.LogString;
 
@@ -78,7 +78,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    LOGGER.finer (new LogString ("Global assignment to %s as %s", symbol, javaSymbolName));
 	    final String classInternalName = compiler.getClassType ().getInternalName ();
 	    context.add (new VarInsnNode (ALOAD, 0));
-	    context.add (new FieldInsnNode (GETFIELD, classInternalName, javaSymbolName, "Llisp/Symbol;"));
+	    context.add (new FieldInsnNode (GETFIELD, classInternalName, javaSymbolName, "Llisp/lang/Symbol;"));
 	    final CompileResultSet results = context.compile (expression.get (2), true);
 	    context.convert (results, Object.class, false, false);
 	    if (resultDesired)
@@ -86,7 +86,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 		// Copy the expression value so it becomes the return value
 		context.add (new InsnNode (DUP_X1));
 	    }
-	    context.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/Symbol", "setValue", "(Ljava/lang/Object;)V", false));
+	    context.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Symbol", "setValue", "(Ljava/lang/Object;)V", false));
 	    final LabelNode ll = new LabelNode ();
 	    context.add (new JumpInsnNode (GOTO, ll));
 	    return new CompileResultSet (new ExplicitCompileResult (ll, resultDesired ? Object.class : void.class));
@@ -170,7 +170,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	// If the valueCell is a TypedValueCell, use the type information.
 	mv.visitVarInsn (ALOAD, 0);
 	final String classInternalName = generator.getClassType ().getInternalName ();
-	mv.visitFieldInsn (GETFIELD, classInternalName, generator.createJavaSymbolName (symbol), "Llisp/Symbol;");
+	mv.visitFieldInsn (GETFIELD, classInternalName, generator.createJavaSymbolName (symbol), "Llisp/lang/Symbol;");
 	generator.compileExpression (mv, valueExpr, Object.class, false, false);
 	if (valueClass != null)
 	{
@@ -178,7 +178,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    mv.visitInsn (DUP_X1);
 	}
 
-	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/Symbol", "setValue", "(Ljava/lang/Object;)V", false);
+	mv.visitMethodInsn (INVOKEVIRTUAL, "lisp/lang/Symbol", "setValue", "(Ljava/lang/Object;)V", false);
 	// Return the expression value
 	generator.addGlobalReference (symbol);
 	if (valueClass != null)

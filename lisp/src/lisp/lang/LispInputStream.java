@@ -1,5 +1,5 @@
 
-package lisp;
+package lisp.lang;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -39,7 +39,7 @@ public class LispInputStream implements LispStream
     /**
      * Has this stream read all the input.
      *
-     * @see lisp.LispStream#eof()
+     * @see lisp.lang.LispStream#eof()
      */
     @Override
     public boolean eof ()

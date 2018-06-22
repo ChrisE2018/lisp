@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-import lisp.*;
+import lisp.lang.*;
 
 /**
  * Simple tests of toString methods to increase code coverage. These tests are not important, but

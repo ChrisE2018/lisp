@@ -3,8 +3,8 @@ package lisp.primitives;
 
 import java.util.*;
 
-import lisp.LispList;
 import lisp.eval.*;
+import lisp.lang.LispList;
 
 /**
  * Bind java functions to lisp symbols.

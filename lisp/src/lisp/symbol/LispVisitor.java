@@ -5,7 +5,7 @@
 
 package lisp.symbol;
 
-import lisp.*;
+import lisp.lang.*;
 
 public interface LispVisitor
 {

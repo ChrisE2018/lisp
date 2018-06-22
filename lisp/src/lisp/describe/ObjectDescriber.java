@@ -3,7 +3,7 @@ package lisp.describe;
 
 import java.lang.reflect.*;
 
-import lisp.Describer;
+import lisp.lang.Describer;
 import lisp.util.MultiMap;
 
 public class ObjectDescriber implements Describer

@@ -3,8 +3,8 @@ package lisp.cc;
 
 import java.util.*;
 
-import lisp.*;
 import lisp.eval.*;
+import lisp.lang.*;
 
 public class CompilerPrimitives extends Definer
 {

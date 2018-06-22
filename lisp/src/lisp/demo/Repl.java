@@ -4,11 +4,11 @@ package lisp.demo;
 import java.io.IOException;
 import java.util.logging.*;
 
-import lisp.*;
-import lisp.Package;
 import lisp.cc.VerifyPrimitives;
 import lisp.eval.*;
 import lisp.gui.*;
+import lisp.lang.*;
+import lisp.lang.Package;
 
 /** Simple toplevel loop that reads a lisp form, evaluates it and prints the result. */
 public class Repl

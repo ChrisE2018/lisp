@@ -3,7 +3,7 @@ package lisp.describe;
 
 import org.objectweb.asm.tree.*;
 
-import lisp.Describer;
+import lisp.lang.Describer;
 import lisp.util.MultiMap;
 
 public class InsnListDescriber implements Describer

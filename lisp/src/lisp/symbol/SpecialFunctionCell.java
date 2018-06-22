@@ -10,8 +10,8 @@ import java.util.*;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import lisp.Symbol;
 import lisp.eval.LexicalContext;
+import lisp.lang.Symbol;
 import lisp.util.MultiMap;
 
 public class SpecialFunctionCell extends FunctionCell

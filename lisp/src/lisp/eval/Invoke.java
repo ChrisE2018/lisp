@@ -4,8 +4,8 @@ package lisp.eval;
 import java.lang.reflect.*;
 import java.util.List;
 
-import lisp.Symbol;
 import lisp.exceptions.CoerceError;
+import lisp.lang.Symbol;
 import lisp.symbol.Applicable;
 
 public class Invoke

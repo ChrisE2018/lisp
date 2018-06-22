@@ -8,10 +8,9 @@ import java.util.logging.*;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.ClassNode;
 
-import lisp.LispList;
-import lisp.Symbol;
 import lisp.cc4.Optimizer;
 import lisp.eval.*;
+import lisp.lang.*;
 import lisp.util.LogString;
 
 // (%defclass foobar (access public) (extends java.lang.Object) (field foo (access public) (type java.lang.Integer) (value 0)))
