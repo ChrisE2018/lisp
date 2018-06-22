@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 import lisp.lang.*;
+import lisp.util.SimpleBiMap;
 
 /**
  * Simple tests of toString methods to increase code coverage. These tests are not important, but
@@ -88,6 +89,17 @@ class ToStringTest
     void testParsing ()
     {
 	final String s = parsing.toString ();
+	assertNotNull (s);
+	assertNotEquals (0, s.length ());
+    }
+
+    @Test
+    void testBiMap ()
+    {
+	final String[][] values = {{"a", "b"}};
+	final SimpleBiMap<String, String> bm = new SimpleBiMap<String, String> (values);
+	assertNotNull (bm);
+	final String s = bm.toString ();
 	assertNotNull (s);
 	assertNotEquals (0, s.length ());
     }

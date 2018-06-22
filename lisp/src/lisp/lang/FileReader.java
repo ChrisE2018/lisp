@@ -71,6 +71,10 @@ public class FileReader
 			}
 		    }
 		}
+		catch (final EOFException e)
+		{
+
+		}
 		finally
 		{
 		    stream.close ();

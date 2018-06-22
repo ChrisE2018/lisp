@@ -9,7 +9,7 @@ public class UnboundVariableError extends Error
 
     public UnboundVariableError (final Symbol variable)
     {
-	super (String.format ("Unbound global %s", variable));
+	super (String.format ("Unbound global %s.%s", variable.getPackage ().getName (), variable.getName ()));
 	this.variable = variable;
     }
 

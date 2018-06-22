@@ -10,7 +10,8 @@ import org.objectweb.asm.tree.ClassNode;
 
 import lisp.cc4.Optimizer;
 import lisp.eval.*;
-import lisp.lang.*;
+import lisp.lang.LispList;
+import lisp.lang.Symbol;
 import lisp.util.LogString;
 
 // (%defclass foobar (access public) (extends java.lang.Object) (field foo (access public) (type java.lang.Integer) (value 0)))
@@ -39,8 +40,7 @@ public class DefclassPrimitives extends Definer
     // (%defclass <name> <clauses> (extends java.lang.Object) (field public java.lang.Integer foo))
     // (%defclass foobar (access public) (extends java.lang.Object) (field foo (access public) (type
     // java.lang.Integer) (value 0)))
-    public Class<?> pctDefclassForm (@SuppressWarnings ("unused") final LexicalContext context, final Symbol name,
-            final Object... clauses)
+    public Class<?> pctDefclassForm (final LexicalContext context, final Symbol name, final Object... clauses)
     {
 	final LispList[] cc = new LispList[clauses.length];
 	for (int i = 0; i < clauses.length; i++)
@@ -55,12 +55,13 @@ public class DefclassPrimitives extends Definer
     {
 	try
 	{
-	    final String pkgName = "lisp.cc";
 	    final LispClassLoader classLoader = new LispClassLoader ();
-	    final byte[] b = getDefclassBytecode (classLoader, pkgName, name, clauses);
+	    final byte[] b = getDefclassBytecode (classLoader, name, clauses);
 	    final String classBinaryName = null; // Must be null or TraceClassVisitor fails
 	    final Class<?> c = classLoader.defineClass (classBinaryName, b);
-	    LOGGER.info (new LogString ("Compiled %s as %s", name, c));
+	    final String fullname = c.getName ();
+	    LOGGER.info (new LogString ("Compiled %s as %s", fullname, c));
+	    Defclass.forName (fullname, c);
 	    return c;
 	}
 	catch (final Exception e)
@@ -95,7 +96,8 @@ public class DefclassPrimitives extends Definer
 	try
 	{
 	    final LispClassLoader classLoader = new LispClassLoader ();
-	    final byte[] b = getDefclassBytecode (classLoader, pkgName, name, clauses);
+	    final byte[] b = getDefclassBytecode (classLoader, // pkgName,
+	            name, clauses);
 	    final File file = new File (pathname);
 	    ensureOutputExists (file);
 	    final OutputStream stream = new BufferedOutputStream (new FileOutputStream (file));
@@ -121,12 +123,12 @@ public class DefclassPrimitives extends Definer
 	}
     }
 
-    private byte[] getDefclassBytecode (final LispClassLoader classLoader, final String pkgName, final String name,
-            final LispList[] clauses)
+    private byte[] getDefclassBytecode (final LispClassLoader classLoader, // final String pkgName,
+            final String name, final LispList[] clauses)
     {
 	// The class access, class name, superclass and interfaces need to be determined before
 	// we can visit the class node
-	final Defclass defclass = new Defclass (asmApi, classLoader, pkgName, name, clauses);
+	final Defclass defclass = new Defclass (asmApi, classLoader, name, clauses);
 	final int accessCode = defclass.getClassAccess ();
 	final String classSimpleName = defclass.getClassSimpleName ();
 	final Type classType = defclass.getClassType ();
@@ -142,7 +144,6 @@ public class DefclassPrimitives extends Definer
 	interfaceList.toArray (interfaces);
 	final ClassNode cn = defclass;
 	cn.visit (bytecodeVersion, accessCode, classInternalName, classBinaryName, superClassInternalName, interfaces);
-	// defclass.addSampleAdditionMethod ();
 	cn.visitEnd ();
 	// optimizers here
 	final Logger pbl = Logger.getLogger (PrintBytecodeClassAdaptor.class.getName ());

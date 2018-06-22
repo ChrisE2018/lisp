@@ -1,0 +1,49 @@
+/* Class definition for testing. */
+
+(%defclass Sample
+	(package "lisp.test")
+	(access public)
+	(extends java.lang.Object)	
+	(implements lisp.test.SampleInterface)
+	(field blah 
+	 	(access private)
+	 	(type int)
+	 	(value 3)
+	 	(getter getBlahX)
+	 	(setter putBlahX)
+	 	)
+	 	
+	 (constructor ()
+	 	(access public)
+	 	(java.lang.System.out.printf "default constructor called%n")
+	 	)
+	 
+	 (constructor (int:x)
+	 	(access public)
+	 	(this)
+	 	(java.lang.System.out.printf "int constructor %s called%n" x)
+	 	(setq blah x)
+	 	)
+	 
+	 (constructor (double:x)
+	 	(access public)
+	 	(this 6)
+	 	)
+	 	
+	 (method int:foo ()
+	 	(access public)
+	 	(+ 3 4)
+	 	)
+	 	
+	 (method int:bar (int:x)
+	 	(access public)
+	 	;(printf "bar called on %s%n" this)
+		(printf "Blah = %s%n" x)
+	 	(setq blah x)
+	 	)
+	 
+	 (method String:toString ()
+	 	(access public)
+	 	(java.lang.String.format "#<Sample %s>" blah)
+	 	)
+)

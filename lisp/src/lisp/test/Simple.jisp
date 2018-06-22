@@ -1,0 +1,25 @@
+/* Class definition for testing. */
+
+(%defclass Simple
+	(package "lisp.test")
+	(access public)
+	(extends java.lang.Object)	
+	(implements lisp.test.SimpleInterface)
+	(field blah 
+	 	(access private)
+	 	(type int)
+	 	(value 5)
+	 	(getter getBlahX)
+	 	(setter putBlahX)
+	 	)
+	 	
+	 (method int:foo ()
+	 	(access public)
+	 	(+ 3 4 blah int:alpha)
+	 	)
+	 	
+	 (method String:toString ()
+	 	(access public)
+	 	(java.lang.String.format "#<Simple %s>" blah)
+	 	)
+)
