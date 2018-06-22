@@ -1,11 +1,12 @@
 
-package lisp.cc;
+package lisp.test;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
 
 import lisp.Symbol;
+import lisp.cc.VerifyPrimitives;
 import lisp.demo.Repl;
 
 class CompilerTest
@@ -65,17 +66,5 @@ class CompilerTest
 	Repl.main (args);
 	checkVerifyStatus ();
 	System.out.println ("Completed testConvertV3");
-    }
-
-    @Override
-    public String toString ()
-    {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (System.identityHashCode (this));
-	buffer.append (">");
-	return buffer.toString ();
     }
 }
