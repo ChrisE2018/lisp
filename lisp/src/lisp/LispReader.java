@@ -190,15 +190,6 @@ public class LispReader
 	{
 	    return readString (DOUBLEQUOTE, in);
 	}
-	final LispList mapResult = parsing.getMapResult (chr);
-	if (mapResult != null)
-	{
-	    in.read ();
-	    in.startLevel ();
-	    final Object result = readMap (in, pkg, mapResult);
-	    in.finishLevel ();
-	    return result;
-	}
 	final LispList listResult = parsing.getParenList (chr);
 	if (listResult != null)
 	{
@@ -282,66 +273,6 @@ public class LispReader
 	else
 	{
 	    result.add (element);
-	}
-    }
-
-    /** Read a map where comma separates entries. */
-    private Object readMap (final LispStream in, final Package pkg, final LispList result) throws IOException
-    {
-	final Parsing parsing = pkg.getParsing ();
-	final char close = result.getCloseChar ();
-	final char separator = parsing.getMapSeparator ();
-	final char theMarker = parsing.getTheMarker ();
-
-	LispList element = null;
-	while (true)
-	{
-	    parsing.skipBlanks (in);
-	    final char p = in.peek (); // For debug
-	    if (p == separator)
-	    {
-		in.read (p);
-		if (element == null)
-		{
-		    element = new LispList ();
-		}
-		result.add (element);
-		element = new LispList ();
-	    }
-	    else if (p == close)
-	    {
-		in.read (p);
-		if (element != null)
-		{
-		    result.add (element);
-		}
-		return result;
-	    }
-	    else if (p == -1)
-	    {
-		return result;
-	    }
-	    else
-	    {
-		final Object key = read (in, pkg);
-		parsing.skipBlanks (in);
-		if (element == null)
-		{
-		    element = new LispList ();
-		}
-		if (in.tryChar (theMarker))
-		{
-		    final LispList the = new LispList ();
-		    the.add (theSymbol);
-		    the.add (key);
-		    the.add (read (in, pkg));
-		    element.add (the);
-		}
-		else
-		{
-		    element.add (key);
-		}
-	    }
 	}
     }
 

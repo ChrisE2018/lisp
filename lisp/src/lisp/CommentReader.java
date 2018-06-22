@@ -26,7 +26,7 @@ public class CommentReader
     public void skipBlanks (final LispStream in) throws IOException
     {
 	state = BlankState.S_NORMAL;
-	while (true)
+	while (!in.eof ())
 	{
 	    final char chr = in.peek ();
 	    switch (state)

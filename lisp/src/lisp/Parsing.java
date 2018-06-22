@@ -107,33 +107,6 @@ public class Parsing
 	return true;
     }
 
-    public LispList getMapResult (final char open)
-    {
-	if (open == OPEN_BRACE)
-	{
-	    // Can't return a brace list or print/read would not round trip.
-	    // Special logic in print could turn nested lists into brace lists, but that would not
-	    // be an exact reverse either.
-	    return new LispList (OPEN_BRACE, CLOSE_BRACE);
-	}
-	return null;
-    }
-
-    public char getMapOpen ()
-    {
-	return OPEN_BRACE;
-    }
-
-    public char getMapClose ()
-    {
-	return CLOSE_BRACE;
-    }
-
-    public char getMapSeparator ()
-    {
-	return COMMA;
-    }
-
     public LispList getParenList (final char open)
     {
 	for (final Character[] slot : LIST_DELIMITERS)
@@ -165,11 +138,6 @@ public class Parsing
     {
 	return wrapperSymbols.getKey (symbol);
     }
-
-    // public char getStringDelimiter ()
-    // {
-    // return DOUBLE_QUOTE;
-    // }
 
     public char getTheMarker ()
     {
