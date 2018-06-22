@@ -345,6 +345,7 @@ public class LispReader
 	// 3) If this matches an existing lisp.Symbol in an imported package return that
 	// Ignore dots in the name: if a symbol somehow has then return it
 	// 4) If this matches an existing java package return that
+	// 4.5) If the prefix matches a lisp package, intern the symbol there.
 	// 5) If this matches a fully qualified java Class return that
 	// 6) If this matches an imported java Class return that
 	// 7) If this matches a java Class in an imported package return that
@@ -375,20 +376,33 @@ public class LispReader
 	result = checkFullyQualifiedJavaClass (name);
 	if (result != null)
 	{
-	    // Java Package (rule 4).
+	    // Fully qualified Java class (rule 5).
 	    return result;
 	}
 	result = checkImportedJavaClass (name);
 	if (result != null)
 	{
-	    // Java Package (rule 4).
+	    // Imported java Class (rule 6).
 	    return result;
 	}
 	result = checkImportedPackageJavaClass (name);
 	if (result != null)
 	{
-	    // Java Package (rule 4).
+	    // Java Class in an imported package (rule 7).
 	    return result;
+	}
+	final int pos = name.indexOf (DOT);
+	if (pos >= 0)
+	{
+	    final String packageName = name.substring (0, pos);
+	    final String symbolName = name.substring (pos + 1);
+	    final Package p = PackageFactory.findPackage (packageName);
+	    result = findExistingSymbol (symbolName, p);
+	    if (result != null)
+	    {
+		return result;
+	    }
+	    return p.internSymbol (symbolName);
 	}
 	return pkg.internSymbol (name);
     }

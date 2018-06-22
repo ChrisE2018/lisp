@@ -15,6 +15,7 @@
 	 	
 	 (constructor ()
 	 	(access public)
+	 	;(super) ; Explicit call to super is not reliable yet
 	 	(java.lang.System.out.printf "default constructor called%n")
 	 	)
 	 
