@@ -116,12 +116,10 @@ public class PackagePrimitives extends Definer
     }
 
     /**
-     * Lookup and return the default (user) package.
-     *
-     * @param arguments
+     * Lookup and return the default package (normally lisp.user).
      */
     @DefineLisp
-    public Object getDefaultPackage ()
+    public Package getDefaultPackage ()
     {
 	final LispReader lispReader = LispReader.getLispThreadReader ();
 	return lispReader.getCurrentPackage ();
@@ -129,13 +127,33 @@ public class PackagePrimitives extends Definer
 
     /**
      * Lookup and return the system package.
-     *
-     * @param arguments
      */
     @DefineLisp
-    public Object getSystemPackage ()
+    public Package getSystemPackage ()
     {
 	return PackageFactory.getSystemPackage ();
+    }
+
+    /**
+     * Lookup and return a lisp package by name.
+     *
+     * @param packageName The name of the required package.
+     */
+    @DefineLisp
+    public Package getLispPackage (final String packageName)
+    {
+	return PackageFactory.getPackage (packageName);
+    }
+
+    /**
+     * Lookup and return a java package by name.
+     *
+     * @param packageName The name of the required package.
+     */
+    @DefineLisp
+    public java.lang.Package getJavaPackage (final String packageName)
+    {
+	return java.lang.Package.getPackage (packageName);
     }
 
     // Symbols
