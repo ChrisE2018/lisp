@@ -518,7 +518,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 			final CompileResultSet cr = context.compile (first.get (i), true);
 			context.convert (cr, params[i - 1], false, false);
 		    }
-		    final String cs = methSignature.getArgumentSignature (constructor);
+		    final String cs = methSignature.getMethodSignature (constructor);
 		    il.add (new MethodInsnNode (Opcodes.INVOKESPECIAL, superName, "<init>", cs, false));
 		    return bodyForms.subList (1);
 		}

@@ -82,6 +82,8 @@ public class LispReader
 	theSymbol = PackageFactory.getSystemPackage ().internSymbol ("the");
 	dotSymbol = PackageFactory.getSystemPackage ().internSymbol ("dot");
 	fieldSymbol = PackageFactory.getSystemPackage ().internSymbol ("field");
+	PackageFactory.getSystemPackage ().internSymbol ("this");
+	PackageFactory.getSystemPackage ().internSymbol ("super");
     }
 
     /** Import a Lisp package. */
