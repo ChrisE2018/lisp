@@ -18,7 +18,7 @@ class TestLispReader
     @Test
     void testImportSymbol ()
     {
-	final Package system = PackageFactory.findPackage ("system");
+	final Package system = PackageFactory.findPackage ("lisp.lang");
 	assertNotNull (system);
 	final Symbol t = system.findSymbol ("true");
 	assertNotNull (t);
@@ -29,7 +29,7 @@ class TestLispReader
     @Test
     void testImportPackage ()
     {
-	final Package system = PackageFactory.findPackage ("system");
+	final Package system = PackageFactory.findPackage ("lisp.lang");
 	assertNotNull (system);
 	lispReader.addImport (system);
 	lispReader.removeImport (system);

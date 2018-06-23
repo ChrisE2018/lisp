@@ -462,7 +462,7 @@ public class TreeCompilerContext implements Opcodes
 	    if (!(function instanceof DefaultFunctionCell))
 	    {
 		final Overload objectMethod = function.selectMethod (locals, expression);
-		if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
+		if (objectMethod != null && symbol.getPackage ().getName ().equals ("lisp.lang"))
 		{
 		    if (Symbol.test ("optimizeFunctionCalls", true))
 		    {

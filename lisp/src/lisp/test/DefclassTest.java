@@ -36,7 +36,7 @@ class DefclassTest
 	// -E " (showBytecode f) "
 	// --setq 'system.compilerVersion="V4"'
 	loggerPrimitives.showBytecode (false);
-	Symbol.named ("system", "compilerVersion").setValue ("V4");
+	Symbol.named ("lisp.lang", "compilerVersion").setValue ("V4");
     }
 
     @Test

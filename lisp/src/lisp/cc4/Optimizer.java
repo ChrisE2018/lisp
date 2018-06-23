@@ -31,7 +31,7 @@ public class Optimizer extends ClassNode implements Opcodes
 	while (oldRemovals < removals)
 	{
 	    oldRemovals = removals;
-	    if (Symbol.named ("system", "optimizeMultipleLabels").getBooleanValue (true))
+	    if (Symbol.named ("lisp.lang", "optimizeMultipleLabels").getBooleanValue (true))
 	    {
 		for (final MethodNode method : methods)
 		{
@@ -39,7 +39,7 @@ public class Optimizer extends ClassNode implements Opcodes
 		}
 	    }
 
-	    if (Symbol.named ("system", "optimizeAfterJump").getBooleanValue (true))
+	    if (Symbol.named ("lisp.lang", "optimizeAfterJump").getBooleanValue (true))
 	    {
 		for (final MethodNode method : methods)
 		{
@@ -47,7 +47,7 @@ public class Optimizer extends ClassNode implements Opcodes
 		}
 	    }
 
-	    if (Symbol.named ("system", "removeStoreLoad").getBooleanValue (true))
+	    if (Symbol.named ("lisp.lang", "removeStoreLoad").getBooleanValue (true))
 	    {
 		for (final MethodNode method : methods)
 		{
@@ -55,7 +55,7 @@ public class Optimizer extends ClassNode implements Opcodes
 		}
 	    }
 
-	    if (Symbol.named ("system", "optimizeJumpToNext").getBooleanValue (true))
+	    if (Symbol.named ("lisp.lang", "optimizeJumpToNext").getBooleanValue (true))
 	    {
 		for (final MethodNode method : methods)
 		{
@@ -63,7 +63,7 @@ public class Optimizer extends ClassNode implements Opcodes
 		}
 	    }
 
-	    if (Symbol.named ("system", "optimizeJumpToJump").getBooleanValue (true))
+	    if (Symbol.named ("lisp.lang", "optimizeJumpToJump").getBooleanValue (true))
 	    {
 		for (final MethodNode method : methods)
 		{
@@ -71,7 +71,7 @@ public class Optimizer extends ClassNode implements Opcodes
 		}
 	    }
 
-	    if (Symbol.named ("system", "optimizeDeadLabels").getBooleanValue (true))
+	    if (Symbol.named ("lisp.lang", "optimizeDeadLabels").getBooleanValue (true))
 	    {
 		for (final MethodNode method : methods)
 		{

@@ -9,7 +9,7 @@ import java.lang.annotation.*;
 public @interface DefineLisp
 {
     /** The package for the function name symbol. */
-    String packageName () default "system";
+    String packageName () default "lisp.lang";
 
     /**
      * The name of the function to create. If this is not supplied, the name of the method is used.

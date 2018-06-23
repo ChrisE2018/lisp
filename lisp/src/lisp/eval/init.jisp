@@ -49,7 +49,7 @@
 (new "lisp.cc.DefinePrimitives")
 (new "lisp.cc.VerifyPrimitives")
 
-(inPackage "system")
+(inPackage "lisp.lang")
 (import java.lang)
 
 (def d (x)

@@ -147,7 +147,7 @@ public class DefclassPrimitives extends Definer
 	cn.visitEnd ();
 	// optimizers here
 	final Logger pbl = Logger.getLogger (PrintBytecodeClassAdaptor.class.getName ());
-	final boolean optimize = Symbol.named ("system", "optimize").getBooleanValue (true);
+	final boolean optimize = Symbol.named ("lisp.lang", "optimize").getBooleanValue (true);
 	final boolean printBytecode = pbl.isLoggable (Level.INFO);
 
 	// Form chain adding things in the middle.

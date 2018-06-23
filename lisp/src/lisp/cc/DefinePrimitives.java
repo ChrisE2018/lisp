@@ -108,7 +108,7 @@ public class DefinePrimitives extends Definer
 	FunctionCell function = symbol.getFunction ();
 	final LispList source = new LispList ();
 	final ClassNode cn = cl.getClassNode ();
-	source.add (Symbol.named ("system", "define"));
+	source.add (Symbol.named ("lisp.lang", "define"));
 	source.add (symbol);
 	source.add (args);
 	for (final Object form : body)

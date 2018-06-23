@@ -90,7 +90,7 @@ public class CompilerFactory
 		{
 		    cv = new PrintBytecodeClassAdaptor (Compiler.ASM_VERSION, cv, new StringWriter ());
 		}
-		if (Symbol.named ("system", "optimize").getBooleanValue (true))
+		if (Symbol.named ("lisp.lang", "optimize").getBooleanValue (true))
 		{
 		    cv = new Optimizer (Compiler.ASM_VERSION, cv);
 		}

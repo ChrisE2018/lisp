@@ -565,7 +565,7 @@ public class CompileClassAdaptor_v3 extends ClassVisitor implements Opcodes, Com
     // if (!(function instanceof DefaultFunctionCell))
     // {
     // final ObjectMethod objectMethod = function.selectMethod (argCount);
-    // if (objectMethod != null && symbol.getPackage ().getName ().equals ("system"))
+    // if (objectMethod != null && symbol.getPackage ().getName ().equals ("lisp.lang"))
     // {
     // // Only methods with Object parameters work right now.
     // // coerceRequired will need to be improved before general method parameters are

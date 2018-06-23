@@ -57,7 +57,7 @@ class TestPackageFactory
 	PackageFactory.setDefaultPackage (p);
 	assertEquals (p, PackageFactory.getDefaultPackage ());
 
-	final Package s = PackageFactory.getPackage ("system");
+	final Package s = PackageFactory.getPackage ("lisp.lang");
 	assertNotNull (s);
 	PackageFactory.setDefaultPackage (s);
     }
