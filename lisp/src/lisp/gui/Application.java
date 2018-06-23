@@ -83,8 +83,6 @@ public class Application
 	    public void accept (final String packageName) throws Exception
 	    {
 		final Package pkg = PackageFactory.getPackage (packageName);
-		PackageFactory.setDefaultPackage (pkg);
-		// final LispReader lispReader = LispReader.getLispThreadReader ();
 		lispReader.setCurrentPackage (pkg);
 		System.out.printf ("-Package %s %n", pkg);
 	    }

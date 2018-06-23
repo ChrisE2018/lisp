@@ -82,7 +82,7 @@ public class DescribePrimitives extends Definer
 
     private void describe (final Describer d, final Object arg)
     {
-	final Package pkg = PackageFactory.getDefaultPackage ();
+	final Package pkg = PackageFactory.getCurrentPackage ();
 	int index = 0;
 	final MultiMap<String, Object> description = d.getDescriberValues (arg);
 	for (final Entry<String, Collection<Object>> entry : description.entrySet ())

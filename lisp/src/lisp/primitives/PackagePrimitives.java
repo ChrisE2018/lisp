@@ -119,10 +119,11 @@ public class PackagePrimitives extends Definer
      * Lookup and return the default package (normally lisp.user).
      */
     @DefineLisp
-    public Package getDefaultPackage ()
+    public Package getCurrentPackage ()
     {
-	final LispReader lispReader = LispReader.getLispThreadReader ();
-	return lispReader.getCurrentPackage ();
+	// final LispReader lispReader = LispReader.getLispThreadReader ();
+	// return lispReader.getCurrentPackage ();
+	return PackageFactory.getCurrentPackage ();
     }
 
     /**

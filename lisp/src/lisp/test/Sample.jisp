@@ -1,7 +1,8 @@
 /* Class definition for testing. */
 
+(inPackage "lisp.test")
+
 (%defclass Sample
-	(package "lisp.test")
 	(access public)
 	(extends java.lang.Object)	
 	(implements lisp.test.SampleInterface)

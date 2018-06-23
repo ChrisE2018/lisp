@@ -372,7 +372,7 @@ public class Symbol implements Describer
     /** Print value to a buffer. */
     public void print (final StringBuilder buffer)
     {
-	if (symbolPackage != null && symbolPackage != PackageFactory.getDefaultPackage ())
+	if (symbolPackage != null && symbolPackage != PackageFactory.getCurrentPackage ())
 	{
 	    final LispReader lispReader = LispReader.getLispThreadReader ();
 	    if (lispReader == null || lispReader.findImportedSymbol (symbolName) != this)
@@ -422,7 +422,7 @@ public class Symbol implements Describer
     public static Symbol named (final String name)
     {
 	final LispReader lispReader = new LispReader ();
-	return lispReader.readSymbol (PackageFactory.getDefaultPackage (), name);
+	return lispReader.readSymbol (PackageFactory.getCurrentPackage (), name);
     }
 
     /**

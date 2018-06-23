@@ -21,7 +21,7 @@ public class PackageFactory
     private static final Object[][] CONSTANT_SYMBOLS =
         {
          {SYSTEM_PACKAGE_NAME, "true", Boolean.TRUE, "false", Boolean.FALSE, "null", null, "t", true, "f", false, "pi", Math.PI,
-          "this", null}};
+          "this", null, "super", null}};
 
     /** Map from package name to package object for all packages that exist. */
     private static final Map<String, Package> packages = new HashMap<String, Package> ();
@@ -72,15 +72,33 @@ public class PackageFactory
 	return getPackage (SYSTEM_PACKAGE_NAME);
     }
 
-    public static Package getDefaultPackage ()
+    /**
+     * Lookup and return the current package (normally lisp.user).
+     */
+    public static Package getCurrentPackage ()
     {
-	return defaultPackage;
+	final LispReader lispReader = LispReader.getLispThreadReader ();
+	return lispReader.getCurrentPackage ();
     }
 
-    public static void setDefaultPackage (final Package pkg)
+    /**
+     * Lookup and return the default package (normally lisp.user). This is used to set the initial
+     * current package for a LispReader.
+     */
+    public static Package getDefaultPackage ()
     {
-	defaultPackage = pkg;
+	return getPackage (DEFAULT_PACKAGE_NAME);
     }
+
+    // public static Package getDefaultPackage ()
+    // {
+    // return defaultPackage;
+    // }
+
+    // public static void setDefaultPackage (final Package pkg)
+    // {
+    // defaultPackage = pkg;
+    // }
 
     public static Package findPackage (final String packageName)
     {

@@ -1,7 +1,12 @@
 /* Class definition for testing. */
 
+(inPackage "lisp.test")
+
+; done in test code
+; (setq alpha 54)
+
 (%defclass Simple
-	(package "lisp.test")
+	;(package "lisp.test")
 	(access public)
 	(extends java.lang.Object)	
 	(implements lisp.test.SimpleInterface)

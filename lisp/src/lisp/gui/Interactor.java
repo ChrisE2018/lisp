@@ -273,7 +273,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 
     private int determineIndetation ()
     {
-	final Package pkg = PackageFactory.getDefaultPackage ();
+	final Package pkg = PackageFactory.getCurrentPackage ();
 	final int offset = inputPosition.getOffset () + 1;
 	// final String change = doc.getText (offset, getCaretPosition () - offset);
 	// out.printf ("[%d] '%s'%n", offset, change);
@@ -300,7 +300,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	{
 	    if (readInput)
 	    {
-		final Package pkg = PackageFactory.getDefaultPackage ();
+		final Package pkg = PackageFactory.getCurrentPackage ();
 		final int offset = inputPosition.getOffset () + 1;
 		final String change = doc.getText (offset, doc.getLength () - offset);
 		// out.printf ("[%d] '%s'%n", offset, change);
@@ -333,7 +333,7 @@ public class Interactor extends JTextPane implements DocumentListener, Runnable,
 	{
 	    try
 	    {
-		final Package pkg = PackageFactory.getDefaultPackage ();
+		final Package pkg = PackageFactory.getCurrentPackage ();
 		final Symbol exprSymbol = pkg.internSymbol ("e").gensym ();
 		final int startPos = doc.getLength ();
 		log (promptStyle, "[%s]", exprSymbol);

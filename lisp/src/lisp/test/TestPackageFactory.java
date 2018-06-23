@@ -49,18 +49,18 @@ class TestPackageFactory
 	assertNotNull (PackageFactory.getPackage ("IamNew"));
     }
 
-    @Test
-    void testPackageDefault ()
-    {
-	final Package p = PackageFactory.getPackage ("IamNew");
-	assertNotNull (p);
-	PackageFactory.setDefaultPackage (p);
-	assertEquals (p, PackageFactory.getDefaultPackage ());
-
-	final Package s = PackageFactory.getPackage ("lisp.lang");
-	assertNotNull (s);
-	PackageFactory.setDefaultPackage (s);
-    }
+    // @Test
+    // void testPackageDefault ()
+    // {
+    // final Package p = PackageFactory.getPackage ("IamNew");
+    // assertNotNull (p);
+    // PackageFactory.setDefaultPackage (p);
+    // assertEquals (p, PackageFactory.getDefaultPackage ());
+    //
+    // final Package s = PackageFactory.getPackage ("lisp.lang");
+    // assertNotNull (s);
+    // PackageFactory.setDefaultPackage (s);
+    // }
 
     @Test
     void testPackageMap ()

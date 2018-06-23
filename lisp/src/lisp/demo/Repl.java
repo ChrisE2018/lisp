@@ -100,7 +100,7 @@ public class Repl
 
     private void rep (final LispStream stream, final int index) throws Exception
     {
-	final Package pkg = PackageFactory.getDefaultPackage ();
+	final Package pkg = PackageFactory.getCurrentPackage ();
 	final Symbol e = pkg.internSymbol ("e" + index);
 	System.out.printf ("[%s] ", e);
 	Object form = null;

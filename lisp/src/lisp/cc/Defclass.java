@@ -17,6 +17,7 @@ import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.VarInsnNode;
 import lisp.cc4.*;
 import lisp.lang.*;
+import lisp.lang.Package;
 import lisp.lang.Symbol;
 import lisp.util.*;
 
@@ -28,7 +29,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private static ClassNamed classNamed = new ClassNamed ();
     private static SelectMethod selectMethod = new SelectMethod ();
     private static MethodSignature methSignature = new MethodSignature ();
-    private static String DEFAULT_PACKAGE = "lisp.cc";
     private static Symbol THIS_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("this");
     private static Symbol SUPER_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("super");
     private static Symbol ACCESS_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("access");
@@ -107,13 +107,13 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     /** For each constructor this contains the classes of the parameters. */
     private final List<Class<?>[]> constructorParameters = new ArrayList<Class<?>[]> ();
 
-    public Defclass (final int api, final LispClassLoader classLoader, // final String pkgName,
-            final String name, final LispList[] members)
+    public Defclass (final int api, final LispClassLoader classLoader, final String name, final LispList[] members)
     {
 	super (api);
 	this.classLoader = classLoader;
 	classSimpleName = name;
-	final String pkgName = getPackage (members);
+	final Package currentPackage = PackageFactory.getCurrentPackage ();
+	final String pkgName = currentPackage.getName ();
 	classType = Type.getType ("L" + pkgName.replace ('.', '/') + '/' + classSimpleName + ";");
 	parse (members);
 	if (!hasConstructor)
@@ -189,30 +189,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	return interfaces;
     }
 
-    private String getPackage (final LispList[] members)
-    {
-	// Process everything except constructor and method members.
-	// Methods generate code that depends on knowing the fields.
-	for (final LispList clause : members)
-	{
-	    final Symbol key = clause.head ();
-	    if (key.is ("package"))
-	    {
-		final Object result = clause.get (1);
-		if (result instanceof String)
-		{
-		    return (String)result;
-		}
-		if (result instanceof java.lang.Package)
-		{
-		    return ((java.lang.Package)result).getName ();
-		}
-		throw new Error ("Invalid package specification " + result);
-	    }
-	}
-	return DEFAULT_PACKAGE;
-    }
-
     private void parse (final LispList[] members)
     {
 	// Process everything except constructor and method members.
@@ -244,9 +220,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		constructorParameters.add (params);
 	    }
 	    else if (key.is ("method"))
-	    {
-	    }
-	    else if (key.is ("package"))
 	    {
 	    }
 	    else
