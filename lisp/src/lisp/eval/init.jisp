@@ -72,4 +72,4 @@
 			    	)
 			    ))
 
-(inPackage "user")
+(inPackage "lisp.user")

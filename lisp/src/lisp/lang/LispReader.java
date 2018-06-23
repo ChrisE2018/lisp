@@ -342,15 +342,17 @@ public class LispReader
 
 	}
 	// Not a number. Return a symbol or Java reference.
-	// 1) If this matches an imported lisp.Symbol return that
-	// 2) If this matches an existing lisp.Symbol in the current package return that
-	// 3) If this matches an existing lisp.Symbol in an imported package return that
+	// 0) If <name> matches a fully qualified lisp Symbol return that
+	// 1) If <name> matches an imported lisp.Symbol return that
+	// 2) If <name> matches an existing lisp.Symbol in the current package return that
+	// 2.5) If <name> matches an existing lisp package return that
+	// 3) If <name> matches an existing lisp.Symbol in an imported package return that
 	// Ignore dots in the name: if a symbol somehow has then return it
-	// 4) If this matches an existing java package return that
+	// 4) If <name> matches an existing java package return that
 	// 4.5) If the prefix matches a lisp package, intern the symbol there.
-	// 5) If this matches a fully qualified java Class return that
-	// 6) If this matches an imported java Class return that
-	// 7) If this matches a java Class in an imported package return that
+	// 5) If <name> matches a fully qualified java Class return that
+	// 6) If <name> matches an imported java Class return that
+	// 7) If <name> matches a java Class in an imported package return that
 	// 5') If a prefix matches a fully qualified java Class use it and look for a field or
 	// method suffix
 	// 6') If a prefix matches an imported java Class use it and look for a field or method
@@ -363,10 +365,35 @@ public class LispReader
 	// target ::= (dot <target> <methodname>)
 	// 99) Create a new symbol in the current package and return it
 	// Intern the name in the reader default package
-	Object result = findExistingSymbol (name, pkg);
+	Object result = findFullyQualifiedSymbol (name);
 	if (result != null)
 	{
-	    // We found an existing lisp.Symbol (rules 1, 2 and 3).
+	    // 0) If <name> matches a fully qualified lisp Symbol return that
+	    return result;
+	}
+	result = findSimpleImportedSymbol (name);
+	if (result != null)
+	{
+	    // 1) If <name> matches an imported lisp.Symbol return that
+	    return result;
+	}
+	result = pkg.findSymbol (name);
+	if (result != null)
+	{
+	    // 2) If <name> matches an existing lisp.Symbol in the current package return that
+	    return result;
+	}
+	result = PackageFactory.findPackage (name);
+	if (result != null)
+	{
+	    // 2.5) If <name> matches an existing lisp package return that
+	    return result;
+	}
+	result = findPackageImportedSymbol (name);
+	if (result != null)
+	{
+	    // 3) If <name> matches an existing lisp.Symbol in an imported package return that
+	    // Ignore dots in the name: if a symbol somehow has then return it
 	    return result;
 	}
 	result = java.lang.Package.getPackage (name);
@@ -393,23 +420,47 @@ public class LispReader
 	    // Java Class in an imported package (rule 7).
 	    return result;
 	}
-	final int pos = name.indexOf (DOT);
+	final int pos = name.lastIndexOf (DOT);
 	if (pos >= 0)
 	{
 	    final String packageName = name.substring (0, pos);
 	    final String symbolName = name.substring (pos + 1);
-	    final Package p = PackageFactory.findPackage (packageName);
-	    result = findExistingSymbol (symbolName, p);
-	    if (result != null)
+	    final Package pack = PackageFactory.findPackage (packageName);
+	    if (pack != null)
 	    {
-		return result;
+		result = pack.findSymbol (symbolName);
+		if (result != null)
+		{
+		    return result;
+		}
+		return pack.internSymbol (symbolName);
 	    }
-	    return p.internSymbol (symbolName);
+	    throw new IOException ("There is no package named '" + packageName + "' for symbol '" + symbolName + "'");
 	}
 	return pkg.internSymbol (name);
     }
 
-    private Symbol findExistingSymbol (final String name, final Package pkg)
+    private Symbol findFullyQualifiedSymbol (final String name)
+    {
+	final int pos = name.lastIndexOf (DOT);
+	if (pos > 0)
+	{
+	    final String packageName = name.substring (0, pos);
+	    final String symbolName = name.substring (pos + 1);
+	    final Package pkg = PackageFactory.findPackage (packageName);
+	    if (pkg != null)
+	    {
+		return pkg.findSymbol (symbolName);
+	    }
+	}
+	return null;
+    }
+
+    /**
+     * Find a Symbol that has been directly imported. This does not check for symbols in imported
+     * packages.
+     */
+    private Symbol findSimpleImportedSymbol (final String name)
     {
 	for (final Object x : imports)
 	{
@@ -422,19 +473,18 @@ public class LispReader
 		}
 	    }
 	}
-	{
-	    final Symbol result = pkg.findSymbol (name);
-	    if (result != null)
-	    {
-		return result;
-	    }
-	}
+	return null;
+    }
+
+    /** Find a symbol in an imported lisp package. */
+    private Symbol findPackageImportedSymbol (final String name)
+    {
 	for (final Object x : imports)
 	{
 	    if (x instanceof Package)
 	    {
-		final Package p = (Package)x;
-		final Symbol result = p.findSymbol (name);
+		final Package pkg = (Package)x;
+		final Symbol result = pkg.findSymbol (name);
 		if (result != null)
 		{
 		    return result;
@@ -443,6 +493,41 @@ public class LispReader
 	}
 	return null;
     }
+
+    // private Symbol findExistingSymbolx (final String name, final Package pkg)
+    // {
+    // for (final Object x : imports)
+    // {
+    // if (x instanceof Symbol)
+    // {
+    // final Symbol symbol = (Symbol)x;
+    // if (symbol.is (name))
+    // {
+    // return symbol;
+    // }
+    // }
+    // }
+    // {
+    // final Symbol result = pkg.findSymbol (name);
+    // if (result != null)
+    // {
+    // return result;
+    // }
+    // }
+    // for (final Object x : imports)
+    // {
+    // if (x instanceof Package)
+    // {
+    // final Package p = (Package)x;
+    // final Symbol result = p.findSymbol (name);
+    // if (result != null)
+    // {
+    // return result;
+    // }
+    // }
+    // }
+    // return null;
+    // }
 
     private Object checkFullyQualifiedJavaClass (final String name)
     {
@@ -684,7 +769,7 @@ public class LispReader
      * Read a symbol using the specified default package.
      *
      * @param pkg The package to intern the symbol into, if not specified explicitly.
-     * @param name The print representation of the symbol. If this contains a package specifier,
+     * @param name The print representation of the symbol. If <name> contains a package specifier,
      *            then the package argument is ignored.
      * @return An interned symbol, or null if it could not be read. The only case it can't be read
      *         is when the explicit package specifier is not a valid Lisp package.

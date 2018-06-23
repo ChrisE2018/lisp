@@ -397,7 +397,8 @@ public class Symbol implements Describer
     {
 	final MultiMap<String, Object> result = new MultiMap<String, Object> ();
 	result.put ("Package", symbolPackage);
-	// result.put ("Public", symbolPackage.isPublic (this));
+	result.put ("Package name", symbolPackage.getName ());
+	result.put ("Symbol name", symbolName);
 	if (symbolValue != null)
 	{
 	    result.put ("Value", symbolValue);

@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 public class PackageFactory
 {
     private static final Logger LOGGER = Logger.getLogger (PackageFactory.class.getName ());
-    private static final String DEFAULT_PACKAGE_NAME = "user";
+    private static final String DEFAULT_PACKAGE_NAME = "lisp.user";
     private static final String SYSTEM_PACKAGE_NAME = "system";
 
     private static boolean initializedp = false;

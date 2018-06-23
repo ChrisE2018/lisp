@@ -42,8 +42,7 @@ public class Package implements Describer
      */
     public Symbol findSymbol (final String name)
     {
-	final Symbol result = packageSymbols.get (name);
-	return result;
+	return packageSymbols.get (name);
     }
 
     /**

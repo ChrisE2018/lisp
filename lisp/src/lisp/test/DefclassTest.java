@@ -96,7 +96,7 @@ class DefclassTest
 	assertNotNull (cls);
 	final SimpleInterface s = cls.newInstance ();
 	assertEquals (5, s.getBlahX ());
-	final Symbol alpha = PackageFactory.getPackage ("user").internSymbol ("alpha");
+	final Symbol alpha = PackageFactory.getPackage ("lisp.user").internSymbol ("alpha");
 	alpha.setValue (54);
 	assertEquals (3 + 4 + 5 + 54, s.foo ()); // (+ 3 4 blah int:alpha)
 	assertEquals ("#<Simple 5>", s.toString ());
