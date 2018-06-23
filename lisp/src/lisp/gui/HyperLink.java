@@ -5,13 +5,14 @@ import javax.swing.text.Position;
 
 public class HyperLink
 {
-    private final Interactor interactor;
+    private final InteractorEval interactor;
     private final Position startPosition;
     private final Position endPosition;
     private final Object form;
     private boolean hilight = false;
 
-    public HyperLink (final Interactor interactor, final Position startPosition, final Position endPosition, final Object form)
+    public HyperLink (final InteractorEval interactor, final Position startPosition, final Position endPosition,
+            final Object form)
     {
 	this.interactor = interactor;
 	this.startPosition = startPosition;
@@ -36,7 +37,7 @@ public class HyperLink
     {
 	if (startPosition.getOffset () <= pos && pos < endPosition.getOffset ())
 	{
-	    interactor.eval (form);
+	    interactor.evaluateLink (form);
 	    return true;
 	}
 	return false;

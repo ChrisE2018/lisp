@@ -1,14 +1,11 @@
 
 package lisp.gui;
 
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.logging.LogManager;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -19,12 +16,7 @@ import lisp.eval.*;
 import lisp.lang.*;
 import lisp.lang.Package;
 
-/**
- * Swing window for lisp interactions.
- *
- * @author cre
- */
-public class Interactor extends JTextPane
+public class InteractorPane extends JTextPane
         implements DocumentListener, Runnable, MouseListener, MouseMotionListener, InteractorEval
 {
     // High priority:
@@ -107,13 +99,9 @@ public class Interactor extends JTextPane
 
     private final List<HyperLink> links = new ArrayList<HyperLink> ();
 
-    public Interactor (final String[] args) throws Exception
+    public InteractorPane (final Interpreter interpreter)
     {
-	LogManager.getLogManager ()
-	        .readConfiguration (Interactor.class.getResource ("loggingBootstrap.properties").openStream ());
-	interpreter = new Interpreter ();
-	final Application application = new Application (interpreter);
-	application.initialize (args);
+	this.interpreter = interpreter;
 	reader = new LispReader ();
 	setBackground (Color.lightGray);
 	doc = getStyledDocument ();
@@ -176,82 +164,6 @@ public class Interactor extends JTextPane
 	System.setErr (new PrintStream (new InteractorOutputStream (errorStyle)));
 
 	thread.start ();
-    }
-
-    public JFrame open (final String title)
-    {
-	return open (title, true);
-    }
-
-    public JFrame open (final String title, final boolean visible)
-    {
-	final JFrame frame = new JFrame (title);
-	frame.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
-
-	// Put the editor pane in a scroll pane.
-	final JScrollPane scrollPane = new JScrollPane (this);
-	scrollPane.setVerticalScrollBarPolicy (JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-	scrollPane.setPreferredSize (new Dimension (700, 400));
-	scrollPane.setMinimumSize (new Dimension (100, 50));
-	addMenubar (frame);
-	frame.setContentPane (scrollPane);
-	frame.pack ();
-	frame.setLocationRelativeTo (null);
-	if (visible)
-	{
-	    frame.setVisible (visible);
-	}
-	return frame;
-    }
-
-    @SuppressWarnings ("unchecked")
-    private void addMenubar (final JFrame frame)
-    {
-	final JMenuBar menubar = new JMenuBar ();
-	final Symbol menuSymbol = PackageFactory.getSystemPackage ().internSymbol ("*menus*");
-	final List<Object> menus = (List<Object>)menuSymbol.getValue (new LispList ());
-	for (final Object ms : menus)
-	{
-	    final List<Object> menuSpec = (List<Object>)ms;
-	    final String menuName = (String)menuSpec.get (0);
-	    final JMenu menu = new JMenu (menuName);
-	    for (final Object mis : menuSpec.subList (1, menuSpec.size ()))
-	    {
-		final JMenuItem item;
-		if (mis instanceof List)
-		{
-		    final List<Object> menuItemSpec = (List<Object>)mis;
-		    final String menuItemName = (String)menuItemSpec.get (0);
-		    final Object action = menuItemSpec.get (1);
-		    item = new JMenuItem (menuItemName);
-		    item.addActionListener (new ActionListener ()
-		    {
-			@Override
-			public void actionPerformed (final ActionEvent e)
-			{
-			    try
-			    {
-				// Evaluate menu item action
-				final LexicalContext context = new LexicalContext (interpreter);
-				context.eval (action);
-			    }
-			    catch (final Exception e1)
-			    {
-				VerifyPrimitives.incrementReplErrorCount ("Action error " + e1);
-				e1.printStackTrace ();
-			    }
-			}
-		    });
-		}
-		else
-		{
-		    item = new JMenuItem ((String)mis);
-		}
-		menu.add (item);
-	    }
-	    menubar.add (menu);
-	}
-	frame.setJMenuBar (menubar);
     }
 
     @Override
@@ -493,31 +405,6 @@ public class Interactor extends JTextPane
 	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
-    }
-
-    public static void main (final String[] args)
-    {
-	final PrintStream err = System.err;
-	try
-	{
-	    final Interactor interactor = new Interactor (args);
-	    interactor.open ("Interactor");
-	}
-	catch (final java.lang.reflect.InvocationTargetException e)
-	{
-	    Throwable ee = e;
-	    for (int i = 0; i < 10 && ee instanceof java.lang.reflect.InvocationTargetException; i++)
-	    {
-		ee = ee.getCause ();
-	    }
-	    err.printf ("Initialization error %s %n", ee);
-	    ee.printStackTrace (err);
-	}
-	catch (final Throwable e)
-	{
-	    err.printf ("Initialization error %s %n", e);
-	    e.printStackTrace (err);
-	}
     }
 
     public void evaluateLink (final Object form)
