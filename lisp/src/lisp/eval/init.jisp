@@ -72,4 +72,7 @@
 			    	)
 			    ))
 
+(setq *buttons* '(("Bytecode" (printf "%s%n" (showBytecode))) ("Exit" (exit 0))
+				)
+		)
 (inPackage "lisp.user")
