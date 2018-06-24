@@ -22,6 +22,10 @@ public class LispReader
     private static final char COMMA = ',';
     private static final char DOT = '.';
 
+    /**
+     * A LispReader is associated with each thread. Return the current one. If none is associated
+     * with this thread, return the defaultLispReader instead.
+     */
     public static LispReader getLispThreadReader ()
     {
 	final Thread thread = Thread.currentThread ();
@@ -33,6 +37,10 @@ public class LispReader
 	return result;
     }
 
+    /**
+     * A LispReader is associated with each thread. Execute a supplier with the supplied reader made
+     * current for this thread.
+     */
     public static Object withLispThreadReader (final LispReader lispReader, final ThrowingSupplier<Object> supplier)
             throws Exception
     {
@@ -51,13 +59,14 @@ public class LispReader
 	return result;
     }
 
+    /** The current package for this reader. */
+    private Package currentPackage;
+
     /**
      * Combined list of Lisp Package, Lisp Symbol, Java package and Java class all of which are made
      * easily available for typing.
      */
     private final LispList imports = new LispList ();
-
-    private Package currentPackage;
 
     /**
      * Symbol for 'the'. Initialize this in the constructor so the PackageFactory is already setup.
@@ -75,8 +84,13 @@ public class LispReader
      */
     private final Symbol fieldSymbol;
 
+    /**
+     * Default constructor for a LispReader. This will set the current package to the PackageFactory
+     * default package and import the system package (lisp.lang) automatically.
+     */
     public LispReader ()
     {
+	// TODO Define another constructor which does no imports
 	currentPackage = PackageFactory.getDefaultPackage ();
 	final Package systemPackage = PackageFactory.getSystemPackage ();
 	theSymbol = systemPackage.internSymbol ("the");
@@ -145,18 +159,39 @@ public class LispReader
 	imports.remove (claz);
     }
 
+    /**
+     * Return the list of imported objects. This is a mixed list of Lisp packages, Java packages
+     * Lisp Symbols, and Java classes.
+     *
+     * @return The list of items. Do not modify the list.
+     */
     public LispList getImports ()
     {
 	return imports;
     }
 
+    /**
+     * Return the current package used to intern Symbols read without a package qualifier.
+     *
+     * @return The current Lisp package for reading Symbols.
+     */
     public Package getCurrentPackage ()
     {
 	return currentPackage;
     }
 
+    /**
+     * Set the current package used to intern Symbols read without a package qualifier.
+     *
+     * @param currentPackage The new current Lisp package for reading Symbols.
+     * @throws NullPointerException If null is given.
+     */
     public void setCurrentPackage (final Package currentPackage)
     {
+	if (currentPackage == null)
+	{
+	    throw new NullPointerException ("Can't set the current package to null");
+	}
 	this.currentPackage = currentPackage;
     }
 
@@ -493,41 +528,6 @@ public class LispReader
 	return null;
     }
 
-    // private Symbol findExistingSymbolx (final String name, final Package pkg)
-    // {
-    // for (final Object x : imports)
-    // {
-    // if (x instanceof Symbol)
-    // {
-    // final Symbol symbol = (Symbol)x;
-    // if (symbol.is (name))
-    // {
-    // return symbol;
-    // }
-    // }
-    // }
-    // {
-    // final Symbol result = pkg.findSymbol (name);
-    // if (result != null)
-    // {
-    // return result;
-    // }
-    // }
-    // for (final Object x : imports)
-    // {
-    // if (x instanceof Package)
-    // {
-    // final Package p = (Package)x;
-    // final Symbol result = p.findSymbol (name);
-    // if (result != null)
-    // {
-    // return result;
-    // }
-    // }
-    // }
-    // return null;
-    // }
-
     private Object checkFullyQualifiedJavaClass (final String name)
     {
 	// Rule 5
@@ -627,6 +627,12 @@ public class LispReader
 	return null;
     }
 
+    /**
+     * Return a class for a name without throwing any exceptions.
+     *
+     * @param name The class name.
+     * @return The class object or null if it is not found.
+     */
     private Class<?> silentClassForName (final String name)
     {
 	try
