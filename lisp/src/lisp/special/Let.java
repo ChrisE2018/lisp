@@ -68,16 +68,4 @@ public class Let extends LogicDefiner implements Opcodes
 	}
 	return result;
     }
-
-    @Override
-    public String toString ()
-    {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (System.identityHashCode (this));
-	buffer.append (">");
-	return buffer.toString ();
-    }
 }

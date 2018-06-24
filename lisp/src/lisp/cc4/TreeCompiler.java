@@ -94,20 +94,20 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	}
     }
 
-    private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
+    // private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
 
-    /**
-     * Keep track of a symbol that has a global reference. This is only used to produce a log
-     * message. globalReferences does nothing else.
-     */
-    private void addGlobalReference (final Symbol symbol)
-    {
-	if (!globalReferences.contains (symbol))
-	{
-	    globalReferences.add (symbol);
-	    LOGGER.finer (new LogString ("Compiled global assignment to %s", symbol));
-	}
-    }
+    // /**
+    // * Keep track of a symbol that has a global reference. This is only used to produce a log
+    // * message. globalReferences does nothing else.
+    // */
+    // private void addGlobalReference (final Symbol symbol)
+    // {
+    // if (!globalReferences.contains (symbol))
+    // {
+    // globalReferences.add (symbol);
+    // LOGGER.finer (new LogString ("Compiled global assignment to %s", symbol));
+    // }
+    // }
 
     /**
      * Arrange for a field to be added to the compilation class containing quoted data.

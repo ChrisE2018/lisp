@@ -17,7 +17,7 @@
 (new "lisp.special.Let")
 (new "lisp.special.Or")
 (new "lisp.special.Progn")
-(new "lisp.special.Quote")
+;(new "lisp.special.Quote")
 (new "lisp.special.Repeat")
 (new "lisp.special.Setq")
 (new "lisp.special.The")

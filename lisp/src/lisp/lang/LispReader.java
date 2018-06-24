@@ -14,13 +14,19 @@ import lisp.util.ThrowingSupplier;
  */
 public class LispReader
 {
+    /**
+     * Association of LispReader to threads.
+     */
     private static Map<Thread, LispReader> threadReaders = new HashMap<Thread, LispReader> ();
+
+    /** Default lisp reader is a thread somehow does not have one. */
     private static final LispReader defaultLispReader = new LispReader ();
 
     private static final char BACKSLASH = '\\';
-    private static final char DOUBLEQUOTE = '"';
     private static final char COMMA = ',';
+    private static final char DOUBLEQUOTE = '"';
     private static final char DOT = '.';
+    private static final char SHARP = '#';
 
     /**
      * A LispReader is associated with each thread. Return the current one. If none is associated
@@ -58,6 +64,8 @@ public class LispReader
 	}
 	return result;
     }
+
+    private final SharpReader sharpReader;
 
     /** The current package for this reader. */
     private Package currentPackage;
@@ -97,6 +105,7 @@ public class LispReader
 	dotSymbol = systemPackage.internSymbol ("dot");
 	fieldSymbol = systemPackage.internSymbol ("field");
 	addImport (systemPackage);
+	sharpReader = new SharpReader (this);
     }
 
     /** Import a Lisp package. */
@@ -243,6 +252,11 @@ public class LispReader
 	    final Object form = read (in, pkg);
 	    wrapper.add (form);
 	    return wrapper;
+	}
+	if (chr == SHARP)
+	{
+	    in.read ();
+	    return sharpReader.readSharpForm (in);
 	}
 	if (chr == parsing.getDotMarker ())
 	{

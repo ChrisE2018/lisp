@@ -13,16 +13,4 @@ public class NetPrimitives extends Definer
     {
 	return new URL (address);
     }
-
-    @Override
-    public String toString ()
-    {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (System.identityHashCode (this));
-	buffer.append (">");
-	return buffer.toString ();
-    }
 }

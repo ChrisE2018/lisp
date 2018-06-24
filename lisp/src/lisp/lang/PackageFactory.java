@@ -7,13 +7,13 @@ import java.util.logging.Logger;
 public class PackageFactory
 {
     private static final Logger LOGGER = Logger.getLogger (PackageFactory.class.getName ());
-    private static final String DEFAULT_PACKAGE_NAME = "lisp.user";
+    private static final String USER_PACKAGE_NAME = "lisp.user";
     private static final String SYSTEM_PACKAGE_NAME = "lisp.lang";
 
     private static boolean initializedp = false;
 
     /** Names of packages to create initially. */
-    private static final String[] INITIAL_PACKAGES = {SYSTEM_PACKAGE_NAME, DEFAULT_PACKAGE_NAME};
+    private static final String[] INITIAL_PACKAGES = {SYSTEM_PACKAGE_NAME, USER_PACKAGE_NAME};
 
     /**
      * Predefined constant values. Each entry is packageName, (symbolName, symbolValue)*
@@ -25,9 +25,6 @@ public class PackageFactory
 
     /** Map from package name to package object for all packages that exist. */
     private static final Map<String, Package> packages = new HashMap<String, Package> ();
-
-    /** Package we are working in currently. */
-    private static Package defaultPackage = null;
 
     private PackageFactory ()
     {
@@ -50,7 +47,6 @@ public class PackageFactory
 		final Package pkg = new Package (packageName);
 		packages.put (packageName, pkg);
 	    }
-	    defaultPackage = getPackage (DEFAULT_PACKAGE_NAME);
 	    for (final Object[] constantDefinition : CONSTANT_SYMBOLS)
 	    {
 		final String packageName = (String)constantDefinition[0];
@@ -87,7 +83,7 @@ public class PackageFactory
      */
     public static Package getDefaultPackage ()
     {
-	return getPackage (DEFAULT_PACKAGE_NAME);
+	return getPackage (USER_PACKAGE_NAME);
     }
 
     // public static Package getDefaultPackage ()

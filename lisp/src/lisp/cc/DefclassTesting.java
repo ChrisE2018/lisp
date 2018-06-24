@@ -35,16 +35,4 @@ public class DefclassTesting extends Definer
 	final Method add = c.getMethod ("add", int.class, int.class);
 	System.out.printf ("%s + %s = %s%n", a, b, add.invoke (calc, a, b));
     }
-
-    @Override
-    public String toString ()
-    {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (System.identityHashCode (this));
-	buffer.append (">");
-	return buffer.toString ();
-    }
 }

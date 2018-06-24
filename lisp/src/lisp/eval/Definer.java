@@ -25,46 +25,31 @@ public class Definer
      * processed it will not be scanned again. This allows Definer classes to be instantiated more
      * than once.
      */
-    private static Set<Class<?>> scannedDefiners = new HashSet<Class<?>> ();
+    private static Map<Class<? extends Definer>, Definer> scannedDefiners = new HashMap<> ();
 
-    /**
-     * The object bound to the defined methods. Normally the same as this but not required to be.
-     */
-    private final Object source;
-
-    public Definer (final Object source)
+    static
     {
-	this.source = source;
-	getAnnotations (source);
+	SharpReader.addDispatchHandler (Definer.class.getSimpleName (), new DefinerSharpReader ());
     }
 
-    public Definer ()
+    public static Definer getDefiner (final Class<? extends Definer> cls)
     {
-	source = this;
-	getAnnotations (source);
-    }
-
-    /**
-     * The object bound to the defined methods. Normally the same as 'this' but not required to be.
-     */
-    public Object getSource ()
-    {
-	return source;
+	return scannedDefiners.get (cls);
     }
 
     /** Scan an object class for DefineLisp annotations if not done already. */
-    private void getAnnotations (final Object object)
+    public Definer ()
     {
-	final Class<?> objectClass = object.getClass ();
-	if (!scannedDefiners.contains (objectClass))
+	final Class<? extends Definer> definerClass = getClass ();
+	if (!scannedDefiners.containsKey (definerClass))
 	{
-	    scannedDefiners.add (objectClass);
-	    LOGGER.info (String.format ("Processing annotations for %s", object));
-	    for (final Method method : objectClass.getDeclaredMethods ())
+	    scannedDefiners.put (definerClass, this);
+	    LOGGER.info (String.format ("Processing annotations for %s", this));
+	    for (final Method method : definerClass.getDeclaredMethods ())
 	    {
 		if (method.isAnnotationPresent (DefineLisp.class))
 		{
-		    defineMethodFunction (object, method);
+		    defineMethodFunction (this, method);
 		}
 	    }
 	}
@@ -232,16 +217,12 @@ public class Definer
     }
 
     @Override
-    public String toString ()
+    final public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (" ");
-	buffer.append (System.identityHashCode (this));
-	buffer.append (" ");
-	buffer.append (source);
-	buffer.append (">");
+	buffer.append ("#Definer(");
+	buffer.append (getClass ().getName ());
+	buffer.append (")");
 	return buffer.toString ();
     }
 }
