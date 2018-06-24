@@ -10,6 +10,8 @@
 ;; where the interpreter and compiler can find it.
 
 (new "lisp.special.And")
+(new "lisp.special.Block")
+(new "lisp.special.BlockNamed")
 (new "lisp.special.Cond")
 (new "lisp.special.Dotimes")
 (new "lisp.special.If")
@@ -19,6 +21,8 @@
 (new "lisp.special.Progn")
 ;(new "lisp.special.Quote")
 (new "lisp.special.Repeat")
+(new "lisp.special.Return")
+(new "lisp.special.ReturnFrom")
 (new "lisp.special.Setq")
 (new "lisp.special.The")
 (new "lisp.special.When")
@@ -56,17 +60,17 @@
 	"Shorthand for describe"
 	(describe x))
 
-;(def exit (x) 
+;(def exit (x)
 ;  (static "java.lang.System" "exit" x))
 
 ;; Menus for Interactor gui
 
-(setq *menus* '(("File" 
+(setq *menus* '(("File"
 					("foo" (printf "foo hit%n"))
 					("exit" (static "java.lang.System" "exit" 0))
 					)
 			    ("Edit" "bar")
-			    ("Lisp" 
+			    ("Lisp"
 			    	("Show Bytecode" (showBytecode true))
 			    	("Hide Bytecode" (showBytecode false))
 			    	)

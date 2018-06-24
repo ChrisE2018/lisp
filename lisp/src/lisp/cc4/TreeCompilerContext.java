@@ -224,17 +224,15 @@ public class TreeCompilerContext implements Opcodes
 		    converter.convert (il, fc, toClass, allowNarrowing, liberalTruth);
 		}
 		else
-		{// Need new special case for standard class, like java.lang.System
+		{
+		    // Need new special case for standard class, like java.lang.System
 		    final Symbol s = quotedData.addQuotedConstant (x);
 		    final Class<?> quotedClass = x.getClass ();
 		    final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
 		    il.add (new VarInsnNode (ALOAD, 0));
 		    final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 		    il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
-		    convert (quotedClass, toClass,
-		            // returnClass,
-		            //
-		            allowNarrowing, liberalTruth);
+		    convert (quotedClass, toClass, allowNarrowing, liberalTruth);
 		}
 	    }
 	    // Jump to exit label
