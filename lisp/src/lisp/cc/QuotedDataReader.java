@@ -9,6 +9,9 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
+import lisp.asm.instructions.InsnNode;
+import lisp.asm.instructions.MethodInsnNode;
+import lisp.asm.instructions.VarInsnNode;
 import lisp.lang.*;
 import lisp.lang.Symbol;
 import lisp.util.LogString;
@@ -102,10 +105,31 @@ public class QuotedDataReader implements QuotedData
 	    cn.fields.add (new FieldNode (hiddenFieldAccess, reference.getName (), typeDescriptor, null, null));
 	}
 
-	if (quotedReferences.size () > 0)
+	if (!symbolReferences.isEmpty () || !quotedReferences.isEmpty ())
 	{
-
+	    LOGGER.fine ("Adding GetSymbol method to " + cn.name);
+	    final MethodNode symbolMethod = getGetSymbolMethod ();
+	    cn.methods.add (symbolMethod);
 	}
+    }
+
+    /** Create a method to locate a Symbol at runtime. */
+    private MethodNode getGetSymbolMethod ()
+    {
+	final MethodNode mn = new MethodNode (Opcodes.ACC_PRIVATE, "getSymbol",
+	        "(Ljava/lang/String;Ljava/lang/String;)Llisp/lang/Symbol;", null, null);
+	final InsnList il = mn.instructions;
+	il.add (new VarInsnNode (Opcodes.ALOAD, 1));
+	il.add (new MethodInsnNode (Opcodes.INVOKESTATIC, "lisp/lang/PackageFactory", "getPackage",
+	        "(Ljava/lang/String;)Llisp/lang/Package;", false));
+	il.add (new VarInsnNode (Opcodes.ALOAD, 2));
+	il.add (new MethodInsnNode (Opcodes.INVOKEVIRTUAL, "lisp/lang/Package", "findSymbol",
+	        "(Ljava/lang/String;)Llisp/lang/Symbol;", false));
+	il.add (new InsnNode (Opcodes.ARETURN));
+
+	mn.maxStack = 0;
+	mn.maxLocals = 0;
+	return mn;
     }
 
     @Override
@@ -143,6 +167,7 @@ public class QuotedDataReader implements QuotedData
 		final Symbol reference = entry.getKey ();
 		final Object quoted = entry.getValue ();
 
+		mv.visitVarInsn (Opcodes.ALOAD, 0);
 		mv.visitLdcInsn (quoted.toString ());
 		mv.visitMethodInsn (Opcodes.INVOKESTATIC, myInternalName, "readQuotedData",
 		        "(Ljava/lang/String;)Ljava/lang/Object;", false);

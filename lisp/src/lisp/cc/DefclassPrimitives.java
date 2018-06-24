@@ -48,8 +48,8 @@ public class DefclassPrimitives extends Definer
 	{
 	    final LispQuotedClassLoader classLoader = new LispQuotedClassLoader ();
 	    // FIXME Make this work. The objects for #<ArithmeticPrimitives> need to be loaded.
-	    // final QuotedData quotedDataHandler = new QuotedDataReader ();
-	    final Defclass defclass = new Defclass (classLoader, name, clauses);
+	    final QuotedData quotedDataHandler = new QuotedDataReader ();
+	    final Defclass defclass = new Defclass (quotedDataHandler, name, clauses);
 	    final byte[] b = defclass.getBytecode ();
 	    final String classBinaryName = null; // Must be null or TraceClassVisitor fails
 	    final Class<?> c = classLoader.defineClass (classBinaryName, b);

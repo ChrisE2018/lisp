@@ -105,8 +105,6 @@ public class LispQuotedClassLoader extends ClassLoader implements QuotedData
 		final String javaSymbolName = javaName.createJavaSymbolName (symbol);
 		cn.fields.add (new FieldNode (hiddenFieldAccess, javaSymbolName, typeDescriptor, null, null));
 	    }
-	    final MethodNode symbolMethod = getGetSymbolMethod ();
-	    cn.methods.add (symbolMethod);
 	}
 
 	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
@@ -115,6 +113,12 @@ public class LispQuotedClassLoader extends ClassLoader implements QuotedData
 	    final Object quoted = entry.getValue ();
 	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
 	    cn.fields.add (new FieldNode (hiddenFieldAccess, reference.getName (), typeDescriptor, null, null));
+	}
+	if (!symbolReferences.isEmpty () || !quotedReferences.isEmpty ())
+	{
+	    LOGGER.fine ("Adding GetSymbol method to " + cn.name);
+	    final MethodNode symbolMethod = getGetSymbolMethod ();
+	    cn.methods.add (symbolMethod);
 	}
     }
 
