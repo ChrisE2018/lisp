@@ -25,6 +25,8 @@ public class CompileLoaderV4 extends ClassLoader implements Compiler
      */
     private final Map<Symbol, Object> quotedReferences = new LinkedHashMap<Symbol, Object> ();
     private ClassReader cr = null;
+
+    // ClassWriter flags Must be zero or more of {@link #COMPUTE_MAXS} and {@link #COMPUTE_FRAMES}.
     private ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
     private ClassVisitor cv = cw;
 

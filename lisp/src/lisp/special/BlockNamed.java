@@ -16,9 +16,7 @@ public class BlockNamed extends Definer
      * @return Value of the last form evaluated.
      * @throws Exception
      */
-    @DefineLisp (special = true, name = "block-named"
-    // , classname = "lisp.special.BlockNamedFunction"
-    )
+    @DefineLisp (special = true, name = "block-named", classname = "lisp.special.BlockNamedFunction")
     public Object blockNamed (final LexicalContext context, final Symbol name, final Object... arguments) throws Exception
     {
 	// (block-named foo (return-from foo 6) 9)

@@ -58,10 +58,12 @@ public class TreeCompilerContext implements Opcodes
 
     // Can we use mn.locals instead of our own structure?
     private final Map<Symbol, LexicalBinding> locals;
-    private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
+
+    private final List<BlockBinding> blockBindings;
+    private final Set<Symbol> globalReferences = new HashSet<> ();
 
     public TreeCompilerContext (final TreeCompilerInterface treeCompiler, final QuotedData quotedData, final Class<?> returnClass,
-            final MethodNode mn, final Map<Symbol, LexicalBinding> locals)
+            final MethodNode mn, final Map<Symbol, LexicalBinding> locals, final List<BlockBinding> blockBindings)
     {
 	this.treeCompiler = treeCompiler;
 	this.quotedData = quotedData;
@@ -69,6 +71,7 @@ public class TreeCompilerContext implements Opcodes
 	this.mn = mn;
 	il = mn.instructions;
 	this.locals = locals;
+	this.blockBindings = blockBindings;
 	argumentTypes = Type.getArgumentTypes (mn.desc);
 	argumentCount = argumentTypes.length;
     }
@@ -89,7 +92,8 @@ public class TreeCompilerContext implements Opcodes
 	lvl.add (local);
 	final Map<Symbol, LexicalBinding> newLocals = new HashMap<Symbol, LexicalBinding> (locals);
 	newLocals.put (var, new LexicalVariable (var, varClass, index));
-	return new TreeCompilerContext (treeCompiler, quotedData, returnClass, mn, newLocals);
+	final List<BlockBinding> newBlockBindings = new ArrayList<> (blockBindings);
+	return new TreeCompilerContext (treeCompiler, quotedData, returnClass, mn, newLocals, newBlockBindings);
     }
 
     /** Setup the bindings for several new local variables. */
@@ -113,12 +117,34 @@ public class TreeCompilerContext implements Opcodes
 	    lvl.add (local);
 	    newLocals.put (var, new LexicalVariable (var, varClass, index));
 	}
-	return new TreeCompilerContext (treeCompiler, quotedData, returnClass, mn, newLocals);
+	final List<BlockBinding> newBlockBindings = new ArrayList<> (blockBindings);
+	return new TreeCompilerContext (treeCompiler, quotedData, returnClass, mn, newLocals, newBlockBindings);
+    }
+
+    /** Setup the binding for a new block named var. */
+    public TreeCompilerContext bindBlock (final BlockBinding binding)
+    {
+	final Map<Symbol, LexicalBinding> newLocals = new HashMap<Symbol, LexicalBinding> (locals);
+	final List<BlockBinding> newBlockBindings = new ArrayList<> (blockBindings);
+	newBlockBindings.add (binding);
+	return new TreeCompilerContext (treeCompiler, quotedData, returnClass, mn, newLocals, newBlockBindings);
     }
 
     public LexicalBinding getLocalVariableBinding (final Symbol var)
     {
 	return locals.get (var);
+    }
+
+    public BlockBinding getBlockBinding (final Symbol name)
+    {
+	for (final BlockBinding bb : blockBindings)
+	{
+	    if (bb.getBlockName () == name)
+	    {
+		return bb;
+	    }
+	}
+	return null;
     }
 
     public TreeCompilerInterface getTreeCompiler ()
@@ -159,6 +185,15 @@ public class TreeCompilerContext implements Opcodes
 		il.add (node);
 		LOGGER.finer (new LogString ("%s instr: %s", il.size (), node));
 	    }
+	}
+    }
+
+    public void add (final TryCatchBlockNode node)
+    {
+	if (node != null)
+	{
+	    mn.tryCatchBlocks.add (node);
+	    LOGGER.finer (new LogString ("Try Catch Block %s", node));
 	}
     }
 
@@ -241,7 +276,34 @@ public class TreeCompilerContext implements Opcodes
 	add (lExit);
     }
 
-    public void add (final ImplicitCompileResult icr)
+    // public void addZ (final ImplicitCompileResult icr)
+    // {
+    // final Object x = icr.getValue ();
+    // if (x == null)
+    // {
+    // il.add (new InsnNode (ACONST_NULL));
+    // }
+    // else if (validLdcInsnParam (x))
+    // {
+    // il.add (new LdcInsnNode (x));
+    // final Class<?> ec = x.getClass ();
+    // final Class<?> p = boxer.getUnboxedClass (ec);
+    // final Class<?> actual = p != null ? p : ec;
+    // convert (actual, returnClass, false, false);
+    // }
+    // else
+    // {
+    // final Symbol s = quotedData.addQuotedConstant (x);
+    // final Class<?> quotedClass = x.getClass ();
+    // final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
+    // il.add (new VarInsnNode (ALOAD, 0));
+    // final String classInternalName = treeCompiler.getClassType ().getInternalName ();
+    // il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
+    // convert (quotedClass, quotedClass, false, false);
+    // }
+    // }
+
+    public void add (final ImplicitCompileResult icr, final Class<?> toClass)
     {
 	final Object x = icr.getValue ();
 	if (x == null)
@@ -253,7 +315,8 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new LdcInsnNode (x));
 	    final Class<?> ec = x.getClass ();
 	    final Class<?> p = boxer.getUnboxedClass (ec);
-	    convert (p != null ? p : ec, returnClass, false, false);
+	    final Class<?> actual = p != null ? p : ec;
+	    convert (actual, toClass, false, false);
 	}
 	else
 	{
@@ -263,7 +326,7 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new VarInsnNode (ALOAD, 0));
 	    final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 	    il.add (new FieldInsnNode (GETFIELD, classInternalName, s.getName (), typeDescriptor));
-	    convert (quotedClass, returnClass, false, false);
+	    convert (quotedClass, toClass, false, false);
 	}
     }
 

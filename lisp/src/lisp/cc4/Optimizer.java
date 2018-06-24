@@ -264,6 +264,12 @@ public class Optimizer extends ClassNode implements Opcodes
 	final Set<LabelNode> foundLabels = new HashSet<LabelNode> ();
 	final Set<LabelNode> usedLabels = new HashSet<LabelNode> ();
 	// Ignore references from LocalVariableNodes. They are not really here.
+	for (final TryCatchBlockNode handler : method.tryCatchBlocks)
+	{
+	    usedLabels.add (handler.start);
+	    usedLabels.add (handler.end);
+	    usedLabels.add (handler.handler);
+	}
 	for (int i = 0; i < il.size (); i++)
 	{
 	    final AbstractInsnNode ins = il.get (i);

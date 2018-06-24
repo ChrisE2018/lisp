@@ -262,30 +262,6 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	return mn;
     }
 
-    // /** Create a method to get a Symbol value at runtime. */
-    // private MethodNode getGetSymbolValueMethod ()
-    // {
-    // final MethodNode mn =
-    // new MethodNode (ACC_PRIVATE, "getSymbolValue",
-    // "(Ljava/lang/String;Ljava/lang/String;)Llisp/lang/Symbol;", null, null);
-    // final InsnList il = mn.instructions;
-    // il.add (new VarInsnNode (ALOAD, 1));
-    // il.add (new MethodInsnNode (INVOKESTATIC, "lisp/lang/PackageFactory", "getPackage",
-    // "(Ljava/lang/String;)Llisp/lang/Package;",
-    // false));
-    // il.add (new VarInsnNode (ALOAD, 2));
-    // il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Package", "findSymbol",
-    // "(Ljava/lang/String;)Llisp/lang/Symbol;", false));
-    // il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Symbol", "getValue",
-    // "()Ljava/lang/Object;",
-    // false));
-    // il.add (new InsnNode (ARETURN));
-    //
-    // mn.maxStack = 0;
-    // mn.maxLocals = 0;
-    // return mn;
-    // }
-
     /* Create a method to implement the user function being defined. */
     private MethodNode getCompiledMethod ()
     {
@@ -297,7 +273,8 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	    locals.put (arg, new LexicalVariable (arg, methodArgClasses.get (i), i + 1));
 	}
 	// Should pass mn to the TreeCompilerContext so it can get at the method locals.
-	final TreeCompilerContext context = new TreeCompilerContext (this, this, methodReturnClass, mn, locals);
+	final List<BlockBinding> bbs = new ArrayList<> ();
+	final TreeCompilerContext context = new TreeCompilerContext (this, this, methodReturnClass, mn, locals, bbs);
 	for (int i = 0; i < methodBody.size () - 1; i++)
 	{
 	    final Object expr = methodBody.get (i);
@@ -318,7 +295,7 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	    else
 	    {
 		final ImplicitCompileResult icr = (ImplicitCompileResult)resultKind;
-		context.add (icr);
+		context.add (icr, methodReturnClass);
 	    }
 	    context.add (new InsnNode (returnType.getOpcode (IRETURN)));
 	}

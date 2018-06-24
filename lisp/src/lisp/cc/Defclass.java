@@ -429,7 +429,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 
 	// Compile the rest of the method here
 	final InsnList il = mn.instructions;
-	final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals);
+	final List<BlockBinding> bbs = new ArrayList<> ();
+	final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals, bbs);
 	if (!referencesThis)
 	{
 	    // Determine if this constructor calls 'this' and not do this part.
@@ -488,7 +489,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 			arguments.add (selectMethod.predictResultClass (locals, first.get (i)));
 		    }
 		    final Class<?>[] constructor = selectMethod.selectConstructor (constructorParameters, arguments);
-		    final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals);
+		    final List<BlockBinding> bbs = new ArrayList<> ();
+		    final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals, bbs);
 		    for (int i = 1; i < first.size (); i++)
 		    {
 			final CompileResultSet cr = context.compile (first.get (i), true);
@@ -509,7 +511,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		    }
 		    final Constructor<?> constructor = selectMethod.selectConstructor (superclass, arguments);
 		    final Class<?>[] params = constructor.getParameterTypes ();
-		    final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals);
+		    final List<BlockBinding> bbs = new ArrayList<> ();
+		    final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals, bbs);
 		    for (int i = 1; i < first.size (); i++)
 		    {
 			final CompileResultSet cr = context.compile (first.get (i), true);
@@ -663,7 +666,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    locals.put (fName, new LexicalField (fName, fClass, classType));
 	}
 	// Pass mn to the TreeCompilerContext so it can get at the method locals.
-	final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, valueClass, mn, locals);
+	final List<BlockBinding> bbs = new ArrayList<> ();
+	final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, valueClass, mn, locals, bbs);
 	for (int i = 0; i < bodyForms.size () - 1; i++)
 	{
 	    final Object expr = bodyForms.get (i);
@@ -684,7 +688,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    else
 	    {
 		final ImplicitCompileResult icr = (ImplicitCompileResult)resultKind;
-		context.add (icr);
+		context.add (icr, valueClass);
 	    }
 	    context.add (new InsnNode (returnType.getOpcode (Opcodes.IRETURN)));
 	}
