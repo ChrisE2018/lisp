@@ -43,6 +43,8 @@ public class TreeCompilerContext implements Opcodes
 
     private final TreeCompilerInterface treeCompiler;
 
+    private final QuotedData quotedData;
+
     private final MethodNode mn;
 
     private final InsnList il;
@@ -56,11 +58,13 @@ public class TreeCompilerContext implements Opcodes
 
     // Can we use mn.locals instead of our own structure?
     private final Map<Symbol, LexicalBinding> locals;
+    private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
 
-    public TreeCompilerContext (final TreeCompilerInterface treeCompiler, final Class<?> returnClass, final MethodNode mn,
-            final Map<Symbol, LexicalBinding> locals)
+    public TreeCompilerContext (final TreeCompilerInterface treeCompiler, final QuotedData quotedData, final Class<?> returnClass,
+            final MethodNode mn, final Map<Symbol, LexicalBinding> locals)
     {
 	this.treeCompiler = treeCompiler;
+	this.quotedData = quotedData;
 	this.returnClass = returnClass;
 	this.mn = mn;
 	il = mn.instructions;
@@ -85,7 +89,7 @@ public class TreeCompilerContext implements Opcodes
 	lvl.add (local);
 	final Map<Symbol, LexicalBinding> newLocals = new HashMap<Symbol, LexicalBinding> (locals);
 	newLocals.put (var, new LexicalVariable (var, varClass, index));
-	return new TreeCompilerContext (treeCompiler, returnClass, mn, newLocals);
+	return new TreeCompilerContext (treeCompiler, quotedData, returnClass, mn, newLocals);
     }
 
     /** Setup the bindings for several new local variables. */
@@ -109,7 +113,7 @@ public class TreeCompilerContext implements Opcodes
 	    lvl.add (local);
 	    newLocals.put (var, new LexicalVariable (var, varClass, index));
 	}
-	return new TreeCompilerContext (treeCompiler, returnClass, mn, newLocals);
+	return new TreeCompilerContext (treeCompiler, quotedData, returnClass, mn, newLocals);
     }
 
     public LexicalBinding getLocalVariableBinding (final Symbol var)
@@ -120,6 +124,11 @@ public class TreeCompilerContext implements Opcodes
     public TreeCompilerInterface getTreeCompiler ()
     {
 	return treeCompiler;
+    }
+
+    public QuotedData getQuotedData ()
+    {
+	return quotedData;
     }
 
     public InsnList getInstructions ()
@@ -216,7 +225,7 @@ public class TreeCompilerContext implements Opcodes
 		}
 		else
 		{// Need new special case for standard class, like java.lang.System
-		    final Symbol s = treeCompiler.addQuotedConstant (x);
+		    final Symbol s = quotedData.addQuotedConstant (x);
 		    final Class<?> quotedClass = x.getClass ();
 		    final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
 		    il.add (new VarInsnNode (ALOAD, 0));
@@ -250,7 +259,7 @@ public class TreeCompilerContext implements Opcodes
 	}
 	else
 	{
-	    final Symbol s = treeCompiler.addQuotedConstant (x);
+	    final Symbol s = quotedData.addQuotedConstant (x);
 	    final Class<?> quotedClass = x.getClass ();
 	    final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
 	    il.add (new VarInsnNode (ALOAD, 0));
@@ -521,7 +530,7 @@ public class TreeCompilerContext implements Opcodes
     // else
     // {
     // final Type objectType = Type.getType (target.getClass ());
-    // final Symbol reference = treeCompiler.addQuotedConstant (target);
+    // final Symbol reference = quotedData.addQuotedConstant (target);
     // add (new VarInsnNode (ALOAD, 0));
     // add (new FieldInsnNode (GETFIELD, classInternalName, reference.getName (),
     // objectType.getDescriptor ()));
@@ -586,7 +595,7 @@ public class TreeCompilerContext implements Opcodes
 	else
 	{
 	    final Type objectType = Type.getType (target.getClass ());
-	    final Symbol reference = treeCompiler.addQuotedConstant (target);
+	    final Symbol reference = quotedData.addQuotedConstant (target);
 	    add (new VarInsnNode (ALOAD, 0));
 	    add (new FieldInsnNode (GETFIELD, classInternalName, reference.getName (), objectType.getDescriptor ()));
 	}
@@ -667,7 +676,7 @@ public class TreeCompilerContext implements Opcodes
 	else
 	{
 	    final Type objectType = Type.getType (target.getClass ());
-	    final Symbol reference = treeCompiler.addQuotedConstant (target);
+	    final Symbol reference = quotedData.addQuotedConstant (target);
 	    add (new VarInsnNode (ALOAD, 0));
 	    final String classInternalName = treeCompiler.getClassType ().getInternalName ();
 	    add (new FieldInsnNode (GETFIELD, classInternalName, reference.getName (), objectType.getDescriptor ()));
@@ -737,7 +746,7 @@ public class TreeCompilerContext implements Opcodes
     private CompileResultSet compileDefaultFunctionCall (final LispList expression)
     {
 	final Symbol symbol = expression.head ();
-	treeCompiler.addSymbolReference (symbol);
+	quotedData.addSymbolReference (symbol);
 	LOGGER.finer (new LogString ("Function symbol reference to %s", symbol));
 	il.add (new VarInsnNode (ALOAD, 0));
 	final Type classType = treeCompiler.getClassType ();
@@ -813,8 +822,8 @@ public class TreeCompilerContext implements Opcodes
 	else
 	{
 	    // Reference to a global variable
-	    treeCompiler.addGlobalReference (symbol); // Log message
-	    treeCompiler.addSymbolReference (symbol); // Make symbol available at execution time
+	    addGlobalReference (symbol); // Log message
+	    quotedData.addSymbolReference (symbol); // Make symbol available at execution time
 	    // FIXME If the symbol valueCell is constant, use the current value.
 	    // FIXME If the valueCell is a TypedValueCell, use the type information.
 	    il.add (new VarInsnNode (ALOAD, 0));
@@ -827,6 +836,19 @@ public class TreeCompilerContext implements Opcodes
 	    final LabelNode ll = new LabelNode ();
 	    il.add (new JumpInsnNode (GOTO, ll));
 	    return new CompileResultSet (new ExplicitCompileResult (ll, Object.class));
+	}
+    }
+
+    /**
+     * Keep track of a symbol that has a global reference. This is only used to produce a log
+     * message. globalReferences does nothing else.
+     */
+    public void addGlobalReference (final Symbol symbol)
+    {
+	if (!globalReferences.contains (symbol))
+	{
+	    globalReferences.add (symbol);
+	    LOGGER.finer (new LogString ("Compiled global assignment to %s", symbol));
 	}
     }
 

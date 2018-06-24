@@ -72,8 +72,9 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    // TODO If the valueCell is a TypedValueCell, use the type information.
 	    // global
 	    final TreeCompilerInterface compiler = context.getTreeCompiler ();
-	    compiler.addSymbolReference (symbol);
-	    compiler.addGlobalReference (symbol);
+	    final QuotedData quotedData = context.getQuotedData ();
+	    quotedData.addSymbolReference (symbol);
+	    context.addGlobalReference (symbol);
 	    final String javaSymbolName = javaName.createJavaSymbolName (symbol);
 	    LOGGER.finer (new LogString ("Global assignment to %s as %s", symbol, javaSymbolName));
 	    final String classInternalName = compiler.getClassType ().getInternalName ();

@@ -6,7 +6,6 @@
 ; (setq alpha 54)
 
 (%defclass Simple
-	;(package "lisp.test")
 	(access public)
 	(extends java.lang.Object)	
 	(implements lisp.test.SimpleInterface)

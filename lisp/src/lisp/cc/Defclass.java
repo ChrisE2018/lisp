@@ -1,11 +1,12 @@
 
 package lisp.cc;
 
+import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.AdviceAdapter;
@@ -25,7 +26,9 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 {
     private static final Logger LOGGER = Logger.getLogger (Defclass.class.getName ());
 
-    private static JavaName javaName = new JavaName ();
+    private static int asmApi = Opcodes.ASM5;
+    private static int bytecodeVersion = Opcodes.V1_5;
+
     private static ClassNamed classNamed = new ClassNamed ();
     private static SelectMethod selectMethod = new SelectMethod ();
     private static MethodSignature methSignature = new MethodSignature ();
@@ -33,7 +36,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private static Symbol SUPER_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("super");
     private static Symbol ACCESS_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("access");
     private static Symbol PUBLIC_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("public");
-    private static final Type OBJECT_TYPE = Type.getType (Object.class);
 
     private static final Object[][] CLASS_MODIFIERS_DATA =
         {
@@ -86,7 +88,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	return classForName.values ();
     }
 
-    private final LispClassLoader classLoader;
     private final String classSimpleName;
     private final Type classType;
     private Class<?> superclass = Object.class;
@@ -107,10 +108,22 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     /** For each constructor this contains the classes of the parameters. */
     private final List<Class<?>[]> constructorParameters = new ArrayList<Class<?>[]> ();
 
-    public Defclass (final int api, final LispClassLoader classLoader, final String name, final LispList[] members)
+    /**
+     * References to global references. This is mainly used to issue information messages about
+     * globals once instead of repeatedly.
+     */
+    private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
+
+    // /** References to symbols that must be available to the bytecode. */
+    // private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
+
+    /** Delegate object to handle quoted data. */
+    private final QuotedData quotedData;
+
+    public Defclass (final QuotedData quotedData, final String name, final LispList[] members)
     {
-	super (api);
-	this.classLoader = classLoader;
+	super (asmApi);
+	this.quotedData = quotedData;
 	classSimpleName = name;
 	final Package currentPackage = PackageFactory.getCurrentPackage ();
 	final String pkgName = currentPackage.getName ();
@@ -126,67 +139,59 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    body.add (accessClause);
 	    parseConstructorClause (arguments, body);
 	}
-	final int hiddenFieldAccess = Opcodes.ACC_PRIVATE;
-	// Create field definitions for all entries in symbolReferences.
-	if (symbolReferences.size () > 0)
-	{
-	    for (final Symbol symbol : symbolReferences)
-	    {
-		final String typeDescriptor = Type.getType (symbol.getClass ()).getDescriptor ();
-		final String javaSymbolName = javaName.createJavaSymbolName (symbol);
-		fields.add (new FieldNode (hiddenFieldAccess, javaSymbolName, typeDescriptor, null, null));
-	    }
-	    final MethodNode symbolMethod = getGetSymbolMethod ();
-	    methods.add (symbolMethod);
-	}
-	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
-	{
-	    final Symbol reference = entry.getKey ();
-	    final Object quoted = entry.getValue ();
-	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
-	    fields.add (new FieldNode (hiddenFieldAccess, reference.getName (), typeDescriptor, null, null));
-	}
-	classLoader.setQuotedReferences (quotedReferences);
+	quotedData.addRequiredFields (this);
 	LOGGER.info ("defclass " + name);
     }
 
-    public String getClassSimpleName ()
-    {
-	return classSimpleName;
-    }
-
+    @Override
     public Type getClassType ()
     {
 	return classType;
     }
 
-    public int getClassAccess ()
+    public byte[] getBytecode ()
     {
-	return access;
-    }
+	// The class access, class name, superclass and interfaces need to be determined before
+	// we can visit the class node
+	final String superClassInternalName = superclassType.getInternalName ();
+	LOGGER.info (new LogString ("Defclass %s extends %s", classSimpleName, superclassType.getClassName ()));
+	final String classInternalName = classType.getInternalName ();
+	// final String classBinaryName = classType.getClassName (); // Uses dots
+	final String classBinaryName = null; // Must be null or TraceClassVisitor fails
+	final ClassWriter cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
+	final List<String> interfaceList = getInterfaces ();
+	final String[] interfaceNames = new String[interfaceList.size ()];
+	interfaceList.toArray (interfaceNames);
+	final ClassNode cn = this;
+	cn.visit (bytecodeVersion, access, classInternalName, classBinaryName, superClassInternalName, interfaceNames);
+	cn.visitEnd ();
 
-    public Type getSuperclassType ()
-    {
-	return superclassType;
-    }
+	// optimizers here
+	final Logger pbl = Logger.getLogger (PrintBytecodeClassAdaptor.class.getName ());
+	final boolean optimize = Symbol.named ("lisp.lang", "optimize").getBooleanValue (true);
+	final boolean printBytecode = pbl.isLoggable (Level.INFO);
 
-    public List<String> getInterfaces ()
-    {
-	if (interfaces == null)
+	// Form chain adding things in the middle.
+	// The last thing to do is write the code using cw.
+	ClassVisitor classVisitor = cw;
+
+	if (printBytecode)
 	{
-	    interfaces = new ArrayList<String> ();
+	    // Install PrintBytecodeClassAdaptor before Optimizer so it runs after.
+	    // Move this block lower to print code before optimization.
+	    classVisitor = new PrintBytecodeClassAdaptor (asmApi, classVisitor, new StringWriter ());
 	}
-	if (interfaces.size () != interfaceClasses.size ())
+	if (optimize)
 	{
-	    interfaces.clear ();
-	    for (int i = 0; i < interfaceClasses.size (); i++)
-	    {
-		final Class<?> ifClass = interfaceClasses.get (i);
-		final Type ifType = Type.getType (ifClass);
-		interfaces.add (ifType.getInternalName ());
-	    }
+	    classVisitor = new Optimizer (Compiler.ASM_VERSION, classVisitor);
 	}
-	return interfaces;
+
+	// Put code into init method to initialize fields and quoted data
+	// This should be the last operation installed (first done)
+	classVisitor = new InitModifierClassVisitor (classVisitor);
+	cn.accept (classVisitor);
+
+	return cw.toByteArray ();
     }
 
     private void parse (final LispList[] members)
@@ -262,6 +267,25 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	superclass = (Class<?>)clause.get (1);
 	superclassType = Type.getType (superclass);
 	superName = superclassType.getInternalName ();
+    }
+
+    private List<String> getInterfaces ()
+    {
+	if (interfaces == null)
+	{
+	    interfaces = new ArrayList<String> ();
+	}
+	if (interfaces.size () != interfaceClasses.size ())
+	{
+	    interfaces.clear ();
+	    for (int i = 0; i < interfaceClasses.size (); i++)
+	    {
+		final Class<?> ifClass = interfaceClasses.get (i);
+		final Type ifType = Type.getType (ifClass);
+		interfaces.add (ifType.getInternalName ());
+	    }
+	}
+	return interfaces;
     }
 
     private void parseImplementsClause (final LispList clause)
@@ -405,7 +429,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 
 	// Compile the rest of the method here
 	final InsnList il = mn.instructions;
-	final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
+	final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals);
 	if (!referencesThis)
 	{
 	    // Determine if this constructor calls 'this' and not do this part.
@@ -464,7 +488,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 			arguments.add (selectMethod.predictResultClass (locals, first.get (i)));
 		    }
 		    final Class<?>[] constructor = selectMethod.selectConstructor (constructorParameters, arguments);
-		    final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
+		    final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals);
 		    for (int i = 1; i < first.size (); i++)
 		    {
 			final CompileResultSet cr = context.compile (first.get (i), true);
@@ -485,7 +509,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		    }
 		    final Constructor<?> constructor = selectMethod.selectConstructor (superclass, arguments);
 		    final Class<?>[] params = constructor.getParameterTypes ();
-		    final TreeCompilerContext context = new TreeCompilerContext (this, void.class, mn, locals);
+		    final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals);
 		    for (int i = 1; i < first.size (); i++)
 		    {
 			final CompileResultSet cr = context.compile (first.get (i), true);
@@ -525,7 +549,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 			if (!selfReferentialConstructors.contains (descriptor))
 			{
 			    // mv.visitInsn (NOP);
-			    addHiddenConstructorSteps (mv);
+			    quotedData.addHiddenConstructorSteps (classType, mv);
 			    // mv.visitInsn (NOP);
 			}
 		    }
@@ -543,82 +567,67 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	}
     }
 
-    private void addHiddenConstructorSteps (final MethodVisitor mv)
-    {
-	final String classInternalName = getClassType ().getInternalName ();
+    // private void addHiddenConstructorSteps (final MethodVisitor mv)
+    // {
+    // final String classInternalName = getClassType ().getInternalName ();
+    //
+    // if (!symbolReferences.isEmpty ())
+    // {
+    // final Type stringType = Type.getType (String.class);
+    // final Type symbolType = Type.getType (Symbol.class);
+    // final String symbolTypeDescriptor = symbolType.getDescriptor ();
+    // // Create initialization code for all required symbols.
+    // for (final Symbol symbol : symbolReferences)
+    // {
+    // final String javaSymbolName = javaName.createJavaSymbolName (symbol);
+    // mv.visitVarInsn (ALOAD, 0);
+    // mv.visitVarInsn (ALOAD, 0);
+    // mv.visitLdcInsn (symbol.getPackage ().getName ());
+    // mv.visitLdcInsn (symbol.getName ());
+    // mv.visitMethodInsn (INVOKESPECIAL, classInternalName, "getSymbol",
+    // Type.getMethodDescriptor (symbolType, stringType, stringType), false);
+    // mv.visitFieldInsn (PUTFIELD, classInternalName, javaSymbolName, symbolTypeDescriptor);
+    //
+    // LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaSymbolName, symbol));
+    // }
+    // }
+    // final Map<Symbol, Object> quotedReferences = quotedData.getQuotedData ();
+    // if (!quotedReferences.isEmpty ())
+    // {
+    // // Create initialization code for all required quoted data.
+    // for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
+    // {
+    // // (define foo () (quote bar))
+    // final Symbol reference = entry.getKey ();
+    // final Object quoted = entry.getValue ();
+    // loadQuotedData (mv, reference);
+    //
+    // final Type quotedType = Type.getType (quoted.getClass ());
+    // final String typeDescriptor = quotedType.getDescriptor ();
+    // mv.visitTypeInsn (CHECKCAST, quotedType.getInternalName ());
+    // mv.visitFieldInsn (PUTFIELD, classInternalName, reference.getName (), typeDescriptor);
+    // }
+    // }
+    // }
 
-	if (!symbolReferences.isEmpty ())
-	{
-	    final Type stringType = Type.getType (String.class);
-	    final Type symbolType = Type.getType (Symbol.class);
-	    final String symbolTypeDescriptor = symbolType.getDescriptor ();
-	    // Create initialization code for all required symbols.
-	    for (final Symbol symbol : symbolReferences)
-	    {
-		final String javaSymbolName = javaName.createJavaSymbolName (symbol);
-		mv.visitVarInsn (ALOAD, 0);
-		mv.visitVarInsn (ALOAD, 0);
-		mv.visitLdcInsn (symbol.getPackage ().getName ());
-		mv.visitLdcInsn (symbol.getName ());
-		mv.visitMethodInsn (INVOKESPECIAL, classInternalName, "getSymbol",
-		        Type.getMethodDescriptor (symbolType, stringType, stringType), false);
-		mv.visitFieldInsn (PUTFIELD, classInternalName, javaSymbolName, symbolTypeDescriptor);
-
-		LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaSymbolName, symbol));
-	    }
-	}
-	if (!quotedReferences.isEmpty ())
-	{
-	    // Create initialization code for all required quoted data.
-	    for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
-	    {
-		// (define foo () (quote bar))
-		final Symbol reference = entry.getKey ();
-		final Object quoted = entry.getValue ();
-		loadQuotedData (mv, reference);
-
-		final Type quotedType = Type.getType (quoted.getClass ());
-		final String typeDescriptor = quotedType.getDescriptor ();
-		mv.visitTypeInsn (CHECKCAST, quotedType.getInternalName ());
-		mv.visitFieldInsn (PUTFIELD, classInternalName, reference.getName (), typeDescriptor);
-	    }
-	}
-    }
-
-    private void loadQuotedData (final MethodVisitor mv, final Symbol reference)
-    {
-	final Type classLoaderType = Type.getType (classLoader.getClass ());
-	final String classLoaderInternalName = classLoaderType.getInternalName ();
-	final String mapMethodDescriptor = Type.getMethodDescriptor (OBJECT_TYPE, OBJECT_TYPE);
-	mv.visitVarInsn (ALOAD, 0);
-	mv.visitInsn (DUP);
-	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
-	mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
-	mv.visitTypeInsn (CHECKCAST, classLoaderInternalName);
-	mv.visitMethodInsn (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;", false);
-
-	mv.visitLdcInsn (reference.getName ());
-	mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", mapMethodDescriptor, true);
-    }
-
-    /** Create a method to locate a Symbol at runtime. */
-    private MethodNode getGetSymbolMethod ()
-    {
-	final MethodNode mn =
-	    new MethodNode (ACC_PRIVATE, "getSymbol", "(Ljava/lang/String;Ljava/lang/String;)Llisp/lang/Symbol;", null, null);
-	final InsnList il = mn.instructions;
-	il.add (new VarInsnNode (ALOAD, 1));
-	il.add (new MethodInsnNode (INVOKESTATIC, "lisp/lang/PackageFactory", "getPackage",
-	        "(Ljava/lang/String;)Llisp/lang/Package;", false));
-	il.add (new VarInsnNode (ALOAD, 2));
-	il.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Package", "findSymbol", "(Ljava/lang/String;)Llisp/lang/Symbol;",
-	        false));
-	il.add (new InsnNode (ARETURN));
-
-	mn.maxStack = 0;
-	mn.maxLocals = 0;
-	return mn;
-    }
+    // private void loadQuotedData (final MethodVisitor mv, final Symbol reference)
+    // {
+    // final Type classLoaderType = Type.getType (classLoader.getClass ());
+    // final String classLoaderInternalName = classLoaderType.getInternalName ();
+    // final String mapMethodDescriptor = Type.getMethodDescriptor (OBJECT_TYPE, OBJECT_TYPE);
+    // mv.visitVarInsn (ALOAD, 0);
+    // mv.visitInsn (DUP);
+    // mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;",
+    // false);
+    // mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader",
+    // "()Ljava/lang/ClassLoader;", false);
+    // mv.visitTypeInsn (CHECKCAST, classLoaderInternalName);
+    // mv.visitMethodInsn (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences",
+    // "()Ljava/util/Map;", false);
+    //
+    // mv.visitLdcInsn (reference.getName ());
+    // mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", mapMethodDescriptor, true);
+    // }
 
     private void parseMethodClause (final Class<?> valueClass, final Symbol methodName, final LispList arguments,
             final LispList body)
@@ -654,7 +663,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    locals.put (fName, new LexicalField (fName, fClass, classType));
 	}
 	// Pass mn to the TreeCompilerContext so it can get at the method locals.
-	final TreeCompilerContext context = new TreeCompilerContext (this, valueClass, mn, locals);
+	final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, valueClass, mn, locals);
 	for (int i = 0; i < bodyForms.size () - 1; i++)
 	{
 	    final Object expr = bodyForms.get (i);
@@ -830,19 +839,14 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	methods.add (mn);
     }
 
-    private static Symbol QUOTE_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("quote");
-    private final Map<Symbol, Object> quotedReferences = new HashMap<Symbol, Object> ();
-    private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
-    private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
-
-    /** Keep track of a symbol that needs to be available as a class field. */
-    public void addSymbolReference (final Symbol symbol)
-    {
-	if (!symbolReferences.contains (symbol))
-	{
-	    symbolReferences.add (symbol);
-	}
-    }
+    // /** Keep track of a symbol that needs to be available as a class field. */
+    // public void addSymbolReference (final Symbol symbol)
+    // {
+    // if (!symbolReferences.contains (symbol))
+    // {
+    // symbolReferences.add (symbol);
+    // }
+    // }
 
     /**
      * Keep track of a symbol that has a global reference. This is only used to produce a log
@@ -855,38 +859,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    globalReferences.add (symbol);
 	    LOGGER.finer (new LogString ("Compiled global assignment to %s", symbol));
 	}
-    }
-
-    // /**
-    // * Arrange for a field to be added to the compilation class containing quoted data.
-    // *
-    // * @param reference The symbol that will name the data field.
-    // * @param quoted The quoted data to be stored.
-    // */
-    // public void addQuotedConstant (final Symbol reference, final Object quoted)
-    // {
-    // quotedReferences.put (reference.getName (), quoted);
-    // }
-
-    /**
-     * Arrange for a field to be added to the compilation class containing quoted data.
-     *
-     * @param quoted The quoted data to be stored.
-     * @return The symbol that will name the data field. This is a generated unique symbol.
-     */
-    public Symbol addQuotedConstant (final Object quoted)
-    {
-	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
-	{
-	    final Object q = entry.getValue ();
-	    if (quoted.equals (q))
-	    {
-		return entry.getKey ();
-	    }
-	}
-	final Symbol reference = QUOTE_SYMBOL.gensym ();
-	quotedReferences.put (reference, quoted);
-	return reference;
     }
 
     @Override

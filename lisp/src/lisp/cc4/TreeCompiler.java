@@ -19,7 +19,7 @@ import lisp.lang.*;
 import lisp.lang.Symbol;
 import lisp.util.LogString;
 
-public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInterface
+public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInterface, QuotedData
 {
     private static final Logger LOGGER = Logger.getLogger (TreeCompiler.class.getName ());
     private static JavaName javaName = new JavaName ();
@@ -29,13 +29,13 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     private final Class<?> methodReturnClass;
     private final String methodName;
     private final LispList methodBody;
-    private final Map<Symbol, Object> quotedReferences;
 
     private final List<Symbol> methodArgs = new ArrayList<Symbol> ();
     private final List<Class<?>> methodArgClasses = new ArrayList<Class<?>> ();
     private final List<Type> methodArgTypes = new ArrayList<Type> ();
-    private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
+
     private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
+    private final Map<Symbol, Object> quotedReferences;
 
     public TreeCompiler (final ClassVisitor cv, final CompileLoaderV4 compileLoader, final Class<?> methodReturnClass,
             final String methodName, final LispList methodArgs, final LispList methodBody)
@@ -94,11 +94,13 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	}
     }
 
+    private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
+
     /**
      * Keep track of a symbol that has a global reference. This is only used to produce a log
      * message. globalReferences does nothing else.
      */
-    public void addGlobalReference (final Symbol symbol)
+    private void addGlobalReference (final Symbol symbol)
     {
 	if (!globalReferences.contains (symbol))
 	{
@@ -113,6 +115,7 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
      * @param quoted The quoted data to be stored.
      * @return The symbol that will name the data field. This is a generated unique symbol.
      */
+    @Override
     public Symbol addQuotedConstant (final Object quoted)
     {
 	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
@@ -125,6 +128,13 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	final Symbol reference = QUOTE_SYMBOL.gensym ();
 	quotedReferences.put (reference, quoted);
 	return reference;
+    }
+
+    /** Get the saved quoted data. */
+    @Override
+    public Map<Symbol, Object> getQuotedData ()
+    {
+	return quotedReferences;
     }
 
     @Override
@@ -140,13 +150,7 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	    final String typeDescriptor = Type.getType (symbol.getClass ()).getDescriptor ();
 	    fields.add (new FieldNode (ACC_PRIVATE, javaName.createJavaSymbolName (symbol), typeDescriptor, null, null));
 	}
-	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
-	{
-	    final String reference = entry.getKey ().getName ();
-	    final Object quoted = entry.getValue ();
-	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
-	    fields.add (new FieldNode (ACC_PRIVATE, reference, typeDescriptor, null, null));
-	}
+	addRequiredFields (this);
 
 	methods.add (initMethod);
 	if (symbolReferences.size () > 0)
@@ -162,6 +166,18 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 
 	// Chain transformation
 	accept (cv);
+    }
+
+    @Override
+    public void addRequiredFields (final ClassNode cn)
+    {
+	for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
+	{
+	    final String reference = entry.getKey ().getName ();
+	    final Object quoted = entry.getValue ();
+	    final String typeDescriptor = Type.getType (quoted.getClass ()).getDescriptor ();
+	    cn.fields.add (new FieldNode (ACC_PRIVATE, reference, typeDescriptor, null, null));
+	}
     }
 
     private MethodNode getInitMethod ()
@@ -281,7 +297,7 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	    locals.put (arg, new LexicalVariable (arg, methodArgClasses.get (i), i + 1));
 	}
 	// Should pass mn to the TreeCompilerContext so it can get at the method locals.
-	final TreeCompilerContext context = new TreeCompilerContext (this, methodReturnClass, mn, locals);
+	final TreeCompilerContext context = new TreeCompilerContext (this, this, methodReturnClass, mn, locals);
 	for (int i = 0; i < methodBody.size () - 1; i++)
 	{
 	    final Object expr = methodBody.get (i);
@@ -337,5 +353,11 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
+    }
+
+    @Override
+    public void addHiddenConstructorSteps (final Type classType, final MethodVisitor mv)
+    {
+	throw new UnsupportedOperationException ();
     }
 }
