@@ -1,0 +1,96 @@
+;; Define isprime with all required declarations to make it fast
+
+(showBytecode t)
+
+(define boolean:isprime (int:a)
+  (let ((int:b 2)
+  		(boolean:result true))
+    (while (and (<= (* b b) a) result)
+      (if (zerop (rem a b))
+      	  (setq result false)
+      	  (setq b (1+ b))))
+    result))
+
+(define collectPrimes (int:n)
+    (let ((int:i 2) (result (list)))
+      (while (<= (size result) n)
+        (when (isprime i) (add result i))
+        (setq i (1+ i)))
+      result))
+
+  // access flags 0x1
+  public isprime2(I)Z
+    LDC 2
+    ISTORE 2
+    LDC true
+    ISTORE 3
+   L0
+    ALOAD 0
+    GETFIELD lisp/cc/Foobar.quote4 : Llisp/primitives/ArithmeticPrimitives;
+    ALOAD 0
+    GETFIELD lisp/cc/Foobar.quote4 : Llisp/primitives/ArithmeticPrimitives;
+    LDC 2
+    ANEWARRAY java/lang/Object
+    DUP
+    LDC 0
+    ILOAD 2
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    CHECKCAST java/lang/Object
+    AASTORE
+    DUP
+    LDC 1
+    ILOAD 2
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    CHECKCAST java/lang/Object
+    AASTORE
+    INVOKEVIRTUAL lisp/primitives/ArithmeticPrimitives.times ([Ljava/lang/Object;)Ljava/lang/Object;
+    CHECKCAST java/lang/Object
+    LDC 1
+    ANEWARRAY java/lang/Object
+    DUP
+    LDC 0
+    ILOAD 1
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    CHECKCAST java/lang/Object
+    AASTORE
+    INVOKEVIRTUAL lisp/primitives/ArithmeticPrimitives.compareLE (Ljava/lang/Object;[Ljava/lang/Object;)Z
+    IFEQ L1
+    ILOAD 3
+    IFEQ L1
+    ALOAD 0
+    GETFIELD lisp/cc/Foobar.quote4 : Llisp/primitives/ArithmeticPrimitives;
+    ILOAD 1
+    ILOAD 2
+    INVOKEVIRTUAL lisp/primitives/ArithmeticPrimitives.rem (II)I
+    IFEQ L2
+    GOTO L3
+   L2
+    LDC false
+    DUP
+    ISTORE 3
+    GOTO L4
+   L3
+    ALOAD 0
+    GETFIELD lisp/cc/Foobar.quote4 : Llisp/primitives/ArithmeticPrimitives;
+    ILOAD 2
+    INVOKEVIRTUAL lisp/primitives/ArithmeticPrimitives.addOne (I)I
+    DUP
+    ISTORE 2
+    GOTO L5
+   L4
+    POP
+    GOTO L0
+   L5
+    POP
+    GOTO L0
+   L1
+    LDC false
+    POP
+    ILOAD 3
+    IRETURN
+    IRETURN
+    LOCALVARIABLE b I L6 L7 2
+    LOCALVARIABLE result Z L8 L9 3
+    MAXSTACK = 0
+    MAXLOCALS = 0
+}
