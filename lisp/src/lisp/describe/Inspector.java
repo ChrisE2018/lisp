@@ -1,6 +1,10 @@
 
 package lisp.describe;
 
+import java.awt.*;
+
+import javax.swing.JFrame;
+
 public class Inspector
 {
     private DescriberFactory factory;
@@ -27,7 +31,20 @@ public class Inspector
 
     public Object inspect (final Object arg)
     {
+	final JFrame inspector = new JFrame ("Inspector");
+	inspector.setContentPane (new InspectorPane (arg));
+	inspector.pack ();
+	centreWindow (inspector);
+	inspector.setVisible (true);
 	return arg;
+    }
+
+    public static void centreWindow (final Window frame)
+    {
+	final Dimension dimension = Toolkit.getDefaultToolkit ().getScreenSize ();
+	final int x = (int)((dimension.getWidth () - frame.getWidth ()) / 2);
+	final int y = (int)((dimension.getHeight () - frame.getHeight ()) / 2);
+	frame.setLocation (x, y);
     }
 
     @Override

@@ -12,15 +12,13 @@ public class DescribePrimitives extends Definer
     public Object describe (final Object arg)
     {
 	System.out.printf ("Describe: %s \n", arg);
-	describe.describe (arg);
-	return arg;
+	return describe.describe (arg);
     }
 
     @DefineLisp
     public Object inspect (final Object arg)
     {
 	System.out.printf ("Inspect: %s \n", arg);
-	inspector.inspect (arg);
-	return arg;
+	return inspector.inspect (arg);
     }
 }

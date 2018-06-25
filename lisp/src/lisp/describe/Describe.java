@@ -1,7 +1,7 @@
 
 package lisp.describe;
 
-import java.util.Collection;
+import java.util.*;
 import java.util.Map.Entry;
 
 import lisp.lang.*;
@@ -32,7 +32,7 @@ public class Describe
 	this.factory = factory;
     }
 
-    public void describe (final Object arg)
+    public Object describe (final Object arg)
     {
 	final Describer describer = factory.getDescriber (arg);
 	final Package pkg = PackageFactory.getCurrentPackage ();
@@ -42,7 +42,8 @@ public class Describe
 	{
 	    // Make a symbol using the index value, i.e., d001
 	    final String key = entry.getKey ();
-	    for (final Object value : entry.getValue ())
+	    final Set<Object> values = new LinkedHashSet<> (entry.getValue ());
+	    for (final Object value : values)
 	    {
 		++index;
 		final Describer valueDescriber = factory.getDescriber (value);
@@ -62,6 +63,7 @@ public class Describe
 		}
 	    }
 	}
+	return arg;
     }
 
     @Override
