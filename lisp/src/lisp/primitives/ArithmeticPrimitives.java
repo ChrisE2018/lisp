@@ -398,8 +398,18 @@ public class ArithmeticPrimitives extends Definer
     @DefineLisp (name = "*", classname = "lisp.special.TimesIntFunction")
     public int times (final int a, final int b)
     {
-	// TODO: need int x double, double x int, int x long, long x int, long x long, long x
-	// double, double x long
+	return a * b;
+    }
+
+    @DefineLisp (name = "*", classname = "lisp.special.TimesLongFunction")
+    public long times (final long a, final long b)
+    {
+	return a * b;
+    }
+
+    @DefineLisp (name = "*", classname = "lisp.special.TimesDoubleFunction")
+    public double times (final double a, final double b)
+    {
 	return a * b;
     }
 
