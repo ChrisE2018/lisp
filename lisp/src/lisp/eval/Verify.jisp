@@ -10,6 +10,8 @@
 
 (verifyPhase interpreter)
 
+(verify () ())
+
 (verify (+ 2 3) 5)
 (setq a 5)
 (verify a 5)
@@ -51,6 +53,18 @@
 (verify (- 67) -67)
 (verify (/ 2) 0.5)
 
+(verify (eval '(+ 1 2 3)) 6)
+
+(verify (classForName "java.lang.System") java.lang.System)
+
+(verify (new "java.lang.Integer" 6) 6)
+
+
+(verifyError (new "java.lang.Integer" 6.8) "java.lang.reflect.InvocationTargetException")
+
+(verifyError (undefined) "java.lang.IllegalArgumentException")
+(verifyError (1234) "java.lang.IllegalArgumentException")
+
 (verifyPhase compile)
 
 (undefine 'foo true)
@@ -89,7 +103,7 @@
 	(verify a 5)
 	(verify (alpha 3) 12)
 
-	(setq a 6) 
+	(setq a 6)
 	(verify (alpha 3) 13))
 
 (define foo (x)
@@ -97,7 +111,7 @@
 (foo 3)
 (verify a 3)
 (foo 5)
-(verify a 5) 
+(verify a 5)
 
 (verifyPhase logic-a)
 (define foo (a b) -99)
@@ -138,7 +152,7 @@
 (verify (foo false 2) 2)
 
 (verifyPhase logic-c)
-	
+
 (define foo (a b) (if (or a b) 1 2))
 (verify (foo true true) 1)
 (verify (foo false true) 1)
@@ -176,7 +190,7 @@
 (verifyPhase loops)
 
 (define foo (x) (repeat x 3))
-(verify (foo 1) false)	
+(verify (foo 1) false)
 
 (define foo (int:x) (repeat x 3) 7)
 (verify (foo 1) 7)
@@ -281,7 +295,7 @@
 		(* n (factorial (- n 1)))))
 
 (verify (factorial 5) 120)
-	
+
 (define foo (x) (length x))
 (verify (foo "foobar") 6)
 
@@ -343,12 +357,12 @@
    (let ((b 42))
 	(1+ x)))
 (verify (foo 34) 35)
-	
+
 (define foo ()
    (let ((b 42))
 	(1+ b)))
 (verify (foo) 43)
-	
+
 (define foo (x)
    (let ((b 5))
 	(setq x (1+ x))
@@ -406,7 +420,7 @@
 (verification dummyCollectPrimes
 	(define collectPrimes (a) 93)
 	(verify (collectPrimes 2) 93))
-	
+
 (verifyPhase primes)
 
 ; Now do it compiled
@@ -431,7 +445,7 @@
 (verifyPhase primesConditions)
 
 (undefine 'foo true);
-        
+
 (define foo (x) (when x 1 2))
 (verify (foo 1) 2)
 (verify (foo 'bar) 2)
@@ -512,14 +526,14 @@
 
 ;(define ccc (n)
 ;	(when (isprime n)
-;		(printf "prime"))) 
+;		(printf "prime")))
 
 
 (define collectPrimes (n); bad
 ;; This is an infinite loop
     (let ((i 2) (result (list)))
       (while (<= (size result) n)
-        (when (not true) ;(isprime i) 
+        (when (not true) ;(isprime i)
         	(add result i)
         	)
         (setq i (1+ i))
@@ -530,29 +544,29 @@
  ;; Reference to undefined function
     (let ((i 2) (result (list)))
       (while (<= (size result) n)
-        (when (bahbab true) ;(isprime i) 
+        (when (bahbab true) ;(isprime i)
         	(add result i)
         	)
         (setq i (1+ i))
         )
       result))
-  
+
 (define collectPrimes (n); bad
  ;; Reference to undefined function
     (let ((i 2) (result (list)))
       (progn (<= (size result) n)
-        (when (bahbab true) ;(isprime i) 
+        (when (bahbab true) ;(isprime i)
         	(add result i)
         	)
         (setq i (1+ i))
         )
       result))
-      
+
 (define collectPrimes (n); bad
  ;; Reference to undefined function
     (let ((i 2) (result (list)))
       (<= (size result) n)
-      (when (bahbab true) ;(isprime i) 
+      (when (bahbab true) ;(isprime i)
         	(add result i)
         	)
       (setq i (1+ i))
@@ -562,7 +576,7 @@
  ;; Reference to undefined function
     (let ((i 2) (result (list)))
       (<= (size result) n)
-      (when (bahbab true) ;(isprime i) 
+      (when (bahbab true) ;(isprime i)
         	(add result i)
         	)
       ;(setq i (1+ i))
@@ -571,7 +585,7 @@
 (define collectPrimes (n); bad
  ;; Reference to undefined function
     (let ((i 2) (result (list)))
-      (when (bahbab true) ;(isprime i) 
+      (when (bahbab true) ;(isprime i)
         	(add result i)
         	)
       result))
@@ -579,7 +593,7 @@
 (define collectPrimes (n); bad
  ;; Reference to undefined function
     (let* ((i 2) (result (list)))
-      (when (bahbab true) 
+      (when (bahbab true)
         	(add result i)
         	)
       result))
@@ -587,63 +601,63 @@
  (define collectPrimes (n); bad
  ;; Reference to undefined function
     (let* ((i 2) (result (list)))
-      (when (bahbab true) 
+      (when (bahbab true)
         	3
         	)
       result))
 
 (define collectPrimes (n); bad
  ;; Reference to undefined function
-    (let ((i 2) 
+    (let ((i 2)
     	  ;(result (list))
     	 )
-      (when (bahbab true) 
+      (when (bahbab true)
         	3
         	)
       4))
 
 (define collectPrimes (n); bad
  ;; Reference to undefined function
-    (let ((i 2) 
+    (let ((i 2)
     	 )
-      (when (bahbab true) 
+      (when (bahbab true)
         	3
         	)
       4))
 
 (define collectPrimes (n); bad
  ;; Reference to undefined function
-      (when (bahbab true) 
+      (when (bahbab true)
         	3
         	)
       4)
 (define collectPrimes (n); bad
  ;; Reference to undefined variable
-      (when jjsajas 
+      (when jjsajas
         	3
         	)
       4)
 
 (define collectPrimes (n); ok
-      (when false 
+      (when false
         	3
         	)
       4)
 
 (define collectPrimes (n); ok
-      (when true 
+      (when true
         	3
         	)
       4)
-      
+
 (define collectPrimes (n); ok
-      (when 44 
+      (when 44
         	3
         	)
       4)
 
 (define collectPrimes (n); OK
-    (when (bahbab true) 
+    (when (bahbab true)
         	3
         	))
 

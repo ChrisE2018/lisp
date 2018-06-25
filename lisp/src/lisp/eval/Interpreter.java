@@ -98,34 +98,6 @@ public class Interpreter extends Definer
 			}
 		    }
 		}
-		// if (f instanceof String)
-		// {
-		// // (System.out.println "foo")
-		// // (String.format "foo")
-		// final Object target = eval (context, dotForm.get (1));
-		// final List<Object> arguments = new LispList ();
-		// for (int i = 1; i < list.size (); i++)
-		// {
-		// arguments.add (eval (context, list.get (i)));
-		// }
-		// if (target instanceof Class)
-		// {
-		// return invoke.javaMethodCall (null, (Class<?>)target, (String)f, arguments);
-		// }
-		// else
-		// {
-		// return invoke.javaMethodCall (target, target.getClass (), (String)f, arguments);
-		// }
-		// }
-		// final List<Object> arguments = new LispList ();
-		// final Object target = dotForm.get (1);
-		// final Method method = (Method)dotForm.get (2);
-		// for (int i = 1; i < list.size (); i++)
-		// {
-		// arguments.add (eval (context, list.get (i)));
-		// }
-		// return invoke.javaMethodCall (target, method.getDeclaringClass (), method.getName
-		// (), arguments);
 		throw new Error ("NYI fn as " + fn);
 	    }
 	    if (fn instanceof Symbol)
@@ -190,7 +162,7 @@ public class Interpreter extends Definer
 
     /** Return a class for a name. This is required so the init file can load the primitives. */
     @DefineLisp
-    public Object ClassForName (final String className) throws ClassNotFoundException
+    public Object classForName (final String className) throws ClassNotFoundException
     {
 	final Class<?> c = Class.forName (className);
 	return c;
@@ -276,14 +248,14 @@ public class Interpreter extends Definer
 	throw new NoSuchMethodException ("Method " + className + "." + methodName + " not found");
     }
 
-    public Object evalString (final String expression) throws Exception
-    {
-	final LexicalContext context = new LexicalContext (this);
-	final LispStream stream = new LispInputStream (expression);
-	final LispReader lispReader = new LispReader ();
-	final Object form = lispReader.read (stream);
-	return eval (context, form);
-    }
+    // public Object evalString (final String expression) throws Exception
+    // {
+    // final LexicalContext context = new LexicalContext (this);
+    // final LispStream stream = new LispInputStream (expression);
+    // final LispReader lispReader = new LispReader ();
+    // final Object form = lispReader.read (stream);
+    // return eval (context, form);
+    // }
 
     @DefineLisp
     public boolean loadResource (final String pathname) throws Exception

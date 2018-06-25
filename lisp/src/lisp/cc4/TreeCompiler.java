@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.LabelNode;
 
 import lisp.asm.instructions.FieldInsnNode;
 import lisp.asm.instructions.InsnNode;
@@ -274,6 +275,9 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	}
 	// Should pass mn to the TreeCompilerContext so it can get at the method locals.
 	final List<BlockBinding> bbs = new ArrayList<> ();
+	final LabelNode l1 = new LabelNode ();
+	final BlockBinding bb = new BlockBinding (null, methodReturnClass, l1);
+	bbs.add (bb);
 	final TreeCompilerContext context = new TreeCompilerContext (this, this, methodReturnClass, mn, locals, bbs);
 	for (int i = 0; i < methodBody.size () - 1; i++)
 	{
@@ -299,6 +303,9 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	    }
 	    context.add (new InsnNode (returnType.getOpcode (IRETURN)));
 	}
+	// Need to optimize away unreachable code
+	context.add (l1);
+	context.add (new InsnNode (returnType.getOpcode (IRETURN)));
 	// Better not get here
 	mn.maxStack = 0;
 	mn.maxLocals = 0;

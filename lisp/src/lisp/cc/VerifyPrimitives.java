@@ -312,7 +312,7 @@ public class VerifyPrimitives extends Definer
 	}
 	catch (final Throwable e)
 	{
-	    if (e.getMessage ().equals (expected))
+	    if (e.getClass ().getName ().equals (expected))
 	    {
 		System.out.printf ("[%s] Pass: Expected error %s found while evaluating %s%n", phase, expected, expr);
 		passCount++;
