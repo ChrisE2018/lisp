@@ -39,21 +39,21 @@ public class LoggerPrimitives extends Definer
     @DefineLisp
     public boolean isBytecode ()
     {
-	final Logger logger = Logger.getLogger (lisp.cc.PrintBytecodeClassAdaptor.class.getName ());
+	final Logger logger = Logger.getLogger (lisp.asm.PrintBytecodeClassAdaptor.class.getName ());
 	return logger.isLoggable (Level.FINE);
     }
 
     @DefineLisp
     public void showBytecode (final boolean flag)
     {
-	final Logger logger = Logger.getLogger (lisp.cc.PrintBytecodeClassAdaptor.class.getName ());
+	final Logger logger = Logger.getLogger (lisp.asm.PrintBytecodeClassAdaptor.class.getName ());
 	logger.setLevel (flag ? Level.FINE : Level.WARNING);
     }
 
     @DefineLisp
     public String showBytecode ()
     {
-	final Logger logger = Logger.getLogger (lisp.cc.PrintBytecodeClassAdaptor.class.getName ());
+	final Logger logger = Logger.getLogger (lisp.asm.PrintBytecodeClassAdaptor.class.getName ());
 	if (logger.isLoggable (Level.FINE))
 	{
 	    logger.setLevel (Level.WARNING);

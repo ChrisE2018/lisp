@@ -1,5 +1,5 @@
 
-package lisp.cc4;
+package lisp.asm;
 
 import org.objectweb.asm.tree.ClassNode;
 

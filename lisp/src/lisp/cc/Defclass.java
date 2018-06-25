@@ -13,6 +13,7 @@ import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.FieldInsnNode;
 
+import lisp.asm.PrintBytecodeClassAdaptor;
 import lisp.asm.instructions.InsnNode;
 import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.VarInsnNode;

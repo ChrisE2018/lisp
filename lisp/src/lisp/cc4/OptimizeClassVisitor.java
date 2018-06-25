@@ -3,6 +3,8 @@ package lisp.cc4;
 
 import org.objectweb.asm.*;
 
+import lisp.asm.RemoveDeadCodeAdapter;
+
 public class OptimizeClassVisitor extends ClassVisitor
 {
     private String classInternalName = null;

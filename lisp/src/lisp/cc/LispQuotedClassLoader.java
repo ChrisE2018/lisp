@@ -13,7 +13,7 @@ import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.VarInsnNode;
 import lisp.lang.PackageFactory;
 import lisp.lang.Symbol;
-import lisp.util.LogString;
+import lisp.util.*;
 
 /**
  * One way to preserve quoted data is to store it in the class loader. This won't work if the

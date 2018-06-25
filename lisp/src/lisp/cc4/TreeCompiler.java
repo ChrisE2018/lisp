@@ -18,7 +18,7 @@ import lisp.asm.instructions.VarInsnNode;
 import lisp.cc.*;
 import lisp.lang.*;
 import lisp.lang.Symbol;
-import lisp.util.LogString;
+import lisp.util.*;
 
 public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInterface, QuotedData
 {

@@ -1,11 +1,10 @@
 
-package lisp.cc;
+package lisp.util;
 
 import lisp.lang.Symbol;
 
 public class JavaName
 {
-
     /**
      * Convert a lisp symbol name into a valid Java identifier String. The same symbol will always
      * convert to the same Java name. Symbols of the same name in different packages may produce

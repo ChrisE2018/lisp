@@ -5,6 +5,7 @@ import java.util.*;
 
 import lisp.lang.*;
 import lisp.symbol.*;
+import lisp.util.Promotion;
 
 public class Analyzer
 {

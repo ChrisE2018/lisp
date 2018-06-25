@@ -7,6 +7,7 @@ import java.util.logging.*;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
+import lisp.asm.*;
 import lisp.lang.Symbol;
 import lisp.util.LogString;
 

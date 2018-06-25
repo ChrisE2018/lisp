@@ -7,6 +7,7 @@ import java.util.logging.*;
 
 import org.objectweb.asm.*;
 
+import lisp.asm.PrintBytecodeClassAdaptor;
 import lisp.cc1.CompileLoader_v1;
 import lisp.cc2.CompileLoader_v2;
 import lisp.cc3.*;

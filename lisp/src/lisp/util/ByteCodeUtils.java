@@ -1,5 +1,5 @@
 
-package lisp.cc;
+package lisp.util;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.*;

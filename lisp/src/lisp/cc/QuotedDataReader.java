@@ -14,7 +14,7 @@ import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.VarInsnNode;
 import lisp.lang.*;
 import lisp.lang.Symbol;
-import lisp.util.LogString;
+import lisp.util.*;
 
 public class QuotedDataReader implements QuotedData
 {

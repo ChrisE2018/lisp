@@ -1,5 +1,5 @@
 
-package lisp.cc;
+package lisp.asm;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.tree.ClassNode;

@@ -13,7 +13,7 @@ import lisp.cc4.*;
 import lisp.lang.LispList;
 import lisp.lang.Symbol;
 import lisp.symbol.LispVisitor;
-import lisp.util.LogString;
+import lisp.util.*;
 
 public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
 {

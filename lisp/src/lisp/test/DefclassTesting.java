@@ -1,5 +1,5 @@
 
-package lisp.cc;
+package lisp.test;
 
 import java.lang.reflect.*;
 

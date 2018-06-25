@@ -11,8 +11,6 @@ public class VerifyPrimitives extends Definer
 {
     private static The the = new The ();
 
-    // private static int replErrorCount = 0;
-
     private static final List<Symbol> verifyFailures = new ArrayList<Symbol> ();
     private static final List<String> verifyErrors = new ArrayList<String> ();
 
