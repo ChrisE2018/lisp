@@ -440,7 +440,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		final Object value = entry.getValue ();
 		final Class<?> fClass = fieldClass.get (fName);
 		final LexicalField lf = new LexicalField (fName, fClass, classType);
-		final CompileResultSet cr = context.compile (value, true);
+		final CompileResults cr = context.compile (value, true);
 		context.convert (cr, fClass, false, false);
 		lf.store (context);
 	    }
@@ -459,7 +459,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	for (int i = 0; i < bodyForms.size (); i++)
 	{
 	    final Object expr = bodyForms.get (i);
-	    final CompileResultSet resultClass = context.compile (expr, false);
+	    final CompileResults resultClass = context.compile (expr, false);
 	    context.convert (resultClass, void.class, false, false);
 	}
 	il.add (new InsnNode (Opcodes.RETURN));
@@ -493,7 +493,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		    final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals, bbs);
 		    for (int i = 1; i < first.size (); i++)
 		    {
-			final CompileResultSet cr = context.compile (first.get (i), true);
+			final CompileResults cr = context.compile (first.get (i), true);
 			context.convert (cr, constructor[i - 1], false, false);
 		    }
 		    final String cs = methSignature.getArgumentSignature (constructor) + "V";
@@ -515,7 +515,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		    final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals, bbs);
 		    for (int i = 1; i < first.size (); i++)
 		    {
-			final CompileResultSet cr = context.compile (first.get (i), true);
+			final CompileResults cr = context.compile (first.get (i), true);
 			context.convert (cr, params[i - 1], false, false);
 		    }
 		    final String cs = methSignature.getMethodSignature (constructor);
@@ -671,23 +671,23 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	for (int i = 0; i < bodyForms.size () - 1; i++)
 	{
 	    final Object expr = bodyForms.get (i);
-	    final CompileResultSet resultClass = context.compile (expr, false);
+	    final CompileResults resultClass = context.compile (expr, false);
 	    context.convert (resultClass, void.class, false, false);
 	}
-	final CompileResultSet resultClass = context.compile (bodyForms.last (), true);
+	final CompileResults resultClass = context.compile (bodyForms.last (), true);
 	// (define double:foo (int:n) 1 2 n)
 	for (final CompileResult resultKind : resultClass.getResults ())
 	{
 	    // TODO This should collect crs of the same class and make them jump to the same place
 	    // instead of duplicating code
 	    context.add (resultKind.getLabels ());
-	    if (resultKind instanceof ExplicitCompileResult)
+	    if (resultKind instanceof ExplicitResult)
 	    {
-		context.convert (((ExplicitCompileResult)resultKind).getResultClass (), valueClass, false, false);
+		context.convert (((ExplicitResult)resultKind).getResultClass (), valueClass, false, false);
 	    }
 	    else
 	    {
-		final ImplicitCompileResult icr = (ImplicitCompileResult)resultKind;
+		final ImplicitResult icr = (ImplicitResult)resultKind;
 		context.add (icr, valueClass);
 	    }
 	    context.add (new InsnNode (returnType.getOpcode (Opcodes.IRETURN)));

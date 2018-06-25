@@ -5,11 +5,11 @@ import java.util.List;
 
 import org.objectweb.asm.tree.LabelNode;
 
-public class ExplicitCompileResult extends CompileResult
+public class ExplicitResult extends CompileResult
 {
     private final Class<?> resultClass;
 
-    public ExplicitCompileResult (final LabelNode l, final Class<?> resultClass)
+    public ExplicitResult (final LabelNode l, final Class<?> resultClass)
     {
 	super (l);
 	this.resultClass = resultClass;
@@ -24,15 +24,15 @@ public class ExplicitCompileResult extends CompileResult
     @Override
     public CompileResult getJumpTo (final LabelNode ll)
     {
-	return new ExplicitCompileResult (ll, resultClass);
+	return new ExplicitResult (ll, resultClass);
     }
 
     @Override
     public boolean equals (final Object o)
     {
-	if (o instanceof ExplicitCompileResult)
+	if (o instanceof ExplicitResult)
 	{
-	    final ExplicitCompileResult ecr = (ExplicitCompileResult)o;
+	    final ExplicitResult ecr = (ExplicitResult)o;
 	    return ecr.resultClass.equals (resultClass);
 	}
 	return false;

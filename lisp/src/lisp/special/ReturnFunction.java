@@ -11,7 +11,7 @@ import lisp.lang.LispList;
 public class ReturnFunction implements Opcodes, LispTreeFunction
 {
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo () (block (return 3) 4))
 	final BlockBinding bb = context.getBlockBinding (null);
@@ -20,7 +20,7 @@ public class ReturnFunction implements Opcodes, LispTreeFunction
 	    throw new Error ("There is no lexically visible anonymous block");
 	}
 	final Object expr = expression.get (1);
-	final CompileResultSet rs = context.compile (expr, true);
+	final CompileResults rs = context.compile (expr, true);
 	context.convert (rs, Object.class, false, false);
 	context.add (new JumpInsnNode (GOTO, bb.getLabel ()));
 	return null;

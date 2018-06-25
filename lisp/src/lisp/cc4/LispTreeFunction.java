@@ -30,6 +30,6 @@ public interface LispTreeFunction extends LispFunction
      * @throws DontOptimize In cases where the compiler can't optimize an expression the normal
      *             compiler product can be produced by throwing this condition.
      */
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
             throws DontOptimize;
 }

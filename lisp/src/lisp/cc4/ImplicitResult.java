@@ -5,19 +5,19 @@ import java.util.List;
 
 import org.objectweb.asm.tree.LabelNode;
 
-public class ImplicitCompileResult extends CompileResult
+public class ImplicitResult extends CompileResult
 {
     private static final TreeBoxer boxer = new TreeBoxer ();
 
     private final Object value;
 
-    public ImplicitCompileResult (final LabelNode l, final Object value)
+    public ImplicitResult (final LabelNode l, final Object value)
     {
 	super (l);
 	this.value = value;
     }
 
-    public ImplicitCompileResult (final List<org.objectweb.asm.tree.LabelNode> labels, final Object value)
+    public ImplicitResult (final List<org.objectweb.asm.tree.LabelNode> labels, final Object value)
     {
 	super (labels);
 	this.value = value;
@@ -43,9 +43,9 @@ public class ImplicitCompileResult extends CompileResult
     @Override
     public boolean equals (final Object o)
     {
-	if (o instanceof ImplicitCompileResult)
+	if (o instanceof ImplicitResult)
 	{
-	    final ImplicitCompileResult icr = (ImplicitCompileResult)o;
+	    final ImplicitResult icr = (ImplicitResult)o;
 
 	    if (icr.value == null)
 	    {
@@ -69,7 +69,7 @@ public class ImplicitCompileResult extends CompileResult
     @Override
     public CompileResult getJumpTo (final LabelNode ll)
     {
-	return new ImplicitCompileResult (ll, value);
+	return new ImplicitResult (ll, value);
     }
 
     @Override

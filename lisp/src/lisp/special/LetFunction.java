@@ -35,7 +35,7 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo () (dotimes (i 10) (printf "foo")))
 	// (define foo (int:n) (dotimes (i n) (printf "foo")))
@@ -63,19 +63,19 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	    final Symbol varName = NameSpec.getVariableName (varSpec);
 	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);
 	    final Object valueExpression = clause.get (1);
-	    final CompileResultSet valueResult = context.compile (valueExpression, true);
+	    final CompileResults valueResult = context.compile (valueExpression, true);
 	    context.convert (valueResult, varClass, false, false);
 	    final LexicalBinding binding = innerContext.getLocalVariableBinding (varName);
 	    binding.store (innerContext);
 	}
 	for (int i = 2; i < expression.size () - 1; i++)
 	{
-	    final CompileResultSet r = innerContext.compile (expression.get (i), false);
+	    final CompileResults r = innerContext.compile (expression.get (i), false);
 	    // Do something with r to throw away garbage if required
 	    innerContext.convert (r, void.class, false, false);
 	}
 
-	final CompileResultSet result = innerContext.compile (expression.last (), true);
+	final CompileResults result = innerContext.compile (expression.last (), true);
 	return result;
     }
 

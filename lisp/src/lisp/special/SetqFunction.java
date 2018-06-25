@@ -33,7 +33,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	final Symbol symbol = (Symbol)expression.get (1);
 	final LexicalBinding lb = context.getLocalVariableBinding (symbol);
@@ -44,7 +44,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    // (define foo (int:x) (setq x 3 ) x)
 	    final Class<?> varClass = lb.getVariableClass ();
 	    final Type varType = lb.getType ();
-	    final CompileResultSet results = context.compile (expression.get (2), true);
+	    final CompileResults results = context.compile (expression.get (2), true);
 	    context.convert (results, varClass, false, false);
 	    if (resultDesired)
 	    {
@@ -64,7 +64,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    lb.store (context);
 	    final LabelNode ll = new LabelNode ();
 	    context.add (new JumpInsnNode (GOTO, ll));
-	    return new CompileResultSet (new ExplicitCompileResult (ll, resultDesired ? varClass : void.class));
+	    return new CompileResults (new ExplicitResult (ll, resultDesired ? varClass : void.class));
 	}
 	else
 	{
@@ -80,7 +80,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    final String classInternalName = compiler.getClassType ().getInternalName ();
 	    context.add (new VarInsnNode (ALOAD, 0));
 	    context.add (new FieldInsnNode (GETFIELD, classInternalName, javaSymbolName, "Llisp/lang/Symbol;"));
-	    final CompileResultSet results = context.compile (expression.get (2), true);
+	    final CompileResults results = context.compile (expression.get (2), true);
 	    context.convert (results, Object.class, false, false);
 	    if (resultDesired)
 	    {
@@ -90,7 +90,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    context.add (new MethodInsnNode (INVOKEVIRTUAL, "lisp/lang/Symbol", "setValue", "(Ljava/lang/Object;)V", false));
 	    final LabelNode ll = new LabelNode ();
 	    context.add (new JumpInsnNode (GOTO, ll));
-	    return new CompileResultSet (new ExplicitCompileResult (ll, resultDesired ? Object.class : void.class));
+	    return new CompileResults (new ExplicitResult (ll, resultDesired ? Object.class : void.class));
 	}
     }
 

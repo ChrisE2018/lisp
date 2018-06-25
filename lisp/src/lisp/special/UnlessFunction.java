@@ -27,12 +27,12 @@ public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo (boolean:x) (unless x 3))
 	if (resultDesired)
 	{
-	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	    final CompileResults testResultSet = context.compile (expression.get (1), true);
 	    // At this point we can optimize handling of information returned from the
 	    // compiler.compile
 	    // call. Any result that is not boolean can just be wired to goto l2.
@@ -43,11 +43,11 @@ public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes
 
 	    for (int i = 2; i < expression.size () - 1; i++)
 	    {
-		final CompileResultSet r = context.compile (expression.get (i), false);
+		final CompileResults r = context.compile (expression.get (i), false);
 		// Do something with r to throw away garbage if required
 		context.convert (r, void.class, false, false);
 	    }
-	    final CompileResultSet result = context.compile (expression.last (), true);
+	    final CompileResults result = context.compile (expression.last (), true);
 	    context.add (lNull);
 	    final LabelNode ll = new LabelNode ();
 	    result.addImplicitCompileResult (ll, null);
@@ -56,7 +56,7 @@ public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	}
 	else
 	{
-	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	    final CompileResults testResultSet = context.compile (expression.get (1), true);
 	    // At this point we can optimize handling of information returned from the
 	    // compiler.compile
 	    // call. Any result that is not boolean can just be wired to goto l2.
@@ -67,12 +67,12 @@ public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes
 
 	    for (int i = 2; i < expression.size (); i++)
 	    {
-		final CompileResultSet r = context.compile (expression.get (i), false);
+		final CompileResults r = context.compile (expression.get (i), false);
 		// Do something with r to throw away garbage if required
 		context.convert (r, void.class, false, false);
 	    }
 	    context.add (lNull);
-	    return new CompileResultSet ();
+	    return new CompileResults ();
 	}
     }
 

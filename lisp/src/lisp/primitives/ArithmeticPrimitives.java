@@ -42,7 +42,7 @@ public class ArithmeticPrimitives extends Definer
     }
 
     /** Zero test for integers. We don't define zero test for floating point numbers. */
-    @DefineLisp
+    @DefineLisp (classname = "lisp.special.ZeropIntFunction")
     public boolean zerop (final int a)
     {
 	return a == 0;
@@ -56,7 +56,7 @@ public class ArithmeticPrimitives extends Definer
     }
 
     /** Remainder for integers. We don't define remainder for floating point numbers. */
-    @DefineLisp
+    @DefineLisp (classname = "lisp.special.RemIntFunction")
     public int rem (final int a, final int b)
     {
 	return a % b;

@@ -28,7 +28,7 @@ public class RepeatFunction implements LispCCFunction, LispTreeFunction, Opcodes
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo () (repeat 10 (printf "foo")))
 	// (define foo () (repeat 3 (printf "foo")))
@@ -36,7 +36,7 @@ public class RepeatFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	final LabelNode l0 = new LabelNode ();
 	final LabelNode l1 = new LabelNode ();
 
-	final CompileResultSet repeatCount = context.compile (expression.get (1), true);
+	final CompileResults repeatCount = context.compile (expression.get (1), true);
 	context.convert (repeatCount, int.class, false, false);
 	context.add (new InsnNode (ICONST_0));
 	context.add (l1);
@@ -45,7 +45,7 @@ public class RepeatFunction implements LispCCFunction, LispTreeFunction, Opcodes
 
 	for (int i = 2; i < expression.size (); i++)
 	{
-	    final CompileResultSet r = context.compile (expression.get (i), false);
+	    final CompileResults r = context.compile (expression.get (i), false);
 	    // Do something with r to throw away garbage if required
 	    context.convert (r, void.class, false, false);
 	}
@@ -58,7 +58,7 @@ public class RepeatFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	// Always return false
 	final LabelNode ll = new LabelNode ();
 	context.add (new JumpInsnNode (GOTO, ll));
-	return new CompileResultSet (new ImplicitCompileResult (ll, false));
+	return new CompileResults (new ImplicitResult (ll, false));
     }
 
     @Override

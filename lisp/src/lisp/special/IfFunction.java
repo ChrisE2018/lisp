@@ -35,15 +35,15 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	if (expression.size () == 3)
 	{
 	    // (define foo (boolean:x) (if x 3))
-	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	    final CompileResults testResultSet = context.compile (expression.get (1), true);
 	    final LabelNode lFalse = new LabelNode ();// This label means we return false
 	    context.convertIfFalse (testResultSet, false, true, lFalse);
-	    final CompileResultSet result = context.compile (expression.last (), true);
+	    final CompileResults result = context.compile (expression.last (), true);
 	    result.addImplicitCompileResult (lFalse, false);
 	    return result;
 	}
@@ -51,22 +51,22 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	{
 	    // (define foo (boolean:x) (if x 3 4))
 	    // (define foo () (if 'bar 3 4))
-	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	    final CompileResults testResultSet = context.compile (expression.get (1), true);
 	    final LabelNode lFalse = new LabelNode ();// This label means we return false
 	    context.convertIfFalse (testResultSet, false, true, lFalse);
 
-	    final CompileResultSet result = context.compile (expression.get (2), true);
+	    final CompileResults result = context.compile (expression.get (2), true);
 
 	    // false case
 	    context.add (lFalse);
 	    // context.add (new LineNumberNode (65, lFalse));
 	    for (int i = 3; i < expression.size () - 1; i++)
 	    {
-		final CompileResultSet r = context.compile (expression.get (i), false);
+		final CompileResults r = context.compile (expression.get (i), false);
 		// Do something with r to throw away garbage if required
 		context.convert (r, void.class, false, false);
 	    }
-	    final CompileResultSet fresult = context.compile (expression.last (), true);
+	    final CompileResults fresult = context.compile (expression.last (), true);
 	    for (final CompileResult cr : fresult.getResults ())
 	    {
 		result.add (cr);

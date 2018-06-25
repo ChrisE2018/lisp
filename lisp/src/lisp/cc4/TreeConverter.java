@@ -96,7 +96,7 @@ public class TreeConverter implements Opcodes
      * Convert to boolean and jump to label if true and fall through if false. Nothing is left on
      * the stack.
      */
-    public void convertIfTrue (final InsnList il, final CompileResultSet fromClass, final boolean allowNarrowing,
+    public void convertIfTrue (final InsnList il, final CompileResults fromClass, final boolean allowNarrowing,
             final boolean liberalTruth, final org.objectweb.asm.tree.LabelNode lTrue)
     {
 	if (fromClass == null)
@@ -109,17 +109,17 @@ public class TreeConverter implements Opcodes
 	{
 	    final CompileResult cr = results.get (i);
 	    add (il, cr.getLabels ());
-	    if (cr instanceof ExplicitCompileResult)
+	    if (cr instanceof ExplicitResult)
 	    {
-		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
+		final ExplicitResult ecr = (ExplicitResult)cr;
 		final Class<?> fc = ecr.getResultClass ();
 		convert (il, fc, boolean.class, allowNarrowing, liberalTruth);
 		il.add (new JumpInsnNode (IFNE, lTrue));
 		il.add (new JumpInsnNode (GOTO, lExit));
 	    }
-	    else if (cr instanceof ImplicitCompileResult)
+	    else if (cr instanceof ImplicitResult)
 	    {
-		final ImplicitCompileResult icr = (ImplicitCompileResult)cr;
+		final ImplicitResult icr = (ImplicitResult)cr;
 		final Object value = icr.getValue ();
 		if (value instanceof Boolean)
 		{
@@ -145,7 +145,7 @@ public class TreeConverter implements Opcodes
      * Convert to boolean and jump to label if false and fall through if true. Nothing is left on
      * the stack.
      */
-    public void convertIfFalse (final InsnList il, final CompileResultSet fromClass, final boolean allowNarrowing,
+    public void convertIfFalse (final InsnList il, final CompileResults fromClass, final boolean allowNarrowing,
             final boolean liberalTruth, final org.objectweb.asm.tree.LabelNode lFalse)
     {
 	if (fromClass == null)
@@ -158,17 +158,17 @@ public class TreeConverter implements Opcodes
 	{
 	    final CompileResult cr = results.get (i);
 	    add (il, cr.getLabels ());
-	    if (cr instanceof ExplicitCompileResult)
+	    if (cr instanceof ExplicitResult)
 	    {
-		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
+		final ExplicitResult ecr = (ExplicitResult)cr;
 		final Class<?> fc = ecr.getResultClass ();
 		convert (il, fc, boolean.class, allowNarrowing, liberalTruth);
 		il.add (new JumpInsnNode (IFEQ, lFalse));
 		il.add (new JumpInsnNode (GOTO, lExit));
 	    }
-	    else if (cr instanceof ImplicitCompileResult)
+	    else if (cr instanceof ImplicitResult)
 	    {
-		final ImplicitCompileResult icr = (ImplicitCompileResult)cr;
+		final ImplicitResult icr = (ImplicitResult)cr;
 		final Object value = icr.getValue ();
 		if (value instanceof Boolean)
 		{
@@ -194,9 +194,9 @@ public class TreeConverter implements Opcodes
      * Fall through if false. Otherwise leave value on the stack and jump to one of the lTrue
      * labels.
      */
-    public CompileResultSet convert2true (final InsnList il, final CompileResultSet r)
+    public CompileResults convert2true (final InsnList il, final CompileResults r)
     {
-	final CompileResultSet result = new CompileResultSet ();
+	final CompileResults result = new CompileResults ();
 	final LabelNode lFalse = new LabelNode ();
 	final LabelNode lTrueImplicit = new LabelNode ();
 	// final LabelNode lTrueExplictBoolean = new LabelNode ();
@@ -205,9 +205,9 @@ public class TreeConverter implements Opcodes
 	{
 	    final CompileResult cr = crl.get (j);
 	    add (il, cr.getLabels ());
-	    if (cr instanceof ImplicitCompileResult)
+	    if (cr instanceof ImplicitResult)
 	    {
-		final ImplicitCompileResult icr = ((ImplicitCompileResult)cr);
+		final ImplicitResult icr = ((ImplicitResult)cr);
 		if (icr.getValue ().equals (Boolean.FALSE))
 		{
 		    il.add (new JumpInsnNode (GOTO, lFalse));
@@ -219,7 +219,7 @@ public class TreeConverter implements Opcodes
 	    }
 	    else
 	    {
-		final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
+		final ExplicitResult ecr = (ExplicitResult)cr;
 		final Class<?> resultClass = ecr.getResultClass ();
 		if (boolean.class.equals (resultClass))
 		{

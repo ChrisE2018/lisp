@@ -12,7 +12,7 @@ public class ReturnFromFunction implements Opcodes, LispTreeFunction
 {
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo () (block-named foo (return-from foo 3) 4))
 	final Symbol name = (Symbol)expression.get (1);
@@ -22,7 +22,7 @@ public class ReturnFromFunction implements Opcodes, LispTreeFunction
 	    throw new Error ("There is no lexically visible block named " + name);
 	}
 	final Object expr = expression.get (2);
-	final CompileResultSet rs = context.compile (expr, true);
+	final CompileResults rs = context.compile (expr, true);
 	context.convert (rs, Object.class, false, false);
 	context.add (new JumpInsnNode (GOTO, bb.getLabel ()));
 	return null;

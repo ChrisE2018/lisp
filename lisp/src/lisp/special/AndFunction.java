@@ -28,7 +28,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	if (!resultDesired)
 	{
@@ -40,7 +40,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	    // case (and)
 	    final LabelNode ll = new LabelNode ();
 	    context.add (new JumpInsnNode (GOTO, ll));
-	    return new CompileResultSet (new ImplicitCompileResult (ll, true));
+	    return new CompileResults (new ImplicitResult (ll, true));
 	}
 	else if (expression.size () == 2)
 	{
@@ -65,12 +65,12 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
      * @param resultDesired
      * @return
      */
-    private CompileResultSet compileAnd (final TreeCompilerContext context, final LispList e, final boolean resultDesired)
+    private CompileResults compileAnd (final TreeCompilerContext context, final LispList e, final boolean resultDesired)
     {
 	// (define foo (a b) (and))
 	// (define foo (a b) (and a b))
 	// Fall through to implicit true
-	final CompileResultSet result = new CompileResultSet ();
+	final CompileResults result = new CompileResults ();
 	// final LabelNodeSet lTrue = new LabelNodeSet (); // Implicit true
 	final LabelNode lFalse = new LabelNode (); // Implicit false
 	final LabelNode lPopFalse = new LabelNode (); // pop false
@@ -82,15 +82,15 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	for (int i = 1; i < e.size () - 1; i++)
 	{
 	    final LabelNode lNext = new LabelNode ();
-	    final CompileResultSet r = context.compile (e.get (i), true);
+	    final CompileResults r = context.compile (e.get (i), true);
 	    final List<CompileResult> crl = r.getResults ();
 	    for (int j = 0; j < crl.size (); j++)
 	    {
 		final CompileResult cr = crl.get (j);
 		context.add (cr.getLabels ());
-		if (cr instanceof ImplicitCompileResult)
+		if (cr instanceof ImplicitResult)
 		{
-		    final ImplicitCompileResult icr = ((ImplicitCompileResult)cr);
+		    final ImplicitResult icr = ((ImplicitResult)cr);
 		    if (icr.getValue ().equals (Boolean.FALSE))
 		    {
 			lFalseUsed = true;
@@ -104,7 +104,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 		}
 		else
 		{
-		    final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
+		    final ExplicitResult ecr = (ExplicitResult)cr;
 		    final Class<?> resultClass = ecr.getResultClass ();
 		    if (boolean.class.equals (resultClass))
 		    {
@@ -157,7 +157,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	}
 	// If we get here, just return the value
 	final LabelNode lExit = new LabelNode ();
-	final CompileResultSet r = context.compile (e.last (), resultDesired);
+	final CompileResults r = context.compile (e.last (), resultDesired);
 	final List<CompileResult> crl = r.getResults ();
 	for (int j = 0; j < crl.size (); j++)
 	{
@@ -189,7 +189,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	final LabelNode l1 = new LabelNode ();
 	for (int i = 1; i < e.size (); i++)
 	{
-	    final CompileResultSet r = context.compile (e.get (i), true);
+	    final CompileResults r = context.compile (e.get (i), true);
 	    context.convert (r, boolean.class, false, true);
 	    context.add (new JumpInsnNode (IFEQ, l1));
 	}
@@ -219,7 +219,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	    final LabelNode l1 = new LabelNode ();
 	    for (int i = 1; i < e.size (); i++)
 	    {
-		final CompileResultSet crs = context.compile (e.get (i), false);
+		final CompileResults crs = context.compile (e.get (i), false);
 		context.convert (crs, boolean.class, false, true);
 		context.add (new JumpInsnNode (IFEQ, l1));
 	    }

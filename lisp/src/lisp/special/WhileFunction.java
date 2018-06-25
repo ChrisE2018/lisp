@@ -27,7 +27,7 @@ public class WhileFunction implements LispCCFunction, LispTreeFunction, Opcodes,
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo () (while true (printf "foo")))
 
@@ -35,12 +35,12 @@ public class WhileFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 	final LabelNode l1 = new LabelNode ();
 
 	context.add (l1);
-	final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	final CompileResults testResultSet = context.compile (expression.get (1), true);
 	context.convertIfFalse (testResultSet, false, true, l0);
 
 	for (int i = 2; i < expression.size (); i++)
 	{
-	    final CompileResultSet r = context.compile (expression.get (i), false);
+	    final CompileResults r = context.compile (expression.get (i), false);
 	    // Do something with r to throw away garbage if required
 	    context.convert (r, void.class, false, false);
 	}
@@ -50,7 +50,7 @@ public class WhileFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 	// Always return false
 	final LabelNode ll = new LabelNode ();
 	context.add (new JumpInsnNode (GOTO, ll));
-	return new CompileResultSet (new ImplicitCompileResult (ll, false));
+	return new CompileResults (new ImplicitResult (ll, false));
     }
 
     @Override

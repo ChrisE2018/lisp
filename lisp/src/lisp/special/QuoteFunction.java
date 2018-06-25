@@ -22,14 +22,14 @@ public class QuoteFunction implements LispCCFunction, LispTreeFunction, Opcodes,
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	if (resultDesired)
 	{
 	    final Object value = expression.get (1);
 	    final LabelNode ll = new LabelNode ();
 	    context.add (new JumpInsnNode (GOTO, ll));
-	    return new CompileResultSet (new ImplicitCompileResult (ll, value));
+	    return new CompileResults (new ImplicitResult (ll, value));
 	}
 	return null;
     }

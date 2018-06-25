@@ -20,9 +20,9 @@ public class PlusOneFunction implements Opcodes, LispTreeWalker, LispTreeFunctio
 	visitor.visitEnd (expression);
     }
 
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
-	final CompileResultSet rs = context.compile (expression.get (1), true);
+	final CompileResults rs = context.compile (expression.get (1), true);
 	final List<CompileResult> result = new ArrayList<CompileResult> ();
 	// null result case must be first
 	for (final CompileResult compileResult : rs.getResults ())
@@ -30,42 +30,42 @@ public class PlusOneFunction implements Opcodes, LispTreeWalker, LispTreeFunctio
 	    final List<org.objectweb.asm.tree.LabelNode> l0 = compileResult.getLabels ();
 	    final LabelNode l1 = new LabelNode ();
 
-	    if (compileResult instanceof ExplicitCompileResult)
+	    if (compileResult instanceof ExplicitResult)
 	    {
-		final Class<?> c = ((ExplicitCompileResult)compileResult).getResultClass ();
+		final Class<?> c = ((ExplicitResult)compileResult).getResultClass ();
 		if (c.equals (int.class))
 		{
 		    context.add (l0);
 		    context.add (new InsnNode (ICONST_1));
 		    context.add (new InsnNode (IADD));
-		    result.add (new ExplicitCompileResult (l1, c));
+		    result.add (new ExplicitResult (l1, c));
 		}
 		else if (c.equals (double.class))
 		{
 		    context.add (l0);
 		    context.add (new InsnNode (DCONST_1));
 		    context.add (new InsnNode (DADD));
-		    result.add (new ExplicitCompileResult (l1, c));
+		    result.add (new ExplicitResult (l1, c));
 		}
 		else // all other possible types
 		{
 		    throw new Error ("NYI");
 		}
 	    }
-	    else if (compileResult instanceof ImplicitCompileResult)
+	    else if (compileResult instanceof ImplicitResult)
 	    {
-		final Object x = ((ImplicitCompileResult)compileResult).getValue ();
+		final Object x = ((ImplicitResult)compileResult).getValue ();
 		if (x instanceof Integer)
 		{
 		    // The result is an implied integer value. Use the same label and change the
 		    // value
 		    final int xx = (Integer)x;
-		    result.add (new ImplicitCompileResult (l0, xx + 1));
+		    result.add (new ImplicitResult (l0, xx + 1));
 		}
 		else if (x instanceof Double)
 		{// The result is an implied double value. Use the same label and change the value
 		    final double xx = (Double)x;
-		    result.add (new ImplicitCompileResult (l0, xx + 1));
+		    result.add (new ImplicitResult (l0, xx + 1));
 		}
 		else
 		{
@@ -77,7 +77,7 @@ public class PlusOneFunction implements Opcodes, LispTreeWalker, LispTreeFunctio
 		throw new Error ("NYI");
 	    }
 	}
-	return new CompileResultSet (result);
+	return new CompileResults (result);
     }
 
     @Override

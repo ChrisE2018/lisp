@@ -27,7 +27,7 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo (boolean:x) (when x 3))
 	// (define foo () (when 'x (printf "foo")))
@@ -38,17 +38,17 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
 
 	if (resultDesired)
 	{
-	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	    final CompileResults testResultSet = context.compile (expression.get (1), true);
 	    final LabelNode lNull = new LabelNode ();// This label means we return null
 	    context.convertIfFalse (testResultSet, false, true, lNull);
 	    // Evaluate and discard body forms except the last one
 	    for (int i = 2; i < expression.size () - 1; i++)
 	    {
-		final CompileResultSet r = context.compile (expression.get (i), false);
+		final CompileResults r = context.compile (expression.get (i), false);
 		// Do something with r to throw away garbage if required
 		context.convert (r, void.class, false, false);
 	    }
-	    final CompileResultSet result = context.compile (expression.last (), resultDesired);
+	    final CompileResults result = context.compile (expression.last (), resultDesired);
 	    // Changing null to false fixes the problem with collectPrimes
 
 	    context.add (lNull);
@@ -59,18 +59,18 @@ public class WhenFunction implements LispCCFunction, Opcodes, LispTreeWalker, Li
 	}
 	else
 	{
-	    final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	    final CompileResults testResultSet = context.compile (expression.get (1), true);
 	    final LabelNode lNull = new LabelNode ();// This label means we return null
 	    context.convertIfFalse (testResultSet, false, true, lNull);
 	    // Evaluate and discard all body forms
 	    for (int i = 2; i < expression.size (); i++)
 	    {
-		final CompileResultSet r = context.compile (expression.get (i), false);
+		final CompileResults r = context.compile (expression.get (i), false);
 		// Do something with r to throw away garbage if required
 		context.convert (r, void.class, false, false);
 	    }
 	    context.add (lNull);
-	    return new CompileResultSet ();
+	    return new CompileResults ();
 	}
     }
 

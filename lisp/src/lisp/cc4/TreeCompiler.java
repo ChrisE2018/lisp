@@ -282,23 +282,23 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	for (int i = 0; i < methodBody.size () - 1; i++)
 	{
 	    final Object expr = methodBody.get (i);
-	    final CompileResultSet resultClass = context.compile (expr, false);
+	    final CompileResults resultClass = context.compile (expr, false);
 	    context.convert (resultClass, void.class, false, false);
 	}
-	final CompileResultSet resultClass = context.compile (methodBody.last (), true);
+	final CompileResults resultClass = context.compile (methodBody.last (), true);
 	// (define double:foo (int:n) 1 2 n)
 	for (final CompileResult resultKind : resultClass.getResults ())
 	{
 	    // TODO This should collect crs of the same class and make them jump to the same place
 	    // instead of duplicating code
 	    context.add (resultKind.getLabels ());
-	    if (resultKind instanceof ExplicitCompileResult)
+	    if (resultKind instanceof ExplicitResult)
 	    {
-		context.convert (((ExplicitCompileResult)resultKind).getResultClass (), methodReturnClass, false, false);
+		context.convert (((ExplicitResult)resultKind).getResultClass (), methodReturnClass, false, false);
 	    }
 	    else
 	    {
-		final ImplicitCompileResult icr = (ImplicitCompileResult)resultKind;
+		final ImplicitResult icr = (ImplicitResult)resultKind;
 		context.add (icr, methodReturnClass);
 	    }
 	    context.add (new InsnNode (returnType.getOpcode (IRETURN)));

@@ -5,17 +5,17 @@ import java.util.*;
 
 import org.objectweb.asm.tree.LabelNode;
 
-public class CompileResultSet
+public class CompileResults
 {
     private final List<CompileResult> results;
 
-    public CompileResultSet (final List<CompileResult> results)
+    public CompileResults (final List<CompileResult> results)
     {
 	this.results = results;
     }
 
     /** Constructor for fixed result. */
-    public CompileResultSet (final CompileResult... result)
+    public CompileResults (final CompileResult... result)
     {
 	results = new ArrayList<CompileResult> ();
 	for (final CompileResult r : result)
@@ -26,12 +26,12 @@ public class CompileResultSet
 
     public void addImplicitCompileResult (final LabelNode l1, final Object value)
     {
-	add (new ImplicitCompileResult (l1, value));
+	add (new ImplicitResult (l1, value));
     }
 
     public void addExplicitCompileResult (final LabelNode l1, final Class<?> kind)
     {
-	add (new ExplicitCompileResult (l1, kind));
+	add (new ExplicitResult (l1, kind));
     }
 
     public void add (final CompileResult cr)

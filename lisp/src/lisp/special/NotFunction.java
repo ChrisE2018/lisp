@@ -15,14 +15,14 @@ public class NotFunction implements Opcodes, LispTreeFunction
      * boolean it does better.
      */
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
-	final CompileResultSet testResultSet = context.compile (expression.get (1), true);
+	final CompileResults testResultSet = context.compile (expression.get (1), true);
 	final LabelNode lFalse = new LabelNode (); // This label means we return false
 	final LabelNode lTrue = new LabelNode (); // This label means we return true
 	context.convertIfFalse (testResultSet, false, true, lTrue); // Note logic inversion
 	context.add (new JumpInsnNode (GOTO, lFalse));
-	final CompileResultSet result = new CompileResultSet ();
+	final CompileResults result = new CompileResults ();
 	result.addImplicitCompileResult (lFalse, false);
 	result.addImplicitCompileResult (lTrue, true);
 	return result;

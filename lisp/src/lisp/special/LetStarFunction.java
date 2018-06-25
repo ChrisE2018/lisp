@@ -37,7 +37,7 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo (x) (let* ((a 1) (b 2)) (+ a b x)))
 	// (define foo () (let* ((a 1) (b 2)) a))
@@ -58,7 +58,7 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 	    final Symbol varName = NameSpec.getVariableName (varSpec);
 	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);
 	    final Object valueExpression = clause.get (1);
-	    final CompileResultSet valueResult = innerContext.compile (valueExpression, true);
+	    final CompileResults valueResult = innerContext.compile (valueExpression, true);
 	    innerContext.convert (valueResult, varClass, false, false);
 	    innerContext = innerContext.bindVariable (varName, varClass);
 	    final LexicalBinding binding = innerContext.getLocalVariableBinding (varName);
@@ -66,12 +66,12 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 	}
 	for (int i = 2; i < expression.size () - 1; i++)
 	{
-	    final CompileResultSet r = innerContext.compile (expression.get (i), false);
+	    final CompileResults r = innerContext.compile (expression.get (i), false);
 	    // Do something with r to throw away garbage if required
 	    innerContext.convert (r, void.class, false, false);
 	}
 
-	final CompileResultSet result = innerContext.compile (expression.last (), true);
+	final CompileResults result = innerContext.compile (expression.last (), true);
 	return result;
     }
 

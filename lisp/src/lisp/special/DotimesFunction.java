@@ -32,7 +32,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo () (dotimes (i 10) (printf "foo")))
 	// (define foo (int:n) (dotimes (i n) (printf "foo %s%n" i)))
@@ -50,7 +50,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	// innerContext.add (new VarInsnNode (ISTORE, countRef));
 
 	final Object countExpression = control.get (1);
-	final CompileResultSet repeatCount = context.compile (countExpression, true);
+	final CompileResults repeatCount = context.compile (countExpression, true);
 	context.convert (repeatCount, int.class, false, false);
 	{
 	    // Current index is in local, repeat limit is on stack
@@ -62,7 +62,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 
 	    for (int i = 2; i < expression.size (); i++)
 	    {
-		final CompileResultSet r = innerContext.compile (expression.get (i), false);
+		final CompileResults r = innerContext.compile (expression.get (i), false);
 		// Do something with r to throw away garbage if required
 		innerContext.convert (r, void.class, false, false);
 	    }
@@ -76,7 +76,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	// Always return false
 	final LabelNode ll = new LabelNode ();
 	context.add (new JumpInsnNode (GOTO, ll));
-	return new CompileResultSet (new ImplicitCompileResult (ll, false));
+	return new CompileResults (new ImplicitResult (ll, false));
     }
 
     @Override

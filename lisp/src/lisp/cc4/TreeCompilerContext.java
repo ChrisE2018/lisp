@@ -197,13 +197,13 @@ public class TreeCompilerContext implements Opcodes
 	}
     }
 
-    public void convertIfTrue (final CompileResultSet testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
+    public void convertIfTrue (final CompileResults testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
             final org.objectweb.asm.tree.LabelNode lTrue)
     {
 	converter.convertIfTrue (il, testResultSet, allowNarrowing, liberalTruth, lTrue);
     }
 
-    public void convertIfFalse (final CompileResultSet testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
+    public void convertIfFalse (final CompileResults testResultSet, final boolean allowNarrowing, final boolean liberalTruth,
             final org.objectweb.asm.tree.LabelNode lFalse)
     {
 	converter.convertIfFalse (il, testResultSet, allowNarrowing, liberalTruth, lFalse);
@@ -213,7 +213,7 @@ public class TreeCompilerContext implements Opcodes
      * Fall through if false. Otherwise leave value on the stack and jump to one of the lTrue
      * labels.
      */
-    public CompileResultSet convert2true (final CompileResultSet testResultSet)
+    public CompileResults convert2true (final CompileResults testResultSet)
     {
 	return converter.convert2true (il, testResultSet);
     }
@@ -224,7 +224,7 @@ public class TreeCompilerContext implements Opcodes
 	converter.convert (il, fromClass, toClass, allowNarrowing, liberalTruth);
     }
 
-    public void convert (final CompileResultSet fromClass, final Class<?> toClass, final boolean allowNarrowing,
+    public void convert (final CompileResults fromClass, final Class<?> toClass, final boolean allowNarrowing,
             final boolean liberalTruth)
     {
 	if (fromClass == null)
@@ -239,14 +239,14 @@ public class TreeCompilerContext implements Opcodes
 	{
 	    final CompileResult cr = results.get (i);
 	    add (cr.getLabels ());
-	    if (cr instanceof ExplicitCompileResult)
+	    if (cr instanceof ExplicitResult)
 	    {
-		final Class<?> fc = (((ExplicitCompileResult)cr).getResultClass ());
+		final Class<?> fc = (((ExplicitResult)cr).getResultClass ());
 		converter.convert (il, fc, toClass, allowNarrowing, liberalTruth);
 	    }
-	    else if (cr instanceof ImplicitCompileResult)
+	    else if (cr instanceof ImplicitResult)
 	    {
-		final ImplicitCompileResult icr = (ImplicitCompileResult)cr;
+		final ImplicitResult icr = (ImplicitResult)cr;
 		final Class<?> fc = icr.getResultClass ();
 		final Object x = icr.getValue ();
 		if (x == null)
@@ -303,7 +303,7 @@ public class TreeCompilerContext implements Opcodes
     // }
     // }
 
-    public void add (final ImplicitCompileResult icr, final Class<?> toClass)
+    public void add (final ImplicitResult icr, final Class<?> toClass)
     {
 	final Object x = icr.getValue ();
 	if (x == null)
@@ -340,7 +340,7 @@ public class TreeCompilerContext implements Opcodes
 	       || x instanceof String;
     }
 
-    public CompileResultSet compile (final Object expression, final boolean resultDesired)
+    public CompileResults compile (final Object expression, final boolean resultDesired)
     {
 	if (expression instanceof List)
 	{
@@ -359,13 +359,13 @@ public class TreeCompilerContext implements Opcodes
 	    {
 		final LabelNode ll = new LabelNode ();
 		add (new JumpInsnNode (GOTO, ll));
-		return new CompileResultSet (new ImplicitCompileResult (ll, expression));
+		return new CompileResults (new ImplicitResult (ll, expression));
 	    }
 	}
 	return null;
     }
 
-    private CompileResultSet compileFunctionCall (final LispList expression, final boolean resultDesired)
+    private CompileResults compileFunctionCall (final LispList expression, final boolean resultDesired)
     {
 	final Object fn = expression.get (0);
 	if (!(fn instanceof Symbol))
@@ -424,7 +424,7 @@ public class TreeCompilerContext implements Opcodes
 		    throw new Error ("Error expanding macro " + symbol, e1);
 		}
 	    }
-	    final CompileResultSet result = compileOptimizedFunctionCall (expression);
+	    final CompileResults result = compileOptimizedFunctionCall (expression);
 	    if (result != null)
 	    {
 		return result;
@@ -434,7 +434,7 @@ public class TreeCompilerContext implements Opcodes
 	return compileDefaultFunctionCall (expression);
     }
 
-    private CompileResultSet compileSpecialLispFunction (final LispList expression, final boolean resultDesired)
+    private CompileResults compileSpecialLispFunction (final LispList expression, final boolean resultDesired)
             throws DontOptimize
     {
 	final Symbol symbol = expression.head ();
@@ -459,7 +459,7 @@ public class TreeCompilerContext implements Opcodes
      * @throws IllegalAccessException
      * @throws IllegalArgumentException
      */
-    private CompileResultSet compileDotFunctionCall (final LispList expression)
+    private CompileResults compileDotFunctionCall (final LispList expression)
             throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException
     {
 	// (define foo (x) (java.lang.String.format "foo %s bar %n" x))
@@ -523,7 +523,7 @@ public class TreeCompilerContext implements Opcodes
 	throw new Error ("Could not compile " + expression);
     }
 
-    private CompileResultSet compileOptimizedFunctionCall (final LispList expression)
+    private CompileResults compileOptimizedFunctionCall (final LispList expression)
     {
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
@@ -554,7 +554,7 @@ public class TreeCompilerContext implements Opcodes
     }
 
     /** Compile a function all into to directly call the given method. */
-    private CompileResultSet compileVarArgsFunctionCall (final Overload objectMethod, final LispList expression)
+    private CompileResults compileVarArgsFunctionCall (final Overload objectMethod, final LispList expression)
     {
 	// (setq showBytecode t)
 	// (define foo (a b) (+ a b))
@@ -562,7 +562,7 @@ public class TreeCompilerContext implements Opcodes
     }
 
     /** Compile a function all into to directly call the given method. */
-    private CompileResultSet compileFixedFunctionCall (final Overload objectMethod, final LispList expression)
+    private CompileResults compileFixedFunctionCall (final Overload objectMethod, final LispList expression)
     {
 	// (setq showBytecode t)
 	// (define foo () (getDefaultPackage))
@@ -640,7 +640,7 @@ public class TreeCompilerContext implements Opcodes
     // }
 
     /** Compile a function all into to directly call the given method. */
-    private CompileResultSet compileVarArgsFunctionCall (final Object target, final Method method, final LispList expression)
+    private CompileResults compileVarArgsFunctionCall (final Object target, final Method method, final LispList expression)
     {
 	LOGGER.fine (new LogString ("Optimized call to %s using %s on %s", expression.get (0), method, target));
 	// final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature
@@ -668,7 +668,7 @@ public class TreeCompilerContext implements Opcodes
      * Compile a function all into to directly call the given method. This version does not produce
      * instructions to load the target onto the stack.
      */
-    private CompileResultSet compileVarArgsFunctionCallNoTarget (final Method method, final LispList expression)
+    private CompileResults compileVarArgsFunctionCallNoTarget (final Method method, final LispList expression)
     {
 	LOGGER.fine (new LogString ("Optimized call to %s using %s", expression.get (0), method));
 	final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature (method);
@@ -679,7 +679,7 @@ public class TreeCompilerContext implements Opcodes
 	{
 	    final Object arg = expression.get (i + 1);
 	    final Class<?> argClass = params[i];
-	    final CompileResultSet rs = compile (arg, true);
+	    final CompileResults rs = compile (arg, true);
 	    convert (rs, argClass, false, false);
 	}
 	final Class<?> argClass = params[params.length - 1].getComponentType ();
@@ -692,7 +692,7 @@ public class TreeCompilerContext implements Opcodes
 	    il.add (new InsnNode (DUP));
 	    il.add (new LdcInsnNode (i));
 	    final Object arg = expression.get (i + params.length);
-	    final CompileResultSet rs = compile (arg, true);
+	    final CompileResults rs = compile (arg, true);
 	    convert (rs, argClass, false, false);
 	    il.add (new InsnNode (AASTORE));
 	}
@@ -708,7 +708,7 @@ public class TreeCompilerContext implements Opcodes
 	    add (new MethodInsnNode (INVOKEVIRTUAL, ownerType, method.getName (), methodSignature, false));
 	}
 	final Class<?> methodValueClass = method.getReturnType ();
-	final CompileResultSet result = new CompileResultSet ();
+	final CompileResults result = new CompileResults ();
 	final LabelNode ll = new LabelNode ();
 	result.addExplicitCompileResult (ll, methodValueClass);
 	add (new JumpInsnNode (GOTO, ll));
@@ -716,7 +716,7 @@ public class TreeCompilerContext implements Opcodes
     }
 
     /** Compile a function all into to directly call the given method. */
-    private CompileResultSet compileFixedFunctionCall (final Object target, final Method method, final LispList expression)
+    private CompileResults compileFixedFunctionCall (final Object target, final Method method, final LispList expression)
     {
 	LOGGER.fine (new LogString ("Optimized call to %s using %s on %s", expression.get (0), method, target));
 	// final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature
@@ -745,7 +745,7 @@ public class TreeCompilerContext implements Opcodes
 	return compileFixedFunctionCallNoTarget (method, expression);
     }
 
-    private CompileResultSet compileFixedFunctionCallNoTarget (final Method method, final LispList expression)
+    private CompileResults compileFixedFunctionCallNoTarget (final Method method, final LispList expression)
     {
 	// Compile arguments here
 	final Class<?>[] params = method.getParameterTypes ();
@@ -753,7 +753,7 @@ public class TreeCompilerContext implements Opcodes
 	{
 	    final Object arg = expression.get (i + 1);
 	    final Class<?> argType = params[i];
-	    final CompileResultSet rs = compile (arg, true);
+	    final CompileResults rs = compile (arg, true);
 	    convert (rs, argType, false, false);
 	}
 	final String methodSignature = TreeCompilerContext.methSignature.getMethodSignature (method);
@@ -769,7 +769,7 @@ public class TreeCompilerContext implements Opcodes
 	    add (new MethodInsnNode (INVOKEVIRTUAL, ownerType, method.getName (), methodSignature, false));
 	}
 	final Class<?> methodValueClass = method.getReturnType ();
-	final CompileResultSet result = new CompileResultSet ();
+	final CompileResults result = new CompileResults ();
 	final LabelNode ll = new LabelNode ();
 	result.addExplicitCompileResult (ll, methodValueClass);
 	add (new JumpInsnNode (GOTO, ll));
@@ -804,7 +804,7 @@ public class TreeCompilerContext implements Opcodes
      * @param expression The function call expression.
      * @return The class of the return value.
      */
-    private CompileResultSet compileDefaultFunctionCall (final LispList expression)
+    private CompileResults compileDefaultFunctionCall (final LispList expression)
     {
 	final Symbol symbol = expression.head ();
 	quotedData.addSymbolReference (symbol);
@@ -828,7 +828,7 @@ public class TreeCompilerContext implements Opcodes
 	{
 	    il.add (new InsnNode (DUP));
 	    il.add (new LdcInsnNode (i));
-	    final CompileResultSet resultDescriptor = compile (expression.get (i + 1), true);
+	    final CompileResults resultDescriptor = compile (expression.get (i + 1), true);
 	    convert (resultDescriptor, Object.class, false, false);
 	    il.add (new InsnNode (AASTORE));
 	}
@@ -839,7 +839,7 @@ public class TreeCompilerContext implements Opcodes
 	        false));
 	final LabelNode ll = new LabelNode ();
 	il.add (new JumpInsnNode (GOTO, ll));
-	return new CompileResultSet (new ExplicitCompileResult (ll, Object.class));
+	return new CompileResults (new ExplicitResult (ll, Object.class));
     }
 
     /**
@@ -851,7 +851,7 @@ public class TreeCompilerContext implements Opcodes
      * @param symbol The symbol value to calculate.
      * @return The class of the result produced.
      */
-    private CompileResultSet compileSymbolReference (final Symbol symbol)
+    private CompileResults compileSymbolReference (final Symbol symbol)
     {
 	if (locals.containsKey (symbol))
 	{
@@ -864,20 +864,20 @@ public class TreeCompilerContext implements Opcodes
 	    final Class<?> fromClass = lb.getVariableClass ();
 	    final LabelNode ll = new LabelNode ();
 	    il.add (new JumpInsnNode (GOTO, ll));
-	    return new CompileResultSet (new ExplicitCompileResult (ll, fromClass));
+	    return new CompileResults (new ExplicitResult (ll, fromClass));
 	}
 	// Handle some simple constants
 	else if (symbol.is ("true") || symbol.is ("t"))
 	{
 	    final LabelNode ll = new LabelNode ();
 	    add (new JumpInsnNode (GOTO, ll));
-	    return new CompileResultSet (new ImplicitCompileResult (ll, true));
+	    return new CompileResults (new ImplicitResult (ll, true));
 	}
 	else if (symbol.is ("false") || symbol.is ("f"))
 	{
 	    final LabelNode ll = new LabelNode ();
 	    add (new JumpInsnNode (GOTO, ll));
-	    return new CompileResultSet (new ImplicitCompileResult (ll, false));
+	    return new CompileResults (new ImplicitResult (ll, false));
 	}
 	// TODO Handle references to standard Java classes (like java.lang.*)
 	else
@@ -896,7 +896,7 @@ public class TreeCompilerContext implements Opcodes
 
 	    final LabelNode ll = new LabelNode ();
 	    il.add (new JumpInsnNode (GOTO, ll));
-	    return new CompileResultSet (new ExplicitCompileResult (ll, Object.class));
+	    return new CompileResults (new ExplicitResult (ll, Object.class));
 	}
     }
 

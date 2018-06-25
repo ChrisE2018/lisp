@@ -52,7 +52,7 @@ public class TheFunction implements LispTreeFunction, LispCCFunction, Opcodes, L
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	final Object type = expression.get (1);
 	final Object arg = expression.get (2);
@@ -64,19 +64,19 @@ public class TheFunction implements LispTreeFunction, LispCCFunction, Opcodes, L
 	    final Symbol t = (Symbol)type;
 	    final Class<?> toClass = typeToClass.get (t.getName ());
 
-	    final CompileResultSet rs = context.compile (arg, resultDesired);
+	    final CompileResults rs = context.compile (arg, resultDesired);
 	    context.convert (rs, toClass, true, false);
 	    final LabelNode l1 = new LabelNode ();
-	    return new CompileResultSet (new ExplicitCompileResult (l1, toClass));
+	    return new CompileResults (new ExplicitResult (l1, toClass));
 	}
 	// Narrowing has not been implemented below this line
 	else if (type instanceof Class)
 	{
 	    final Class<?> c = (Class<?>)type;
-	    final CompileResultSet rs = context.compile (arg, resultDesired);
+	    final CompileResults rs = context.compile (arg, resultDesired);
 	    context.convert (rs, c, true, false);
 	    final LabelNode l1 = new LabelNode ();
-	    return new CompileResultSet (new ExplicitCompileResult (l1, c));
+	    return new CompileResults (new ExplicitResult (l1, c));
 	}
 	else if (type instanceof String)
 	{
@@ -84,10 +84,10 @@ public class TheFunction implements LispTreeFunction, LispCCFunction, Opcodes, L
 	    try
 	    {
 		final Class<?> c = Class.forName (t);
-		final CompileResultSet rs = context.compile (arg, resultDesired);
+		final CompileResults rs = context.compile (arg, resultDesired);
 		context.convert (rs, c, true, false);
 		final LabelNode l1 = new LabelNode ();
-		return new CompileResultSet (new ExplicitCompileResult (l1, c));
+		return new CompileResults (new ExplicitResult (l1, c));
 	    }
 	    catch (final ClassNotFoundException e)
 	    {
@@ -97,10 +97,10 @@ public class TheFunction implements LispTreeFunction, LispCCFunction, Opcodes, L
 		try
 		{
 		    final Class<?> c = Class.forName ("java.lang." + t);
-		    final CompileResultSet rs = context.compile (arg, resultDesired);
+		    final CompileResults rs = context.compile (arg, resultDesired);
 		    context.convert (rs, c, true, false);
 		    final LabelNode l1 = new LabelNode ();
-		    return new CompileResultSet (new ExplicitCompileResult (l1, c));
+		    return new CompileResults (new ExplicitResult (l1, c));
 		}
 		catch (final ClassNotFoundException e)
 		{

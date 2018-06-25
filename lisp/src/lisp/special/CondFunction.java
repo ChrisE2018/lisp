@@ -44,19 +44,19 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// (define foo () (cond))
 	// (define boolean:foo (boolean:x) (cond (x true)))
-	final CompileResultSet result = new CompileResultSet ();
+	final CompileResults result = new CompileResults ();
 	for (int i = 1; i < expression.size (); i++)
 	{
 	    final LabelNode lNext = new LabelNode ();
 	    final LispList clause = expression.getSublist (i);
 	    if (clause.size () == 1)
 	    {
-		final CompileResultSet bvr = context.compile (clause.car (), true);
-		final CompileResultSet rr = context.convert2true (bvr);
+		final CompileResults bvr = context.compile (clause.car (), true);
+		final CompileResults rr = context.convert2true (bvr);
 		for (final CompileResult r : rr.getResults ())
 		{
 		    result.add (r);
@@ -65,14 +65,14 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    }
 	    else
 	    {
-		final CompileResultSet bv = context.compile (clause.car (), true);
+		final CompileResults bv = context.compile (clause.car (), true);
 		context.convertIfFalse (bv, false, true, lNext);
 		for (int j = 1; j < clause.size () - 1; j++)
 		{
-		    final CompileResultSet ignore = context.compile (clause.get (j), false);
+		    final CompileResults ignore = context.compile (clause.get (j), false);
 		    context.convert (ignore, void.class, false, false);
 		}
-		final CompileResultSet rr = context.compile (clause.last (), true);
+		final CompileResults rr = context.compile (clause.last (), true);
 		for (final CompileResult r : rr.getResults ())
 		{
 		    result.add (r);

@@ -28,7 +28,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
     }
 
     @Override
-    public CompileResultSet compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
+    public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	if (!resultDesired)
 	{
@@ -40,7 +40,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    // case (or)
 	    final LabelNode ll = new LabelNode ();
 	    context.add (new JumpInsnNode (GOTO, ll));
-	    return new CompileResultSet (new ImplicitCompileResult (ll, false));
+	    return new CompileResults (new ImplicitResult (ll, false));
 	}
 	else if (expression.size () == 2)
 	{
@@ -53,12 +53,12 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	}
     }
 
-    private CompileResultSet compileOr (final TreeCompilerContext context, final LispList e, final boolean resultDesired)
+    private CompileResults compileOr (final TreeCompilerContext context, final LispList e, final boolean resultDesired)
     {
 	// (define foo (a b) (or))
 	// (define foo (a b) (or a b))
 	// Fall through to implicit true
-	final CompileResultSet result = new CompileResultSet ();
+	final CompileResults result = new CompileResults ();
 	final LabelNode lTrue = new LabelNode (); // Implicit true
 	final LabelNode lPopTrue = new LabelNode (); // pop true
 	final LabelNode lexit = new LabelNode ();
@@ -71,15 +71,15 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	{
 	    // Jump here to check next conjunct
 	    final LabelNode lNext = new LabelNode ();
-	    final CompileResultSet r = context.compile (e.get (i), true);
+	    final CompileResults r = context.compile (e.get (i), true);
 	    final List<CompileResult> crl = r.getResults ();
 	    for (int j = 0; j < crl.size (); j++)
 	    {
 		final CompileResult cr = crl.get (j);
 		context.add (cr.getLabels ());
-		if (cr instanceof ImplicitCompileResult)
+		if (cr instanceof ImplicitResult)
 		{
-		    final ImplicitCompileResult icr = ((ImplicitCompileResult)cr);
+		    final ImplicitResult icr = ((ImplicitResult)cr);
 		    if (icr.getValue ().equals (Boolean.FALSE))
 		    {
 			context.add (new JumpInsnNode (GOTO, lNext));
@@ -92,7 +92,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 		}
 		else
 		{
-		    final ExplicitCompileResult ecr = (ExplicitCompileResult)cr;
+		    final ExplicitResult ecr = (ExplicitResult)cr;
 		    final Class<?> resultClass = ecr.getResultClass ();
 		    if (boolean.class.equals (resultClass))
 		    {
@@ -145,7 +145,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    }
 	}
 	// If we get here, just return the value
-	final CompileResultSet r = context.compile (e.last (), resultDesired);
+	final CompileResults r = context.compile (e.last (), resultDesired);
 	final List<CompileResult> crl = r.getResults ();
 	for (int j = 0; j < crl.size () - 1; j++)
 	{
@@ -180,7 +180,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	final LabelNode l1 = new LabelNode ();
 	for (int i = 1; i < e.size (); i++)
 	{
-	    final CompileResultSet r = context.compile (e.get (i), true);
+	    final CompileResults r = context.compile (e.get (i), true);
 	    context.convert (r, boolean.class, false, true);
 	    context.add (new JumpInsnNode (IFNE, l1));
 	}
@@ -209,7 +209,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    final LabelNode l1 = new LabelNode ();
 	    for (int i = 1; i < e.size (); i++)
 	    {
-		final CompileResultSet crs = context.compile (e.get (i), false);
+		final CompileResults crs = context.compile (e.get (i), false);
 		context.convert (crs, boolean.class, false, true);
 		context.add (new JumpInsnNode (IFNE, l1));
 	    }
