@@ -78,6 +78,14 @@ public class Optimizer extends ClassNode implements Opcodes
 		    removeDeadLabels (method);
 		}
 	    }
+
+	    if (Symbol.named ("lisp.lang", "optimizeDoubleReturns").getBooleanValue (true))
+	    {
+		for (final MethodNode method : methods)
+		{
+		    removeDoubleReturns (method);
+		}
+	    }
 	    MethodTransformer mt = null;
 	    mt = new OptimizeJumpTransformer (mt);
 	    mt = new RemoveGetFieldPutFieldTransformer (mt);
@@ -320,6 +328,41 @@ public class Optimizer extends ClassNode implements Opcodes
 		}
 	    }
 	}
+    }
+
+    /** Remove two returns in a row. */
+    private void removeDoubleReturns (final MethodNode method)
+    {
+	LOGGER.finer (new LogString ("removeDoubleReturns Method %s (%s so far)", method.name, removals));
+	final InsnList il = method.instructions;
+	for (int i = 1; i < il.size (); i++)
+	{
+	    final AbstractInsnNode ins = il.get (i);
+	    if (isReturnInsn (ins))
+	    {
+		if (isReturnInsn (il.get (i - 1)))
+		{
+		    il.remove (ins);
+		    removals++;
+		}
+	    }
+	}
+    }
+
+    private boolean isReturnInsn (final AbstractInsnNode ins)
+    {
+	final int op = ins.getOpcode ();
+	switch (op)
+	{
+	    case IRETURN:
+	    case LRETURN:
+	    case FRETURN:
+	    case DRETURN:
+	    case ARETURN:
+	    case RETURN:
+		return true;
+	}
+	return false;
     }
 
     private void printMethod (final MethodNode method)

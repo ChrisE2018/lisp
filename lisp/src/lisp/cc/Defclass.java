@@ -414,11 +414,14 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    }
 	}
 	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
+	int localRef = 1;
 	for (int i = 0; i < arguments.size (); i++)
 	{
 	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
 	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
-	    locals.put (arg, new LexicalVariable (arg, argClass, i + 1));
+	    locals.put (arg, new LexicalVariable (arg, argClass, localRef));
+	    final Type type = Type.getType (argClass);
+	    localRef += type.getSize ();
 	}
 	final LispList bodyForms = addConstructorChain (mn, locals, body.subList (headerCount));
 
@@ -590,11 +593,14 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
 	// Define 'this' as a local variable
 	locals.put (THIS_SYMBOL, new LexicalVariable (THIS_SYMBOL, superclass, 0));
+	int localRef = 1;
 	for (int i = 0; i < arguments.size (); i++)
 	{
 	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
 	    final Class<?> argClass = NameSpec.getVariableClass (arguments.get (i));
-	    locals.put (arg, new LexicalVariable (arg, argClass, i + 1));
+	    locals.put (arg, new LexicalVariable (arg, argClass, localRef));
+	    final Type type = Type.getType (argClass);
+	    localRef += type.getSize ();
 	}
 	for (final Entry<Symbol, FieldNode> entry : fieldMap.entrySet ())
 	{
@@ -780,15 +786,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	il.add (new InsnNode (Opcodes.RETURN));
 	methods.add (mn);
     }
-
-    // /** Keep track of a symbol that needs to be available as a class field. */
-    // public void addSymbolReference (final Symbol symbol)
-    // {
-    // if (!symbolReferences.contains (symbol))
-    // {
-    // symbolReferences.add (symbol);
-    // }
-    // }
 
     /**
      * Keep track of a symbol that has a global reference. This is only used to produce a log

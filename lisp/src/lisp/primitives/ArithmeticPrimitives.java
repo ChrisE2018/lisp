@@ -29,13 +29,16 @@ public class ArithmeticPrimitives extends Definer
 	return false;
     }
 
-    @DefineLisp
+    /**
+     * Boolean not. Note that the compiler support class works both here and in the general case.
+     */
+    @DefineLisp (classname = "lisp.special.NotFunction")
     public boolean not (final boolean arg)
     {
 	return !arg;
     }
 
-    @DefineLisp (name = "null")
+    @DefineLisp (name = "null", classname = "lisp.special.NullFunction")
     public boolean nullPredicate (final Object arg)
     {
 	return arg == null;
@@ -83,7 +86,7 @@ public class ArithmeticPrimitives extends Definer
      * One plus for double. Direct calls to this method can be made if the compiler knows the
      * argument type.
      */
-    @DefineLisp (name = "1+")
+    @DefineLisp (name = "1+", classname = "lisp.special.PlusOneDoubleFunction")
     public double addOne (final double x)
     {
 	return x + 1;
@@ -125,7 +128,7 @@ public class ArithmeticPrimitives extends Definer
 	return x - 1;
     }
 
-    @DefineLisp (name = "1-")
+    @DefineLisp (name = "1-", classname = "lisp.special.SubOneDoubleFunction")
     public double subOne (final double x)
     {
 	return x - 1;
@@ -158,6 +161,24 @@ public class ArithmeticPrimitives extends Definer
 	{
 	    throw new IllegalArgumentException ("Number required " + x);
 	}
+    }
+
+    @DefineLisp (name = "+", classname = "lisp.special.PlusIntFunction")
+    public int plus (final int a, final int b)
+    {
+	return a + b;
+    }
+
+    @DefineLisp (name = "+", classname = "lisp.special.PlusLongFunction")
+    public long plus (final long a, final long b)
+    {
+	return a + b;
+    }
+
+    @DefineLisp (name = "+", classname = "lisp.special.PlusDoubleFunction")
+    public double plus (final double a, final double b)
+    {
+	return a + b;
     }
 
     @DefineLisp (name = "+")

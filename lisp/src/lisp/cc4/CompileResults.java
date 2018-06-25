@@ -24,6 +24,19 @@ public class CompileResults
 	}
     }
 
+    /** Determine if this only contains implicit results. */
+    public boolean isImplicit ()
+    {
+	for (final CompileResult r : results)
+	{
+	    if (!(r instanceof ImplicitResult))
+	    {
+		return false;
+	    }
+	}
+	return true;
+    }
+
     public void addImplicitCompileResult (final LabelNode l1, final Object value)
     {
 	add (new ImplicitResult (l1, value));
