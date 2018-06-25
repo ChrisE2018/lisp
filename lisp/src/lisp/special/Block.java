@@ -4,9 +4,12 @@ package lisp.special;
 import java.lang.reflect.InvocationTargetException;
 
 import lisp.eval.*;
+import lisp.lang.*;
 
 public class Block extends Definer
 {
+    private static Symbol BLOCK_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("block");
+
     /**
      * Interpreter for block forms.
      *
@@ -20,6 +23,8 @@ public class Block extends Definer
     {
 	// (block (return 6))
 	final LexicalContext nestedContext = new LexicalContext (context);
+	final Symbol key = BLOCK_SYMBOL.gensym ();
+	nestedContext.addBlock (BLOCK_SYMBOL, key);
 	Object result = null;
 	try
 	{
@@ -39,7 +44,7 @@ public class Block extends Definer
 	    if (cause instanceof ReturnThrow)
 	    {
 		final ReturnThrow rt = (ReturnThrow)cause;
-		if (rt.getName () == null)
+		if (rt.getName () == key)
 		{
 		    result = rt.getValue ();
 		}

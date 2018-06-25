@@ -11,22 +11,27 @@ import java.util.List;
 import org.objectweb.asm.tree.ClassNode;
 
 import lisp.eval.LexicalContext;
-import lisp.lang.Symbol;
+import lisp.lang.*;
 import lisp.util.MultiMap;
 
 /** Function cell for a function definition of a named function that binds arguments to values. */
 public class DefFunctionCell extends FunctionCell
 {
+    private static Symbol BLOCK_SYMBOL = PackageFactory.getSystemPackage ().internSymbol ("block");
     private final Symbol name;
     private final List<Symbol> arglist;
-    private final Object[] body;
+    private final LispList body;
 
     public DefFunctionCell (final Symbol name, final List<Symbol> arglist, final Object... body)
     {
 	super (name, true);
 	this.name = name;
 	this.arglist = arglist;
-	this.body = body;
+	this.body = new LispList (BLOCK_SYMBOL);
+	for (final Object f : body)
+	{
+	    this.body.add (f);
+	}
     }
 
     @Override
@@ -50,13 +55,8 @@ public class DefFunctionCell extends FunctionCell
 	    final Symbol var = arglist.get (i - 1);
 	    con.bind (var, context.eval (form.get (i)));
 	}
-	Object result = null;
 	// Evaluate the method body
-	for (final Object f : body)
-	{
-	    result = con.eval (f);
-	}
-	return result;
+	return con.eval (body);
     }
 
     /**

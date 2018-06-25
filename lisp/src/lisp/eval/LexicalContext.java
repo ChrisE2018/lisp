@@ -12,7 +12,7 @@ import lisp.lang.Symbol;
  */
 public class LexicalContext
 {
-    private static Map<Thread, LexicalContext> threadContextMap = new HashMap<Thread, LexicalContext> ();
+    private static Map<Thread, LexicalContext> threadContextMap = new HashMap<> ();
 
     public static LexicalContext getCurrentThreadLexicalContext ()
     {
@@ -24,17 +24,21 @@ public class LexicalContext
 
     private final Map<Symbol, Object> bindings;
 
+    private final Map<Symbol, Symbol> blocks;
+
     public LexicalContext (final Interpreter interpreter)
     {
 	this.interpreter = interpreter;
-	bindings = new HashMap<Symbol, Object> ();
+	bindings = new HashMap<> ();
+	blocks = new HashMap<> ();
 	threadContextMap.put (Thread.currentThread (), this);
     }
 
     public LexicalContext (final LexicalContext context)
     {
 	interpreter = context.interpreter;
-	bindings = new HashMap<Symbol, Object> (context.bindings);
+	bindings = new HashMap<> (context.bindings);
+	blocks = new HashMap<> (context.blocks);
 	threadContextMap.put (Thread.currentThread (), this);
     }
 
@@ -76,6 +80,16 @@ public class LexicalContext
 	    return bindings.get (symbol);
 	}
 	return symbol.getValue (defaultValue);
+    }
+
+    public void addBlock (final Symbol name, final Symbol key)
+    {
+	blocks.put (name, key);
+    }
+
+    public Symbol getBlock (final Symbol name)
+    {
+	return blocks.get (name);
     }
 
     public Object eval (final Object form) throws Exception

@@ -7,7 +7,7 @@ import lisp.lang.Symbol;
 public class ReturnFrom extends Definer
 {
     /**
-     * Interpreter for progn forms.
+     * Interpreter for return-from forms.
      *
      * @param context Lexical binding context.
      * @param arguments Forms to evaluate.
@@ -19,7 +19,11 @@ public class ReturnFrom extends Definer
     public Object blockReturnFrom (final LexicalContext context, final Symbol name, final Object form)
             throws Exception, ReturnThrow
     {
-	final Object result = context.eval (form);
-	throw new ReturnThrow (name, result);
+	final Symbol key = context.getBlock (name);
+	if (key == null)
+	{
+	    throw new IllegalStateException ("There is no enclosing block named " + name + " to return to");
+	}
+	throw new ReturnThrow (key, context.eval (form));
     }
 }

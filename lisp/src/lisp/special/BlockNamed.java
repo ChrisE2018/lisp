@@ -9,7 +9,7 @@ import lisp.lang.Symbol;
 public class BlockNamed extends Definer
 {
     /**
-     * Interpreter for block forms.
+     * Interpreter for block-named forms.
      *
      * @param context Lexical binding context.
      * @param arguments Forms to evaluate.
@@ -23,6 +23,9 @@ public class BlockNamed extends Definer
 	// (block-named foo (block-named bar (return-from foo 6) 7) 8) => 6
 	// (block-named foo (block-named bar (return-from bar 6) 7) 8) => 8
 	final LexicalContext nestedContext = new LexicalContext (context);
+
+	final Symbol key = name.gensym ();
+	nestedContext.addBlock (name, key);
 	Object result = null;
 	try
 	{
@@ -42,7 +45,7 @@ public class BlockNamed extends Definer
 	    if (cause instanceof ReturnThrow)
 	    {
 		final ReturnThrow rt = (ReturnThrow)cause;
-		if (rt.getName () == name)
+		if (rt.getName () == key)
 		{
 		    result = rt.getValue ();
 		}
