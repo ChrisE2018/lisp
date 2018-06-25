@@ -17,6 +17,7 @@ import lisp.lang.*;
 public class Interactor
 {
     private static final String WINDOW_NAME = "Interactor";
+    private static final String[] DEFAULT_ARGS = {"-g", "logging.properties", "-l", "init.jisp"};
     private final Interpreter interpreter;
     private final InteractorPane interactor;
     private final PrintStream err = System.err;
@@ -26,7 +27,7 @@ public class Interactor
 	final PrintStream err = System.err;
 	try
 	{
-	    final Interactor app = new Interactor (args);
+	    final Interactor app = new Interactor (args.length > 0 ? args : DEFAULT_ARGS);
 	    SwingUtilities.invokeLater (new Runnable ()
 	    {
 		@Override

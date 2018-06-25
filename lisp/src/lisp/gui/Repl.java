@@ -1,5 +1,5 @@
 
-package lisp.demo;
+package lisp.gui;
 
 import java.io.IOException;
 import java.util.logging.*;

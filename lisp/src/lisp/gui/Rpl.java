@@ -1,5 +1,5 @@
 
-package lisp.demo;
+package lisp.gui;
 
 import lisp.lang.*;
 import lisp.lang.Package;

@@ -6,7 +6,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.logging.*;
 
-import lisp.demo.Repl;
 import lisp.eval.*;
 import lisp.lang.*;
 import lisp.lang.Package;
