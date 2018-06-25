@@ -44,7 +44,7 @@ public abstract class FunctionCell implements Describer
      * @param source The Lisp source object.
      * @param cn An ASM ClassNode containing the bytecode.
      */
-    public void overload (final Object obj, final Method method, final String documentation, final Object source,
+    public Overload overload (final Object obj, final Method method, final String documentation, final Object source,
             final ClassNode cn)
     {
 	final Overload newOverload = new Overload (obj, method, documentation, source, cn);
@@ -64,17 +64,8 @@ public abstract class FunctionCell implements Describer
 		return result;
 	    }
 	});
-	// Want to remove this block of code and rely on the above:
-	// final int count = newOverload.getParameterTypes ().length;
-	// overloads.removeIf (new Predicate<ObjectMethod> ()
-	// {
-	// @Override
-	// public boolean test (final ObjectMethod t)
-	// {
-	// return t.getParameterTypes ().length == count;
-	// }
-	// });
 	overloads.add (newOverload);
+	return newOverload;
     }
 
     FunctionCell (final Symbol symbol, final boolean allowRedefinition)

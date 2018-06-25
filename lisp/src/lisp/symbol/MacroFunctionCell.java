@@ -33,7 +33,7 @@ public class MacroFunctionCell extends FunctionCell
     }
 
     @Override
-    public void overload (final Object obj, final Method m, final String doc, final Object source, final ClassNode cn)
+    public Overload overload (final Object obj, final Method m, final String doc, final Object source, final ClassNode cn)
     {
 	throw new UnsupportedOperationException ("Can't overload macro functions");
     }

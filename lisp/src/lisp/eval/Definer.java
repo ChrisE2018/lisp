@@ -66,6 +66,7 @@ public class Definer
 	final boolean macro = a.macro ();
 	String symbolName = a.name ();
 	final String documentation = a.documentation ();
+	Overload overload = null;
 	if (symbolName.isEmpty ())
 	{
 	    // Default if the annotation does not specify the name is to use the name of the method
@@ -96,7 +97,7 @@ public class Definer
 		    symbol.setFunction (function);
 		}
 	    }
-	    function.overload (object, method, documentation, null, null);
+	    overload = function.overload (object, method, documentation, null, null);
 	}
 
 	if (!className.isEmpty ())
@@ -108,9 +109,20 @@ public class Definer
 		{
 		    final Class<? extends LispFunction> functionClass = fnClass.asSubclass (LispFunction.class);
 		    final Constructor<? extends LispFunction> constructor = functionClass.getConstructor ();
-		    final FunctionCell function = symbol.getFunction ();
 		    final LispFunction lispFunction = constructor.newInstance ();
-		    function.setLispFunction (lispFunction);
+		    if (overload != null && !special)
+		    {
+			overload.setLispFunction (lispFunction);
+		    }
+		    else
+		    {
+			final FunctionCell function = symbol.getFunction ();
+			function.setLispFunction (lispFunction);
+		    }
+		}
+		else
+		{
+		    LOGGER.warning ("Class " + className + " does not extend LispFunction");
 		}
 	    }
 	    catch (final ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException

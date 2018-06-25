@@ -391,40 +391,7 @@ public class TreeCompilerContext implements Opcodes
 	final FunctionCell function = symbol.getFunction ();
 	if (function != null)
 	{
-	    try
-	    {
-		if (function.getLispFunction () instanceof LispTreeFunction)
-		{
-		    // Some 'normal' functions need special coding, i.e, arithmetic and comparisons,
-		    // so this is called for any function with a compiler, not just special forms.
-		    return compileSpecialLispFunction (expression, resultDesired);
-		}
-	    }
-	    catch (final DontOptimize e)
-	    {
-		// Ignore and continue
-	    }
-	    if (function instanceof SpecialFunctionCell)
-	    {
-		// Since this is not a known special function, we are stuck and can't proceed
-		throw new IllegalArgumentException ("Unrecognized special form " + symbol);
-	    }
-	    if (function instanceof MacroFunctionCell)
-	    {
-		// Expand and replace
-		final MacroFunctionCell macro = (MacroFunctionCell)function;
-		try
-		{
-		    // FIXME Test macros
-		    final Object replacement = macro.expand (expression);
-		    return compile (replacement, resultDesired);
-		}
-		catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e1)
-		{
-		    throw new Error ("Error expanding macro " + symbol, e1);
-		}
-	    }
-	    final CompileResults result = compileOptimizedFunctionCall (expression);
+	    final CompileResults result = compileDefinedFunctionCall (symbol, expression, resultDesired);
 	    if (result != null)
 	    {
 		return result;
@@ -434,7 +401,49 @@ public class TreeCompilerContext implements Opcodes
 	return compileDefaultFunctionCall (expression);
     }
 
-    private CompileResults compileSpecialLispFunction (final LispList expression, final boolean resultDesired)
+    private CompileResults compileDefinedFunctionCall (final Symbol symbol, final LispList expression,
+            final boolean resultDesired)
+    {
+	final FunctionCell function = symbol.getFunction ();
+	try
+	{
+	    final LispFunction lispFunction = function.getLispFunction ();
+	    if (lispFunction instanceof LispTreeFunction)
+	    {
+		// Some 'normal' functions need special coding, i.e, arithmetic and comparisons,
+		// so this is called for any function with a compiler, not just special forms.
+		final LispTreeFunction compiler = (LispTreeFunction)lispFunction;
+		return compiler.compile (this, expression, resultDesired);
+	    }
+	}
+	catch (final DontOptimize e)
+	{
+	    // Ignore and continue
+	}
+	if (function instanceof SpecialFunctionCell)
+	{
+	    // Since this is not a known special function, we are stuck and can't proceed
+	    throw new IllegalArgumentException ("Unrecognized special form " + symbol);
+	}
+	if (function instanceof MacroFunctionCell)
+	{
+	    // Expand and replace
+	    final MacroFunctionCell macro = (MacroFunctionCell)function;
+	    try
+	    {
+		// FIXME Test macros
+		final Object replacement = macro.expand (expression);
+		return compile (replacement, resultDesired);
+	    }
+	    catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e1)
+	    {
+		throw new Error ("Error expanding macro " + symbol, e1);
+	    }
+	}
+	return compileOptimizedFunctionCall (expression, resultDesired);
+    }
+
+    private CompileResults compileSpecialLispFunctionx (final LispList expression, final boolean resultDesired)
             throws DontOptimize
     {
 	final Symbol symbol = expression.head ();
@@ -523,7 +532,7 @@ public class TreeCompilerContext implements Opcodes
 	throw new Error ("Could not compile " + expression);
     }
 
-    private CompileResults compileOptimizedFunctionCall (final LispList expression)
+    private CompileResults compileOptimizedFunctionCall (final LispList expression, final boolean resultDesired)
     {
 	final Symbol symbol = expression.head ();
 	final FunctionCell function = symbol.getFunction ();
@@ -532,9 +541,27 @@ public class TreeCompilerContext implements Opcodes
 	    if (!(function instanceof DefaultFunctionCell))
 	    {
 		final Overload objectMethod = function.selectMethod (locals, expression);
-		if (objectMethod != null && symbol.getPackage ().getName ().equals ("lisp.lang"))
+		if (objectMethod != null)
 		{
-		    if (Symbol.test ("optimizeFunctionCalls", true))
+		    try
+		    {
+			final LispFunction lispFunction = objectMethod.getLispFunction ();
+			if (lispFunction instanceof LispTreeFunction)
+			{
+			    // Some 'normal' functions need special coding, i.e, arithmetic and
+			    // comparisons,
+			    // so this is called for any function with a compiler, not just special
+			    // forms.
+			    final LispTreeFunction compiler = (LispTreeFunction)lispFunction;
+			    return compiler.compile (this, expression, resultDesired);
+			}
+		    }
+		    catch (final DontOptimize e)
+		    {
+			// Ignore and continue
+		    }
+
+		    if (symbol.getPackage ().getName ().equals ("lisp.lang") && Symbol.test ("optimizeFunctionCalls", true))
 		    {
 			if (objectMethod.isVarArgs ())
 			{

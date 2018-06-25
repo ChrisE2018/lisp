@@ -29,6 +29,9 @@ public class Overload implements Describer
     final Method method;
     final String documentation;
 
+    /** Optional support object with compiler and analyzer. */
+    private LispFunction lispFunction;
+
     /** Place to store the lisp source, if available. */
     final Object source;
 
@@ -74,6 +77,22 @@ public class Overload implements Describer
 	return documentation;
     }
 
+    /** Optional support object with compiler and analyzer. */
+    public LispFunction getLispFunction ()
+    {
+	return lispFunction;
+    }
+
+    /** Optional support object with compiler and analyzer. */
+    public void setLispFunction (final LispFunction lispFunction)
+    {
+	if (this.lispFunction != null)
+	{
+	    throw new Error ("Lisp function support has already been defined for " + this);
+	}
+	this.lispFunction = lispFunction;
+    }
+
     public String getMethodName ()
     {
 	return method.getName ();
@@ -97,14 +116,22 @@ public class Overload implements Describer
      */
     public boolean isBetterThan (final Overload otherMethod)
     {
+	if (method.isVarArgs () && !otherMethod.isVarArgs ())
+	{
+	    return false;
+	}
+	if (!method.isVarArgs () && otherMethod.isVarArgs ())
+	{
+	    return true;
+	}
 	final Class<?>[] myTypes = method.getParameterTypes ();
 	final Class<?>[] otherTypes = otherMethod.getParameterTypes ();
-	if (myTypes.length < otherTypes.length)
+	if (myTypes.length > otherTypes.length)
 	{
 	    // Prefer fixed argument methods to VarArgs methods.
 	    return true;
 	}
-	else if (otherTypes.length < myTypes.length)
+	else if (otherTypes.length > myTypes.length)
 	{
 	    // Prefer fixed argument methods to VarArgs methods.
 	    return false;
@@ -157,6 +184,10 @@ public class Overload implements Describer
 		    result.put ("Method node", mn);
 		}
 	    }
+	}
+	if (lispFunction != null)
+	{
+	    result.put ("Function", lispFunction);
 	}
 	return result;
     }

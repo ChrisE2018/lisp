@@ -49,7 +49,7 @@ public class ArithmeticPrimitives extends Definer
     }
 
     /** Zero test for long integers. We don't define zero test for floating point numbers. */
-    @DefineLisp
+    @DefineLisp (classname = "lisp.special.ZeropLongFunction")
     public boolean zerop (final long a)
     {
 	return a == 0;
@@ -63,7 +63,7 @@ public class ArithmeticPrimitives extends Definer
     }
 
     /** Remainder for long integers. We don't define remainder for floating point numbers. */
-    @DefineLisp
+    @DefineLisp (classname = "lisp.special.RemLongFunction")
     public long rem (final long a, final long b)
     {
 	return a % b;
@@ -73,7 +73,7 @@ public class ArithmeticPrimitives extends Definer
      * One plus for integers. Direct calls to this method can be made if the compiler knows the
      * argument type.
      */
-    @DefineLisp (name = "1+")
+    @DefineLisp (name = "1+", classname = "lisp.special.PlusOneIntFunction")
     public int addOne (final int x)
     {
 	return x + 1;
@@ -119,7 +119,7 @@ public class ArithmeticPrimitives extends Definer
 	}
     }
 
-    @DefineLisp (name = "1-")
+    @DefineLisp (name = "1-", classname = "lisp.special.SubOneIntFunction")
     public int subOne (final int x)
     {
 	return x - 1;
@@ -372,6 +372,14 @@ public class ArithmeticPrimitives extends Definer
 	{
 	    throw new IllegalArgumentException ("Number required " + a);
 	}
+    }
+
+    @DefineLisp (name = "*", classname = "lisp.special.TimesIntFunction")
+    public int times (final int a, final int b)
+    {
+	// TODO: need int x double, double x int, int x long, long x int, long x long, long x
+	// double, double x long
+	return a * b;
     }
 
     @DefineLisp (name = "*")
@@ -647,6 +655,12 @@ public class ArithmeticPrimitives extends Definer
 	    previous = arguments[i];
 	}
 	return true;
+    }
+
+    @DefineLisp (name = "<=", classname = "lisp.special.CompareLEIntFunction")
+    public boolean compareLE (final int a, final int b)
+    {
+	return a <= b;
     }
 
     @DefineLisp (name = "<=")
