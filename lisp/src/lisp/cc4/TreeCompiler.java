@@ -38,12 +38,12 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
     private final Map<Symbol, Object> quotedReferences;
 
-    public TreeCompiler (final ClassVisitor cv, final CompileLoaderV4 compileLoader, final Class<?> methodReturnClass,
-            final String methodName, final LispList methodArgs, final LispList methodBody)
+    public TreeCompiler (final int api, final ClassVisitor cv, final CompileLoaderV4 compileLoader,
+            final Class<?> methodReturnClass, final String methodName, final LispList methodArgs, final LispList methodBody)
     {
 	// '(setq system.compilerVersion "V4")' "(setq system.showBytecode t)"
 	// (define foo () 1)
-	super (Opcodes.ASM5);
+	super (api);
 	this.cv = cv;
 
 	this.compileLoader = compileLoader;
@@ -94,21 +94,6 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	    symbolReferences.add (symbol);
 	}
     }
-
-    // private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
-
-    // /**
-    // * Keep track of a symbol that has a global reference. This is only used to produce a log
-    // * message. globalReferences does nothing else.
-    // */
-    // private void addGlobalReference (final Symbol symbol)
-    // {
-    // if (!globalReferences.contains (symbol))
-    // {
-    // globalReferences.add (symbol);
-    // LOGGER.finer (new LogString ("Compiled global assignment to %s", symbol));
-    // }
-    // }
 
     /**
      * Arrange for a field to be added to the compilation class containing quoted data.

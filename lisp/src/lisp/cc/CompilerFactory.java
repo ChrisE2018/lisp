@@ -84,7 +84,6 @@ public class CompilerFactory
 		result.setClassReader (null);
 		result.setClassType (classType);
 		ClassVisitor cv = result.getClassVisitor ();
-		// (setLoggerLevel "lisp.cc.PrintBytecodeClassAdaptor" "INFO")
 		final Logger pbl = Logger.getLogger (PrintBytecodeClassAdaptor.class.getName ());
 		if (pbl.isLoggable (Level.INFO))
 		{
@@ -92,9 +91,14 @@ public class CompilerFactory
 		}
 		if (Symbol.named ("lisp.lang", "optimize").getBooleanValue (true))
 		{
+		    // This won't work because it assumes the ClassWriter has already determined the
+		    // frames.
+		    // Need to make that run, then read the class back and finally load the
+		    // bytecode.
+		    // cv = new OptimizeClassVisitor (Compiler.ASM_VERSION, cv);
 		    cv = new Optimizer (Compiler.ASM_VERSION, cv);
 		}
-		cv = new TreeCompiler (cv, result, returnType, methodName, methodArgs, methodBody);
+		cv = new TreeCompiler (Compiler.ASM_VERSION, cv, result, returnType, methodName, methodArgs, methodBody);
 		result.setClassVisitor (cv);
 		return result;
 	    }

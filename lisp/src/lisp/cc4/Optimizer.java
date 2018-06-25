@@ -78,6 +78,13 @@ public class Optimizer extends ClassNode implements Opcodes
 		    removeDeadLabels (method);
 		}
 	    }
+	    MethodTransformer mt = null;
+	    mt = new OptimizeJumpTransformer (mt);
+	    mt = new RemoveGetFieldPutFieldTransformer (mt);
+	    for (final MethodNode method : methods)
+	    {
+		mt.transform (method);
+	    }
 	}
 	LOGGER.fine (new LogString ("Optimization of %s removed %s of %s instructions", name, removals, initialCount));
 	if (LOGGER.isLoggable (Level.FINEST))

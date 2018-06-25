@@ -570,68 +570,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	}
     }
 
-    // private void addHiddenConstructorSteps (final MethodVisitor mv)
-    // {
-    // final String classInternalName = getClassType ().getInternalName ();
-    //
-    // if (!symbolReferences.isEmpty ())
-    // {
-    // final Type stringType = Type.getType (String.class);
-    // final Type symbolType = Type.getType (Symbol.class);
-    // final String symbolTypeDescriptor = symbolType.getDescriptor ();
-    // // Create initialization code for all required symbols.
-    // for (final Symbol symbol : symbolReferences)
-    // {
-    // final String javaSymbolName = javaName.createJavaSymbolName (symbol);
-    // mv.visitVarInsn (ALOAD, 0);
-    // mv.visitVarInsn (ALOAD, 0);
-    // mv.visitLdcInsn (symbol.getPackage ().getName ());
-    // mv.visitLdcInsn (symbol.getName ());
-    // mv.visitMethodInsn (INVOKESPECIAL, classInternalName, "getSymbol",
-    // Type.getMethodDescriptor (symbolType, stringType, stringType), false);
-    // mv.visitFieldInsn (PUTFIELD, classInternalName, javaSymbolName, symbolTypeDescriptor);
-    //
-    // LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaSymbolName, symbol));
-    // }
-    // }
-    // final Map<Symbol, Object> quotedReferences = quotedData.getQuotedData ();
-    // if (!quotedReferences.isEmpty ())
-    // {
-    // // Create initialization code for all required quoted data.
-    // for (final Entry<Symbol, Object> entry : quotedReferences.entrySet ())
-    // {
-    // // (define foo () (quote bar))
-    // final Symbol reference = entry.getKey ();
-    // final Object quoted = entry.getValue ();
-    // loadQuotedData (mv, reference);
-    //
-    // final Type quotedType = Type.getType (quoted.getClass ());
-    // final String typeDescriptor = quotedType.getDescriptor ();
-    // mv.visitTypeInsn (CHECKCAST, quotedType.getInternalName ());
-    // mv.visitFieldInsn (PUTFIELD, classInternalName, reference.getName (), typeDescriptor);
-    // }
-    // }
-    // }
-
-    // private void loadQuotedData (final MethodVisitor mv, final Symbol reference)
-    // {
-    // final Type classLoaderType = Type.getType (classLoader.getClass ());
-    // final String classLoaderInternalName = classLoaderType.getInternalName ();
-    // final String mapMethodDescriptor = Type.getMethodDescriptor (OBJECT_TYPE, OBJECT_TYPE);
-    // mv.visitVarInsn (ALOAD, 0);
-    // mv.visitInsn (DUP);
-    // mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;",
-    // false);
-    // mv.visitMethodInsn (INVOKEVIRTUAL, "java/lang/Class", "getClassLoader",
-    // "()Ljava/lang/ClassLoader;", false);
-    // mv.visitTypeInsn (CHECKCAST, classLoaderInternalName);
-    // mv.visitMethodInsn (INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences",
-    // "()Ljava/util/Map;", false);
-    //
-    // mv.visitLdcInsn (reference.getName ());
-    // mv.visitMethodInsn (INVOKEINTERFACE, "java/util/Map", "get", mapMethodDescriptor, true);
-    // }
-
     private void parseMethodClause (final Class<?> valueClass, final Symbol methodName, final LispList arguments,
             final LispList body)
     {

@@ -12,10 +12,10 @@ public class RemoveDeadCodeAdapter extends MethodVisitor implements Opcodes
     String owner;
     MethodVisitor next;
 
-    public RemoveDeadCodeAdapter (final String owner, final int access, final String name, final String desc,
+    public RemoveDeadCodeAdapter (final int api, final String owner, final int access, final String name, final String desc,
             final MethodVisitor mv)
     {
-	super (ASM5, new MethodNode (access, name, desc, null, null));
+	super (api, new MethodNode (access, name, desc, null, null));
 	this.owner = owner;
 	next = mv;
     }
@@ -34,7 +34,8 @@ public class RemoveDeadCodeAdapter extends MethodVisitor implements Opcodes
 	    {
 		if (frames[i] == null && !(insns[i] instanceof LabelNode))
 		{
-		    mn.instructions.remove (insns[i]);
+		    final AbstractInsnNode deadCode = insns[i];
+		    mn.instructions.remove (deadCode);
 		}
 	    }
 	}
