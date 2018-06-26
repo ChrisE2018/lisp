@@ -9,7 +9,7 @@ import java.util.logging.*;
 
 import lisp.lang.*;
 import lisp.lang.FileReader;
-import lisp.symbol.FunctionCell;
+import lisp.symbol.*;
 
 /**
  * Simple interpreter that uses reflection to evaluate forms like Lisp functions. Everything
@@ -19,6 +19,7 @@ import lisp.symbol.FunctionCell;
 public class Interpreter extends Definer
 {
     private static final Logger LOGGER = Logger.getLogger (Interpreter.class.getName ());
+    private static final Applicable applicable = new Applicable ();
 
     private static Invoke invoke = new Invoke ();
 
@@ -187,18 +188,22 @@ public class Interpreter extends Definer
 	    {
 		try
 		{
-		    if (constructor.isVarArgs ())
+		    // Should do full overload selection here
+		    if (applicable.applicable (constructor, args))
 		    {
-			if (constructor.getParameterCount () - 1 <= n)
+			// if (constructor.isVarArgs ())
+			// {
+			// if (constructor.getParameterCount () - 1 <= n)
+			// {
+			// final Object result = constructor.newInstance (args);
+			// return result;
+			// }
+			// }
+			// else if (constructor.getParameterCount () == n)
 			{
 			    final Object result = constructor.newInstance (args);
 			    return result;
 			}
-		    }
-		    else if (constructor.getParameterCount () == n)
-		    {
-			final Object result = constructor.newInstance (args);
-			return result;
 		    }
 		}
 		catch (final InstantiationException | IllegalArgumentException | InvocationTargetException

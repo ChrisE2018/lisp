@@ -12,19 +12,29 @@ import lisp.lang.Symbol;
 public class LexicalField extends LexicalBinding
 {
     private final Type classType;
+    private final boolean isStatic;
 
-    public LexicalField (final Symbol variable, final Class<?> varClass, final Type classType)
+    public LexicalField (final Symbol variable, final boolean isStatic, final Class<?> varClass, final Type classType)
     {
 	super (variable, varClass);
+	this.isStatic = isStatic;
 	this.classType = classType;
     }
 
     @Override
     public void loadValue (final InsnList il)
     {
-	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
-	final String desc = getType ().getDescriptor ();
-	il.add (new FieldInsnNode (Opcodes.GETFIELD, classType.getInternalName (), getVariable ().getName (), desc));
+	if (isStatic)
+	{
+	    final String desc = getType ().getDescriptor ();
+	    il.add (new FieldInsnNode (Opcodes.GETSTATIC, classType.getInternalName (), getVariable ().getName (), desc));
+	}
+	else
+	{
+	    il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+	    final String desc = getType ().getDescriptor ();
+	    il.add (new FieldInsnNode (Opcodes.GETFIELD, classType.getInternalName (), getVariable ().getName (), desc));
+	}
     }
 
     @Override
@@ -42,10 +52,18 @@ public class LexicalField extends LexicalBinding
     @Override
     public void store (final TreeCompilerContext context)
     {
-	context.add (new VarInsnNode (Opcodes.ALOAD, 0));
-	context.add (new InsnNode (Opcodes.SWAP));
-	final String desc = getType ().getDescriptor ();
-	context.add (new FieldInsnNode (Opcodes.PUTFIELD, classType.getInternalName (), getVariable ().getName (), desc));
+	if (isStatic)
+	{
+	    final String desc = getType ().getDescriptor ();
+	    context.add (new FieldInsnNode (Opcodes.PUTSTATIC, classType.getInternalName (), getVariable ().getName (), desc));
+	}
+	else
+	{
+	    context.add (new VarInsnNode (Opcodes.ALOAD, 0));
+	    context.add (new InsnNode (Opcodes.SWAP));
+	    final String desc = getType ().getDescriptor ();
+	    context.add (new FieldInsnNode (Opcodes.PUTFIELD, classType.getInternalName (), getVariable ().getName (), desc));
+	}
     }
 
     @Override

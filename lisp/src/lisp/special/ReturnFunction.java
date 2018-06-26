@@ -19,10 +19,20 @@ public class ReturnFunction implements Opcodes, LispTreeFunction
 	{
 	    throw new Error ("There is no lexically visible anonymous block");
 	}
-	final Object expr = expression.get (1);
-	final CompileResults rs = context.compile (expr, true);
-	context.convert (rs, Object.class, false, false);
-	context.add (new JumpInsnNode (GOTO, bb.getLabel ()));
-	return null;
+	final Class<?> returnClass = bb.getReturnClass ();
+	if (returnClass == void.class)
+	{
+	    // Return from constructor
+	    context.add (new JumpInsnNode (GOTO, bb.getLabel ()));
+	    return null;
+	}
+	else
+	{
+	    final Object expr = expression.get (1);
+	    final CompileResults rs = context.compile (expr, true);
+	    context.convert (rs, returnClass, false, false);
+	    context.add (new JumpInsnNode (GOTO, bb.getLabel ()));
+	    return null;
+	}
     }
 }

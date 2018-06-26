@@ -1,0 +1,38 @@
+/* Class definition for testing. */
+
+(inPackage "lisp.test")
+
+(%defclass Sample
+	(access public)
+	(extends java.lang.Object)	
+	(implements lisp.test.SampleInterface)
+	(field blah 
+	 	(access private)
+	 	(type int)
+	 	(value 43)
+	 	(getter getBlahX)
+	 	(setter putBlahX)
+	 	)
+	(field bar 
+	 	(access static private)
+	 	(type int)
+	 	(value 55)
+	 	(getter getBar)
+	 	(setter setBar)
+	 	)
+	 	
+	 (method int:foo ()
+	 	(access public)
+	 	(+ 7 blah)
+	 	)
+	 	
+	 (method int:bar (int:x)
+	 	(access public static)
+		(+ 8 bar)
+	 	)
+	 
+	 (method String:toString ()
+	 	(access public)
+	 	(java.lang.String.format "#<Sample %s>" blah)
+	 	)
+)
