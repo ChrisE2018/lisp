@@ -12,11 +12,11 @@ public class MinusLongFunction implements Opcodes, LispTreeFunction
     public CompileResults compile (final TreeCompilerContext context, final LispList expression, final boolean resultDesired)
     {
 	// TODO Check if both rs1 and rs2 are implicit. If so, constant fold and return implicit.
+	// (define long:foo (long:a long:b) (- a b))
 	// (define double:foo (long:a double:b) (- a b))
 	// (define long:foo (short:a long:b) (- a b))
 	// (define long:foo (short:a byte:b) (- a b))
 	// (define double:foo (long:a double:b) (- a b))
-	// (define long:foo (long:a long:b) (- a b))
 	// (define double:foo (double:a long:b) (- a b))
 	final CompileResults rs1 = context.compile (expression.get (1), true);
 	context.convert (rs1, long.class, false, false);

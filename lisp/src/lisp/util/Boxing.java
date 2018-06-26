@@ -44,7 +44,7 @@ public class Boxing
 	{
 	    return Double.class;
 	}
-	throw new IllegalArgumentException ("Primitive class required: " + primitiveClass);
+	return primitiveClass;
     }
 
     /**
@@ -88,7 +88,7 @@ public class Boxing
 	{
 	    return double.class;
 	}
-	throw new IllegalArgumentException ("Wrapper class required: " + wrapperClass);
+	return wrapperClass;
     }
 
     /**

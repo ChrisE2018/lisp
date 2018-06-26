@@ -48,7 +48,8 @@ public class Assignable
 	    {
 		return isPrimitiveAssignableFrom (toClass, fromClass);
 	    }
-	    return boxing.boxedClass (toClass).isAssignableFrom (fromClass);
+	    final Class<?> fromUnwrapped = boxing.unboxedClass (fromClass);
+	    return isPrimitiveAssignableFrom (toClass, fromUnwrapped);
 	}
 	if (fromClass.isPrimitive ())
 	{

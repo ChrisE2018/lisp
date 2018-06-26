@@ -8,6 +8,7 @@ package lisp.symbol;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.logging.*;
 
 import org.objectweb.asm.tree.ClassNode;
 
@@ -19,6 +20,7 @@ import lisp.util.*;
 /** Base class of all function cells. */
 public abstract class FunctionCell implements Describer
 {
+    private static final Logger LOGGER = Logger.getLogger (FunctionCell.class.getName ());
     private static Applicable applicable = new Applicable ();
     private static Selectable selectable = new Selectable ();
     private static MethodSignature signature = new MethodSignature ();
@@ -265,6 +267,11 @@ public abstract class FunctionCell implements Describer
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	Overload selectedMethod = null;
+	if (LOGGER.isLoggable (Level.FINE))
+	{
+	    LOGGER.fine (String.format ("Apply %s selecting from %d overloads", symbol, overloads.size ()));
+	    LOGGER.fine (getArglist (arguments));
+	}
 	for (final Overload method : overloads)
 	{
 	    final Method m = method.getMethod ();
@@ -273,16 +280,19 @@ public abstract class FunctionCell implements Describer
 		if (selectedMethod == null)
 		{
 		    selectedMethod = method;
+		    LOGGER.fine (new LogString ("%s method %s is first applicable method", symbol, m));
 		}
 		else if (selectedMethod.isBetterThan (method))
 		{
 		    // Ignore. Test this first so method definition order is secondary key.
+		    LOGGER.fine (new LogString ("%s method %s is rejected applicable method", symbol, m));
 		}
 		else if (method.isBetterThan (selectedMethod))
 		{
 		    // (define foo (int:a double:b) 'alpha)
 		    // (define foo (double:a int:b) 'beta)
 		    selectedMethod = method;
+		    LOGGER.fine (new LogString ("%s method %s is better applicable method", symbol, m));
 		}
 		else
 		{
@@ -299,12 +309,41 @@ public abstract class FunctionCell implements Describer
 		    throw new IllegalArgumentException (buffer.toString ());
 		}
 	    }
+	    else
+	    {
+		LOGGER.fine (new LogString ("%s method %s is not applicable", symbol, m));
+	    }
 	}
 	if (selectedMethod != null)
 	{
 	    return selectedMethod.apply (arguments);
 	}
 	throw new IllegalArgumentException ("No applicable " + symbol + " method for " + arguments);
+    }
+
+    private String getArglist (final List<Object> arguments)
+    {
+	final StringBuilder buffer = new StringBuilder ();
+	buffer.append (symbol);
+	buffer.append (" (");
+	for (int i = 0; i < arguments.size (); i++)
+	{
+	    if (i > 0)
+	    {
+		buffer.append (", ");
+	    }
+	    final Object arg = arguments.get (i);
+	    if (arg == null)
+	    {
+		buffer.append ("null");
+	    }
+	    else
+	    {
+		buffer.append (arg.getClass ());
+	    }
+	}
+	buffer.append (")");
+	return buffer.toString ();
     }
 
     /**
