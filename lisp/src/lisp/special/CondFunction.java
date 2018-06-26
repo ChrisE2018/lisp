@@ -55,7 +55,7 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    final LispList clause = expression.getSublist (i);
 	    if (clause.size () == 1)
 	    {
-		final CompileResults bvr = context.compile (clause.car (), true);
+		final CompileResults bvr = context.compile (clause.get (0), true);
 		final CompileResults rr = context.convert2true (bvr);
 		for (final CompileResult r : rr.getResults ())
 		{
@@ -65,7 +65,7 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	    }
 	    else
 	    {
-		final CompileResults bv = context.compile (clause.car (), true);
+		final CompileResults bv = context.compile (clause.get (0), true);
 		context.convertIfFalse (bv, false, true, lNext);
 		for (int j = 1; j < clause.size () - 1; j++)
 		{

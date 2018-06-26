@@ -107,30 +107,6 @@ public class BracketList extends LispList
 	return (BracketList)o;
     }
 
-    /** First element of a list, using standard Lisp terminology. */
-    @Override
-    public Object car ()
-    {
-	final Object result = get (0);
-	if (result instanceof LispList)
-	{
-	    return requireBracketList (result);
-	}
-	return result;
-    }
-
-    /** First element of a list. */
-    @Override
-    public Object first ()
-    {
-	final Object result = get (0);
-	if (result instanceof LispList)
-	{
-	    return requireBracketList (result);
-	}
-	return result;
-    }
-
     @Override
     public Object last ()
     {

@@ -6,7 +6,6 @@ import java.util.logging.*;
 
 import lisp.cc.VerifyPrimitives;
 import lisp.eval.*;
-import lisp.gui.*;
 import lisp.lang.*;
 import lisp.lang.Package;
 

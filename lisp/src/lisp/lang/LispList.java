@@ -92,18 +92,6 @@ public class LispList extends ArrayList<Object> implements Describer
 	}
     }
 
-    /** First element of a list, using standard Lisp terminology. */
-    public Object car ()
-    {
-	return get (0);
-    }
-
-    /** First element of a list. */
-    public Object first ()
-    {
-	return get (0);
-    }
-
     public Object last ()
     {
 	return get (size () - 1);
@@ -135,38 +123,6 @@ public class LispList extends ArrayList<Object> implements Describer
 		}
 	    }
 	}
-	// if (isBraceMap ())
-	// {
-	// buffer.append (getOpenChar ());
-	// for (int i = 0; i < size (); i++)
-	// {
-	// if (i > 0)
-	// {
-	// buffer.append (parsing.getMapSeparator ());
-	// buffer.append (' ');
-	// }
-	// final Object rawItem = get (i);
-	// if (rawItem instanceof List)
-	// {
-	// final List<?> item = (List<?>)get (i);
-	// for (int j = 0; j < item.size (); j++)
-	// {
-	// if (j > 0)
-	// {
-	// buffer.append (' ');
-	// }
-	// LispReader.printElement (buffer, item.get (j));
-	// }
-	// }
-	// else
-	// {
-	// LispReader.printElement (buffer, rawItem);
-	// }
-	// }
-	// buffer.append (getCloseChar ());
-	// return;
-	// }
-
 	buffer.append (getOpenChar ());
 	for (int i = 0; i < size (); i++)
 	{
@@ -179,21 +135,11 @@ public class LispList extends ArrayList<Object> implements Describer
 	buffer.append (getCloseChar ());
     }
 
-    // protected boolean isBraceMap ()
-    // {
-    // return getOpenChar () == parsing.getMapOpen () && getCloseChar () == parsing.getMapClose ();
-    // }
-
     @Override
     public String toString ()
     {
 	final StringBuilder buffer = new StringBuilder ();
 	print (buffer);
-	// buffer.append ("#<");
-	// buffer.append (getClass ().getSimpleName ());
-	// buffer.append (" ");
-	// print (buffer);
-	// buffer.append (">");
 	return buffer.toString ();
     }
 

@@ -443,23 +443,6 @@ public class TreeCompilerContext implements Opcodes
 	return compileOptimizedFunctionCall (expression, resultDesired);
     }
 
-    private CompileResults compileSpecialLispFunctionx (final LispList expression, final boolean resultDesired)
-            throws DontOptimize
-    {
-	final Symbol symbol = expression.head ();
-	final FunctionCell function = symbol.getFunction ();
-	if (function != null)
-	{
-	    final LispFunction compiler = function.getLispFunction ();
-	    if (compiler instanceof LispTreeFunction)
-	    {
-		final LispTreeFunction c = (LispTreeFunction)compiler;
-		return c.compile (this, expression, resultDesired);
-	    }
-	}
-	return null;
-    }
-
     /**
      * Compile a static method call.
      *

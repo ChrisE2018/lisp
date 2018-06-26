@@ -45,20 +45,6 @@ public class BraceList extends LispList
 	}
     }
 
-    /** First element of a list, using standard Lisp terminology. */
-    @Override
-    public Object car ()
-    {
-	return get (0);
-    }
-
-    /** First element of a list. */
-    @Override
-    public Object first ()
-    {
-	return get (0);
-    }
-
     @Override
     public Object last ()
     {
