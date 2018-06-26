@@ -287,6 +287,24 @@ public class ArithmeticPrimitives extends Definer
 	}
     }
 
+    @DefineLisp (name = "-", classname = "lisp.special.MinusIntFunction")
+    public int minus (final int a, final int b)
+    {
+	return a - b;
+    }
+
+    @DefineLisp (name = "-", classname = "lisp.special.MinusLongFunction")
+    public long minus (final long a, final long b)
+    {
+	return a - b;
+    }
+
+    @DefineLisp (name = "-", classname = "lisp.special.MinusDoubleFunction")
+    public double minus (final double a, final double b)
+    {
+	return a - b;
+    }
+
     @DefineLisp (name = "-")
     public Object minus (final Object from, final Object... arguments)
     {
@@ -516,6 +534,24 @@ public class ArithmeticPrimitives extends Definer
 	{
 	    throw new IllegalArgumentException ("Number required " + a);
 	}
+    }
+
+    @DefineLisp (name = "/", classname = "lisp.special.QuotientIntFunction")
+    public int quotient (final int a, final int b)
+    {
+	return a / b;
+    }
+
+    @DefineLisp (name = "/", classname = "lisp.special.QuotientLongFunction")
+    public long quotient (final long a, final long b)
+    {
+	return a / b;
+    }
+
+    @DefineLisp (name = "/", classname = "lisp.special.QuotientDoubleFunction")
+    public double quotient (final double a, final double b)
+    {
+	return a / b;
     }
 
     @DefineLisp (name = "/")
