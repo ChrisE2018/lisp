@@ -10,7 +10,8 @@ import lisp.asm.instructions.*;
 import lisp.cc.*;
 import lisp.cc3.*;
 import lisp.cc4.*;
-import lisp.lang.*;
+import lisp.lang.LispList;
+import lisp.lang.Symbol;
 import lisp.symbol.LispVisitor;
 
 public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
@@ -40,7 +41,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	final LabelNode l0 = new LabelNode ();
 	final LabelNode l1 = new LabelNode ();
 
-	final LispList control = expression.getSublist (1);
+	final LispList control = (LispList)expression.get (1);
 	final Symbol var = control.head (); // always an int, not need to declare
 	final TreeCompilerContext innerContext = context.bindVariable (var, int.class);
 	final LexicalBinding binding = innerContext.getLocalVariableBinding (var);

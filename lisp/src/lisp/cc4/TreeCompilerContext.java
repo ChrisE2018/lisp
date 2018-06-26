@@ -456,7 +456,7 @@ public class TreeCompilerContext implements Opcodes
     {
 	// (define foo (x) (java.lang.String.format "foo %s bar %n" x))
 	// (define foo (x) (System.out.println x))
-	final LispList dot = expression.getSublist (0);
+	final LispList dot = (LispList)expression.get (0);
 	final Object target = dot.get (1);
 	final String methodName = (String)dot.get (2);
 

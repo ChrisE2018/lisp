@@ -24,7 +24,7 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	visitor.visitStart (expression);
 	for (int i = 1; i < expression.size (); i++)
 	{
-	    final LispList clause = expression.getSublist (i);
+	    final LispList clause = (LispList)expression.get (i);
 	    if (clause.size () == 1)
 	    {
 		visitor.visitBooleanValue (clause.get (0));
@@ -52,7 +52,7 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 	for (int i = 1; i < expression.size (); i++)
 	{
 	    final LabelNode lNext = new LabelNode ();
-	    final LispList clause = expression.getSublist (i);
+	    final LispList clause = (LispList)expression.get (i);
 	    if (clause.size () == 1)
 	    {
 		final CompileResults bvr = context.compile (clause.get (0), true);

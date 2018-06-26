@@ -9,7 +9,8 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.cc.*;
 import lisp.cc3.*;
 import lisp.cc4.*;
-import lisp.lang.*;
+import lisp.lang.LispList;
+import lisp.lang.Symbol;
 import lisp.symbol.LispVisitor;
 
 public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
@@ -45,11 +46,11 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	// (define foo (x) (let ((a b) (b a)) (if x a b)))
 	// (define foo (int:a int:b) (let ((int:c a) (int:d b)) (+ c d)))
 
-	final LispList bindings = expression.getSublist (1);
+	final LispList bindings = (LispList)expression.get (1);
 	final Map<Symbol, Class<?>> newLocals = new HashMap<Symbol, Class<?>> ();
 	for (int i = 0; i < bindings.size (); i++)
 	{
-	    final LispList clause = bindings.getSublist (i);
+	    final LispList clause = (LispList)bindings.get (i);
 	    final Object varSpec = clause.get (0);
 	    final Symbol varName = NameSpec.getVariableName (varSpec);
 	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);
@@ -58,7 +59,7 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	final TreeCompilerContext innerContext = context.bindVariables (newLocals);
 	for (int i = 0; i < bindings.size (); i++)
 	{
-	    final LispList clause = bindings.getSublist (i);
+	    final LispList clause = (LispList)bindings.get (i);
 	    final Object varSpec = clause.get (0);
 	    final Symbol varName = NameSpec.getVariableName (varSpec);
 	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);

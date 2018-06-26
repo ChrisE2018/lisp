@@ -30,21 +30,6 @@ public class BraceList extends LispList
 	return '}';
     }
 
-    /** Convenience method that allows the caller to avoid a cast. */
-    @Override
-    public LispList getSublist (final int i)
-    {
-	final Object result = get (i);
-	try
-	{
-	    return (LispList)result;
-	}
-	catch (final ClassCastException e)
-	{
-	    throw new IllegalArgumentException ("List member " + i + " is not a sublist", e);
-	}
-    }
-
     @Override
     public Object last ()
     {

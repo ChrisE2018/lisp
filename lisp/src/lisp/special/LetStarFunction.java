@@ -9,7 +9,8 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import lisp.cc.*;
 import lisp.cc3.*;
 import lisp.cc4.*;
-import lisp.lang.*;
+import lisp.lang.LispList;
+import lisp.lang.Symbol;
 import lisp.symbol.LispVisitor;
 
 public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcodes, LispTreeWalker
@@ -50,10 +51,10 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 	// (define foo () (let ((a 4) (c a)) c)) now (foo) = 1
 
 	TreeCompilerContext innerContext = context;
-	final LispList bindings = expression.getSublist (1);
+	final LispList bindings = (LispList)expression.get (1);
 	for (int i = 0; i < bindings.size (); i++)
 	{
-	    final LispList clause = bindings.getSublist (i);
+	    final LispList clause = (LispList)bindings.get (i);
 	    final Object varSpec = clause.get (0);
 	    final Symbol varName = NameSpec.getVariableName (varSpec);
 	    final Class<?> varClass = NameSpec.getVariableClass (varSpec);
