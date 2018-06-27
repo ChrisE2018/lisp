@@ -18,6 +18,12 @@ public class Repl
     private static boolean running = true;
 
     private final Interpreter interpreter;
+    private Symbol star;
+    private Symbol star2;
+    private Symbol star3;
+    private Symbol plus;
+    private Symbol plus2;
+    private Symbol plus3;
 
     public static void main (final String[] args)
     {
@@ -99,14 +105,24 @@ public class Repl
 
     private void rep (final LispStream stream, final int index) throws Exception
     {
-	final Package pkg = PackageFactory.getCurrentPackage ();
-	final Symbol e = pkg.internSymbol ("e" + index);
-	System.out.printf ("[%s] ", e);
 	Object form = null;
+	final LispReader lispReader = LispReader.getLispThreadReader ();
+	final Package pkg = lispReader.getCurrentPackage ();
+	final Symbol e = lispReader.readSymbol (pkg, "e" + index);
 	try
 	{
-	    final LispReader lispReader = LispReader.getLispThreadReader ();
+	    System.out.printf ("[%s] ", e);
+	    star = lispReader.readSymbol (pkg, "*");
+	    star2 = lispReader.readSymbol (pkg, "**");
+	    star3 = lispReader.readSymbol (pkg, "***");
+	    plus = lispReader.readSymbol (pkg, "+");
+	    plus2 = lispReader.readSymbol (pkg, "++");
+	    plus3 = lispReader.readSymbol (pkg, "+++");
 	    form = lispReader.read (stream, pkg);
+	    plus3.setValue (plus2.getValue (null));
+	    plus2.setValue (plus.getValue (null));
+	    plus.setValue (form);
+	    e.setValue (form);
 	}
 	catch (final Throwable ex)
 	{
@@ -127,32 +143,26 @@ public class Repl
 	    }
 	    return;
 	}
-	if (form == null)
-	{
-	    System.out.println ("Exit");
-	    return;
-	}
-	e.setValue (form);
+	// if (form == null)
+	// {
+	// System.out.println ("Exit");
+	// return;
+	// }
 	final StringBuilder buffer = new StringBuilder ();
-	// buffer.append (form.toString ());
-	// System.out.println (buffer);
-	final Symbol v = pkg.internSymbol ("v" + index);
-	final Symbol t = pkg.internSymbol ("t" + index);
-	final Symbol repeat = pkg.internSymbol ("*repeat*");
-	final int repeatCount = repeat.getIntValue (1);
+	final Symbol v = lispReader.readSymbol (pkg, "v" + index);
+	final Symbol t = lispReader.readSymbol (pkg, "t" + index);
 	System.out.printf ("[%s] ==> ", v);
 	final LexicalContext context = new LexicalContext (interpreter);
 	final long startTime = System.currentTimeMillis ();
 	final Object value = context.eval (form);
-	for (int i = 1; i < repeatCount; i++)
-	{
-	    context.eval (form);
-	}
 	final long duration = System.currentTimeMillis () - startTime;
-	// Provide time for output to display
-	Thread.sleep (50);
+	star3.setValue (star2.getValue (null));
+	star2.setValue (star.getValue (null));
+	star.setValue (value);
 	v.setValue (value);
 	t.setValue (duration);
+	// Provide time for output to display
+	Thread.sleep (50);
 	buffer.setLength (0);
 	if (value == null)
 	{
@@ -163,16 +173,9 @@ public class Repl
 	    LispReader.printElement (buffer, value);
 	}
 	buffer.append ("\n");
+	// TODO Make display of duration configurable.
 	buffer.append (duration);
 	buffer.append (" ms");
-	if (repeatCount > 1)
-	{
-	    // buffer.append (" in ");
-	    // buffer.append (repeatCount);
-	    // buffer.append ("iterations. ");
-	    final double tt = (double)duration / repeatCount;
-	    buffer.append (String.format (" %.3f ms/iteration. ", tt));
-	}
 	buffer.append ("\n");
 	System.out.print (buffer);
     }

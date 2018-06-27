@@ -20,6 +20,14 @@
 	 	(getter getBar)
 	 	(setter setBar)
 	 	)
+	(field baz 
+	 	(access static private)
+	 	(type int)
+	 	(value 66)
+	 	(getter)
+	 	(setter)
+	 	)
+	 (static (setq baz 76))
 	 	
 	 (method int:foo ()
 	 	(access public)

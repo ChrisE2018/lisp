@@ -7,6 +7,8 @@ import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 
 import lisp.asm.instructions.InsnNode;
 import lisp.asm.instructions.MethodInsnNode;
@@ -198,5 +200,24 @@ public class LispQuotedClassLoader extends ClassLoader implements QuotedData
 
 	mv.visitLdcInsn (reference.getName ());
 	mv.visitMethodInsn (Opcodes.INVOKEINTERFACE, "java/util/Map", "get", mapMethodDescriptor, true);
+    }
+
+    @Override
+    public void loadData (final Symbol reference, final String classInternalName, final InsnList il)
+    {
+	final Type classLoaderType = Type.getType (getClass ());
+	final String classLoaderInternalName = classLoaderType.getInternalName ();
+	final String mapMethodDescriptor = Type.getMethodDescriptor (OBJECT_TYPE, OBJECT_TYPE);
+	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+	il.add (new InsnNode (Opcodes.DUP));
+	il.add (new MethodInsnNode (Opcodes.INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false));
+	il.add (new MethodInsnNode (Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;",
+	        false));
+	il.add (new TypeInsnNode (Opcodes.CHECKCAST, classLoaderInternalName));
+	il.add (new MethodInsnNode (Opcodes.INVOKEVIRTUAL, classLoaderInternalName, "getQuotedReferences", "()Ljava/util/Map;",
+	        false));
+
+	il.add (new LdcInsnNode (reference.getName ()));
+	il.add (new MethodInsnNode (Opcodes.INVOKEINTERFACE, "java/util/Map", "get", mapMethodDescriptor, true));
     }
 }

@@ -1,8 +1,188 @@
 
 package lisp.util;
 
+/**
+ * Conversion between primitive values and the boxed equivalent and between the corresponding
+ * classes.
+ */
 public class Boxing
 {
+    /**
+     * Convert a primitive value to the boxed equivalent.
+     *
+     * @param primitive The primitive value.
+     * @return The boxed equivalent.
+     */
+    public Boolean box (final boolean primitive)
+    {
+	return Boolean.valueOf (primitive);
+    }
+
+    /**
+     * Convert a primitive value to the boxed equivalent.
+     *
+     * @param primitive The primitive value.
+     * @return The boxed equivalent.
+     */
+    public Character box (final char primitive)
+    {
+	return Character.valueOf (primitive);
+    }
+
+    /**
+     * Convert a primitive value to the boxed equivalent.
+     *
+     * @param primitive The primitive value.
+     * @return The boxed equivalent.
+     */
+    public Byte box (final byte primitive)
+    {
+	return Byte.valueOf (primitive);
+    }
+
+    /**
+     * Convert a primitive value to the boxed equivalent.
+     *
+     * @param primitive The primitive value.
+     * @return The boxed equivalent.
+     */
+    public Short box (final short primitive)
+    {
+	return Short.valueOf (primitive);
+    }
+
+    /**
+     * Convert a primitive value to the boxed equivalent.
+     *
+     * @param primitive The primitive value.
+     * @return The boxed equivalent.
+     */
+    public Integer box (final int primitive)
+    {
+	return Integer.valueOf (primitive);
+    }
+
+    /**
+     * Convert a primitive value to the boxed equivalent.
+     *
+     * @param primitive The primitive value.
+     * @return The boxed equivalent.
+     */
+    public Long box (final long primitive)
+    {
+	return Long.valueOf (primitive);
+    }
+
+    /**
+     * Convert a primitive value to the boxed equivalent.
+     *
+     * @param primitive The primitive value.
+     * @return The boxed equivalent.
+     */
+    public Float box (final float primitive)
+    {
+	return Float.valueOf (primitive);
+    }
+
+    /**
+     * Convert a primitive value to the boxed equivalent.
+     *
+     * @param primitive The primitive value.
+     * @return The boxed equivalent.
+     */
+    public Double box (final double primitive)
+    {
+	return Double.valueOf (primitive);
+    }
+
+    /**
+     * Convert a boxed value to the primitive equivalent.
+     *
+     * @param wrapped The boxed value.
+     * @return The primitive equivalent.
+     */
+    public boolean unbox (final Boolean wrapped)
+    {
+	return wrapped.booleanValue ();
+    }
+
+    /**
+     * Convert a boxed value to the primitive equivalent.
+     *
+     * @param wrapped The boxed value.
+     * @return The primitive equivalent.
+     */
+    public char unbox (final Character wrapped)
+    {
+	return wrapped.charValue ();
+    }
+
+    /**
+     * Convert a boxed value to the primitive equivalent.
+     *
+     * @param wrapped The boxed value.
+     * @return The primitive equivalent.
+     */
+    public byte unbox (final Byte wrapped)
+    {
+	return wrapped.byteValue ();
+    }
+
+    /**
+     * Convert a boxed value to the primitive equivalent.
+     *
+     * @param wrapped The boxed value.
+     * @return The primitive equivalent.
+     */
+    public short unbox (final Short wrapped)
+    {
+	return wrapped.shortValue ();
+    }
+
+    /**
+     * Convert a boxed value to the primitive equivalent.
+     *
+     * @param wrapped The boxed value.
+     * @return The primitive equivalent.
+     */
+    public int unbox (final Integer wrapped)
+    {
+	return wrapped.intValue ();
+    }
+
+    /**
+     * Convert a boxed value to the primitive equivalent.
+     *
+     * @param wrapped The boxed value.
+     * @return The primitive equivalent.
+     */
+    public long unbox (final Long wrapped)
+    {
+	return wrapped.longValue ();
+    }
+
+    /**
+     * Convert a boxed value to the primitive equivalent.
+     *
+     * @param wrapped The boxed value.
+     * @return The primitive equivalent.
+     */
+    public float unbox (final Float wrapped)
+    {
+	return wrapped.floatValue ();
+    }
+
+    /**
+     * Convert a boxed value to the primitive equivalent.
+     *
+     * @param wrapped The boxed value.
+     * @return The primitive equivalent.
+     */
+    public double unbox (final Double wrapped)
+    {
+	return wrapped.doubleValue ();
+    }
+
     /**
      * Convert the class for a primitive type to the corresponding wrapper class.
      *

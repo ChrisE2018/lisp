@@ -31,11 +31,11 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     private final String methodName;
     private final LispList methodBody;
 
-    private final List<Symbol> methodArgs = new ArrayList<Symbol> ();
-    private final List<Class<?>> methodArgClasses = new ArrayList<Class<?>> ();
-    private final List<Type> methodArgTypes = new ArrayList<Type> ();
+    private final List<Symbol> methodArgs = new ArrayList<> ();
+    private final List<Class<?>> methodArgClasses = new ArrayList<> ();
+    private final List<Type> methodArgTypes = new ArrayList<> ();
 
-    private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
+    private final List<Symbol> symbolReferences = new ArrayList<> ();
     private final Map<Symbol, Object> quotedReferences;
 
     public TreeCompiler (final int api, final ClassVisitor cv, final CompileLoaderV4 compileLoader,
@@ -81,12 +81,14 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     }
 
     /** The ASM type of the class enclosing the function currently being compiled. */
+    @Override
     public Type getClassType ()
     {
 	return compileLoader.getClassType ();
     }
 
     /** Keep track of a symbol that needs to be available as a class field. */
+    @Override
     public void addSymbolReference (final Symbol symbol)
     {
 	if (!symbolReferences.contains (symbol))
@@ -121,6 +123,43 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     public Map<Symbol, Object> getQuotedData ()
     {
 	return quotedReferences;
+    }
+
+    @Override
+    public void addHiddenConstructorSteps (final Type classType, final MethodVisitor mv)
+    {
+	throw new UnsupportedOperationException ();
+    }
+
+    @Override
+    public void loadData (final Symbol reference, final String classInternalName, final InsnList il)
+    {
+	if (symbolReferences.contains (reference))
+	{
+	    final String symbolName = javaName.createJavaSymbolName (reference);
+	    il.add (new VarInsnNode (ALOAD, 0));
+	    il.add (new FieldInsnNode (Opcodes.GETFIELD, classInternalName, symbolName, "Llisp/lang/Symbol;"));
+	}
+	else if (quotedReferences.containsKey (reference))
+	{
+	    final Object quotedData = quotedReferences.get (reference);
+	    if (quotedData == null)
+	    {
+		il.add (new InsnNode (Opcodes.ACONST_NULL));
+	    }
+	    else
+	    {
+		final Class<?> objectClass = quotedData.getClass ();
+		final Type objectType = Type.getType (objectClass);
+		il.add (new VarInsnNode (Opcodes.ALOAD, 0));
+		il.add (new FieldInsnNode (Opcodes.GETFIELD, classInternalName, reference.getName (),
+		        objectType.getDescriptor ()));
+	    }
+	}
+	else
+	{
+	    throw new UnsupportedOperationException ();
+	}
     }
 
     @Override
@@ -252,7 +291,7 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
     private MethodNode getCompiledMethod ()
     {
 	final MethodNode mn = new MethodNode (ACC_PUBLIC, methodName, getMethodSignature (), null, null);
-	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
+	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<> ();
 	int localRef = 1;
 	for (int i = 0; i < methodArgs.size (); i++)
 	{
@@ -308,7 +347,6 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	buffer.append ("(");
 	for (int i = 0; i < methodArgs.size (); i++)
 	{
-	    // buffer.append (CompileSupport.getNameTypeDescriptor (methodArgTypes.get (i)));
 	    buffer.append (Type.getType (methodArgClasses.get (i)).getDescriptor ());
 	}
 	buffer.append (")");
@@ -326,11 +364,5 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	buffer.append (System.identityHashCode (this));
 	buffer.append (">");
 	return buffer.toString ();
-    }
-
-    @Override
-    public void addHiddenConstructorSteps (final Type classType, final MethodVisitor mv)
-    {
-	throw new UnsupportedOperationException ();
     }
 }

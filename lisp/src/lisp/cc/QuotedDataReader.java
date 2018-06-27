@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
+import lisp.asm.instructions.FieldInsnNode;
 import lisp.asm.instructions.InsnNode;
 import lisp.asm.instructions.MethodInsnNode;
 import lisp.asm.instructions.VarInsnNode;
@@ -85,7 +86,7 @@ public class QuotedDataReader implements QuotedData
     @Override
     public void addRequiredFields (final ClassNode cn)
     {
-	final int hiddenFieldAccess = Opcodes.ACC_PRIVATE;
+	final int hiddenFieldAccess = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC;
 	// Create field definitions for all entries in symbolReferences.
 	if (symbolReferences.size () > 0)
 	{
@@ -145,13 +146,11 @@ public class QuotedDataReader implements QuotedData
 	    for (final Symbol symbol : symbolReferences)
 	    {
 		final String javaSymbolName = javaName.createJavaSymbolName (symbol);
-		mv.visitVarInsn (Opcodes.ALOAD, 0);
-		// mv.visitVarInsn (Opcodes.ALOAD, 0);
 		mv.visitLdcInsn (symbol.getPackage ().getName ());
 		mv.visitLdcInsn (symbol.getName ());
 		mv.visitMethodInsn (Opcodes.INVOKESTATIC, classInternalName, "getSymbol",
 		        Type.getMethodDescriptor (symbolType, stringType, stringType), false);
-		mv.visitFieldInsn (Opcodes.PUTFIELD, classInternalName, javaSymbolName, symbolTypeDescriptor);
+		mv.visitFieldInsn (Opcodes.PUTSTATIC, classInternalName, javaSymbolName, symbolTypeDescriptor);
 
 		LOGGER.finer (new LogString ("Init: private Symbol %s %s;", javaSymbolName, symbol));
 	    }
@@ -167,7 +166,6 @@ public class QuotedDataReader implements QuotedData
 		final Symbol reference = entry.getKey ();
 		final Object quoted = entry.getValue ();
 
-		mv.visitVarInsn (Opcodes.ALOAD, 0);
 		mv.visitLdcInsn (quoted.toString ());
 		mv.visitMethodInsn (Opcodes.INVOKESTATIC, myInternalName, "readQuotedData",
 		        "(Ljava/lang/String;)Ljava/lang/Object;", false);
@@ -175,8 +173,36 @@ public class QuotedDataReader implements QuotedData
 		final Type quotedType = Type.getType (quoted.getClass ());
 		final String typeDescriptor = quotedType.getDescriptor ();
 		mv.visitTypeInsn (Opcodes.CHECKCAST, quotedType.getInternalName ());
-		mv.visitFieldInsn (Opcodes.PUTFIELD, classInternalName, reference.getName (), typeDescriptor);
+		mv.visitFieldInsn (Opcodes.PUTSTATIC, classInternalName, reference.getName (), typeDescriptor);
 	    }
+	}
+    }
+
+    @Override
+    public void loadData (final Symbol reference, final String classInternalName, final InsnList il)
+    {
+	if (quotedReferences.containsKey (reference))
+	{
+	    final Object quotedValue = quotedReferences.get (reference);
+	    if (quotedValue == null)
+	    {
+		il.add (new InsnNode (Opcodes.ACONST_NULL));
+	    }
+	    else
+	    {
+		final Class<?> quotedClass = quotedValue.getClass ();
+		final String typeDescriptor = Type.getType (quotedClass).getDescriptor ();
+		il.add (new FieldInsnNode (Opcodes.GETSTATIC, classInternalName, reference.getName (), typeDescriptor));
+	    }
+	}
+	else if (symbolReferences.contains (reference))
+	{
+	    final String symbolName = javaName.createJavaSymbolName (reference);
+	    il.add (new FieldInsnNode (Opcodes.GETSTATIC, classInternalName, symbolName, "Llisp/lang/Symbol;"));
+	}
+	else
+	{
+	    throw new Error (reference + " does not reference a compiled symbol or quoted data");
 	}
     }
 

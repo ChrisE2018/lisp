@@ -4,7 +4,7 @@ package lisp.cc;
 import java.util.Map;
 
 import org.objectweb.asm.*;
-import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.*;
 
 import lisp.lang.Symbol;
 
@@ -28,4 +28,6 @@ public interface QuotedData
 
     public void addHiddenConstructorSteps (Type classType, final MethodVisitor mv);
 
+    /** Load quoted data onto the stack. */
+    public void loadData (Symbol s, final String classInternalName, InsnList il);
 }

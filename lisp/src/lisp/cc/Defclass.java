@@ -73,7 +73,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private static final List<Object[]> CONSTRUCTOR_MODIFIERS = Arrays.asList (METHOD_MODIFIERS_DATA);
     private static final List<Object[]> METHOD_MODIFIERS = Arrays.asList (METHOD_MODIFIERS_DATA);
 
-    private static Map<String, Class<?>> classForName = new HashMap<String, Class<?>> ();
+    private static Map<String, Class<?>> classForName = new HashMap<> ();
 
     public static Class<?> forName (final String name)
     {
@@ -94,33 +94,33 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private final Type classType;
     private Class<?> superclass = Object.class;
     private Type superclassType = Type.getType (Object.class);
-    private final List<Class<?>> interfaceClasses = new ArrayList<Class<?>> ();
+    private final List<Class<?>> interfaceClasses = new ArrayList<> ();
     private boolean hasConstructor = false;
 
     /**
      * If a constructor calls 'this' then the object initialization is not required. The signature
      * of such a constructor is added to this set so it can be skipped by the AdviceAdaptor.
      */
-    private final Set<String> selfReferentialConstructors = new HashSet<String> ();
+    private final Set<String> selfReferentialConstructors = new HashSet<> ();
 
-    private final Map<Symbol, FieldNode> fieldMap = new HashMap<Symbol, FieldNode> ();
-    private final Map<Symbol, Class<?>> fieldClass = new HashMap<Symbol, Class<?>> ();
-    private final Map<Symbol, Object> fieldValues = new HashMap<Symbol, Object> ();
+    private final Map<Symbol, FieldNode> fieldMap = new HashMap<> ();
+    private final Map<Symbol, Class<?>> fieldClass = new HashMap<> ();
+    private final Map<Symbol, Object> fieldValues = new HashMap<> ();
 
     /** For each constructor this contains the classes of the parameters. */
-    private final List<Class<?>[]> constructorParameters = new ArrayList<Class<?>[]> ();
+    private final List<Class<?>[]> constructorParameters = new ArrayList<> ();
 
     /**
      * References to global references. This is mainly used to issue information messages about
      * globals once instead of repeatedly.
      */
-    private final Set<Symbol> globalReferences = new HashSet<Symbol> ();
-
-    // /** References to symbols that must be available to the bytecode. */
-    // private final List<Symbol> symbolReferences = new ArrayList<Symbol> ();
+    private final Set<Symbol> globalReferences = new HashSet<> ();
 
     /** Delegate object to handle quoted data. */
     private final QuotedData quotedData;
+
+    /** Collect all static evaluation forms here. */
+    private final LispList staticForms = new LispList ();
 
     public Defclass (final QuotedData quotedData, final String name, final LispList[] members)
     {
@@ -219,6 +219,10 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    {
 		parseFieldClause (clause);
 	    }
+	    else if (key.is ("static"))
+	    {
+		parseStaticClause (clause);
+	    }
 	    else if (key.is ("constructor"))
 	    {
 		// Extract information about constructors so constructor chains can be resolved.
@@ -254,6 +258,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		parseMethodClause (valueClass, methodName, arguments, body);
 	    }
 	}
+	createStaticInit (staticForms);
     }
 
     private void parseAccessClause (final LispList clause)
@@ -275,7 +280,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     {
 	if (interfaces == null)
 	{
-	    interfaces = new ArrayList<String> ();
+	    interfaces = new ArrayList<> ();
 	}
 	if (interfaces.size () != interfaceClasses.size ())
 	{
@@ -344,8 +349,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		final Symbol key = c.head ();
 		if (key.is ("getter"))
 		{
-		    // TODO Static accessors should go through the class not the instance.
-		    // TODO Static fields should be initialized in a static block
+		    // Static accessors should go through the class not the instance.
+		    // Static fields should be initialized in a static block
 		    if (c.size () == 0)
 		    {
 			addGetterMethod (fName, accessorAccess, getGetterName (fName));
@@ -378,6 +383,97 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	}
     }
 
+    private void parseStaticClause (final LispList clause)
+    {
+	for (int i = 1; i < clause.size (); i++)
+	{
+	    staticForms.add (clause.get (i));
+	}
+    }
+
+    private void createStaticInit (final LispList body)
+    {
+	if (!hasStaticFields ())
+	{
+	    if (body.isEmpty ())
+	    {
+		LOGGER.fine (new LogString ("Static initializer not needed"));
+		return;
+	    }
+	}
+	LOGGER.fine (new LogString ("Static: %s", body));
+
+	final MethodNode mn = new MethodNode ();
+	mn.name = "<clinit>";
+	mn.desc = getMethodSignature (Type.VOID_TYPE, new ArrayList<Type> ());
+	mn.exceptions = new ArrayList<> ();
+	mn.access = ACC_STATIC;
+	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<> ();
+
+	// Compile the body forms here
+	final LabelNode l1 = new LabelNode ();
+	final Symbol blockName = null;
+	final BlockBinding bb = new BlockBinding (blockName, void.class, l1);
+	final List<BlockBinding> blocks = new ArrayList<> ();
+	blocks.add (bb);
+	final TreeCompilerContext context = new TreeCompilerContext (this, quotedData, void.class, mn, locals, blocks);
+
+	for (final Entry<Symbol, Object> entry : fieldValues.entrySet ())
+	{
+	    final Symbol fName = entry.getKey ();
+	    final FieldNode fieldNode = fieldMap.get (fName);
+	    final boolean isStatic = ((fieldNode.access & ACC_STATIC) != 0);
+	    if (isStatic)
+	    {
+		final Object value = entry.getValue ();
+		final Class<?> fClass = fieldClass.get (fName);
+		final LexicalField lf = new LexicalField (fName, true, fClass, classType);
+		final CompileResults cr = context.compile (value, true);
+		context.convert (cr, fClass, false, false);
+		lf.store (context);
+	    }
+	}
+	// Create local references for all class fields
+	for (final Entry<Symbol, FieldNode> entry : fieldMap.entrySet ())
+	{
+	    final Symbol fName = entry.getKey ();
+	    final FieldNode fieldNode = entry.getValue ();
+	    final boolean isStatic = ((fieldNode.access & ACC_STATIC) != 0);
+	    if (isStatic)
+	    {
+		final Class<?> fClass = fieldClass.get (fName);
+		locals.put (fName, new LexicalField (fName, isStatic, fClass, classType));
+	    }
+	}
+
+	// Pass mn to the TreeCompilerContext so it can get at the method locals.
+	for (int i = 0; i < body.size (); i++)
+	{
+	    final Object expr = body.get (i);
+	    final CompileResults resultClass = context.compile (expr, false);
+	    context.convert (resultClass, void.class, false, false);
+	}
+	context.add (l1);
+	context.add (new InsnNode (Opcodes.RETURN));
+	methods.add (mn);
+    }
+
+    /** Determine if any static fields have been declared. */
+    private boolean hasStaticFields ()
+    {
+	for (final Entry<Symbol, Object> entry : fieldValues.entrySet ())
+	{
+	    final Symbol fName = entry.getKey ();
+	    final FieldNode fieldNode = fieldMap.get (fName);
+	    final boolean isStatic = ((fieldNode.access & ACC_STATIC) != 0);
+	    if (isStatic)
+	    {
+		return true;
+	    }
+	}
+	return false;
+    }
+
     private void parseConstructorClause (final LispList arguments, final LispList body)
     {
 	LOGGER.fine (new LogString ("Constructor: %s", arguments));
@@ -385,7 +481,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	final MethodNode mn = new MethodNode ();
 	mn.name = "<init>";
 	mn.desc = getMethodSignature (Type.VOID_TYPE, getParameterTypes (arguments));
-	mn.exceptions = new ArrayList<String> ();
+	mn.exceptions = new ArrayList<> ();
 	int headerCount = 0;
 	for (int i = 0; i < body.size () && isMethodHeader (body.get (i)); i++)
 	{
@@ -406,7 +502,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		}
 	    }
 	}
-	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
+	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<> ();
 	int localRef = 1;
 	for (int i = 0; i < arguments.size (); i++)
 	{
@@ -437,11 +533,12 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    {
 		final Symbol fName = entry.getKey ();
 		final FieldNode fieldNode = fieldMap.get (fName);
-		if ((fieldNode.access & ACC_STATIC) == 0)
+		final boolean isStatic = ((fieldNode.access & ACC_STATIC) != 0);
+		if (!isStatic)
 		{
 		    final Object value = entry.getValue ();
 		    final Class<?> fClass = fieldClass.get (fName);
-		    final LexicalField lf = new LexicalField (fName, false, fClass, classType);
+		    final LexicalField lf = new LexicalField (fName, isStatic, fClass, classType);
 		    final CompileResults cr = context.compile (value, true);
 		    context.convert (cr, fClass, false, false);
 		    lf.store (context);
@@ -453,11 +550,9 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	{
 	    final Symbol fName = entry.getKey ();
 	    final FieldNode fieldNode = entry.getValue ();
-	    if ((fieldNode.access & ACC_STATIC) == 0)
-	    {
-		final Class<?> fClass = fieldClass.get (fName);
-		locals.put (fName, new LexicalField (fName, false, fClass, classType));
-	    }
+	    final boolean isStatic = ((fieldNode.access & ACC_STATIC) != 0);
+	    final Class<?> fClass = fieldClass.get (fName);
+	    locals.put (fName, new LexicalField (fName, isStatic, fClass, classType));
 	}
 	// Define 'this' as a local variable
 	locals.put (THIS_SYMBOL, new LexicalVariable (THIS_SYMBOL, superclass, 0));
@@ -480,7 +575,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	if (bodyForms.size () > 0)
 	{
 	    final Object firstForm = bodyForms.get (0);
-	    // TODO Need to support explicit calls to super or this constructors.
+	    // Support explicit calls to super or this constructors.
 	    if (firstForm instanceof LispList)
 	    {
 		final LispList first = (LispList)firstForm;
@@ -490,7 +585,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		    // Compile call to another constructor
 		    il.add (new VarInsnNode (Opcodes.ALOAD, 0));
 
-		    final List<Class<?>> arguments = new ArrayList<Class<?>> ();
+		    final List<Class<?>> arguments = new ArrayList<> ();
 		    for (int i = 1; i < first.size (); i++)
 		    {
 			arguments.add (selectMethod.predictResultClass (locals, first.get (i)));
@@ -511,7 +606,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		{
 		    // Compile call to superclass constructor
 		    il.add (new VarInsnNode (Opcodes.ALOAD, 0));
-		    final List<Class<?>> arguments = new ArrayList<Class<?>> ();
+		    final List<Class<?>> arguments = new ArrayList<> ();
 		    for (int i = 1; i < first.size (); i++)
 		    {
 			arguments.add (selectMethod.predictResultClass (locals, first.get (i)));
@@ -558,6 +653,8 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		    {
 			if (!selfReferentialConstructors.contains (descriptor))
 			{
+			    // Quoted data needs to be saved to static fields so it
+			    // can be seen by static methods.
 			    // mv.visitInsn (NOP);
 			    quotedData.addHiddenConstructorSteps (classType, mv);
 			    // mv.visitInsn (NOP);
@@ -585,7 +682,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	final Type returnType = Type.getType (valueClass);
 	mn.name = methodName.getName ();
 	mn.desc = getMethodSignature (returnType, getParameterTypes (arguments));
-	mn.exceptions = new ArrayList<String> ();
+	mn.exceptions = new ArrayList<> ();
 	int headerCount = 0;
 	for (int i = 0; i < body.size () && isMethodHeader (body.get (i)); i++)
 	{
@@ -595,10 +692,10 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	final boolean isStatic = (mn.access & ACC_STATIC) != 0;
 	final LispList bodyForms = body.subList (headerCount);
 	// bodyForms is the rest of the code
-	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<Symbol, LexicalBinding> ();
+	final Map<Symbol, LexicalBinding> locals = new LinkedHashMap<> ();
 	// Define 'this' as a local variable
 	locals.put (THIS_SYMBOL, new LexicalVariable (THIS_SYMBOL, superclass, 0));
-	int localRef = 1;
+	int localRef = isStatic ? 0 : 1;
 	for (int i = 0; i < arguments.size (); i++)
 	{
 	    final Symbol arg = NameSpec.getVariableName (arguments.get (i));
@@ -662,7 +759,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     private int getAccess (final List<Object[]> modifiers, final Object a)
     {
 	final String ms = ((Symbol)a).getName ();
-	final Find<Object[]> finder = new Find<Object[]> ();
+	final Find<Object[]> finder = new Find<> ();
 	final Object[] mod = finder.find (modifiers, new Predicate<Object[]> ()
 	{
 	    @Override
@@ -728,7 +825,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 
     private List<Type> getParameterTypes (final LispList arguments)
     {
-	final List<Type> result = new ArrayList<Type> ();
+	final List<Type> result = new ArrayList<> ();
 	for (final Object arg : arguments)
 	{
 	    final Class<?> varClass = NameSpec.getVariableClass (arg);
@@ -745,21 +842,12 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	buffer.append ("(");
 	for (int i = 0; i < argTypes.size (); i++)
 	{
-	    // buffer.append (CompileSupport.getNameTypeDescriptor (methodArgTypes.get (i)));
 	    buffer.append (argTypes.get (i).getDescriptor ());
 	}
 	buffer.append (")");
 	buffer.append (returnTypeDescriptor);
 	return buffer.toString ();
     }
-
-    // private void addGetterMethod (final Symbol field)
-    // {
-    // final String root = field.getName ();
-    // final char ch = root.charAt (0);
-    // final String methodName = "get" + Character.toUpperCase (ch) + root.substring (1);
-    // addGetterMethod (field, Opcodes.ACC_PUBLIC, methodName);
-    // }
 
     private String getGetterName (final Symbol field)
     {
@@ -778,7 +866,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	mn.access = getterAccess;
 	mn.name = methodName;
 	mn.desc = "()" + type.getDescriptor ();
-	mn.exceptions = new ArrayList<String> ();
+	mn.exceptions = new ArrayList<> ();
 	final InsnList il = mn.instructions;
 	if ((getterAccess & ACC_STATIC) != 0)
 	{
@@ -792,14 +880,6 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	il.add (new InsnNode (type.getOpcode (Opcodes.IRETURN)));
 	methods.add (mn);
     }
-
-    // private void addSetterMethod (final Symbol field)
-    // {
-    // final String root = field.getName ();
-    // final char ch = root.charAt (0);
-    // final String methodName = "set" + Character.toUpperCase (ch) + root.substring (1);
-    // addSetterMethod (field, Opcodes.ACC_PUBLIC, methodName);
-    // }
 
     private String getSetterName (final Symbol field)
     {
@@ -818,7 +898,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	mn.access = setterAccess;
 	mn.name = methodName;
 	mn.desc = "(" + type.getDescriptor () + ")V";
-	mn.exceptions = new ArrayList<String> ();
+	mn.exceptions = new ArrayList<> ();
 	final InsnList il = mn.instructions;
 	if ((setterAccess & ACC_STATIC) != 0)
 	{
