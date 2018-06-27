@@ -5,7 +5,7 @@ import java.lang.reflect.*;
 
 import lisp.eval.*;
 
-public class DefclassTesting extends Definer
+public class DefclassTestSupport extends Definer
 {
     @DefineLisp
     public void dd (final Class<?> c)

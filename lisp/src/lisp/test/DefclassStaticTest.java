@@ -16,14 +16,14 @@ import lisp.lang.*;
 import lisp.lang.FileReader;
 import lisp.primitives.LoggerPrimitives;
 
-class DefclassReturnTest
+class DefclassStaticTest
 {
     private static final LogManager logManager = LogManager.getLogManager ();
     private static final LoggerPrimitives loggerPrimitives = new LoggerPrimitives ();
     private final Interpreter interpreter = new Interpreter ();
     private final LexicalContext context = new LexicalContext (interpreter);
 
-    private static final String LISP_TEST_FILE = "ReturnSample.jisp";
+    private static final String LISP_TEST_FILE = "StaticSample.jisp";
 
     @BeforeAll
     static void setUpBeforeClass () throws Exception
@@ -67,8 +67,8 @@ class DefclassReturnTest
 	final Class<? extends SampleInterface> cls = (Class<? extends SampleInterface>)Defclass.forName ("lisp.test.Sample");
 	assertNotNull (cls);
 	final SampleInterface s = cls.newInstance ();
-	assertEquals (3 + 4, s.foo ());
-	assertEquals ("#<Sample 33>", s.toString ());
+	assertEquals (7 + 43, s.foo ());
+	assertEquals ("#<StaticSample 43>", s.toString ());
     }
 
     // FIXME add to this test case.

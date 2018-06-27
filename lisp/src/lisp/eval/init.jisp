@@ -52,7 +52,7 @@
 (new "lisp.cc.DefinePrimitives")
 (new "lisp.cc.VerifyPrimitives")
 
-(new "lisp.test.DefclassTesting")
+(new "lisp.test.DefclassTestSupport")
 
 (inPackage "lisp.lang")
 (import java.lang)

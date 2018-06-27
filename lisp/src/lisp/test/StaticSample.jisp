@@ -41,6 +41,6 @@
 	 
 	 (method String:toString ()
 	 	(access public)
-	 	(java.lang.String.format "#<Sample %s>" blah)
+	 	(java.lang.String.format "#<StaticSample %s>" blah)
 	 	)
 )
