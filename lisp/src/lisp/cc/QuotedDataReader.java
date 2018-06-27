@@ -116,13 +116,13 @@ public class QuotedDataReader implements QuotedData
     /** Create a method to locate a Symbol at runtime. */
     private MethodNode getGetSymbolMethod ()
     {
-	final MethodNode mn = new MethodNode (Opcodes.ACC_PRIVATE, "getSymbol",
+	final MethodNode mn = new MethodNode (Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, "getSymbol",
 	        "(Ljava/lang/String;Ljava/lang/String;)Llisp/lang/Symbol;", null, null);
 	final InsnList il = mn.instructions;
-	il.add (new VarInsnNode (Opcodes.ALOAD, 1));
+	il.add (new VarInsnNode (Opcodes.ALOAD, 0));
 	il.add (new MethodInsnNode (Opcodes.INVOKESTATIC, "lisp/lang/PackageFactory", "getPackage",
 	        "(Ljava/lang/String;)Llisp/lang/Package;", false));
-	il.add (new VarInsnNode (Opcodes.ALOAD, 2));
+	il.add (new VarInsnNode (Opcodes.ALOAD, 1));
 	il.add (new MethodInsnNode (Opcodes.INVOKEVIRTUAL, "lisp/lang/Package", "findSymbol",
 	        "(Ljava/lang/String;)Llisp/lang/Symbol;", false));
 	il.add (new InsnNode (Opcodes.ARETURN));
@@ -146,10 +146,10 @@ public class QuotedDataReader implements QuotedData
 	    {
 		final String javaSymbolName = javaName.createJavaSymbolName (symbol);
 		mv.visitVarInsn (Opcodes.ALOAD, 0);
-		mv.visitVarInsn (Opcodes.ALOAD, 0);
+		// mv.visitVarInsn (Opcodes.ALOAD, 0);
 		mv.visitLdcInsn (symbol.getPackage ().getName ());
 		mv.visitLdcInsn (symbol.getName ());
-		mv.visitMethodInsn (Opcodes.INVOKESPECIAL, classInternalName, "getSymbol",
+		mv.visitMethodInsn (Opcodes.INVOKESTATIC, classInternalName, "getSymbol",
 		        Type.getMethodDescriptor (symbolType, stringType, stringType), false);
 		mv.visitFieldInsn (Opcodes.PUTFIELD, classInternalName, javaSymbolName, symbolTypeDescriptor);
 
