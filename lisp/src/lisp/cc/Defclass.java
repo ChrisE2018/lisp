@@ -2,13 +2,14 @@
 package lisp.cc;
 
 import java.io.StringWriter;
-import java.lang.reflect.Constructor;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.logging.*;
 
 import org.objectweb.asm.*;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -122,7 +123,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     /** Collect all static evaluation forms here. */
     private final LispList staticForms = new LispList ();
 
-    public Defclass (final QuotedData quotedData, final String name, final LispList[] members)
+    public Defclass (final QuotedData quotedData, final String name, final LispList[] members) throws ClassNotFoundException
     {
 	super (asmApi);
 	this.quotedData = quotedData;
@@ -196,7 +197,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	return cw.toByteArray ();
     }
 
-    private void parse (final LispList[] members)
+    private void parse (final LispList[] members) throws ClassNotFoundException
     {
 	// Process everything except constructor and method members.
 	// Methods generate code that depends on knowing the fields.
@@ -214,6 +215,10 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    else if (key.is ("implements"))
 	    {
 		parseImplementsClause (clause);
+	    }
+	    else if (key.is ("annotation"))
+	    {
+		parseClassAnnotationClause (clause);
 	    }
 	    else if (key.is ("field"))
 	    {
@@ -300,7 +305,56 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	interfaceClasses.add ((Class<?>)clause.get (1));
     }
 
-    private void parseFieldClause (final LispList clause)
+    /**
+     * @param clause
+     * @throws ClassNotFoundException
+     * @See AnnotationNode source for information about the values field format.
+     */
+    private void parseClassAnnotationClause (final LispList clause) throws ClassNotFoundException
+    {
+	LOGGER.info (new LogString ("Annotation: %s", clause));
+	final Object annotationKind = clause.get (1);
+	Class<?> annotationClass;
+	if (annotationKind instanceof Class<?>)
+	{
+	    annotationClass = (Class<?>)annotationKind;
+	}
+	else if (annotationKind instanceof String)
+	{
+	    annotationClass = Class.forName ((String)annotationKind);
+	}
+	else
+	{
+	    throw new IllegalArgumentException (annotationKind + " is not an annotation");
+	}
+	final Type annotationType = Type.getType (annotationClass);
+	final AnnotationNode annotation = new AnnotationNode (api, annotationType.getDescriptor ());
+	for (int i = 0; i < clause.size (); i++)
+	{
+	    final String key = (String)clause.get (i - 1);
+	    final Object value = clause.get (i);
+	    annotation.values.add (key);
+	    annotation.values.add (value);
+	    verifyAnnotationMethod (annotationClass, key);
+	}
+	visibleAnnotations.add (annotation);
+    }
+
+    private void verifyAnnotationMethod (final Class<?> annotationClass, final String methodName)
+    {
+	final Method[] annotationMethods = annotationClass.getDeclaredMethods ();
+	for (final Method method : annotationMethods)
+	{
+	    if (method.getName ().equals (methodName))
+	    {
+		return;
+	    }
+	}
+	throw new IllegalArgumentException (
+	        methodName + " is not a valid field of annotation " + annotationClass.getSimpleName ());
+    }
+
+    private void parseFieldClause (final LispList clause) throws ClassNotFoundException
     {
 	final Symbol fName = (Symbol)clause.get (1);
 	final String fieldName = fName.getName ();
@@ -333,6 +387,10 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		{
 		    final Object value = c.get (1);
 		    fieldValues.put (fName, value);
+		}
+		else if (key.is ("annotation"))
+		{
+		    parseFieldAnnotationClause (fn, c);
 		}
 	    }
 	}
@@ -381,6 +439,41 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 		}
 	    }
 	}
+    }
+
+    /**
+     * @param clause
+     * @throws ClassNotFoundException
+     * @See AnnotationNode source for information about the values field format.
+     */
+    private void parseFieldAnnotationClause (final FieldNode fn, final LispList clause) throws ClassNotFoundException
+    {
+	LOGGER.info (new LogString ("Field %s Annotation: %s", fn.name, clause));
+	final Object annotationKind = clause.get (1);
+	Class<?> annotationClass;
+	if (annotationKind instanceof Class<?>)
+	{
+	    annotationClass = (Class<?>)annotationKind;
+	}
+	else if (annotationKind instanceof String)
+	{
+	    annotationClass = Class.forName ((String)annotationKind);
+	}
+	else
+	{
+	    throw new IllegalArgumentException (annotationKind + " is not an annotation");
+	}
+	final Type annotationType = Type.getType (annotationClass);
+	final AnnotationNode annotation = new AnnotationNode (api, annotationType.getDescriptor ());
+	for (int i = 0; i < clause.size (); i++)
+	{
+	    final String key = (String)clause.get (i - 1);
+	    final Object value = clause.get (i);
+	    annotation.values.add (key);
+	    annotation.values.add (value);
+	    verifyAnnotationMethod (annotationClass, key);
+	}
+	fn.visibleAnnotations.add (annotation);
     }
 
     private void parseStaticClause (final LispList clause)
@@ -474,7 +567,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	return false;
     }
 
-    private void parseConstructorClause (final LispList arguments, final LispList body)
+    private void parseConstructorClause (final LispList arguments, final LispList body) throws ClassNotFoundException
     {
 	LOGGER.fine (new LogString ("Constructor: %s", arguments));
 
@@ -675,7 +768,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     }
 
     private void parseMethodClause (final Class<?> valueClass, final Symbol methodName, final LispList arguments,
-            final LispList body)
+            final LispList body) throws ClassNotFoundException
     {
 	LOGGER.fine (new LogString ("Method: %s %s", methodName, arguments));
 	final MethodNode mn = new MethodNode ();
@@ -777,16 +870,16 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 
     private boolean isMethodHeader (final Object object)
     {
-	if (object instanceof LispList)
+	if (object instanceof List)
 	{
-	    final LispList c = (LispList)object;
+	    final List<?> c = (List<?>)object;
 	    if (c.size () > 0)
 	    {
 		final Object h = c.get (0);
 		if (h instanceof Symbol)
 		{
 		    final Symbol key = (Symbol)h;
-		    return (key.is ("access") || key.is ("throws"));
+		    return key.is ("access") || key.is ("throws") || key.is ("annotation");
 		}
 	    }
 	}
@@ -794,6 +887,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
     }
 
     private void processMethodHeader (final MethodNode mn, final List<Object[]> modifiers, final LispList m)
+            throws ClassNotFoundException
     {
 	final LispList c = m;
 	final Symbol key = c.head ();
@@ -811,6 +905,45 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    final Type type = Type.getType (dataType);
 	    mn.exceptions.add (type.getInternalName ());
 	}
+	else if (key.is ("annotation"))
+	{
+	    parseMethodAnnotationClause (mn, c);
+	}
+    }
+
+    /**
+     * @param clause
+     * @throws ClassNotFoundException
+     * @See AnnotationNode source for information about the values field format.
+     */
+    private void parseMethodAnnotationClause (final MethodNode mn, final LispList clause) throws ClassNotFoundException
+    {
+	LOGGER.info (new LogString ("Method %s Annotation: %s", mn.name, clause));
+	final Object annotationKind = clause.get (1);
+	Class<?> annotationClass;
+	if (annotationKind instanceof Class<?>)
+	{
+	    annotationClass = (Class<?>)annotationKind;
+	}
+	else if (annotationKind instanceof String)
+	{
+	    annotationClass = Class.forName ((String)annotationKind);
+	}
+	else
+	{
+	    throw new IllegalArgumentException (annotationKind + " is not an annotation");
+	}
+	final Type annotationType = Type.getType (annotationClass);
+	final AnnotationNode annotation = new AnnotationNode (api, annotationType.getDescriptor ());
+	for (int i = 0; i < clause.size (); i++)
+	{
+	    final String key = (String)clause.get (i - 1);
+	    final Object value = clause.get (i);
+	    annotation.values.add (key);
+	    annotation.values.add (value);
+	    verifyAnnotationMethod (annotationClass, key);
+	}
+	mn.visibleAnnotations.add (annotation);
     }
 
     private Class<?>[] getParameterClasses (final LispList arguments)

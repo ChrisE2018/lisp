@@ -5,15 +5,17 @@
 
 package lisp.symbol;
 
-import lisp.lang.*;
+import java.util.List;
+
+import lisp.lang.Symbol;
 
 public interface LispVisitor
 {
     /** Call this at the start of each expression before doing anything else. */
-    public void visitStart (LispList expression);
+    public void visitStart (List<?> expression);
 
     /** Call this at the end of each expression after doing everything else. */
-    public void visitEnd (LispList expression);
+    public void visitEnd (List<?> expression);
 
     /** Visit a sub-expression whose value may become the return value. */
     public void visitValue (Object expression);

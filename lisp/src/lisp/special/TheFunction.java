@@ -44,7 +44,7 @@ public class TheFunction implements LispTreeFunction, LispCCFunction, Opcodes, L
     }
 
     @Override
-    public void walker (final LispVisitor visitor, final LispList expression)
+    public void walker (final LispVisitor visitor, final List<?> expression)
     {
 	visitor.visitStart (expression);
 	visitor.visitValue (expression.get (2));

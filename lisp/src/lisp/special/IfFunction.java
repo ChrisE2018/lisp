@@ -1,6 +1,8 @@
 
 package lisp.special;
 
+import java.util.List;
+
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
@@ -14,7 +16,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
-    public void walker (final LispVisitor visitor, final LispList expression)
+    public void walker (final LispVisitor visitor, final List<?> expression)
     {
 	visitor.visitStart (expression);
 	visitor.visitBoolean (expression.get (1));
@@ -25,7 +27,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    {
 		visitor.visitIgnored (expression.get (i));
 	    }
-	    visitor.visitValue (expression.last ());
+	    visitor.visitValue (expression.get (expression.size () - 1));
 	}
 	else
 	{

@@ -17,7 +17,7 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
-    public void walker (final LispVisitor visitor, final LispList expression)
+    public void walker (final LispVisitor visitor, final List<?> expression)
     {
 	visitor.visitStart (expression);
 	final LispList bindings = (LispList)expression.get (1);
@@ -31,7 +31,7 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	{
 	    visitor.visitIgnored (expression.get (i));
 	}
-	visitor.visitValue (expression.last ());
+	visitor.visitValue (expression.get (expression.size () - 1));
 	visitor.visitEnd (expression);
     }
 

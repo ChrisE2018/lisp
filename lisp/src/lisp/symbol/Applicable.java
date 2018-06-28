@@ -19,7 +19,7 @@ public class Applicable
      * @param arguments The arguments that will be used to invoke the method.
      * @return True if it is applicable.
      */
-    public boolean applicable (final Method method, final List<Object> arguments)
+    public boolean applicable (final Method method, final List<?> arguments)
     {
 	final int actualArgCount = arguments.size ();
 	final int minimumArgCount = method.getParameterCount () + (method.isVarArgs () ? -1 : 0);

@@ -50,32 +50,6 @@ public class Invoke
 	return javaMethodCall (target, parentClass, methodName, arguments);
     }
 
-    // /**
-    // * Determine if an overloaded method is applicable to a specific set of arguments. Currently
-    // * this just tests the number of arguments, it needs to be modified to test the types
-    // too.</br>
-    // * FIXME Test parameter types.
-    // *
-    // * @param method
-    // * @param arguments
-    // * @return
-    // */
-    // private boolean applicable (final Method method, final List<Object> arguments)
-    // {
-    // if (method.isVarArgs ())
-    // {
-    // if (method.getParameterCount () - 1 <= arguments.size ())
-    // {
-    // return true;
-    // }
-    // }
-    // else if (method.getParameterCount () == arguments.size ())
-    // {
-    // return true;
-    // }
-    // return false;
-    // }
-
     /**
      * Apply a single method to a target and argument list. This will only apply this method, it
      * will not search for an inherited method or another overloaded version.
@@ -92,7 +66,7 @@ public class Invoke
      * @throws IllegalArgumentException
      * @throws InvocationTargetException
      */
-    public Object apply (final Method method, final Object target, final List<Object> arguments)
+    public Object apply (final Method method, final Object target, final List<?> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	// Need to handle VarArgs here.
@@ -125,7 +99,7 @@ public class Invoke
      * @throws IllegalArgumentException
      * @throws InvocationTargetException
      */
-    private Object invokeVarArgsMethod (final Object target, final Method method, final List<Object> arguments)
+    private Object invokeVarArgsMethod (final Object target, final Method method, final List<?> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	final Class<?>[] parameters = method.getParameterTypes ();
@@ -171,7 +145,7 @@ public class Invoke
      * @throws IllegalArgumentException
      * @throws InvocationTargetException
      */
-    private Object invokeMethod (final Object target, final Method method, final List<Object> arguments)
+    private Object invokeMethod (final Object target, final Method method, final List<?> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	final Class<?>[] parameters = method.getParameterTypes ();

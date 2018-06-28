@@ -16,7 +16,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
-    public void walker (final LispVisitor visitor, final LispList expression)
+    public void walker (final LispVisitor visitor, final List<?> expression)
     {
 	visitor.visitStart (expression);
 	for (int i = 1; i < expression.size (); i++)

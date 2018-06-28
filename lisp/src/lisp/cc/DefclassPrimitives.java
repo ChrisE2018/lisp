@@ -66,7 +66,7 @@ public class DefclassPrimitives extends Definer
 	return null;
     }
 
-    // FIXME (compile pathname &key String:bindir boolean:ifneeded)
+    // (compile pathname &key String:bindir boolean:ifneeded)
 
     @DefineLisp (name = "%compile", special = true)
     public String pctCompileclassForm (@SuppressWarnings ("unused") final LexicalContext context, final String pathname,
@@ -89,13 +89,12 @@ public class DefclassPrimitives extends Definer
 	}
 	try
 	{
-	    // FIXME Must use another kind of QuotedData here.
 	    final QuotedData quotedDataHandler = new QuotedDataReader ();
 	    final Defclass defclass = new Defclass (quotedDataHandler, name, clauses);
 	    final byte[] b = defclass.getBytecode ();
-	    final File file = new File (pathname);
-	    ensureOutputExists (file);
-	    final OutputStream stream = new BufferedOutputStream (new FileOutputStream (file));
+	    final File outputFile = new File (pathname);
+	    ensureOutputFileExists (outputFile);
+	    final OutputStream stream = new BufferedOutputStream (new FileOutputStream (outputFile));
 	    stream.write (b, 0, b.length);
 	    stream.flush ();
 	    stream.close ();
@@ -109,7 +108,7 @@ public class DefclassPrimitives extends Definer
 	return null;
     }
 
-    private void ensureOutputExists (final File file)
+    private void ensureOutputFileExists (final File file)
     {
 	final File folder = file.getParentFile ();
 	if (!folder.exists ())

@@ -45,12 +45,12 @@ public class DefaultFunctionCell extends FunctionCell
      *            is based on argument types and inherits from superclasses of the target object.
      */
     @Override
-    public Object apply (final List<Object> arguments)
+    public Object apply (final List<?> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	final Object target = arguments.get (0);
 	final String name = getFunctionName ().getName ();
-	final List<Object> args = arguments.subList (1, arguments.size ());
+	final List<?> args = arguments.subList (1, arguments.size ());
 	for (Class<?> cls = target.getClass (); cls != null; cls = cls.getSuperclass ())
 	{
 	    Method selectedMethod = null;

@@ -1,6 +1,8 @@
 
 package lisp.special;
 
+import java.util.List;
+
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
@@ -13,14 +15,14 @@ public class PrognFunction implements LispCCFunction, Opcodes, LispTreeWalker, L
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
-    public void walker (final LispVisitor visitor, final LispList expression)
+    public void walker (final LispVisitor visitor, final List<?> expression)
     {
 	visitor.visitStart (expression);
 	for (int i = 1; i < expression.size () - 1; i++)
 	{
 	    visitor.visitIgnored (expression.get (i));
 	}
-	visitor.visitValue (expression.last ());
+	visitor.visitValue (expression.get (expression.size () - 1));
 	visitor.visitEnd (expression);
     }
 

@@ -18,14 +18,14 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 
     /** Call visitor on all directly nested subexpressions. */
     @Override
-    public void walker (final LispVisitor visitor, final LispList expression)
+    public void walker (final LispVisitor visitor, final List<?> expression)
     {
 	visitor.visitStart (expression);
-	final LispList bindings = (LispList)expression.get (1);
+	final List<?> bindings = (List<?>)expression.get (1);
 	// CONSIDER visit variable binding
 	for (int i = 0; i < bindings.size (); i++)
 	{
-	    final LispList clause = (LispList)bindings.get (i);
+	    final List<?> clause = (List<?>)bindings.get (i);
 	    // varSpec = clause.get (0)
 	    visitor.visitValue (clause.get (1));
 	}
@@ -33,7 +33,7 @@ public class LetStarFunction implements LispCCFunction, LispTreeFunction, Opcode
 	{
 	    visitor.visitIgnored (expression.get (i));
 	}
-	visitor.visitValue (expression.last ());
+	visitor.visitValue (expression.get (expression.size () - 1));
 	visitor.visitEnd (expression);
     }
 

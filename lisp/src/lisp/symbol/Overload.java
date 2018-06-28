@@ -148,7 +148,7 @@ public class Overload implements Describer
 	return false;
     }
 
-    public Object apply (final List<Object> arguments)
+    public Object apply (final List<?> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	if (!valid)

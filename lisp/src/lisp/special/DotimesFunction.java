@@ -18,7 +18,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 {
     /** Call visitor on all directly nested subexpressions. */
     @Override
-    public void walker (final LispVisitor visitor, final LispList expression)
+    public void walker (final LispVisitor visitor, final List<?> expression)
     {
 	visitor.visitStart (expression);
 	final LispList clause = (LispList)expression.get (1);
@@ -28,7 +28,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
 	{
 	    visitor.visitIgnored (expression.get (i));
 	}
-	visitor.visitValue (expression.last ());
+	visitor.visitValue (expression.get (expression.size () - 1));
 	visitor.visitEnd (expression);
     }
 

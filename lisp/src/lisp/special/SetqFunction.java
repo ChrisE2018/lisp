@@ -1,6 +1,7 @@
 
 package lisp.special;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.objectweb.asm.*;
@@ -23,7 +24,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 
     /** Call visitor on all directly nested subexpressions. */
     @Override
-    public void walker (final LispVisitor visitor, final LispList expression)
+    public void walker (final LispVisitor visitor, final List<?> expression)
     {
 	visitor.visitStart (expression);
 	final Symbol symbol = (Symbol)expression.get (1);

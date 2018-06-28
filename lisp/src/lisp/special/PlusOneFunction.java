@@ -13,7 +13,7 @@ import lisp.symbol.LispVisitor;
 public class PlusOneFunction implements Opcodes, LispTreeWalker, LispTreeFunction
 {
     @Override
-    public void walker (final LispVisitor visitor, final LispList expression)
+    public void walker (final LispVisitor visitor, final List<?> expression)
     {
 	visitor.visitStart (expression);
 	visitor.visitValue (expression.get (1));

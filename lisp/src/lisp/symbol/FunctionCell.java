@@ -109,7 +109,7 @@ public abstract class FunctionCell implements Describer
      * @param locals The current binding context.
      * @param expression The expression that will be evaluated.
      */
-    public Overload selectMethod (final Map<Symbol, LexicalBinding> locals, final LispList expression)
+    public Overload selectMethod (final Map<Symbol, LexicalBinding> locals, final List<?> expression)
     {
 	final List<Class<?>> arguments = new ArrayList<Class<?>> ();
 	for (int i = 1; i < expression.size (); i++)
@@ -220,7 +220,7 @@ public abstract class FunctionCell implements Describer
      * @param locals The current binding context.
      * @param expression The expression that will be evaluated.
      */
-    public Class<?> getResultClass (final Map<Symbol, LexicalBinding> locals, final LispList expression)
+    public Class<?> getResultClass (final Map<Symbol, LexicalBinding> locals, final List<?> expression)
     {
 	if (overloads.size () > 0)
 	{
@@ -263,7 +263,7 @@ public abstract class FunctionCell implements Describer
      * @throws IllegalArgumentException
      * @throws InvocationTargetException
      */
-    public Object apply (final List<Object> arguments)
+    public Object apply (final List<?> arguments)
             throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
 	Overload selectedMethod = null;
@@ -321,7 +321,7 @@ public abstract class FunctionCell implements Describer
 	throw new IllegalArgumentException ("No applicable " + symbol + " method for " + arguments);
     }
 
-    private String getArglist (final List<Object> arguments)
+    private String getArglist (final List<?> arguments)
     {
 	final StringBuilder buffer = new StringBuilder ();
 	buffer.append (symbol);
