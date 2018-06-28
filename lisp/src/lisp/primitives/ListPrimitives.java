@@ -75,7 +75,7 @@ public class ListPrimitives extends Definer
     }
 
     @DefineLisp
-    public Object nth (final List<?> arg, final int n)
+    public Object nth (final int n, final List<?> arg)
     {
 	return arg.get (n);
     }

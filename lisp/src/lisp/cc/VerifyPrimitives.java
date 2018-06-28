@@ -13,6 +13,7 @@ public class VerifyPrimitives extends Definer
 
     private static final List<Symbol> verifyFailures = new ArrayList<Symbol> ();
     private static final List<String> verifyErrors = new ArrayList<String> ();
+    private static int totalTestCount = 0;
 
     /**
      * Record an error. Originally this just stored the count. It was modified to record a message
@@ -22,6 +23,11 @@ public class VerifyPrimitives extends Definer
      */
     public static void incrementReplErrorCount (final String message)
     {
+	if (message.startsWith ("null"))
+	{
+	    /// huh?
+	    verifyErrors.add (message);
+	}
 	verifyErrors.add (message);
     }
 
@@ -33,6 +39,12 @@ public class VerifyPrimitives extends Definer
     public static void resetReplErrorCount ()
     {
 	verifyErrors.clear ();
+    }
+
+    /** Use this to determine (from JUnit) if any tests have been run. */
+    public static int getTotalTestCount ()
+    {
+	return totalTestCount;
     }
 
     @DefineLisp
@@ -78,6 +90,7 @@ public class VerifyPrimitives extends Definer
 	failCount = 0;
 	errorCount = 0;
 	verifyFailures.clear ();
+	totalTestCount = 0;
 	startTime = System.currentTimeMillis ();
 	return null;
     }
@@ -145,11 +158,20 @@ public class VerifyPrimitives extends Definer
     @DefineLisp (special = true)
     public Object verifyPhase (final LexicalContext context, final Symbol phase)
     {
-	System.out.printf ("%nCompleted verification phase %s%n", verifyPhase);
-	printTestStatistics ();
-
+	if (verifyPhase != null)
+	{
+	    System.out.printf ("%nCompleted verification phase %s%n", verifyPhase);
+	    printTestStatistics ();
+	}
 	verifyPhase = phase;
-	System.out.printf ("%nStarting verification phase %s%n%n", phase);
+	if (phase == null)
+	{
+	    System.out.printf ("%nVerification complete%n%n", phase);
+	}
+	else
+	{
+	    System.out.printf ("%nStarting verification phase %s%n%n", phase);
+	}
 	return verifyPhase;
     }
 
@@ -252,6 +274,7 @@ public class VerifyPrimitives extends Definer
     {
 	final Symbol phase = getVerifyPhase ();
 	testCount++;
+	totalTestCount++;
 	try
 	{
 
@@ -296,10 +319,11 @@ public class VerifyPrimitives extends Definer
     }
 
     @DefineLisp (special = true)
-    public Object verifyError (final LexicalContext context, final Object expr, final String expected)
+    public Object verifyError (final LexicalContext context, final Object expr, final Class<? extends Throwable> expected)
     {
 	final Symbol phase = getVerifyPhase ();
 	testCount++;
+	totalTestCount++;
 	try
 	{
 	    final Object value = context.eval (expr);
@@ -310,10 +334,74 @@ public class VerifyPrimitives extends Definer
 	}
 	catch (final Throwable e)
 	{
-	    if (e.getClass ().getName ().equals (expected))
+	    verifyError (expr, e, expected);
+	}
+	return null;
+    }
+
+    private void verifyError (final Object expr, final Throwable e, final Class<? extends Throwable> expectedClass)
+    {
+	final Symbol phase = getVerifyPhase ();
+
+	final Class<? extends Throwable> actualClass = e.getClass ();
+	if (actualClass.equals (expectedClass))
+	{
+	    System.out.printf ("[%s] Pass: Expected error %s found while evaluating %s%n", phase, expectedClass, expr);
+	    passCount++;
+	}
+	else
+	{
+	    final Throwable cause = e.getCause ();
+	    if (cause != null)
 	    {
-		System.out.printf ("[%s] Pass: Expected error %s found while evaluating %s%n", phase, expected, expr);
-		passCount++;
+		verifyError (expr, cause, expectedClass);
+	    }
+	    else
+	    {
+		verifyFailures.add (phase);
+		System.out.printf ("[%s] Fail: Expected error %s not found while evaluating %s: %s%n", phase, expectedClass, expr,
+		        e);
+		failCount++;
+		checkStopAtFirstFailure ();
+	    }
+	}
+    }
+
+    @DefineLisp (special = true)
+    public Object verifyError (final LexicalContext context, final Object expr, final String expected)
+    {
+	final Symbol phase = getVerifyPhase ();
+	testCount++;
+	totalTestCount++;
+	try
+	{
+	    final Object value = context.eval (expr);
+	    verifyFailures.add (phase);
+	    System.out.printf ("[%s] Fail: value of %s is %s while expecting error %s%n", phase, expr, value, expected);
+	    failCount++;
+	    checkStopAtFirstFailure ();
+	}
+	catch (final Throwable e)
+	{
+	    verifyError (expr, e, expected);
+	}
+	return null;
+    }
+
+    private void verifyError (final Object expr, final Throwable e, final String expected)
+    {
+	final Symbol phase = getVerifyPhase ();
+	if (e.getClass ().getName ().equals (expected))
+	{
+	    System.out.printf ("[%s] Pass: Expected error %s found while evaluating %s%n", phase, expected, expr);
+	    passCount++;
+	}
+	else
+	{
+	    final Throwable cause = e.getCause ();
+	    if (cause != null)
+	    {
+		verifyError (expr, cause, expected);
 	    }
 	    else
 	    {
@@ -323,7 +411,6 @@ public class VerifyPrimitives extends Definer
 		checkStopAtFirstFailure ();
 	    }
 	}
-	return null;
     }
 
     private boolean same (final Object a, final Object b)

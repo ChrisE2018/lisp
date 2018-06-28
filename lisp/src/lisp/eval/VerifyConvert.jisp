@@ -164,5 +164,5 @@
 (verify (foo) 3)
 
 ; And quit
-(verifyPhase verifyComplete)
+(verifyPhase null)
 

@@ -665,6 +665,6 @@
 (printTestStatistics)
 
 ; And quit
-(verifyPhase verifyComplete)
+(verifyPhase null)
 
 

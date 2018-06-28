@@ -1,0 +1,94 @@
+;
+; Test cases for ListPrimitives.java
+;
+
+(showBytecode f)
+
+(verifyPhase listTest)
+
+(undefine 'size)
+
+(verify (list 1 2 3) '(1 2 3))
+
+(define foo (a b c)
+	(list a b c))
+
+(verify (foo 4 5 6) '(4 5 6))
+
+(setq x (set "a" "b" "c" "a" "b"))
+(verify (size x) 3)
+(verify (getName (getClass x)) "java.util.LinkedHashSet")
+
+(setq y (set "a" "b" "d" "a" "b"))
+(verify (size y) 3)
+(verify (size (set)) 0)
+
+(verify (intersection x y) (set "a" "b"))
+(verify (intersection x y) (set "b" "a"))
+
+(verify (intersection (set) y) (set))
+
+(verify (union x y) (set "d" "a" "b" "c"))
+
+(verify (union (set) (set)) (set))
+
+(verify (union (set 1) (set 2)) (set 2 1))
+
+(verify (difference (set 1 2 3) (set 2)) (set 3 1))
+(verify (difference (set 1 2 3 4 5 6) (set 2 4)) (set 5 3 6 1))
+(verify (difference (set 1 2 3 4 5 6) (set)) (set 1 2 3 4 5 6))
+(verify (difference (set) (set 1 2 3 4 5 6)) (set))
+
+(verify (nth 2 (list 0 1 2 3 4 5 6)) 2)
+(verify (nth 0 (list 0 1 2 3 4 5 6)) 0)
+(verify (nth 6 (list 0 1 2 3 4 5 6)) 6)
+(verifyError (nth -1 (list 1 2 3)) java.lang.ArrayIndexOutOfBoundsException)
+(verifyError (nth 5 (list 1 2 3)) java.lang.IndexOutOfBoundsException)
+
+(setq x (list 0 1 2 3 4 5 6))
+
+(verify (car x) 0)
+(verify (cadr x) 1)
+(verify (caddr x) 2)
+(verify (cadddr x) 3)
+(verify (caddddr x) 4)
+
+(verify (first x) 0)
+(verify (second x) 1)
+(verify (third x) 2)
+(verify (fourth x) 3)
+(verify (fifth x) 4)
+
+(verify (cons 1 x) (list 1 0 1 2 3 4 5 6))
+
+(verify (member 0 x) true)
+(verify (member 1 x) true)
+(verify (member 2 x) true)
+(verify (member 3 x) true)
+(verify (member 4 x) true)
+(verify (member 5 x) true)
+(verify (member 6 x) true)
+
+(verify (member -1 x) false)
+(verify (member "alpha" x) false)
+(verify (member x x) false)
+
+(verify (remove 3 x) true)
+(verify (remove 3 x) false)
+(verify (member 0 x) true)
+(verify (member 1 x) true)
+(verify (member 2 x) true)
+(verify (member 3 x) false)
+(verify (member 4 x) true)
+(verify (member 5 x) true)
+(verify (member 6 x) true)
+
+(verify (count 1 x) 1)
+(verify (count 3 x) 0)
+(verify (count 1 (set)) 0)
+(verify (count 4 (set 4)) 1)
+(verify (count 'a (set 'a)) 1)
+(verify (count 'b (set 'a)) 0)
+
+(verifyPhase null)
+
