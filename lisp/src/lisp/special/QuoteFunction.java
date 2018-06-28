@@ -38,8 +38,8 @@ public class QuoteFunction implements LispCCFunction, LispTreeFunction, Opcodes,
     }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
-            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e, final Class<?> valueClass,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo () (quote bar))
 	final Object value = e.get (1);

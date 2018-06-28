@@ -79,7 +79,7 @@ public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes
     }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e, final Class<?> valueType,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (unless x 1 2))
@@ -94,7 +94,7 @@ public class UnlessFunction implements LispCCFunction, LispTreeFunction, Opcodes
 	    generator.compileExpression (mv, e.get (i), null, false, false);
 	}
 	// Don't pop the last value
-	generator.compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
+	generator.compileExpression (mv, e.get (e.size () - 1), valueType, allowNarrowing, liberalTruth);
 	final Label l3 = new Label ();
 	mv.visitJumpInsn (GOTO, l3);
 

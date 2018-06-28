@@ -823,7 +823,7 @@ public class Defclass extends ClassNode implements TreeCompilerInterface, Opcode
 	    final CompileResults resultClass = context.compile (expr, false);
 	    context.convert (resultClass, void.class, false, false);
 	}
-	final CompileResults resultClass = context.compile (bodyForms.last (), true);
+	final CompileResults resultClass = context.compile (bodyForms.get (bodyForms.size () - 1), true);
 	// (define double:foo (int:n) 1 2 n)
 	for (final CompileResult resultKind : resultClass.getResults ())
 	{

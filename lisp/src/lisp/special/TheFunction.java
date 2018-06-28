@@ -111,8 +111,8 @@ public class TheFunction implements LispTreeFunction, LispCCFunction, Opcodes, L
     }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
-            final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e, final Class<?> valueClass,
+            final boolean allowNarrowing, final boolean liberalTruth)
     {
 	final Object type = e.get (1);
 	final Object arg = e.get (2);

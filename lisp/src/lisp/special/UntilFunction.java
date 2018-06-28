@@ -56,7 +56,7 @@ public class UntilFunction implements LispCCFunction, LispTreeFunction, Opcodes,
     }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e, final Class<?> valueType,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (setq a 0) (until (> a x) (printf "A: %s%n" a) (setq a (+ a 1))))
@@ -81,7 +81,7 @@ public class UntilFunction implements LispCCFunction, LispTreeFunction, Opcodes,
 	    generator.compileExpression (mv, e.get (i), null, false, false);
 	}
 	// Don't pop the last value
-	generator.compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
+	generator.compileExpression (mv, e.get (e.size () - 1), valueType, allowNarrowing, liberalTruth);
 	mv.visitJumpInsn (GOTO, l1);
 
 	mv.visitLabel (l2);

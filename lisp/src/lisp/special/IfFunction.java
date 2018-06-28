@@ -78,7 +78,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
     }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expression,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> expression,
             final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (expression.size () <= 3)
@@ -93,7 +93,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	}
     }
 
-    public void compileOneCaseIf (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
+    public void compileOneCaseIf (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e,
             final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (when x 1 2))
@@ -110,7 +110,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	    generator.compileExpression (mv, e.get (i), null, false, false);
 	}
 	// Don't pop the last value
-	generator.compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
+	generator.compileExpression (mv, e.get (e.size () - 1), valueType, allowNarrowing, liberalTruth);
 	mv.visitJumpInsn (GOTO, l1);
 
 	// False case.
@@ -122,7 +122,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	mv.visitLabel (l1);
     }
 
-    private void compileTwoCaseIf (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
+    private void compileTwoCaseIf (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e,
             final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (if x 1 2))
@@ -152,7 +152,7 @@ public class IfFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	else
 	{
 	    // Return the last value
-	    generator.compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
+	    generator.compileExpression (mv, e.get (e.size () - 1), valueType, allowNarrowing, liberalTruth);
 	}
 
 	// Jump here after true case or fall through after else.

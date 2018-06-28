@@ -254,7 +254,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
     // }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expression,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> expression,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (valueClass == null)
@@ -272,7 +272,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
     }
 
     /** Compile an 'and' expression whose value will be ignored. */
-    public void compile2void (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e)
+    public void compile2void (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e)
     {
 	// (define foo (a b) (and) 1)
 	// (define foo (a b) (and a b) 2)
@@ -289,7 +289,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
     }
 
     /** Compile an 'and' expression whose value is only used as a boolean */
-    private void compileBooleanAnd (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e)
+    private void compileBooleanAnd (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e)
     {
 	// (define foo (a b) (if (and a b) 1 2))
 	final Label l1 = new Label ();
@@ -312,7 +312,7 @@ public class AndFunction implements LispCCFunction, Opcodes, LispTreeWalker, Lis
 	mv.visitLabel (l2);
     }
 
-    private void compileAnd (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
+    private void compileAnd (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (a b) (and))

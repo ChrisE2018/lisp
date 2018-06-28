@@ -313,7 +313,7 @@ public class TreeCompiler extends ClassNode implements Opcodes, TreeCompilerInte
 	    final CompileResults resultClass = context.compile (expr, false);
 	    context.convert (resultClass, void.class, false, false);
 	}
-	final CompileResults resultClass = context.compile (methodBody.last (), true);
+	final CompileResults resultClass = context.compile (methodBody.get (methodBody.size () - 1), true);
 	// (define double:foo (int:n) 1 2 n)
 	for (final CompileResult resultKind : resultClass.getResults ())
 	{

@@ -609,7 +609,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    {
 		compileExpression (mv, e.get (i), null);
 	    }
-	    compileExpression (mv, e.last (), valueType);
+	    compileExpression (mv, e.get (e.size () - 1), valueType);
 	}
     }
 
@@ -644,7 +644,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	}
 	else
 	{
-	    compileExpression (mv, e.last (), valueType);
+	    compileExpression (mv, e.get (e.size () - 1), valueType);
 	}
 
 	// Jump here after true case or fall through after else.
@@ -750,7 +750,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), null);
 	}
 	// Don't pop the last value
-	compileExpression (mv, e.last (), valueType);
+	compileExpression (mv, e.get (e.size () - 1), valueType);
 	mv.visitJumpInsn (GOTO, l1);
 
 	// False case.
@@ -785,7 +785,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), null);
 	}
 	// Don't pop the last value
-	compileExpression (mv, e.last (), valueType);
+	compileExpression (mv, e.get (e.size () - 1), valueType);
 	final Label l3 = new Label ();
 	mv.visitJumpInsn (GOTO, l3);
 
@@ -1086,7 +1086,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), null);
 	}
 	// Don't pop the last value
-	compileExpression (mv, e.last (), valueType);
+	compileExpression (mv, e.get (e.size () - 1), valueType);
 	mv.visitJumpInsn (GOTO, l1);
 
 	mv.visitLabel (l2);
@@ -1127,7 +1127,7 @@ public class CompileClassAdaptor_v2 extends ClassVisitor implements Opcodes
 	    compileExpression (mv, e.get (i), null);
 	}
 	// Don't pop the last value
-	compileExpression (mv, e.last (), valueType);
+	compileExpression (mv, e.get (e.size () - 1), valueType);
 	mv.visitJumpInsn (GOTO, l1);
 
 	mv.visitLabel (l2);

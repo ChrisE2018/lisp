@@ -219,7 +219,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 
     // OLD VERSION
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expression,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> expression,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (valueClass == null)
@@ -237,7 +237,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
     }
 
     /** Compile an 'or' expression whose value will be ignored. */
-    private void compileVoidOr (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e)
+    private void compileVoidOr (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e)
     {
 	// (define foo (a b) (or) 2)
 	// (define foo (a b) (or a b) 3)
@@ -254,7 +254,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
     }
 
     /** Compile an 'or' expression whose value is only used as a boolean */
-    private void compileBooleanOr (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e)
+    private void compileBooleanOr (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e)
     {
 	// (define foo (a b) (if (or a b) 1 2))
 	final Label l1 = new Label ();
@@ -277,7 +277,7 @@ public class OrFunction implements LispCCFunction, LispTreeFunction, Opcodes, Li
 	mv.visitLabel (l2);
     }
 
-    private void compileOr (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
+    private void compileOr (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (a b) (or))

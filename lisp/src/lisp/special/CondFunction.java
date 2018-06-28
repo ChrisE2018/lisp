@@ -88,7 +88,7 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expression,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> expression,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	if (valueClass == null)
@@ -106,7 +106,7 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     }
 
     /** Case where no return value is required. */
-    private void compileVoidCond (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e)
+    private void compileVoidCond (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e)
     {
 	// (define foo (x) (cond ((= x 1) (printf "one%n")) ((= x 2)(printf "two%n"))) 'done)
 
@@ -139,7 +139,7 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     /** Case where only a boolean value is required. */
     // (define foo (x) (when (cond ((= x 1)) ((= x 2) false) ((= x 3) true)) (printf "when%n")))
     // (define foo (x) (when (cond ((= x 1)) ((= x 2) false) ((= x 3))) (printf "when%n")))
-    private void compileBooleanCond (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e)
+    private void compileBooleanCond (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e)
     {
 	// Label to goto and return result
 	final Label l1 = new Label ();
@@ -177,7 +177,7 @@ public class CondFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
     }
 
     /** Compile a cond expression where the value will be used. */
-    private void compileCond (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e,
+    private void compileCond (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (setq showBytecode t)

@@ -81,7 +81,7 @@ public class DotimesFunction implements LispCCFunction, LispTreeFunction, Opcode
     }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e, final Class<?> valueType,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo () (dotimes (i 3) 0))

@@ -97,7 +97,7 @@ public class Analyzer
 	    final Object expression = forms.get (i);
 	    analyzeVoidExpression (0, expression, localVariables);
 	}
-	analyzeValueExpression (0, forms.last (), localVariables, valueType);
+	analyzeValueExpression (0, forms.get (forms.size () - 1), localVariables, valueType);
     }
 
     private void analyzeVoidExpression (final int level, final Object expression, final Map<Symbol, Local> localVariables)
@@ -655,7 +655,7 @@ public class Analyzer
 		    {
 			analyzeVoidExpression (level + 1, clause.get (j), localVariables);
 		    }
-		    analyzeVoidExpression (level + 1, clause.last (), localVariables);
+		    analyzeVoidExpression (level + 1, clause.get (clause.size () - 1), localVariables);
 		}
 	    }
 	}
@@ -681,7 +681,7 @@ public class Analyzer
 	    {
 		analyzeVoidExpression (level + 1, expression.get (i), localVariables);
 	    }
-	    analyzeValueExpression (level + 1, expression.last (), localVariables, valueType);
+	    analyzeValueExpression (level + 1, expression.get (expression.size () - 1), localVariables, valueType);
 	}
 	else if (fn.is ("when"))
 	{
@@ -691,7 +691,7 @@ public class Analyzer
 	    {
 		analyzeVoidExpression (level + 1, expression.get (i), localVariables);
 	    }
-	    analyzeValueExpression (level + 1, expression.last (), localVariables, valueType);
+	    analyzeValueExpression (level + 1, expression.get (expression.size () - 1), localVariables, valueType);
 	}
 	else if (fn.is ("if"))
 	{
@@ -704,7 +704,7 @@ public class Analyzer
 		{
 		    analyzeVoidExpression (level + 1, expression.get (i), localVariables);
 		}
-		analyzeValueExpression (level + 1, expression.last (), localVariables, valueType);
+		analyzeValueExpression (level + 1, expression.get (expression.size () - 1), localVariables, valueType);
 	    }
 	}
 	else if (fn.is ("unless"))
@@ -715,7 +715,7 @@ public class Analyzer
 	    {
 		analyzeVoidExpression (level + 1, expression.get (i), localVariables);
 	    }
-	    analyzeValueExpression (level + 1, expression.last (), localVariables, valueType);
+	    analyzeValueExpression (level + 1, expression.get (expression.size () - 1), localVariables, valueType);
 	}
 	else if (fn.is ("and"))
 	{
@@ -747,7 +747,7 @@ public class Analyzer
 	    {
 		analyzeVoidExpression (level + 1, expression.get (i), localVariables);
 	    }
-	    analyzeValueExpression (level + 1, expression.last (), localVariables, valueType);
+	    analyzeValueExpression (level + 1, expression.get (expression.size () - 1), localVariables, valueType);
 	}
 	else if (fn.is ("while"))
 	{
@@ -757,7 +757,7 @@ public class Analyzer
 	    {
 		analyzeVoidExpression (level + 1, expression.get (i), localVariables);
 	    }
-	    analyzeValueExpression (level + 1, expression.last (), localVariables, valueType);
+	    analyzeValueExpression (level + 1, expression.get (expression.size () - 1), localVariables, valueType);
 	}
 	else if (fn.is ("until"))
 	{
@@ -767,7 +767,7 @@ public class Analyzer
 	    {
 		analyzeVoidExpression (level + 1, expression.get (i), localVariables);
 	    }
-	    analyzeValueExpression (level + 1, expression.last (), localVariables, valueType);
+	    analyzeValueExpression (level + 1, expression.get (expression.size () - 1), localVariables, valueType);
 	}
 	else if (fn.is ("let"))
 	{
@@ -788,7 +788,7 @@ public class Analyzer
 	    {
 		analyzeVoidExpression (level + 1, expression.get (i), boundVariables);
 	    }
-	    analyzeValueExpression (level + 1, expression.last (), boundVariables, valueType);
+	    analyzeValueExpression (level + 1, expression.get (expression.size () - 1), boundVariables, valueType);
 	}
 	else if (fn.is ("let*"))
 	{
@@ -809,7 +809,7 @@ public class Analyzer
 	    {
 		analyzeVoidExpression (level + 1, expression.get (i), boundVariables);
 	    }
-	    analyzeValueExpression (level + 1, expression.last (), boundVariables, valueType);
+	    analyzeValueExpression (level + 1, expression.get (expression.size () - 1), boundVariables, valueType);
 	}
 	else if (fn.is ("cond"))
 	{
@@ -824,7 +824,7 @@ public class Analyzer
 		    {
 			analyzeVoidExpression (level + 1, clause.get (j), localVariables);
 		    }
-		    analyzeValueExpression (level + 1, clause.last (), localVariables, valueType);
+		    analyzeValueExpression (level + 1, clause.get (expression.size () - 1), localVariables, valueType);
 		}
 	    }
 	}

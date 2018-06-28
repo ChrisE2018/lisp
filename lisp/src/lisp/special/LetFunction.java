@@ -81,7 +81,7 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
     }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e, final Class<?> valueType,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (let ((a 1) (b 2)) (+ a b x)))
@@ -115,7 +115,7 @@ public class LetFunction implements LispCCFunction, LispTreeFunction, Opcodes, L
 	    generator.compileExpression (mv, e.get (i), null, false, false);
 	}
 	// Evaluate last (required) body form
-	generator.compileExpression (mv, e.last (), valueType, allowNarrowing, liberalTruth);
+	generator.compileExpression (mv, e.get (e.size () - 1), valueType, allowNarrowing, liberalTruth);
 	// Restore original local variables map
 	// localVariableMap = savedLocalVariableMap;
 	generator.setLocalBindingContext (savedLocalVariableMap);

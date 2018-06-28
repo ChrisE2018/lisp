@@ -39,7 +39,7 @@ public class PrognFunction implements LispCCFunction, Opcodes, LispTreeWalker, L
     }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expr,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> expr,
             final Class<?> valueType, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo () (progn (printf "a%n") (printf "b%n") 3))
@@ -53,7 +53,7 @@ public class PrognFunction implements LispCCFunction, Opcodes, LispTreeWalker, L
 	    {
 		generator.compileExpression (mv, expr.get (i), null, false, false);
 	    }
-	    generator.compileExpression (mv, expr.last (), valueType, allowNarrowing, liberalTruth);
+	    generator.compileExpression (mv, expr.get (expr.size () - 1), valueType, allowNarrowing, liberalTruth);
 	}
     }
 

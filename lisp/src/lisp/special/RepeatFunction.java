@@ -64,7 +64,7 @@ public class RepeatFunction implements LispCCFunction, LispTreeFunction, Opcodes
     }
 
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList e, final Class<?> valueType,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> e, final Class<?> valueType,
             final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (repeat x 3))

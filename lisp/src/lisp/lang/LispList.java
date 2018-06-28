@@ -78,20 +78,6 @@ public class LispList extends ArrayList<Object> implements Describer
 	}
     }
 
-    // /** Convenience method that allows the caller to avoid a cast. */
-    // public LispList getSublist (final int i)
-    // {
-    // final Object result = get (i);
-    // try
-    // {
-    // return (LispList)result;
-    // }
-    // catch (final ClassCastException e)
-    // {
-    // throw new IllegalArgumentException ("List member " + i + " is not a sublist", e);
-    // }
-    // }
-
     public Object last ()
     {
 	return get (size () - 1);

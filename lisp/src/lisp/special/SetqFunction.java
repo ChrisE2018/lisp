@@ -97,7 +97,7 @@ public class SetqFunction implements LispCCFunction, LispTreeFunction, Opcodes, 
 
     /** For compiler v3 */
     @Override
-    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final LispList expr,
+    public void compile (final CompilerGenerator generator, final GeneratorAdapter mv, final List<?> expr,
             final Class<?> valueClass, final boolean allowNarrowing, final boolean liberalTruth)
     {
 	// (define foo (x) (setq x 3))
