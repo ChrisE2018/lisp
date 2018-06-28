@@ -40,7 +40,7 @@ public class PackageFactory
     {
 	if (!initializedp)
 	{
-	    LOGGER.info ("Initializing PackageFactory");
+	    LOGGER.finer ("Initializing PackageFactory");
 	    initializedp = true;
 	    for (final String packageName : INITIAL_PACKAGES)
 	    {
@@ -85,16 +85,6 @@ public class PackageFactory
     {
 	return getPackage (USER_PACKAGE_NAME);
     }
-
-    // public static Package getDefaultPackage ()
-    // {
-    // return defaultPackage;
-    // }
-
-    // public static void setDefaultPackage (final Package pkg)
-    // {
-    // defaultPackage = pkg;
-    // }
 
     public static Package findPackage (final String packageName)
     {

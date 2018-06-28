@@ -60,6 +60,8 @@ public class CompilerPrimitives extends Definer
 	return compileFile (context, new File (inputFile), outputFile);
     }
 
+    private LispReader compileFileReader = null;
+
     /**
      * Compile an input file to an output file. The output file is verified to have extension
      * .class.
@@ -73,27 +75,44 @@ public class CompilerPrimitives extends Definer
     @DefineLisp (special = true)
     public boolean compileFile (final LexicalContext context, final File inputFile, final File outputFile) throws Exception
     {
-	final String outputName = outputFile.getName ();
-	final int dot = outputName.lastIndexOf (DOT);
-	if (dot < 0)
+	try
 	{
-	    return compileFile (context, new LispReader (), inputFile, new File (outputFile, outputName + ".class"));
-	}
-	else
-	{
-	    final String extension = outputName.substring (dot + 1);
-	    if (!extension.equals ("class"))
+	    compileFileReader = new LispReader ();
+	    final String outputName = outputFile.getName ();
+	    final int dot = outputName.lastIndexOf (DOT);
+	    if (dot < 0)
 	    {
-		throw new IllegalArgumentException ("Compiler output files must end with .class");
+		return compileFileForms (context, inputFile, new File (outputFile, outputName + ".class"));
 	    }
-	    return compileFile (context, new LispReader (), inputFile, outputFile);
+	    else
+	    {
+		final String extension = outputName.substring (dot + 1);
+		if (!extension.equals ("class"))
+		{
+		    throw new IllegalArgumentException ("Compiler output files must end with .class");
+		}
+		return compileFileForms (context, inputFile, outputFile);
 
+	    }
+	}
+	finally
+	{
+	    compileFileReader = null;
 	}
     }
 
-    private boolean compileFile (final LexicalContext context, final LispReader reader, final File inputFile,
-            final File outputFile) throws Exception
+    private boolean compileFileForms (final LexicalContext context, final File inputFile, final File outputFile) throws Exception
     {
+	// (compileFile "src/lisp/cc/SampleDefclass.jisp" "demo/SampleDefclass.class")
+	if (!inputFile.canRead ())
+	{
+	    final File cf = inputFile.getCanonicalFile ();
+	    if (!inputFile.exists ())
+	    {
+		throw new IOException ("File does not exist " + cf);
+	    }
+	    throw new IOException ("Can't read " + cf);
+	}
 	try (FileInputStream in = new FileInputStream (inputFile))
 	{
 	    final BufferedInputStream bufferedInput = new BufferedInputStream (in);
@@ -103,7 +122,7 @@ public class CompilerPrimitives extends Definer
 	    {
 		while (!inputStream.eof ())
 		{
-		    final Object item = reader.read (inputStream);
+		    final Object item = compileFileReader.read (inputStream);
 		    compileForm (context, item, outputStream);
 		}
 		outputStream.flush ();
@@ -150,7 +169,15 @@ public class CompilerPrimitives extends Definer
     private void compileFunctionCall (final LexicalContext context, final Symbol fn, final List<?> form,
             final OutputStream outputStream) throws Exception
     {
-	if (fn.is ("%defclass"))
+	if (fn.is ("inPackage"))
+	{
+	    compileInPackage (form);
+	}
+	else if (fn.is ("import"))
+	{
+	    compileImport (form);
+	}
+	else if (fn.is ("%defclass"))
 	{
 	    compileDefclass (form, outputStream);
 	}
@@ -165,6 +192,10 @@ public class CompilerPrimitives extends Definer
 	else if (fn.is ("let*"))
 	{
 	    compileLetStar (context, form, outputStream);
+	}
+	else if (fn.is ("set"))
+	{
+	    compileSetq (context, form);
 	}
 	else
 	{
@@ -181,6 +212,53 @@ public class CompilerPrimitives extends Definer
 		}
 	    }
 	    throw new IllegalArgumentException ("Can't compile toplevel call to " + fn);
+	}
+    }
+
+    private void compileInPackage (final List<?> form)
+    {
+	final Object imp = form.get (1);
+	lisp.lang.Package pkg = null;
+	if (imp instanceof lisp.lang.Package)
+	{
+	    pkg = (lisp.lang.Package)imp;
+	}
+	else if (imp instanceof String)
+	{
+	    pkg = PackageFactory.findPackage ((String)imp);
+	}
+	if (pkg == null)
+	{
+	    throw new IllegalArgumentException ("Can't set package to " + imp);
+	}
+	compileFileReader.setCurrentPackage (pkg);
+    }
+
+    private void compileImport (final List<?> form)
+    {
+	for (int i = 1; i < form.size (); i++)
+	{
+	    final Object imp = form.get (i);
+	    if (imp instanceof lisp.lang.Package)
+	    {
+		compileFileReader.addImport ((lisp.lang.Package)imp);
+	    }
+	    else if (imp instanceof Symbol)
+	    {
+		compileFileReader.addImport ((Symbol)imp);
+	    }
+	    else if (imp instanceof java.lang.Package)
+	    {
+		compileFileReader.addImport ((java.lang.Package)imp);
+	    }
+	    else if (imp instanceof Class<?>)
+	    {
+		compileFileReader.addImport ((Class<?>)imp);
+	    }
+	    else
+	    {
+		throw new IllegalArgumentException ("Can't import " + imp);
+	    }
 	}
     }
 
@@ -245,6 +323,13 @@ public class CompilerPrimitives extends Definer
 	    final Object item = form.get (i);
 	    compileForm (context, item, outputStream);
 	}
+    }
+
+    private void compileSetq (final LexicalContext context, final List<?> form) throws Exception
+    {
+	final Symbol var = (Symbol)form.get (1);
+	final Object expr = form.get (2);
+	context.bind (var, context.eval (expr));
     }
 
     private void ensureOutputFileExists (final File file)

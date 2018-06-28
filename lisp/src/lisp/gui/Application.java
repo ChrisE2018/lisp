@@ -38,7 +38,7 @@ public class Application
 		// final LispReader lispReader = new LispReader ();
 		final Object form = lispReader.read (stream);
 		final Object result = interpreter.eval (new LexicalContext (interpreter), form);
-		System.out.printf ("-E %s => %s %n", form, result);
+		LOGGER.fine (new LogString ("-E %s => %s", form, result));
 	    }
 	}, "Evaluate a form", "-E", "--eval");
 
@@ -47,7 +47,7 @@ public class Application
 	    @Override
 	    public void accept (final String message) throws Exception
 	    {
-		System.out.printf ("--exit %s %n", message);
+		LOGGER.fine ("--exit " + message);
 		Repl.exit ();
 	    }
 	}, "Exit Lisp system", "--exit");
@@ -72,7 +72,7 @@ public class Application
 		final LogManager logManager = LogManager.getLogManager ();
 		final URL resource = getClass ().getResource (filename);
 		logManager.readConfiguration (resource.openStream ());
-		LOGGER.info ("Logging Configuration: " + resource);
+		LOGGER.fine ("Logging Configuration: " + resource);
 	    }
 	}, "Load logging properties file", "-g", "--log");
 
@@ -83,7 +83,7 @@ public class Application
 	    {
 		final Package pkg = PackageFactory.getPackage (packageName);
 		lispReader.setCurrentPackage (pkg);
-		System.out.printf ("-Package %s %n", pkg);
+		LOGGER.fine (new LogString ("-Package %s", pkg));
 	    }
 	}, "Evaluate a form", "-P", "--package");
 
@@ -102,7 +102,7 @@ public class Application
 		final Package pkg = lispReader.getCurrentPackage ();
 		final Symbol symbol = lispReader.readSymbol (pkg, var);
 		symbol.setValue (result);
-		System.out.printf ("-setq %s %s => %s %n", var, form, result);
+		LOGGER.fine (new LogString ("-setq %s %s => %s", var, form, result));
 	    }
 	}, "Evaluate a form", "-S", "--setq");
     }

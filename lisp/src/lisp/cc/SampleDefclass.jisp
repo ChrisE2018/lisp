@@ -1,33 +1,33 @@
 
-    // (package p) (import q)
-    // (defclass [public/static/final] foo (extends x) (implements y) (generics) (annotations) .
-    // members)
-    // TODO Annotations?
-    //
-    // Members:
-    // <fieldDeclaration>
-    // <constructorDeclaration>
-    // <methodDeclaration>
-    // <nestedClass>
-    // <staticCode>
-    //
-    // fieldDeclaration:
-    // ([public/private] [static] [type][fieldname] <initform>)
-    //
-    // constructorDeclaration:
-    //
-    // methodDeclaration:
-    //
-    // nestedClass:
-    //
-    // staticCode:
-    //
-    // Annotations
+ ;   // (package p) (import q)
+ ;   // (defclass [public/static/final] foo (extends x) (implements y) (generics) (annotations) .
+ ;   // members)
+;    // TODO Annotations?
+ ;   //
+;    // Members:
+;    // <fieldDeclaration>
+ ;   // <constructorDeclaration>
+  ;  // <methodDeclaration>
+  ;  // <nestedClass>
+  ;  // <staticCode>
+ ;   //
+ ;   // fieldDeclaration:
+ ;   // ([public/private] [static] [type][fieldname] <initform>)
+ ;   //
+ ;   // constructorDeclaration:
+ ;   //
+ ;   // methodDeclaration:
+ ;   //
+ ;   // nestedClass:
+ ;   //
+ ;   // staticCode:
+ ;   //
+ ;   // Annotations
 
 (%defclass Foobar
 	(access public)
-	(extends java.lang.Object)	
-	(field blah 
+	(extends java.lang.Object)
+	(field blah
 	 	(access private)
 	 	(type int)
 	 	(value 3)
@@ -71,13 +71,13 @@
 	 	(java.lang.String.format "#<Foobar %s>" blah)
 	 	)
 )
-
-(%compile "/Users/cre/Documents/Work/Workspaces/lisp/Sandbox/xbin/lisp/something/Foobar" 
+/*
+(%compile "/Users/cre/Documents/Work/Workspaces/lisp/Sandbox/xbin/lisp/something/Foobar"
 	"lisp.something" Foobar
 	(access public)
-	(extends java.lang.Object)	
+	(extends java.lang.Object)
 	; (constructor () (access public))
-	(field blah 
+	(field blah
 	 	(access private)
 	 	(type int)
 	 	(value 5)
@@ -85,4 +85,5 @@
 	 	(setter putBlah)
 	 	)
 )
+*/
 

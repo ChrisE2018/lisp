@@ -28,7 +28,7 @@ public class Package implements Describer
     public Package (final String name)
     {
 	packageName = name;
-	LOGGER.info ("Creating Package " + name);
+	LOGGER.fine ("Creating Package " + name);
     }
 
     /** Name of this package. */
