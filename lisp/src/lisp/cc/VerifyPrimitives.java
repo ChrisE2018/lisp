@@ -23,11 +23,6 @@ public class VerifyPrimitives extends Definer
      */
     public static void incrementReplErrorCount (final String message)
     {
-	if (message.startsWith ("null"))
-	{
-	    /// huh?
-	    verifyErrors.add (message);
-	}
 	verifyErrors.add (message);
     }
 
@@ -158,19 +153,24 @@ public class VerifyPrimitives extends Definer
     @DefineLisp (special = true)
     public Object verifyPhase (final LexicalContext context, final Symbol phase)
     {
+	Symbol newPhase = phase;
+	if (newPhase != null && newPhase.is ("null"))
+	{
+	    newPhase = null;
+	}
 	if (verifyPhase != null)
 	{
 	    System.out.printf ("%nCompleted verification phase %s%n", verifyPhase);
 	    printTestStatistics ();
 	}
-	verifyPhase = phase;
-	if (phase == null)
+	verifyPhase = newPhase;
+	if (newPhase == null)
 	{
-	    System.out.printf ("%nVerification complete%n%n", phase);
+	    System.out.printf ("%nVerification complete%n%n");
 	}
 	else
 	{
-	    System.out.printf ("%nStarting verification phase %s%n%n", phase);
+	    System.out.printf ("%nStarting verification phase %s%n%n", newPhase);
 	}
 	return verifyPhase;
     }
@@ -203,6 +203,11 @@ public class VerifyPrimitives extends Definer
     public Object verification (final LexicalContext context, final Symbol phase, final Object setup, final Object... checks)
     {
 	final Symbol oldVerifyPhase = verifyPhase;
+	Symbol newPhase = phase;
+	if (newPhase != null && newPhase.is ("null"))
+	{
+	    newPhase = null;
+	}
 	try
 	{
 	    if (verifyPhase != null)
@@ -211,8 +216,11 @@ public class VerifyPrimitives extends Definer
 		printTestStatistics ();
 	    }
 
-	    verifyPhase = phase;
-	    System.out.printf ("%nStarting verification phase %s%n%n", phase);
+	    verifyPhase = newPhase;
+	    if (newPhase != null)
+	    {
+		System.out.printf ("%nStarting verification phase %s%n%n", newPhase);
+	    }
 	    try
 	    {
 		context.eval (setup);
@@ -220,18 +228,18 @@ public class VerifyPrimitives extends Definer
 	    catch (final Throwable e)
 	    {
 
-		verifyFailures.add (phase);
-		System.out.printf ("[%s] Error: during setup: %s%n", phase, e);
+		verifyFailures.add (newPhase);
+		System.out.printf ("[%s] Error: during setup: %s%n", newPhase, e);
 		errorCount++;
 		checkStopAtFirstFailure ();
 		return null;
 	    }
-	    verificationInternals (context, phase, checks);
+	    verificationInternals (context, newPhase, checks);
 	}
 	catch (final Throwable e)
 	{
-	    verifyFailures.add (phase);
-	    System.out.printf ("[%s] Error: unexpected internal error: %s%n", phase, e);
+	    verifyFailures.add (newPhase);
+	    System.out.printf ("[%s] Error: unexpected internal error: %s%n", newPhase, e);
 	    errorCount++;
 	    checkStopAtFirstFailure ();
 	}

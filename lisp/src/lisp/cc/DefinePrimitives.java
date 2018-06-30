@@ -128,4 +128,76 @@ public class DefinePrimitives extends Definer
 	}
 	return cls;
     }
+
+    /**
+     * Define a macro function. This is called definemacro instead of defmacro because it does not
+     * provide the best API. When it is possible to implement something more like the Common Lisp
+     * defmacro, the name should be used for that. In particular, the destructuring bind capability
+     * is missing from this definition.
+     *
+     * @param context
+     * @param nameSpec
+     * @param args
+     * @param forms
+     * @return
+     */
+    @DefineLisp (special = true, name = "definemacro")
+    public Object definemacro (@SuppressWarnings ("unused") final LexicalContext context, final Object nameSpec,
+            final LispList args, final Object... forms)
+    {
+	try
+	{
+	    final LispList body = new LispList ();
+	    for (final Object f : forms)
+	    {
+		body.add (f);
+	    }
+	    final Symbol functionName = NameSpec.getVariableName (nameSpec);
+	    final Class<?> returnType = NameSpec.getVariableClass (nameSpec);
+	    LOGGER.info (String.format ("Compiling %s %s: %s", returnType, functionName, body));
+	    final Class<?> c = createCompiledMacro (returnType, functionName, args, body);
+	    LOGGER.info (String.format ("Compiled %s", functionName));
+	    return functionName;
+	}
+	catch (final Exception e)
+	{
+	    VerifyPrimitives.incrementReplErrorCount (e.toString ());
+	    e.printStackTrace ();
+	}
+	return false;
+    }
+
+    /**
+     * Create a compiled macro definition from lisp sources.
+     *
+     * @throws IOException
+     */
+    private Class<?> createCompiledMacro (final Class<?> returnType, final Symbol symbol, final LispList args,
+            final LispList body) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException, IOException
+    {
+
+	final String methodName = symbol.gensym ().getName ();
+	final String documentation = (body.get (0) instanceof String) ? (String)(body.get (0)) : "";
+
+	final CompilerFactory compilerFactory = new CompilerFactory ();
+	final Compiler cl = compilerFactory.getCompiler (returnType, methodName, args, body);
+	final Class<?> cls = cl.compile ();
+
+	// Call int constructor to make an instance
+	final Class<?>[] types = {int.class};
+	final Constructor<?> con = cls.getConstructor (types);
+	final Object instance = con.newInstance (1);
+
+	// Locate method matching the compiled function
+	final Class<?>[] parameterTypes = new Class<?>[args.size ()];
+	for (int i = 0; i < parameterTypes.length; i++)
+	{
+	    parameterTypes[i] = NameSpec.getVariableClass (args.get (i));
+	}
+	final Method method = cls.getDeclaredMethod (methodName, parameterTypes);
+	final FunctionCell function = new MacroFunctionCell (symbol, instance, method, documentation);
+	symbol.setFunction (function);
+	return cls;
+    }
 }

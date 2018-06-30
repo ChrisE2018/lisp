@@ -181,6 +181,7 @@ public class CompilerPrimitives extends Definer
 	{
 	    compileDefclass (form, outputStream);
 	}
+	// FIXME Allow define and defmacro to be used too
 	else if (fn.is ("progn"))
 	{
 	    compileProgn (context, form, outputStream);

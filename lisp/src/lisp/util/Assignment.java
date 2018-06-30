@@ -1,6 +1,7 @@
 
 package lisp.util;
 
+/** Prints a table showing which types are assignable to which. */
 public class Assignment
 {
     private static Class<?>[] CLASSES =
