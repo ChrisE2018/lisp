@@ -3,7 +3,7 @@ package plan;
 
 import java.util.*;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 
 public abstract class Achiever
 {

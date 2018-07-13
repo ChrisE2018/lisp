@@ -3,7 +3,8 @@ package plan;
 
 import java.util.*;
 
-import lisp.*;
+import lisp.lang.*;
+import lisp.util.MultiMap;
 
 /** Domain action with preconditions and postconditions. */
 public class Action implements Describer
@@ -103,9 +104,9 @@ public class Action implements Describer
     }
 
     @Override
-    public Map<String, Object> getDescriberValues (final Object target)
+    public MultiMap<String, Object> getDescriberValues (final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	final MultiMap<String, Object> result = new MultiMap<String, Object> ();
 	result.put ("Name", name);
 	result.put ("Precondition", precondition);
 	result.put ("Postcondition", postcondition);

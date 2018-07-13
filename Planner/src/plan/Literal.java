@@ -1,7 +1,7 @@
 
 package plan;
 
-import lisp.LispList;
+import lisp.lang.LispList;
 
 public class Literal
 {

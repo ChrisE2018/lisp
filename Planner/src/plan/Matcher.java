@@ -4,7 +4,7 @@ package plan;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import lisp.*;
+import lisp.lang.*;
 
 public class Matcher
 {

@@ -37,7 +37,7 @@ import javax.swing.*;
 import org.abego.treelayout.*;
 import org.abego.treelayout.util.*;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 import plan.Plan;
 
 /**

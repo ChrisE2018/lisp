@@ -1,10 +1,10 @@
 
 package plan;
 
-import lisp.*;
-import lisp.Package;
-import lisp.demo.Repl;
 import lisp.eval.*;
+import lisp.gui.Repl;
+import lisp.lang.*;
+import lisp.lang.Package;
 
 public class Demo
 {
@@ -36,7 +36,7 @@ public class Demo
 	try
 	{
 	    final LexicalContext context = new LexicalContext (interpreter);
-	    fileReader.read (context, pkg, "../../../lisp/src/lisp/eval/init.jisp");
+	    fileReader.read (context, "../../../lisp/src/lisp/eval/init.jisp");
 	    PlanFunctions.initialize ();
 	}
 	catch (Throwable e)
@@ -76,15 +76,11 @@ public class Demo
 	{
 	    pkg = PackageFactory.getPackage (value);
 	}
-	// if (key.equals ("-t"))
-	// {
-	// fileReader.setTrace (Boolean.parseBoolean (value));
-	// }
 	if (key.equals ("-f"))
 	{
 	    System.out.printf ("Loading %s %n", value);
 	    final LexicalContext context = new LexicalContext (interpreter);
-	    fileReader.read (context, pkg, value);
+	    fileReader.read (context, value);
 	}
 	if (key.equals ("-r"))
 	{
@@ -99,7 +95,7 @@ public class Demo
 	    if (doRepl)
 	    {
 		final Repl repl = new Repl (interpreter);
-		final LispStream stream = new LispStream (System.in);
+		final LispStream stream = new LispInputStream (System.in);
 		repl.toplevel (stream);
 	    }
 	}

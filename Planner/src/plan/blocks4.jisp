@@ -1,5 +1,7 @@
 /* Sample blocks problems. */
 
+(inPackage "lisp.user")
+
 (def d (x)
 	(describe x))
 
@@ -31,7 +33,7 @@
 			))
 	(before initial goal)
 	)
- 
+
 (setq PlanView false)
 
 (setq s (bfs p1))

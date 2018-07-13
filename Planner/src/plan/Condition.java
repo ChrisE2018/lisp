@@ -3,7 +3,8 @@ package plan;
 
 import java.util.*;
 
-import lisp.*;
+import lisp.lang.*;
+import lisp.util.MultiMap;
 
 public class Condition implements Describer
 {
@@ -307,9 +308,9 @@ public class Condition implements Describer
     }
 
     @Override
-    public Map<String, Object> getDescriberValues (final Object target)
+    public MultiMap<String, Object> getDescriberValues (final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	final MultiMap<String, Object> result = new MultiMap<> ();
 	result.put ("Negated", negated);
 	result.put ("Predicate", predicate);
 	result.put ("Terms", terms);

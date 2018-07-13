@@ -4,9 +4,9 @@ package plan;
 import java.awt.Rectangle;
 import java.util.*;
 
-import lisp.*;
-import lisp.Package;
 import lisp.eval.*;
+import lisp.lang.*;
+import lisp.lang.Package;
 import plan.gui.*;
 import search.BestFirstSearch;
 
@@ -233,15 +233,5 @@ public class PlanFunctions extends Definer
 	    BlockworldSimulator.makeView (plan);
 	}
 	return plan;
-    }
-
-    @Override
-    public String toString ()
-    {
-	final StringBuilder buffer = new StringBuilder ();
-	buffer.append ("#<");
-	buffer.append (getClass ().getSimpleName ());
-	buffer.append (">");
-	return buffer.toString ();
     }
 }

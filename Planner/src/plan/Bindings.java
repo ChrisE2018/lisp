@@ -3,7 +3,7 @@ package plan;
 
 import java.util.LinkedHashMap;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 
 /**
  * Bindings produced by matching Conditions. This just names a specification of HashMap.

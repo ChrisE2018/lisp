@@ -1,9 +1,8 @@
 
 package util;
 
-import java.util.*;
-
-import lisp.Describer;
+import lisp.lang.Describer;
+import lisp.util.MultiMap;
 
 /** Type-safe ordered pair. */
 public class Pair<A, B> implements Describer
@@ -42,9 +41,9 @@ public class Pair<A, B> implements Describer
     }
 
     @Override
-    public Map<String, Object> getDescriberValues (final Object target)
+    public MultiMap<String, Object> getDescriberValues (final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	final MultiMap<String, Object> result = new MultiMap<> ();
 	result.put ("First", a);
 	result.put ("Second", b);
 	return result;

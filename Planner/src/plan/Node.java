@@ -3,7 +3,8 @@ package plan;
 
 import java.util.*;
 
-import lisp.*;
+import lisp.lang.*;
+import lisp.util.MultiMap;
 
 public class Node implements Describer
 {
@@ -405,9 +406,9 @@ public class Node implements Describer
     }
 
     @Override
-    public Map<String, Object> getDescriberValues (final Object target)
+    public MultiMap<String, Object> getDescriberValues (final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	final MultiMap<String, Object> result = new MultiMap<String, Object> ();
 	result.put ("Name", name);
 	if (action != null)
 	{

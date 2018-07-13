@@ -3,7 +3,7 @@ package plan;
 
 import java.util.*;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 import plan.gui.PlanView;
 
 public class LinkAchiever extends Achiever
@@ -55,7 +55,7 @@ public class LinkAchiever extends Achiever
 	// Create a child by adding a causal link from n to node
 	makeChild (bindings);
 	final Plan child = getChild ();
-	if (Symbol.value ("user.PlanView") == Boolean.TRUE)
+	if (Symbol.value ("PlanView") == Boolean.TRUE)
 	{
 	    PlanView.makeView (getParent ());
 	    PlanView.makeView (child);

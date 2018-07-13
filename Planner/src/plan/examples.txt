@@ -1,3 +1,5 @@
+(inPackage "lisp.user")
+
 (defstate state1
 	(on block001 block002)
 	(on block002 block003)
@@ -23,7 +25,7 @@ state1
 (defaction stack
 	[precondition (clear ?a) (clear ?b)]
 	[postcondition (on ?a ?b) (not (ontable ?a))])
-	
+
 (defaction unstack
 	[precondition (clear ?a) (on ?a ?b)]
 	[postcondition (not (on ?a ?b)) (clear ?b) (ontable ?a)])

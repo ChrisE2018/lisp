@@ -9,7 +9,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.Timer;
 
-import lisp.Symbol;
+import lisp.lang.Symbol;
 import plan.*;
 
 public class BlockworldSimulator extends JPanel implements ActionListener

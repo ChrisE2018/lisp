@@ -3,7 +3,8 @@ package plan;
 
 import java.util.*;
 
-import lisp.*;
+import lisp.lang.*;
+import lisp.util.MultiMap;
 import search.ProblemState;
 import util.Pair;
 
@@ -465,9 +466,9 @@ public class Plan implements Describer, ProblemState
     }
 
     @Override
-    public Map<String, Object> getDescriberValues (final Object target)
+    public MultiMap<String, Object> getDescriberValues (final Object target)
     {
-	final Map<String, Object> result = new LinkedHashMap<String, Object> ();
+	final MultiMap<String, Object> result = new MultiMap<> ();
 	result.put ("Name", name);
 	result.put ("Solved", solved ());
 	// result.put ("Nodes", nodes);
