@@ -155,7 +155,7 @@ public class DefinePrimitives extends Definer
 	    final Symbol functionName = NameSpec.getVariableName (nameSpec);
 	    final Class<?> returnType = NameSpec.getVariableClass (nameSpec);
 	    LOGGER.info (String.format ("Compiling %s %s: %s", returnType, functionName, body));
-	    final Class<?> c = createCompiledMacro (returnType, functionName, args, body);
+	    createCompiledMacro (returnType, functionName, args, body);
 	    LOGGER.info (String.format ("Compiled %s", functionName));
 	    return functionName;
 	}
