@@ -6,6 +6,7 @@ import java.awt.event.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -52,7 +53,12 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 	    if (!selection.isEmpty ())
 	    {
 		final Node selected = selection.get (0);
-		System.out.printf ("Perform next action %s %n", selected);
+		final StringBuilder buffer = new StringBuilder ();
+		buffer.append ("Perform next action ");
+		buffer.append (selected.getName ());
+		buffer.append (" ");
+		buffer.append (selected.getAction ());
+		System.out.println (buffer);
 		simulate (selected);
 	    }
 	    else
@@ -137,6 +143,19 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 	    state.add (c);
 	}
 	System.out.printf ("State %s %n", state);
+	final StringBuilder buffer = new StringBuilder ();
+	final Map<Symbol, Symbol> constraints = plan.getConstraints ();
+	if (!constraints.isEmpty ())
+	{
+	    for (final Entry<Symbol, Symbol> entry : constraints.entrySet ())
+	    {
+		buffer.append (entry.getKey ());
+		buffer.append (" != ");
+		buffer.append (entry.getValue ());
+		buffer.append (" ");
+	    }
+	    System.out.printf ("Constraints %s %n", buffer);
+	}
 	update ();
 	simulatedNodes.add (node);
     }

@@ -5,17 +5,29 @@
 (defpredicate clear ?b1)
 (defpredicate ontable ?b1)
 (defpredicate on ?b1 ?b2)
+(defpredicate color ?b1 ?color)
+(defpredicate distinct ?b1 ?b2)
 
 (defaction stack
-	[precondition (clear ?a) (clear ?b)]
-	; Also need (not (same ?a ?b))
+	[constraints (distinct ?a ?b)]
+	[precondition (clear ?a) (clear ?b) (ontable ?a)]
 	[postcondition (on ?a ?b)
 				   (not (ontable ?a))
 				   (not (clear ?b))
 				   ])
 
+(defaction restack
+	[constraints (distinct ?a ?b) (distinct ?a ?c) (distinct ?b ?c)]
+	[precondition (clear ?a) (clear ?b) (on ?a ?c)]
+	[postcondition (on ?a ?b)
+				   (not (ontable ?a))
+				   (not (on ?a ?c))
+				   (clear ?c)
+				   (not (clear ?b))
+				   ])
 
 (defaction unstack
+	[constraints (distinct ?a ?b)]
 	[precondition (clear ?a) (on ?a ?b)]
 	[postcondition
 	    (not (on ?a ?b))

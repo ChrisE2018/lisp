@@ -65,8 +65,8 @@ public class SearchState implements Comparable<SearchState>
 	for (final Entry<ProblemState, Double> entry : children.entrySet ())
 	{
 	    final ProblemState child = entry.getKey ();
-	    final double increment = entry.getValue ();
-	    final SearchState s = new SearchState (this, child, increment);
+	    final double childIncrement = entry.getValue ();
+	    final SearchState s = new SearchState (this, child, childIncrement);
 	    result.add (s);
 	}
 	return result;

@@ -2,6 +2,7 @@
 package plan;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import lisp.lang.Symbol;
 
@@ -74,6 +75,12 @@ public abstract class Achiever
 		final ProtectionInterval pi2 = new ProtectionInterval (condition, achieverCopy, protectedNodeCopy);
 		n2.addPI (pi2);
 	    }
+	}
+	for (final Entry<Symbol, Symbol> entry : parent.getConstraints ().entrySet ())
+	{
+	    final Symbol a = bindings.translate (entry.getKey ());
+	    final Symbol b = bindings.translate (entry.getValue ());
+	    child.addConstraint (a, b);
 	}
     }
 

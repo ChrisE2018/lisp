@@ -2,6 +2,7 @@
 package plan;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import lisp.lang.*;
 import lisp.util.MultiMap;
@@ -26,6 +27,8 @@ public class Plan implements Describer, ProblemState
 
     private final List<Node> nodes = new ArrayList<Node> ();
 
+    private final Map<Symbol, Symbol> distinctVariables = new HashMap<> ();
+
     public Plan (final Symbol name)
     {
 	this.name = name;
@@ -38,20 +41,33 @@ public class Plan implements Describer, ProblemState
 	this.name = name;
 	planAchiever = achiever;
 	name.setValue (this);
-	planAchiever.getParent ().children.add (name);
+	final Plan parent = planAchiever.getParent ();
+	parent.children.add (name);
     }
 
-    /** Determine if this plan is a solution. */
-    public boolean solved ()
+    public void addConstraint (final Condition constraint)
     {
-	for (final Node node : nodes)
+	if (!constraint.getPredicate ().is ("distinct"))
 	{
-	    if (node.hasOpenSubgoals ())
-	    {
-		return false;
-	    }
+	    throw new Error ("Invalid constraint " + constraint);
 	}
-	return true;
+	final Symbol a = constraint.getTerms ().get (0);
+	final Symbol b = constraint.getTerms ().get (1);
+	distinctVariables.put (a, b);
+	if (a == b)
+	{
+	    throw new Error ("Contradiction " + a + " != " + b);
+	}
+    }
+
+    public void addConstraint (final Symbol a, final Symbol b)
+    {
+	distinctVariables.put (a, b);
+    }
+
+    public Map<Symbol, Symbol> getConstraints ()
+    {
+	return distinctVariables;
     }
 
     public Plan getRootPlan ()
@@ -68,6 +84,19 @@ public class Plan implements Describer, ProblemState
     {
 	final Plan rootPlan = getRootPlan ();
 	return rootPlan.getOpenNodes ();
+    }
+
+    /** Determine if this plan is a solution. */
+    public boolean solved ()
+    {
+	for (final Node node : nodes)
+	{
+	    if (node.hasOpenSubgoals ())
+	    {
+		return false;
+	    }
+	}
+	return true;
     }
 
     public List<Node> getNodes ()
@@ -93,12 +122,9 @@ public class Plan implements Describer, ProblemState
 	final List<OpenGoalCondition> result = new ArrayList<OpenGoalCondition> ();
 	for (final Node node : nodes)
 	{
-	    if (node.hasOpenSubgoals ())
+	    for (final Condition goal : node.getGoalConditions ())
 	    {
-		for (final Condition goal : node.getGoalConditions ())
-		{
-		    result.add (new OpenGoalCondition (node, goal));
-		}
+		result.add (new OpenGoalCondition (node, goal));
 	    }
 	}
 	return result;
@@ -120,22 +146,25 @@ public class Plan implements Describer, ProblemState
 	    }
 	}
 	System.out.printf ("Expanding %s %n", bestGoal);
-	final List<Achiever> achievers = bestGoal.getAchievers ();
 	final List<Plan> result = new ArrayList<Plan> ();
-	for (final Achiever achiever : achievers)
+	if (bestGoal != null)
 	{
-	    final ProtectionInterval pi = achiever.expand ();
-	    final Plan child = achiever.getChild ();
-	    child.revisionGoal = pi;
+	    final List<Achiever> achievers = bestGoal.getAchievers ();
+	    for (final Achiever achiever : achievers)
+	    {
+		final ProtectionInterval pi = achiever.expand ();
+		final Plan child = achiever.getChild ();
+		child.revisionGoal = pi;
 
-	    final List<PIConflict> conflicts = child.getConflicts (pi);
-	    if (conflicts.size () == 0)
-	    {
-		result.add (child);
-	    }
-	    else
-	    {
-		child.resolveConflicts (result, conflicts);
+		final List<PIConflict> conflicts = child.getConflicts (pi);
+		if (conflicts.size () == 0)
+		{
+		    result.add (child);
+		}
+		else
+		{
+		    child.resolveConflicts (result, conflicts);
+		}
 	    }
 	}
 	if (result.isEmpty ())
@@ -144,47 +173,6 @@ public class Plan implements Describer, ProblemState
 	}
 	return result;
     }
-
-    // public List<Plan> expandPlanx ()
-    // {
-    // System.out.printf ("%nExpanding %s %n", this);
-    // final List<Plan> result = new ArrayList<Plan> ();
-    // for (final Node node : nodes)
-    // {
-    // if (node.hasOpenSubgoals ())
-    // {
-    // for (final Condition goal : node.getGoalConditions ())
-    // {
-    // System.out.printf ("Expanding %s: %s %n", node, goal);
-    // final List<Achiever> achievers = new ArrayList<Achiever> ();
-    // getLinkAchievers (achievers, node, goal);
-    // getActionAchievers (achievers, node, goal);
-    // for (final Achiever achiever : achievers)
-    // {
-    // final ProtectionInterval pi = achiever.expand ();
-    // final Plan child = achiever.getChild ();
-    // child.revisionGoal = pi;
-    //
-    // final List<PIConflict> conflicts = child.getConflicts (pi);
-    // if (conflicts.size () == 0)
-    // {
-    // result.add (child);
-    // }
-    // else
-    // {
-    // child.resolveConflicts (result, conflicts);
-    // }
-    // }
-    // if (result.isEmpty ())
-    // {
-    // System.out.printf ("Failure Expanding %s: %s %n", node, goal);
-    // }
-    // return result;
-    // }
-    // }
-    // }
-    // return result;
-    // }
 
     public void getLinkAchievers (final List<Achiever> result, final Node goalNode, final Condition goalCondition)
     {
@@ -197,7 +185,10 @@ public class Plan implements Describer, ProblemState
 		{
 		    for (final Bindings b : binds)
 		    {
-			result.add (new LinkAchiever (this, goalNode, goalCondition, possibleAchiever, b));
+			if (!conflictsDistinct (b))
+			{
+			    result.add (new LinkAchiever (this, goalNode, goalCondition, possibleAchiever, b));
+			}
 		    }
 		}
 	    }
@@ -212,10 +203,13 @@ public class Plan implements Describer, ProblemState
 	    final Bindings match = action.canAchieve (goalCondition);
 	    if (match != null)
 	    {
-		final Bindings anonymousBindings = getAnonymousActionBindings (action);
-		final Action anonymousAction = getAnonymousAction (action, anonymousBindings);
-		final Bindings rebind = anonymousAction.canAchieve (goalCondition);
-		result.add (new ActionAchiever (this, goalNode, goalCondition, anonymousAction, rebind, 2.0));
+		if (!conflictsDistinct (match))
+		{
+		    final Bindings anonymousBindings = getAnonymousActionBindings (action);
+		    final Action anonymousAction = getAnonymousAction (action, anonymousBindings);
+		    final Bindings rebind = anonymousAction.canAchieve (goalCondition);
+		    result.add (new ActionAchiever (this, goalNode, goalCondition, anonymousAction, rebind, 2.0));
+		}
 	    }
 	}
     }
@@ -224,6 +218,7 @@ public class Plan implements Describer, ProblemState
     {
 	final List<Condition> precondition = new ArrayList<Condition> ();
 	final List<Condition> postcondition = new ArrayList<Condition> ();
+	final List<Condition> constraints = new ArrayList<Condition> ();
 	for (final Condition c : action.getPrecondition ())
 	{
 	    precondition.add (c.bind (bindings));
@@ -232,7 +227,11 @@ public class Plan implements Describer, ProblemState
 	{
 	    postcondition.add (c.bind (bindings));
 	}
-	return new Action (action.getName ().gensym (), precondition, postcondition);
+	for (final Condition c : action.getConstraints ())
+	{
+	    constraints.add (c.bind (bindings));
+	}
+	return new Action (action.getName ().gensym (), precondition, postcondition, constraints);
     }
 
     private Bindings getAnonymousActionBindings (final Action action)
@@ -259,6 +258,40 @@ public class Plan implements Describer, ProblemState
 		}
 	    }
 	}
+    }
+
+    // private List<Condition> getDistinctConditions ()
+    // {
+    // final List<Condition> result = new ArrayList<> ();
+    // for (final Node node : nodes)
+    // {
+    // for (final Condition c : node.getDeleteConditions ())
+    // {
+    // if (c.getPredicate ().is ("same"))
+    // {
+    // result.add (c);
+    // }
+    // }
+    // }
+    // return result;
+    // }
+
+    private boolean conflictsDistinct (final Bindings bindings)
+    {
+	for (final Entry<Symbol, Symbol> entry : distinctVariables.entrySet ())
+	{
+	    final Symbol a = entry.getKey ();
+	    final Symbol b = entry.getValue ();
+	    if (bindings.get (a) == b)
+	    {
+		return false;
+	    }
+	    if (bindings.get (b) == a)
+	    {
+		return false;
+	    }
+	}
+	return false;
     }
 
     private List<PIConflict> getConflicts (final ProtectionInterval pi)
@@ -476,6 +509,13 @@ public class Plan implements Describer, ProblemState
 	{
 	    buffer.append (" ");
 	    buffer.append (node.getName ());
+	}
+	for (final Entry<Symbol, Symbol> entry : distinctVariables.entrySet ())
+	{
+	    buffer.append (" ");
+	    buffer.append (entry.getKey ());
+	    buffer.append ("!=");
+	    buffer.append (entry.getValue ());
 	}
 	buffer.append (">");
 	return buffer.toString ();

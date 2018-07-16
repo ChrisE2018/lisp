@@ -79,6 +79,10 @@ public class ActionAchiever extends Achiever
 		a.getDeleteConditions ().add (c.bind (true, bindings));
 	    }
 	}
+	for (final Condition c : action.getConstraints ())
+	{
+	    child.addConstraint (c.bind (bindings));
+	}
 	return pi;
     }
 

@@ -119,18 +119,6 @@ public class Node implements Describer
     {
 	final NodeSearch ns = new NodeSearch ();
 	return ns.before (node);
-	// if (next.contains (node))
-	// {
-	// return true;
-	// }
-	// for (final Node n : next)
-	// {
-	// if (n.before (node))
-	// {
-	// return true;
-	// }
-	// }
-	// return false;
     }
 
     /**
@@ -143,18 +131,6 @@ public class Node implements Describer
     {
 	final NodeSearch ns = new NodeSearch ();
 	return ns.after (node);
-	// if (previous.contains (node))
-	// {
-	// return true;
-	// }
-	// for (final Node n : previous)
-	// {
-	// if (n.after (node))
-	// {
-	// return true;
-	// }
-	// }
-	// return false;
     }
 
     private class NodeSearch

@@ -26,6 +26,7 @@ public class PlanFunctions extends Definer
     private final Symbol PREDICATE_SYMBOL = pkg.internSymbol ("predicate");
     private final Symbol PRECONDITION_SYMBOL = pkg.internSymbol ("precondition");
     private final Symbol POSTCONDITION_SYMBOL = pkg.internSymbol ("postcondition");
+    private final Symbol CONSTRAINTS_SYMBOL = pkg.internSymbol ("constraints");
 
     private PlanFunctions ()
     {
@@ -49,6 +50,7 @@ public class PlanFunctions extends Definer
     {
 	final List<Condition> preconditions = new ArrayList<Condition> ();
 	final List<Condition> postconditions = new ArrayList<Condition> ();
+	final List<Condition> constraints = new ArrayList<Condition> ();
 	for (int i = 0; i < body.length; i++)
 	{
 	    final LispList arg = (LispList)body[i];
@@ -69,8 +71,16 @@ public class PlanFunctions extends Definer
 		    postconditions.add (condition);
 		}
 	    }
+	    else if (key == CONSTRAINTS_SYMBOL)
+	    {
+		for (final Object c : arg.subList (1, arg.size ()))
+		{
+		    final Condition condition = getCondition (false, (List<?>)c);
+		    constraints.add (condition);
+		}
+	    }
 	}
-	final Action action = new Action (name, preconditions, postconditions);
+	final Action action = new Action (name, preconditions, postconditions, constraints);
 	name.setValue (action);
 	Action.getActions ().add (action);
 	return name;

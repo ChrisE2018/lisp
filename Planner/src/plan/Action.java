@@ -14,17 +14,20 @@ public class Action implements Describer
     private final Symbol name;
     private final List<Condition> precondition;
     private final List<Condition> postcondition;
+    private final List<Condition> constraints;
 
     public static List<Action> getActions ()
     {
 	return actions;
     }
 
-    public Action (final Symbol name, final List<Condition> precondition, final List<Condition> postcondition)
+    public Action (final Symbol name, final List<Condition> precondition, final List<Condition> postcondition,
+            final List<Condition> constraints)
     {
 	this.name = name;
 	this.precondition = precondition;
 	this.postcondition = postcondition;
+	this.constraints = constraints;
     }
 
     public Action (final Action action, final Bindings bindings)
@@ -32,6 +35,7 @@ public class Action implements Describer
 	name = action.name.gensym ();
 	precondition = new ArrayList<Condition> ();
 	postcondition = new ArrayList<Condition> ();
+	constraints = new ArrayList<Condition> ();
 	for (final Condition c : action.precondition)
 	{
 	    precondition.add (c.bind (bindings));
@@ -39,6 +43,10 @@ public class Action implements Describer
 	for (final Condition c : action.postcondition)
 	{
 	    postcondition.add (c.bind (bindings));
+	}
+	for (final Condition c : action.constraints)
+	{
+	    constraints.add (c.bind (bindings));
 	}
     }
 
@@ -55,6 +63,11 @@ public class Action implements Describer
     public List<Condition> getPostcondition ()
     {
 	return postcondition;
+    }
+
+    public List<Condition> getConstraints ()
+    {
+	return constraints;
     }
 
     public Bindings canAchieve (final Condition condition)
