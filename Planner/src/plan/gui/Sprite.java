@@ -5,16 +5,16 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import util.Pair;
+import util.*;
 
 public class Sprite extends Rectangle
 {
     private static final int LINE_GAP = 2;
     private static final int MAX_FONT_SIZE = 14;
     private final List<Pair<String, Color>> labels = new ArrayList<Pair<String, Color>> ();
-    private final Color frameColor = Color.blue;
-    private final Color backColor = Color.white;
-    private final Color labelColor = Color.black;
+    private Color frameColor = Color.blue;
+    private Color backColor = Color.white;
+    private Color labelColor = Color.black;
     private Object target = null;
     public final Rectangle destination = new Rectangle (0, 0, 0, 0);
 
@@ -70,8 +70,8 @@ public class Sprite extends Rectangle
 	final int lineCount = labels.size ();
 	final int lineHeight = Math.min (MAX_FONT_SIZE, (int)Math.round ((double)height / (double)lineCount) - LINE_GAP);
 	final int top = (height - (lineHeight + LINE_GAP) * lineCount) / 2;
-	final Font boldFont = getBoldFont (g, lineHeight);
-	final Font font = getFont (g, lineHeight);
+	final Font boldFont = FontUtil.getBoldFont (g, lineHeight);
+	final Font font = FontUtil.getFont (g, lineHeight);
 	g.setFont (boldFont);
 	final FontMetrics metrics = g.getFontMetrics ();
 	final int baseline = metrics.getAscent ();
@@ -121,9 +121,19 @@ public class Sprite extends Rectangle
 	return frameColor;
     }
 
+    public void setFrameColor (final Color frameColor)
+    {
+	this.frameColor = frameColor;
+    }
+
     public Color getBackColor ()
     {
 	return backColor;
+    }
+
+    public void setBackColor (final Color backColor)
+    {
+	this.backColor = backColor;
     }
 
     public Color getLabelColor ()
@@ -131,22 +141,9 @@ public class Sprite extends Rectangle
 	return labelColor;
     }
 
-    public Font getFont (final Graphics g, final int size)
+    public void setLabelColor (final Color labelColor)
     {
-	final String fontName = g.getFont ().getFontName ();
-	return new Font (fontName, 0, size);
-    }
-
-    public Font getBoldFont (final Graphics g, final int size)
-    {
-	final String fontName = g.getFont ().getFontName ();
-	return new Font (fontName, Font.BOLD, size);
-    }
-
-    public Font getItalicFont (final Graphics g, final int size)
-    {
-	final String fontName = g.getFont ().getFontName ();
-	return new Font (fontName, Font.ITALIC, size);
+	this.labelColor = labelColor;
     }
 
     @Override

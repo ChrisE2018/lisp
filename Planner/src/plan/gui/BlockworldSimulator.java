@@ -3,6 +3,7 @@ package plan.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import javax.swing.Timer;
 
 import lisp.lang.Symbol;
 import plan.*;
+import util.FontUtil;
 
 public class BlockworldSimulator extends JPanel implements ActionListener
 {
@@ -29,6 +31,9 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 
     /** Conditions that are currently true. */
     private final List<Condition> state = new ArrayList<Condition> ();
+
+    /** Goals of the original plan. */
+    private final List<Condition> goals = new ArrayList<> ();
 
     public BlockworldSimulator ()
     {
@@ -162,14 +167,16 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 			{
 			    System.out.printf ("No sprite for %s %n", s);
 			}
-
-			sprite.destination.x = x;
-			sprite.destination.y = y;
-			sprite.destination.width = size;
-			sprite.destination.height = height;
-			positionedBlocks.add (s);
-			System.out.printf ("Table block %s at %s %n", s, x);
-			x += w;
+			else
+			{
+			    sprite.destination.x = x;
+			    sprite.destination.y = y;
+			    sprite.destination.width = size;
+			    sprite.destination.height = height;
+			    positionedBlocks.add (s);
+			    System.out.printf ("Table block %s at %s %n", s, x);
+			    x += w;
+			}
 		    }
 		}
 		else if (p.is ("on"))
@@ -191,25 +198,55 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 			}
 		    }
 		}
+		else if (p.is ("color"))
+		{
+		    try
+		    {
+			final Symbol block = c.getTerms ().get (0);
+			final Sprite sprite = sprites.get (block);
+			if (sprite != null)
+			{
+			    final Color color = getColor (c.getTerms ().get (1).getName ());
+			    sprite.setBackColor (color);
+			}
+		    }
+		    catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e)
+		    {
+		    }
+		}
 	    }
 	}
     }
 
-    private Set<Symbol> getLiterals (final Node node)
+    private Color getColor (final String colorName)
+            throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException
     {
-	final Set<Symbol> result = new HashSet<Symbol> ();
-	for (final Condition c : node.getAddConditions ())
+	final Field field = Color.class.getField (colorName);
+	if (field == null)
 	{
-	    for (final Symbol s : c.getTerms ())
-	    {
-		if (!s.isVariable ())
-		{
-		    result.add (s);
-		}
-	    }
+	    return null;
 	}
-	return result;
+	else
+	{
+	    return (Color)field.get (null);
+	}
     }
+
+    // private Set<Symbol> getLiterals (final Node node)
+    // {
+    // final Set<Symbol> result = new HashSet<> ();
+    // for (final Condition c : node.getAddConditions ())
+    // {
+    // for (final Symbol s : c.getTerms ())
+    // {
+    // if (!s.isVariable ())
+    // {
+    // result.add (s);
+    // }
+    // }
+    // }
+    // return result;
+    // }
 
     @Override
     public void paintComponent (final Graphics g)
@@ -226,6 +263,13 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 	{
 	    sprite.paint (g);
 	}
+	g.setFont (FontUtil.getFont (g, 12));
+	g.setColor (Color.black);
+	for (int i = 0; i < goals.size (); i++)
+	{
+	    final Condition goal = goals.get (i);
+	    g.drawString (goal.toString (), 10, 20 + i * 15);
+	}
     }
 
     private void setPlan (final Plan plan)
@@ -237,8 +281,8 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 	    blocks.clear ();
 	    sprites.clear ();
 	    simulatedNodes.clear ();
-	    final Node node = plan.getInitialNode ();
-	    for (final Condition c : node.getAddConditions ())
+	    final Node initialNode = plan.getInitialNode ();
+	    for (final Condition c : initialNode.getAddConditions ())
 	    {
 		for (final Symbol s : c.getTerms ())
 		{
@@ -249,6 +293,12 @@ public class BlockworldSimulator extends JPanel implements ActionListener
 	    {
 		final Sprite sprite = new Sprite (s, 0, 0, 10, 10, s.getName ());
 		sprites.put (s, sprite);
+	    }
+	    final List<Node> goalNodes = plan.getOriginalGoalNodes ();
+	    goals.clear ();
+	    for (final Node node : goalNodes)
+	    {
+		goals.addAll (node.getGoalConditions ());
 	    }
 	    actionTimestamp = System.currentTimeMillis ();
 	    // System.out.printf ("new setPlan %s%n", plan);

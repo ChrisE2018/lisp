@@ -54,6 +54,22 @@ public class Plan implements Describer, ProblemState
 	return true;
     }
 
+    public Plan getRootPlan ()
+    {
+	final Plan parent = planAchiever.getParent ();
+	if (parent == null)
+	{
+	    return this;
+	}
+	return parent.getRootPlan ();
+    }
+
+    public List<Node> getOriginalGoalNodes ()
+    {
+	final Plan rootPlan = getRootPlan ();
+	return rootPlan.getOpenNodes ();
+    }
+
     public List<Node> getNodes ()
     {
 	return nodes;

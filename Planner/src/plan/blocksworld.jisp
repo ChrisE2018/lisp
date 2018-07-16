@@ -4,6 +4,7 @@
 
 (defaction stack
 	[precondition (clear ?a) (clear ?b)]
+	; Also need (not (same ?a ?b))
 	[postcondition (on ?a ?b)
 				   (not (ontable ?a))
 				   (not (clear ?b))

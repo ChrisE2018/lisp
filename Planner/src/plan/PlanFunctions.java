@@ -32,7 +32,7 @@ public class PlanFunctions extends Definer
     private final Symbol POSTCONDITION_SYMBOL = pkg.internSymbol ("postcondition");
 
     /**
-     * @param interpreter
+     * @param context
      */
     @DefineLisp (special = true)
     public Object defaction (final LexicalContext context, final Symbol name, final Object... body)
@@ -86,7 +86,7 @@ public class PlanFunctions extends Definer
     /**
      * Create a plan from nodes and before link expressions.
      *
-     * @param interpreter
+     * @param context
      */
     @DefineLisp (special = true, name = "plan")
     public Object createPlan (final LexicalContext context, final Symbol name, final Object... body)
