@@ -2,6 +2,10 @@
 
 (inPackage "lisp.user")
 
+(defpredicate clear ?b1)
+(defpredicate ontable ?b1)
+(defpredicate on ?b1 ?b2)
+
 (defaction stack
 	[precondition (clear ?a) (clear ?b)]
 	; Also need (not (same ?a ?b))

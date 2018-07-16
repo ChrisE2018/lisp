@@ -4,10 +4,15 @@ package plan;
 import java.util.*;
 
 import lisp.lang.*;
+import lisp.lang.Package;
 import lisp.util.MultiMap;
 
 public class Condition implements Describer
 {
+    private final Package pkg = PackageFactory.getDefaultPackage ();
+
+    private final Symbol PREDICATE_SYMBOL = pkg.internSymbol ("predicate");
+
     private final boolean negated;
     private final Symbol predicate;
     private final List<Symbol> terms;
@@ -17,6 +22,7 @@ public class Condition implements Describer
 	this.negated = negated;
 	this.predicate = predicate;
 	this.terms = terms;
+	checkArgs ();
     }
 
     public Condition (final Symbol predicate, final List<Symbol> terms)
@@ -24,6 +30,7 @@ public class Condition implements Describer
 	negated = false;
 	this.predicate = predicate;
 	this.terms = terms;
+	checkArgs ();
     }
 
     public Condition (final List<Object> expression)
@@ -48,6 +55,20 @@ public class Condition implements Describer
 	for (final Object term : expr.subList (1, expr.size ()))
 	{
 	    terms.add ((Symbol)term);
+	}
+	checkArgs ();
+    }
+
+    private void checkArgs ()
+    {
+	final Object[] args = (Object[])predicate.get (PREDICATE_SYMBOL);
+	if (args == null)
+	{
+	    throw new Error (predicate + " is not a defined predicate");
+	}
+	if (args.length != terms.size ())
+	{
+	    throw new Error (predicate + " requires " + args.length + " arguments but " + terms.size () + " given");
 	}
     }
 

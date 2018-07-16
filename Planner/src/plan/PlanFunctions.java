@@ -23,13 +23,23 @@ public class PlanFunctions extends Definer
 
     private final Package pkg = PackageFactory.getDefaultPackage ();
 
+    private final Symbol PREDICATE_SYMBOL = pkg.internSymbol ("predicate");
+    private final Symbol PRECONDITION_SYMBOL = pkg.internSymbol ("precondition");
+    private final Symbol POSTCONDITION_SYMBOL = pkg.internSymbol ("postcondition");
+
     private PlanFunctions ()
     {
     }
 
-    // private final Symbol NOT_SYMBOL = pkg.internSymbol ("not");
-    private final Symbol PRECONDITION_SYMBOL = pkg.internSymbol ("precondition");
-    private final Symbol POSTCONDITION_SYMBOL = pkg.internSymbol ("postcondition");
+    /**
+     * @param context
+     */
+    @DefineLisp (special = true)
+    public Object defpredicate (final LexicalContext context, final Symbol name, final Object... args)
+    {
+	name.put (PREDICATE_SYMBOL, args);
+	return name;
+    }
 
     /**
      * @param context
