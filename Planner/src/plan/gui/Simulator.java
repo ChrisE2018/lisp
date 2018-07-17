@@ -17,7 +17,7 @@ import lisp.lang.Symbol;
 import plan.*;
 import util.FontUtil;
 
-public class BlockworldSimulator extends JPanel implements ComponentListener, MouseListener, MouseMotionListener
+public class Simulator extends JPanel implements ComponentListener, MouseListener, MouseMotionListener
 {
     private static final long ACTION_INTERVAL = 2000;
     private static final int ANIMATION_TIMER_INTERVAL = 1;
@@ -61,7 +61,7 @@ public class BlockworldSimulator extends JPanel implements ComponentListener, Mo
     private int blockHeight = 25;
     private int tableY = 250;
 
-    public BlockworldSimulator ()
+    public Simulator ()
     {
 	addComponentListener (this);
 	addMouseListener (this);
@@ -569,7 +569,7 @@ public class BlockworldSimulator extends JPanel implements ComponentListener, Mo
 	{
 	    frame = new JFrame ("" + plan.getName () + " Simulation");
 	    frame.setDefaultCloseOperation (WindowConstants.HIDE_ON_CLOSE);
-	    final BlockworldSimulator simulatorView = new BlockworldSimulator ();
+	    final Simulator simulatorView = new Simulator ();
 	    frame.setSize (900, 800);
 	    // frame.pack ();
 	    frame.getContentPane ().add (simulatorView);

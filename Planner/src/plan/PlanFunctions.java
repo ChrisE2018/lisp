@@ -250,7 +250,7 @@ public class PlanFunctions extends Definer
     {
 	if (plan != null)
 	{
-	    BlockworldSimulator.makeView (plan);
+	    Simulator.makeView (plan);
 	}
 	return plan;
     }
