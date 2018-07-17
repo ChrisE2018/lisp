@@ -146,6 +146,27 @@ public class Sprite extends Rectangle
 	this.labelColor = labelColor;
     }
 
+    public boolean isMoving ()
+    {
+	if (getX () != destination.x)
+	{
+	    return true;
+	}
+	if (getY () != destination.y)
+	{
+	    return true;
+	}
+	if (getWidth () != destination.width)
+	{
+	    return true;
+	}
+	if (getHeight () != destination.height)
+	{
+	    return true;
+	}
+	return false;
+    }
+
     @Override
     public String toString ()
     {

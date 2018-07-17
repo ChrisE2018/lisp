@@ -1,6 +1,8 @@
 
 package plan.gui;
 
+import static java.lang.Math.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
@@ -15,7 +17,7 @@ import lisp.lang.Symbol;
 import plan.*;
 import util.FontUtil;
 
-public class BlockworldSimulator extends JPanel implements ActionListener, ComponentListener
+public class BlockworldSimulator extends JPanel implements ActionListener, ComponentListener, MouseListener, MouseMotionListener
 {
     private static final long ACTION_INTERVAL = 2000;
     private Plan plan;
@@ -46,6 +48,8 @@ public class BlockworldSimulator extends JPanel implements ActionListener, Compo
     {
 	timer.start ();
 	addComponentListener (this);
+	addMouseListener (this);
+	addMouseMotionListener (this);
     }
 
     private void updateSizes ()
@@ -83,19 +87,7 @@ public class BlockworldSimulator extends JPanel implements ActionListener, Compo
 	{
 	    for (final Sprite sprite : sprites.values ())
 	    {
-		if (sprite.getX () != sprite.destination.x)
-		{
-		    return;
-		}
-		if (sprite.getY () != sprite.destination.y)
-		{
-		    return;
-		}
-		if (sprite.getWidth () != sprite.destination.width)
-		{
-		    return;
-		}
-		if (sprite.getHeight () != sprite.destination.height)
+		if (sprite.isMoving ())
 		{
 		    return;
 		}
@@ -115,8 +107,8 @@ public class BlockworldSimulator extends JPanel implements ActionListener, Compo
 	    }
 	    else
 	    {
-		System.out.printf ("Simulation complete %n");
-		timer.stop ();
+		// System.out.printf ("Simulation complete %n");
+		// timer.stop ();
 	    }
 	    actionTimestamp = now;
 	}
@@ -379,14 +371,13 @@ public class BlockworldSimulator extends JPanel implements ActionListener, Compo
     @Override
     public void paintComponent (final Graphics g)
     {
-	final int height3 = getHeight () / 3;
-	final int baseline = height3 * 2;
-	g.setColor (Color.cyan);
-	g.fillRect (0, 0, getWidth (), baseline);
+	final int baseline = (getHeight () * 2) / 3;
 	g.setColor (Color.green);
-	g.fillRect (0, baseline, getWidth (), height3);
-	g.setColor (Color.YELLOW);
-	g.fillOval (100, 100, 50, 50);
+	g.fillRect (0, 0, getWidth (), baseline);
+	g.setColor (Color.darkGray);
+	g.fillRect (0, baseline, getWidth (), getHeight () - baseline);
+	// g.setColor (Color.YELLOW);
+	// g.fillOval (100, 100, 50, 50);
 	for (final Sprite sprite : sprites.values ())
 	{
 	    sprite.paint (g);
@@ -398,6 +389,129 @@ public class BlockworldSimulator extends JPanel implements ActionListener, Compo
 	    final Condition goal = goals.get (i);
 	    g.drawString (goal.toString (), 10, 20 + i * 15);
 	}
+    }
+
+    @Override
+    public void componentResized (final ComponentEvent e)
+    {
+	updateSizes ();
+    }
+
+    @Override
+    public void componentMoved (final ComponentEvent e)
+    {
+    }
+
+    @Override
+    public void componentShown (final ComponentEvent e)
+    {
+    }
+
+    @Override
+    public void componentHidden (final ComponentEvent e)
+    {
+    }
+
+    private Sprite mouseSprite = null;
+    private Symbol mouseBlock = null;
+    private int mouseDeltaX = 0;
+    private int mouseDeltaY = 0;
+
+    @Override
+    public void mouseClicked (final MouseEvent e)
+    {
+    }
+
+    @Override
+    public void mousePressed (final MouseEvent e)
+    {
+	for (final Entry<Symbol, Sprite> entry : sprites.entrySet ())
+	{
+	    final Sprite sprite = entry.getValue ();
+	    if (sprite.contains (e.getPoint ()))
+	    {
+		mouseSprite = sprite;
+		mouseBlock = entry.getKey ();
+		mouseDeltaX = e.getX () - sprite.x;
+		mouseDeltaY = e.getY () - sprite.y;
+		System.out.printf ("mousePressed on %s %n", mouseSprite);
+	    }
+	}
+    }
+
+    @Override
+    public void mouseReleased (final MouseEvent e)
+    {
+	if (mouseSprite != null)
+	{
+	    // System.out.printf ("mouseReleased on %s %n", mouseSprite);
+	    mouseSprite.x = e.getX () - mouseDeltaX;
+	    mouseSprite.y = min (e.getY () - mouseDeltaY, tableY);
+	    mouseSprite.destination.x = mouseSprite.x;
+	    mouseSprite.destination.y = getLandingLevel (mouseBlock);
+	    mouseSprite = null;
+	    mouseBlock = null;
+	}
+    }
+
+    private int getLandingLevel (final Symbol block)
+    {
+	double result = tableY;
+	final Sprite blockSprite = sprites.get (block);
+	System.out.printf ("Sprite %s [%s, %s] is above table %s%n", block, blockSprite.x, blockSprite.y, result);
+	for (final Entry<Symbol, Sprite> entry : sprites.entrySet ())
+	{
+	    final Sprite sprite = entry.getValue ();
+	    if (blockSprite != sprite)
+	    {
+		if (blockSprite.getMaxY () <= sprite.getY ())
+		{
+		    final double top = sprite.getMinY () - blockHeight;
+		    System.out.printf ("Sprite %s [x %s, %s] is above %s [x %s, %s] [y %s %s] %n", block, blockSprite.x,
+		            blockSprite.y, entry.getKey (), sprite.x, sprite.y, top, sprite.getMaxY ());
+		    if (top < result)
+		    {
+			if (blockSprite.getX () <= sprite.getMaxX ())
+			{
+			    if (blockSprite.getMaxX () >= sprite.getMinX ())
+			    {
+				result = top;
+				System.out.printf ("Sprite %s will fall onto %s at %s %n", block, entry.getKey (), top);
+			    }
+			}
+		    }
+		}
+	    }
+	}
+	System.out.printf ("Sprite %s [%s, %s] will fall to %s%n", block, blockSprite.x, blockSprite.y, result);
+	return (int)round (result);
+    }
+
+    @Override
+    public void mouseEntered (final MouseEvent e)
+    {
+    }
+
+    @Override
+    public void mouseExited (final MouseEvent e)
+    {
+	mouseSprite = null;
+    }
+
+    @Override
+    public void mouseDragged (final MouseEvent e)
+    {
+	if (mouseSprite != null)
+	{
+	    // System.out.printf ("mouseDragged on %s %n", mouseSprite);
+	    mouseSprite.destination.x = e.getX () - mouseDeltaX;
+	    mouseSprite.destination.y = min (e.getY () - mouseDeltaY, tableY);
+	}
+    }
+
+    @Override
+    public void mouseMoved (final MouseEvent e)
+    {
     }
 
     @Override
@@ -443,26 +557,5 @@ public class BlockworldSimulator extends JPanel implements ActionListener, Compo
 		f.toFront ();
 	    }
 	});
-    }
-
-    @Override
-    public void componentResized (final ComponentEvent e)
-    {
-	updateSizes ();
-    }
-
-    @Override
-    public void componentMoved (final ComponentEvent e)
-    {
-    }
-
-    @Override
-    public void componentShown (final ComponentEvent e)
-    {
-    }
-
-    @Override
-    public void componentHidden (final ComponentEvent e)
-    {
     }
 }
