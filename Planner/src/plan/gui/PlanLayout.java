@@ -4,12 +4,16 @@ package plan.gui;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.logging.Logger;
 
+import lisp.util.LogString;
 import plan.*;
 
 /** Layout a partially ordered plan geometrically. */
 public class PlanLayout
 {
+    private static final Logger LOGGER = Logger.getLogger (PlanLayout.class.getName ());
+
     private final int X_GAP = 50;
     private final int Y_GAP = 50;
 
@@ -25,7 +29,7 @@ public class PlanLayout
 	    final List<Node> column = getFirstNodes (plan, marked);
 	    if (column.isEmpty ())
 	    {
-		System.out.printf ("No first nodes found in %s %n", plan);
+		LOGGER.warning (new LogString ("No first nodes found in %s", plan));
 		List<Node> c2;
 		do
 		{
@@ -40,7 +44,7 @@ public class PlanLayout
 	    {
 		maxColumnSize = columnSize;
 	    }
-	    // System.out.printf ("Column %s %n", column);
+	    LOGGER.fine (new LogString ("Column %s", column));
 	}
 	final int columnWidth = r.width / columns.size ();
 	final int rowHeight = r.height / maxColumnSize;

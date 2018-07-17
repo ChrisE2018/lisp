@@ -3,15 +3,19 @@ package plan;
 
 import java.awt.Rectangle;
 import java.util.*;
+import java.util.logging.Logger;
 
 import lisp.eval.*;
 import lisp.lang.*;
 import lisp.lang.Package;
+import lisp.util.LogString;
 import plan.gui.*;
 import search.BestFirstSearch;
 
 public class PlanFunctions extends Definer
 {
+    private static final Logger LOGGER = Logger.getLogger (PlanFunctions.class.getName ());
+
     @SuppressWarnings ("unused")
     private static PlanFunctions planFunctions = new PlanFunctions ();
 
@@ -113,7 +117,7 @@ public class PlanFunctions extends Definer
     {
 	final Plan plan = new Plan (name);
 	name.setValue (plan);
-	System.out.printf ("Create plan %s %n", name);
+	LOGGER.info (new LogString ("Create plan %s", name));
 	for (final Object c : body)
 	{
 	    @SuppressWarnings ("unchecked")
@@ -121,9 +125,9 @@ public class PlanFunctions extends Definer
 	    final Symbol key = coerceSymbol (clause.get (0), true);
 	    if (key.is ("node"))
 	    {
-		System.out.printf (" Node %s %n", clause);
+		LOGGER.fine (new LogString (" Node %s", clause));
 		final Node node = createPlanNode (clause);
-		System.out.printf ("  Node %s %n", node);
+		LOGGER.fine (new LogString ("  Node %s", node));
 		plan.addNode (node);
 	    }
 	    else if (key.is ("before"))
@@ -132,7 +136,7 @@ public class PlanFunctions extends Definer
 		final Symbol c2 = coerceSymbol (clause.get (2), true);
 		final Node n1 = plan.getNode (c1);
 		final Node n2 = plan.getNode (c2);
-		System.out.printf ("  Before %s %s %n", n1.getName (), n2.getName ());
+		LOGGER.fine (new LogString ("  Before %s %s", n1.getName (), n2.getName ()));
 		n1.addSuccessor (n2);
 	    }
 	    else
@@ -140,14 +144,14 @@ public class PlanFunctions extends Definer
 		throw new IllegalArgumentException ("Unknown clause in plan definition: " + clause);
 	    }
 	}
-	System.out.printf ("Plan %s %n", plan);
+	LOGGER.info (new LogString ("Plan %s", plan));
 	return plan;
     }
 
     private Node createPlanNode (final List<Object> nodeDef)
     {
 	final Symbol name = coerceSymbol (nodeDef.get (1), true);
-	// System.out.printf (" Plan node %s %n", name);
+	LOGGER.fine (new LogString (" Plan node %s", name));
 	final Node result = new Node (name);
 	for (final Object c : nodeDef.subList (2, nodeDef.size ()))
 	{
@@ -161,7 +165,7 @@ public class PlanFunctions extends Definer
 		    @SuppressWarnings ("unchecked")
 		    final List<Object> expr = (List<Object>)expression;
 		    final Condition condition = new Condition (expr);
-		    // System.out.printf (" Add %s %n", condition);
+		    LOGGER.finer (new LogString (" Add %s", condition));
 		    result.getAddConditions ().add (condition);
 		}
 	    }
@@ -172,7 +176,7 @@ public class PlanFunctions extends Definer
 		    @SuppressWarnings ("unchecked")
 		    final List<Object> expr = (List<Object>)expression;
 		    final Condition condition = new Condition (expr);
-		    // System.out.printf (" Delete %s %n", condition);
+		    LOGGER.finer (new LogString (" Delete %s", condition));
 		    result.getDeleteConditions ().add (condition);
 		}
 	    }
@@ -183,7 +187,7 @@ public class PlanFunctions extends Definer
 		    @SuppressWarnings ("unchecked")
 		    final List<Object> expr = (List<Object>)expression;
 		    final Condition condition = new Condition (expr);
-		    // System.out.printf (" Goal %s %n", condition);
+		    LOGGER.finer (new LogString (" Goal %s", condition));
 		    result.getGoalConditions ().add (condition);
 		}
 	    }

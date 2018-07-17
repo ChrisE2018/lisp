@@ -3,15 +3,18 @@ package plan;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 import lisp.lang.*;
-import lisp.util.MultiMap;
+import lisp.util.*;
 import search.ProblemState;
 import util.Pair;
 
 /** Implementation of nonlinear plan. */
 public class Plan implements Describer, ProblemState
 {
+    private static final Logger LOGGER = Logger.getLogger (Plan.class.getName ());
+
     /** Name of this plan. */
     private final Symbol name;
 
@@ -132,7 +135,8 @@ public class Plan implements Describer, ProblemState
 
     public List<Plan> expandPlan ()
     {
-	System.out.printf ("%nExpanding %s %n", this);
+	LOGGER.info ("");
+	LOGGER.info (new LogString ("Expanding %s", this));
 	OpenGoalCondition bestGoal = null;
 	final List<OpenGoalCondition> goals = getOpenGoals ();
 	for (final OpenGoalCondition goal : goals)
@@ -145,7 +149,7 @@ public class Plan implements Describer, ProblemState
 		bestGoal = goal;
 	    }
 	}
-	System.out.printf ("Expanding %s %n", bestGoal);
+	LOGGER.info (new LogString ("Expanding %s", bestGoal));
 	final List<Plan> result = new ArrayList<Plan> ();
 	if (bestGoal != null)
 	{
@@ -169,7 +173,7 @@ public class Plan implements Describer, ProblemState
 	}
 	if (result.isEmpty ())
 	{
-	    System.out.printf ("Failure Expanding %s %n", bestGoal);
+	    LOGGER.info (new LogString ("Failure Expanding %s", bestGoal));
 	}
 	return result;
     }
@@ -311,9 +315,9 @@ public class Plan implements Describer, ProblemState
 		    if (!n.before (from) && !to.before (n))
 		    {
 			// This is a possibly conflicting node
-			System.out.printf ("Conflicted condition %s %n", c);
-			System.out.printf ("Conflict node %s %n", n);
-			System.out.printf ("Conflict interval %s => %s %n", from, to);
+			LOGGER.info (new LogString ("Conflicted condition %s", c));
+			LOGGER.info (new LogString ("Conflict node %s", n));
+			LOGGER.info (new LogString ("Conflict interval %s => %s", from, to));
 			final PIConflict conflict = new PIConflict (n, pi);
 			conflicts.add (conflict);
 		    }

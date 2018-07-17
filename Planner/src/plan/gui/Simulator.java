@@ -8,16 +8,20 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 import javax.swing.*;
 import javax.swing.Timer;
 
-import lisp.lang.Symbol;
+import lisp.lang.*;
+import lisp.lang.Package;
+import lisp.util.LogString;
 import plan.*;
 import util.FontUtil;
 
-public class Simulator extends JPanel implements ComponentListener, MouseListener, MouseMotionListener
+public class Simulator extends JPanel implements ComponentListener, MouseListener, MouseMotionListener, ActionListener
 {
+    private static final Logger LOGGER = Logger.getLogger (Simulator.class.getName ());
     private static final long ACTION_INTERVAL = 2000;
     private static final int ANIMATION_TIMER_INTERVAL = 1;
     private static final int SIMULATION_TIMER_INTERVAL = 250;
@@ -36,6 +40,9 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 
     /** Domain specific simulation content. */
     private final World world;
+
+    private final JButton makePlan = new JButton ("Make Plan");
+    private final JButton simulate = new JButton ("Simulate");
 
     /** The plan to simulate */
     private Plan plan;
@@ -65,13 +72,27 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 
     public Simulator (final World world)
     {
+	setLayout (null);
 	this.world = world;
 	world.setSimulator (this);
 	addComponentListener (this);
 	addMouseListener (this);
 	addMouseMotionListener (this);
-	animationTimer.start ();
-	simulationTimer.start ();
+	makePlan.addActionListener (this);
+	simulate.addActionListener (this);
+	SwingUtilities.invokeLater (new Runnable ()
+	{
+	    @Override
+	    public void run ()
+	    {
+		makePlan.setSize (100, 30);
+		simulate.setSize (100, 30);
+		add (makePlan);
+		add (simulate);
+		animationTimer.start ();
+		simulationTimer.start ();
+	    }
+	});
     }
 
     public boolean isPositioned (final Symbol s)
@@ -96,7 +117,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 
     private void setPlan (final Plan plan)
     {
-	System.out.printf ("setPlan %s%n", plan);
+	LOGGER.info (new LogString ("setPlan %s", plan));
 	if (this.plan != plan)
 	{
 	    this.plan = plan;
@@ -139,6 +160,9 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 	world.setBlockHeight (blockHeight);
 	world.setBlockSpacing (blockSpacing);
 	world.setTableY (tableY);
+
+	makePlan.setLocation (getWidth () - 150, 10);
+	simulate.setLocation (getWidth () - 150, 50);
     }
 
     private class AnimationTimer extends Timer
@@ -250,7 +274,8 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 
     private void simulate (final Node node)
     {
-	System.out.printf ("Simulate %s %n", node);
+	LOGGER.info ("==========================================");
+	LOGGER.info (new LogString ("[%d/%d] Simulate %s", simulatedNodes.size (), plan.getNodes ().size (), node));
 	for (final Condition c : node.getDeleteConditions ())
 	{
 	    state.remove (c);
@@ -259,7 +284,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 	{
 	    state.add (c);
 	}
-	System.out.printf ("State %s %n", state);
+	LOGGER.info (new LogString ("State %s", state));
 	final StringBuilder buffer = new StringBuilder ();
 	final Map<Symbol, Symbol> constraints = plan.getConstraints ();
 	if (!constraints.isEmpty ())
@@ -271,11 +296,11 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 		buffer.append (entry.getValue ());
 		buffer.append (" ");
 	    }
-	    System.out.printf ("Constraints %s %n", buffer);
+	    LOGGER.info (new LogString ("Constraints %s", buffer));
 	}
 	for (final Condition c : node.getAddConditions ())
 	{
-	    if (!world.canChange (c))
+	    if (world.canChange (c))
 	    {
 		positionedBlocks.removeAll (c.getTerms ());
 	    }
@@ -286,11 +311,12 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 
     private void animateCurrentState ()
     {
+	LOGGER.info (new LogString ("Animate %s", state));
 	for (final Symbol b : blocks)
 	{
 	    if (!positionedBlocks.contains (b))
 	    {
-		System.out.printf ("Position block %s %n", b);
+		LOGGER.info (new LogString ("Position block %s", b));
 	    }
 	}
 	final int limit = state.size ();
@@ -298,9 +324,51 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 	{
 	    for (final Condition c : state)
 	    {
+		LOGGER.info (new LogString ("Animate %s", c));
 		world.animateCondition (c);
 	    }
 	}
+    }
+
+    @Override
+    public void actionPerformed (final ActionEvent e)
+    {
+	try
+	{
+	    final Object source = e.getSource ();
+	    if (source == makePlan)
+	    {
+		makePlan ();
+	    }
+	    if (source == simulate)
+	    {
+		simulatePlan ();
+	    }
+	}
+	catch (final Throwable ex)
+	{
+	    ex.printStackTrace ();
+	}
+    }
+
+    private void makePlan ()
+    {
+	final Package pkg = PackageFactory.getDefaultPackage ();
+	final Node initialNode = plan.getInitialNode ();
+	final Plan p = new Plan (plan.getName ().gensym ());
+	final Node start = new Node (pkg.internSymbol ("start").gensym ());
+	final Node goal = new Node (pkg.internSymbol ("goal").gensym ());
+	start.addSuccessor (goal);
+	start.getAddConditions ().addAll (initialNode.getAddConditions ());
+	goal.getGoalConditions ().addAll (goals);
+	p.addNode (start);
+	p.addNode (goal);
+
+    }
+
+    private void simulatePlan ()
+    {
+
     }
 
     @Override
@@ -369,7 +437,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 		mouseBlock = entry.getKey ();
 		mouseDeltaX = e.getX () - sprite.x;
 		mouseDeltaY = e.getY () - sprite.y;
-		System.out.printf ("mousePressed on %s %n", mouseSprite);
+		LOGGER.info (new LogString ("mousePressed on %s", mouseSprite));
 	    }
 	}
     }
@@ -379,7 +447,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
     {
 	if (mouseSprite != null)
 	{
-	    // System.out.printf ("mouseReleased on %s %n", mouseSprite);
+	    // LOGGER.info (new LogString ("mouseReleased on %s", mouseSprite));
 	    mouseSprite.x = e.getX () - mouseDeltaX;
 	    mouseSprite.y = min (e.getY () - mouseDeltaY, tableY);
 	    mouseSprite.destination.x = mouseSprite.x;
@@ -393,7 +461,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
     {
 	double result = tableY;
 	final Sprite blockSprite = sprites.get (block);
-	System.out.printf ("Sprite %s [%s, %s] is above table %s%n", block, blockSprite.x, blockSprite.y, result);
+	LOGGER.info (new LogString ("Sprite %s [%s, %s] is above table %s", block, blockSprite.x, blockSprite.y, result));
 	for (final Entry<Symbol, Sprite> entry : sprites.entrySet ())
 	{
 	    final Sprite sprite = entry.getValue ();
@@ -402,8 +470,8 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 		if (blockSprite.getMaxY () <= sprite.getY ())
 		{
 		    final double top = sprite.getMinY () - blockHeight;
-		    System.out.printf ("Sprite %s [x %s, %s] is above %s [x %s, %s] [y %s %s] %n", block, blockSprite.x,
-		            blockSprite.y, entry.getKey (), sprite.x, sprite.y, top, sprite.getMaxY ());
+		    LOGGER.info (new LogString ("Sprite %s [x %s, %s] is above %s [x %s, %s] [y %s %s]", block, blockSprite.x,
+		            blockSprite.y, entry.getKey (), sprite.x, sprite.y, top, sprite.getMaxY ()));
 		    if (top < result)
 		    {
 			if (blockSprite.getX () <= sprite.getMaxX ())
@@ -411,14 +479,14 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 			    if (blockSprite.getMaxX () >= sprite.getMinX ())
 			    {
 				result = top;
-				System.out.printf ("Sprite %s will fall onto %s at %s %n", block, entry.getKey (), top);
+				LOGGER.info (new LogString ("Sprite %s will fall onto %s at %s", block, entry.getKey (), top));
 			    }
 			}
 		    }
 		}
 	    }
 	}
-	System.out.printf ("Sprite %s [%s, %s] will fall to %s%n", block, blockSprite.x, blockSprite.y, result);
+	LOGGER.info (new LogString ("Sprite %s [%s, %s] will fall to %s", block, blockSprite.x, blockSprite.y, result));
 	return (int)round (result);
     }
 
@@ -438,7 +506,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
     {
 	if (mouseSprite != null)
 	{
-	    // System.out.printf ("mouseDragged on %s %n", mouseSprite);
+	    // LOGGER.info (new LogString ("mouseDragged on %s", mouseSprite));
 	    mouseSprite.destination.x = e.getX () - mouseDeltaX;
 	    mouseSprite.destination.y = min (e.getY () - mouseDeltaY, tableY);
 	}
@@ -467,7 +535,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
     {
 	if (plan == null)
 	{
-	    System.out.printf ("Can't view null plan %n");
+	    LOGGER.info ("Can't view null plan");
 	    return;
 	}
 	JFrame frame = simulationViews.get (plan);

@@ -4,12 +4,17 @@ package plan.gui;
 import java.awt.Color;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.logging.Logger;
 
 import lisp.lang.Symbol;
+import lisp.util.LogString;
 import plan.Condition;
 
 public class Blocksworld implements World
 {
+    // TODO Consider moving actions into the current World
+    private static final Logger LOGGER = Logger.getLogger (Blocksworld.class.getName ());
+
     private Simulator simulator;
     private int blockSpacing = 100;
     private int blockWidth = 25;
@@ -63,6 +68,7 @@ public class Blocksworld implements World
 
     public boolean canChange (final Condition c)
     {
+	// Can implement this by inspecting the available actions
 	return !c.getPredicate ().is ("color");
     }
 
@@ -102,13 +108,14 @@ public class Blocksworld implements World
 	final Symbol s = c.getTerms ().get (0);
 	if (!simulator.isPositioned (s))
 	{
+	    LOGGER.info (new LogString ("Sim %s", c));
 	    final Sprite sprite = simulator.getSprite (s);
 	    final int x = getOpenTableX (sprite);
 	    sprite.destination.x = x;
 	    sprite.destination.y = tableY;
 	    sprite.destination.width = blockWidth;
 	    sprite.destination.height = blockHeight;
-	    System.out.printf ("Table %s %s at %s %n", s, blockWidth, x);
+	    LOGGER.info (new LogString ("Table %s %s at %s", s, blockWidth, x));
 	    simulator.setPositioned (s);
 	}
     }
@@ -152,9 +159,10 @@ public class Blocksworld implements World
 	{
 	    if (simulator.isPositioned (lower))
 	    {
+		LOGGER.info (new LogString ("Sim %s", c));
 		final Sprite upperSprite = simulator.getSprite (upper);
 		final Sprite lowerSprite = simulator.getSprite (lower);
-		System.out.printf ("Simulate %s on %s %n", upper, lower);
+		LOGGER.info (new LogString ("Simulate %s on %s", upper, lower));
 		upperSprite.destination.x = lowerSprite.destination.x;
 		upperSprite.destination.y = lowerSprite.destination.y - blockHeight;
 		upperSprite.destination.width = blockWidth;
@@ -168,6 +176,7 @@ public class Blocksworld implements World
     {
 	try
 	{
+	    LOGGER.info (new LogString ("Sim %s", c));
 	    final Symbol block = c.getTerms ().get (0);
 	    final Sprite sprite = simulator.getSprite (block);
 	    if (sprite != null)
