@@ -5,7 +5,6 @@ import static java.lang.Math.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
@@ -35,6 +34,9 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
     /** True while animation is active. Freezes plan simulation. */
     private boolean hasMovingSprite = true;
 
+    /** Domain specific simulation content. */
+    private final World world;
+
     /** The plan to simulate */
     private Plan plan;
 
@@ -61,13 +63,35 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
     private int blockHeight = 25;
     private int tableY = 250;
 
-    public Simulator ()
+    public Simulator (final World world)
     {
+	this.world = world;
+	world.setSimulator (this);
 	addComponentListener (this);
 	addMouseListener (this);
 	addMouseMotionListener (this);
 	animationTimer.start ();
 	simulationTimer.start ();
+    }
+
+    public boolean isPositioned (final Symbol s)
+    {
+	return positionedBlocks.contains (s);
+    }
+
+    public void setPositioned (final Symbol s)
+    {
+	positionedBlocks.add (s);
+    }
+
+    public Set<Symbol> getPositioned ()
+    {
+	return positionedBlocks;
+    }
+
+    public Sprite getSprite (final Symbol s)
+    {
+	return sprites.get (s);
     }
 
     private void setPlan (final Plan plan)
@@ -83,14 +107,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 	    final Node initialNode = plan.getInitialNode ();
 	    for (final Condition c : initialNode.getAddConditions ())
 	    {
-		if (c.getPredicate ().is ("color"))
-		{
-		    blocks.add (c.getTerms ().get (0));
-		}
-		else
-		{
-		    blocks.addAll (c.getTerms ());
-		}
+		blocks.addAll (world.getObjects (c));
 	    }
 	    int i = 0;
 	    for (final Symbol s : blocks)
@@ -118,6 +135,10 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 	final int height3 = getHeight () / 3;
 	final int baseline = height3 * 2;
 	tableY = Math.max (10, baseline - blockHeight + 10);
+	world.setBlockWidth (blockWidth);
+	world.setBlockHeight (blockHeight);
+	world.setBlockSpacing (blockSpacing);
+	world.setTableY (tableY);
     }
 
     private class AnimationTimer extends Timer
@@ -206,7 +227,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 	{
 	    if (!simulatedNodes.contains (node))
 	    {
-		if (!hasNewPredecessor (node, simulatedNodes))
+		if (!hasUnmarkedPredecessor (node, simulatedNodes))
 		{
 		    result.add (node);
 		}
@@ -215,7 +236,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 	return result;
     }
 
-    private boolean hasNewPredecessor (final Node node, final Collection<Node> marked)
+    private boolean hasUnmarkedPredecessor (final Node node, final Collection<Node> marked)
     {
 	for (final Node p : node.getPrevious ())
 	{
@@ -254,7 +275,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 	}
 	for (final Condition c : node.getAddConditions ())
 	{
-	    if (!c.getPredicate ().is ("color"))
+	    if (!world.canChange (c))
 	    {
 		positionedBlocks.removeAll (c.getTerms ());
 	    }
@@ -277,123 +298,8 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 	{
 	    for (final Condition c : state)
 	    {
-		animateCondition (c);
+		world.animateCondition (c);
 	    }
-	}
-    }
-
-    private void animateCondition (final Condition c)
-    {
-	final Symbol p = c.getPredicate ();
-	if (p.is ("ontable"))
-	{
-	    showBlockOnTable (c);
-	}
-	else if (p.is ("on"))
-	{
-	    showBlockOnBlock (c);
-	}
-	else if (p.is ("color"))
-	{
-	    setBlockColor (c);
-	}
-    }
-
-    private void showBlockOnTable (final Condition c)
-    {
-	final Symbol s = c.getTerms ().get (0);
-	if (!positionedBlocks.contains (s))
-	{
-	    final Sprite sprite = sprites.get (s);
-	    final int x = getOpenTableX (sprite);
-	    sprite.destination.x = x;
-	    sprite.destination.y = tableY;
-	    sprite.destination.width = blockWidth;
-	    sprite.destination.height = blockHeight;
-	    System.out.printf ("Table %s %s at %s %n", s, blockWidth, x);
-	    positionedBlocks.add (s);
-	}
-    }
-
-    private int getOpenTableX (final Sprite sprite)
-    {
-	final int originalX = sprite.destination.x;
-	if (isTableXAvailable (originalX))
-	{
-	    return originalX;
-	}
-	for (int x = blockWidth / 10; true; x += blockSpacing)
-	{
-	    if (isTableXAvailable (x))
-	    {
-		return x;
-	    }
-	}
-    }
-
-    private boolean isTableXAvailable (final int x)
-    {
-	final int low = x - blockSpacing;
-	final int high = x + blockSpacing;
-	for (final Symbol b : positionedBlocks)
-	{
-	    final Sprite sprite = sprites.get (b);
-	    if (sprite.destination.x > low && sprite.destination.x < high)
-	    {
-		return false;
-	    }
-	}
-	return true;
-    }
-
-    private void showBlockOnBlock (final Condition c)
-    {
-	final Symbol upper = c.getTerms ().get (0);
-	final Symbol lower = c.getTerms ().get (1);
-	if (!positionedBlocks.contains (upper))
-	{
-	    if (positionedBlocks.contains (lower))
-	    {
-		final Sprite upperSprite = sprites.get (upper);
-		final Sprite lowerSprite = sprites.get (lower);
-		System.out.printf ("Simulate %s on %s %n", upper, lower);
-		upperSprite.destination.x = lowerSprite.destination.x;
-		upperSprite.destination.y = lowerSprite.destination.y - blockHeight;
-		upperSprite.destination.width = blockWidth;
-		upperSprite.destination.height = blockHeight;
-		positionedBlocks.add (upper);
-	    }
-	}
-    }
-
-    private void setBlockColor (final Condition c)
-    {
-	try
-	{
-	    final Symbol block = c.getTerms ().get (0);
-	    final Sprite sprite = sprites.get (block);
-	    if (sprite != null)
-	    {
-		final Color color = getColor (c.getTerms ().get (1).getName ());
-		sprite.setBackColor (color);
-	    }
-	}
-	catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e)
-	{
-	}
-    }
-
-    private Color getColor (final String colorName)
-            throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException
-    {
-	final Field field = Color.class.getField (colorName);
-	if (field == null)
-	{
-	    return null;
-	}
-	else
-	{
-	    return (Color)field.get (null);
 	}
     }
 
@@ -557,7 +463,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 
     private static Map<Plan, JFrame> simulationViews = new HashMap<> ();
 
-    public static void makeView (final Plan plan)
+    public static void makeView (final World world, final Plan plan)
     {
 	if (plan == null)
 	{
@@ -569,7 +475,7 @@ public class Simulator extends JPanel implements ComponentListener, MouseListene
 	{
 	    frame = new JFrame ("" + plan.getName () + " Simulation");
 	    frame.setDefaultCloseOperation (WindowConstants.HIDE_ON_CLOSE);
-	    final Simulator simulatorView = new Simulator ();
+	    final Simulator simulatorView = new Simulator (world);
 	    frame.setSize (900, 800);
 	    // frame.pack ();
 	    frame.getContentPane ().add (simulatorView);

@@ -250,7 +250,8 @@ public class PlanFunctions extends Definer
     {
 	if (plan != null)
 	{
-	    Simulator.makeView (plan);
+	    final World world = new Blocksworld ();
+	    Simulator.makeView (world, plan);
 	}
 	return plan;
     }
