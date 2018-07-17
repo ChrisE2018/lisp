@@ -17,27 +17,44 @@ import lisp.lang.Symbol;
 import plan.*;
 import util.FontUtil;
 
-public class BlockworldSimulator extends JPanel implements ActionListener, ComponentListener, MouseListener, MouseMotionListener
+public class BlockworldSimulator extends JPanel implements ComponentListener, MouseListener, MouseMotionListener
 {
     private static final long ACTION_INTERVAL = 2000;
-    private Plan plan;
+    private static final int ANIMATION_TIMER_INTERVAL = 1;
+    private static final int SIMULATION_TIMER_INTERVAL = 250;
 
-    private final List<Node> simulatedNodes = new ArrayList<> ();
+    /** Timer for animation. */
+    private final Timer animationTimer = new AnimationTimer (ANIMATION_TIMER_INTERVAL);
 
+    /** Timer for plan simulation. */
+    private final Timer simulationTimer = new SimulationTimer (SIMULATION_TIMER_INTERVAL);
+
+    /** Time of plan simulation action. */
     private long actionTimestamp;
 
-    private final Set<Symbol> blocks = new LinkedHashSet<> ();
-    private final Set<Symbol> positionedBlocks = new LinkedHashSet<> ();
+    /** True while animation is active. Freezes plan simulation. */
+    private boolean hasMovingSprite = true;
 
-    private final Map<Symbol, Sprite> sprites = new HashMap<> ();
+    /** The plan to simulate */
+    private Plan plan;
 
-    private final Timer timer = new Timer (1, this);
+    /** Plan steps that have already been shown. */
+    private final List<Node> simulatedNodes = new ArrayList<> ();
+
+    /** Goals of the original plan. */
+    private final List<Condition> goals = new ArrayList<> ();
 
     /** Conditions that are currently true. */
     private final List<Condition> state = new ArrayList<> ();
 
-    /** Goals of the original plan. */
-    private final List<Condition> goals = new ArrayList<> ();
+    /** Blocks found in the plan. */
+    private final Set<Symbol> blocks = new LinkedHashSet<> ();
+
+    /** Blocks that have been given a display position. */
+    private final Set<Symbol> positionedBlocks = new LinkedHashSet<> ();
+
+    /** Sprites for each block. */
+    private final Map<Symbol, Sprite> sprites = new HashMap<> ();
 
     private int blockSpacing = 100;
     private int blockWidth = 25;
@@ -46,117 +63,11 @@ public class BlockworldSimulator extends JPanel implements ActionListener, Compo
 
     public BlockworldSimulator ()
     {
-	timer.start ();
 	addComponentListener (this);
 	addMouseListener (this);
 	addMouseMotionListener (this);
-    }
-
-    private void updateSizes ()
-    {
-	blockWidth = Math.max (50, Math.min (getWidth (), getHeight ()) / 10);
-	blockSpacing = blockWidth + blockWidth / 4;
-	blockHeight = blockWidth;
-	final int height3 = getHeight () / 3;
-	final int baseline = height3 * 2;
-	tableY = Math.max (10, baseline - blockHeight + 10);
-    }
-
-    /** Execute a timer action. */
-    @Override
-    public void actionPerformed (final ActionEvent e)
-    {
-	for (final Sprite sprite : sprites.values ())
-	{
-	    final int dx = sprite.destination.x - sprite.x;
-	    final int dy = sprite.destination.y - sprite.y;
-	    final int dw = sprite.destination.width - sprite.width;
-	    final int dh = sprite.destination.height - sprite.height;
-	    final int sx = sign (dx);
-	    final int sy = sign (dy);
-	    final int sw = sign (dw);
-	    final int sh = sign (dh);
-	    sprite.x += sx;
-	    sprite.y += sy;
-	    sprite.width += sw;
-	    sprite.height += sh;
-	}
-	repaint ();
-	final long now = System.currentTimeMillis ();
-	if (actionTimestamp + ACTION_INTERVAL < now)
-	{
-	    for (final Sprite sprite : sprites.values ())
-	    {
-		if (sprite.isMoving ())
-		{
-		    return;
-		}
-	    }
-	    // System.out.printf ("Perform next action %n");
-	    final List<Node> selection = getFirstNodes ();
-	    if (!selection.isEmpty ())
-	    {
-		final Node selected = selection.get (0);
-		final StringBuilder buffer = new StringBuilder ();
-		buffer.append ("Perform next action ");
-		buffer.append (selected.getName ());
-		buffer.append (" ");
-		buffer.append (selected.getAction ());
-		System.out.println (buffer);
-		simulate (selected);
-	    }
-	    else
-	    {
-		// System.out.printf ("Simulation complete %n");
-		// timer.stop ();
-	    }
-	    actionTimestamp = now;
-	}
-	// Need to periodically advance through the plan and "execute" an action.
-	// Need to determine current variable bindings.
-	// Need a graphic for each action.
-    }
-
-    private int sign (final int dx)
-    {
-	if (dx > 0)
-	{
-	    return 1;
-	}
-	else if (dx < 0)
-	{
-	    return -1;
-	}
-	return 0;
-    }
-
-    /** Get all nodes with no predecessors. These will be placed on the left. */
-    private List<Node> getFirstNodes ()
-    {
-	final List<Node> result = new ArrayList<> ();
-	for (final Node node : plan.getNodes ())
-	{
-	    if (!simulatedNodes.contains (node))
-	    {
-		if (!hasNewPredecessor (node, simulatedNodes))
-		{
-		    result.add (node);
-		}
-	    }
-	}
-	return result;
-    }
-
-    private boolean hasNewPredecessor (final Node node, final Collection<Node> marked)
-    {
-	for (final Node p : node.getPrevious ())
-	{
-	    if (!marked.contains (p))
-	    {
-		return true;
-	    }
-	}
-	return false;
+	animationTimer.start ();
+	simulationTimer.start ();
     }
 
     private void setPlan (final Plan plan)
@@ -198,6 +109,124 @@ public class BlockworldSimulator extends JPanel implements ActionListener, Compo
 	}
     }
 
+    /** Calculates baseline when the view is resized this */
+    private void updateSizes ()
+    {
+	blockWidth = Math.max (50, Math.min (getWidth (), getHeight ()) / 10);
+	blockSpacing = blockWidth + blockWidth / 4;
+	blockHeight = blockWidth;
+	final int height3 = getHeight () / 3;
+	final int baseline = height3 * 2;
+	tableY = Math.max (10, baseline - blockHeight + 10);
+    }
+
+    private class AnimationTimer extends Timer
+    {
+	AnimationTimer (final int interval)
+	{
+	    super (interval, new ActionListener ()
+	    {
+		@Override
+		public void actionPerformed (final ActionEvent e)
+		{
+		    boolean moved = false;
+		    for (final Sprite sprite : sprites.values ())
+		    {
+			final int dx = sprite.destination.x - sprite.x;
+			final int dy = sprite.destination.y - sprite.y;
+			final int dw = sprite.destination.width - sprite.width;
+			final int dh = sprite.destination.height - sprite.height;
+			if (dx != 0 || dy != 0 || dw != 0 || dh != 0)
+			{
+			    moved = true;
+			    sprite.x += sign (dx);
+			    sprite.y += sign (dy);
+			    sprite.width += sign (dw);
+			    sprite.height += sign (dh);
+			}
+		    }
+		    if (moved)
+		    {
+			repaint ();
+		    }
+		    hasMovingSprite = moved;
+		}
+	    });
+	}
+    }
+
+    private int sign (final int dx)
+    {
+	if (dx > 0)
+	{
+	    return 1;
+	}
+	else if (dx < 0)
+	{
+	    return -1;
+	}
+	return 0;
+    }
+
+    private class SimulationTimer extends Timer
+    {
+	SimulationTimer (final int interval)
+	{
+	    super (interval, new ActionListener ()
+	    {
+		@Override
+		public void actionPerformed (final ActionEvent e)
+		{
+		    if (!hasMovingSprite && actionTimestamp + ACTION_INTERVAL < System.currentTimeMillis ())
+		    {
+			final List<Node> selection = getFirstNodes ();
+			if (!selection.isEmpty ())
+			{
+			    final Node selected = selection.get (0);
+			    final StringBuilder buffer = new StringBuilder ();
+			    buffer.append ("Perform next action ");
+			    buffer.append (selected.getName ());
+			    buffer.append (" ");
+			    buffer.append (selected.getAction ());
+			    System.out.println (buffer);
+			    simulate (selected);
+			}
+			actionTimestamp = System.currentTimeMillis ();
+		    }
+		}
+	    });
+	}
+    }
+
+    /** Get nodes with no predecessors that have not been simulated. These can be simulated now. */
+    private List<Node> getFirstNodes ()
+    {
+	final List<Node> result = new ArrayList<> ();
+	for (final Node node : plan.getNodes ())
+	{
+	    if (!simulatedNodes.contains (node))
+	    {
+		if (!hasNewPredecessor (node, simulatedNodes))
+		{
+		    result.add (node);
+		}
+	    }
+	}
+	return result;
+    }
+
+    private boolean hasNewPredecessor (final Node node, final Collection<Node> marked)
+    {
+	for (final Node p : node.getPrevious ())
+	{
+	    if (!marked.contains (p))
+	    {
+		return true;
+	    }
+	}
+	return false;
+    }
+
     private void simulate (final Node node)
     {
 	System.out.printf ("Simulate %s %n", node);
@@ -230,11 +259,11 @@ public class BlockworldSimulator extends JPanel implements ActionListener, Compo
 		positionedBlocks.removeAll (c.getTerms ());
 	    }
 	}
-	update ();
+	animateCurrentState ();
 	simulatedNodes.add (node);
     }
 
-    private void update ()
+    private void animateCurrentState ()
     {
 	for (final Symbol b : blocks)
 	{
@@ -248,12 +277,12 @@ public class BlockworldSimulator extends JPanel implements ActionListener, Compo
 	{
 	    for (final Condition c : state)
 	    {
-		update (c);
+		animateCondition (c);
 	    }
 	}
     }
 
-    private void update (final Condition c)
+    private void animateCondition (final Condition c)
     {
 	final Symbol p = c.getPredicate ();
 	if (p.is ("ontable"))
